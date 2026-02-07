@@ -158,7 +158,7 @@ export default function CartPage() {
             </div>
             
             <div className="cart-actions">
-              <Link to="/shop" className="btn btn-outline">
+              <Link to="/products" className="btn btn-outline">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>

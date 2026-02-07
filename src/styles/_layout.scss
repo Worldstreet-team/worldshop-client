@@ -417,6 +417,7 @@
   flex: 1;
   overflow-y: auto;
   padding: $spacing-md;
+  padding-bottom: 0;
   
   .cart-empty {
     @include flex-center;
@@ -441,9 +442,13 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.cart-item {
+// Cart sidebar specific cart-item styles
+.cart-sidebar-content .cart-item {
   display: flex;
   gap: $spacing-md;
   padding-bottom: $spacing-md;
@@ -451,96 +456,112 @@
   
   &:last-child {
     border-bottom: none;
+    padding-bottom: 0;
   }
-}
-
-.cart-item-image {
-  width: 80px;
-  height: 80px;
-  flex-shrink: 0;
   
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: $radius-sm;
-  }
-}
-
-.cart-item-details {
-  flex: 1;
-  
-  .cart-item-name {
-    display: block;
-    font-weight: $font-weight-medium;
-    margin-bottom: $spacing-xs;
-    @include text-truncate;
+  .cart-item-image {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
     
-    &:hover {
-      color: $primary-color;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: $radius-sm;
+      border: 1px solid $border-light;
     }
   }
   
-  .cart-item-variant {
-    display: block;
-    font-size: $font-size-sm;
-    color: $text-muted;
-    margin-bottom: $spacing-xs;
+  .cart-item-details {
+    flex: 1;
+    min-width: 0;
+    
+    .cart-item-name {
+      display: block;
+      font-weight: $font-weight-medium;
+      margin-bottom: $spacing-xs;
+      @include text-truncate;
+      
+      &:hover {
+        color: $primary-color;
+      }
+    }
+    
+    .cart-item-variant {
+      display: block;
+      font-size: $font-size-sm;
+      color: $text-muted;
+      margin-bottom: $spacing-xs;
+    }
+    
+    .cart-item-price {
+      font-weight: $font-weight-semibold;
+      margin-bottom: $spacing-sm;
+    }
   }
   
-  .cart-item-price {
-    font-weight: $font-weight-semibold;
-    margin-bottom: $spacing-sm;
+  .cart-item-quantity {
+    display: flex;
+    align-items: center;
+    border: 1px solid $border-color;
+    border-radius: $radius-sm;
+    overflow: hidden;
+    width: fit-content;
+    
+    button {
+      @include flex-center;
+      width: 32px;
+      height: 32px;
+      background: $gray-100;
+      border: none;
+      color: $text-primary;
+      cursor: pointer;
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      transition: background-color 0.2s;
+      
+      &:hover:not(:disabled) {
+        background-color: $gray-200;
+      }
+      
+      &:disabled {
+        color: $text-muted;
+        cursor: not-allowed;
+        background-color: $gray-50;
+      }
+    }
+    
+    span {
+      min-width: 36px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+      font-weight: $font-weight-medium;
+      background: $white;
+      border-left: 1px solid $border-color;
+      border-right: 1px solid $border-color;
+    }
   }
-}
-
-.cart-item-quantity {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid $border-color;
-  border-radius: $radius-sm;
   
-  button {
+  .cart-item-remove {
     @include flex-center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     border: none;
-    color: $text-primary;
+    color: $text-muted;
     cursor: pointer;
+    flex-shrink: 0;
+    align-self: flex-start;
     
-    &:hover:not(:disabled) {
-      background-color: $gray-100;
+    &:hover {
+      color: $danger-color;
     }
     
-    &:disabled {
-      color: $text-muted;
-      cursor: not-allowed;
+    .material-icons {
+      font-size: 20px;
     }
-  }
-  
-  span {
-    min-width: 28px;
-    text-align: center;
-    font-weight: $font-weight-medium;
-  }
-}
-
-.cart-item-remove {
-  @include flex-center;
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: none;
-  color: $text-muted;
-  cursor: pointer;
-  
-  &:hover {
-    color: $danger-color;
-  }
-  
-  .material-icons {
-    font-size: 20px;
   }
 }
 

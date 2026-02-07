@@ -103,6 +103,185 @@
 }
 
 // ============================================
+// CATEGORIES PAGE
+// ============================================
+
+.categories-page {
+  padding: $spacing-xl 0;
+  
+  .page-header {
+    text-align: center;
+    margin-bottom: $spacing-3xl;
+    
+    h1 {
+      margin-bottom: $spacing-sm;
+    }
+    
+    .page-subtitle {
+      color: $text-secondary;
+      font-size: $font-size-lg;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  }
+}
+
+.categories-grid-page {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-xl;
+  
+  @include lg {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include sm-down {
+    grid-template-columns: 1fr;
+    gap: $spacing-lg;
+  }
+}
+
+.category-card {
+  @include card;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-decoration: none;
+  color: inherit;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-lg;
+    
+    .category-card-overlay {
+      opacity: 0.4;
+    }
+    
+    .category-card-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .category-card-image img {
+      transform: scale(1.05);
+    }
+  }
+}
+
+.category-card-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  
+  @include sm-down {
+    height: 180px;
+  }
+}
+
+.category-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba($black, 0.6) 100%);
+  opacity: 0.3;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.category-card-content {
+  padding: $spacing-lg;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+  .category-card-title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    margin-bottom: $spacing-xs;
+    color: $text-primary;
+  }
+  
+  .category-card-description {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin-bottom: $spacing-sm;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .category-card-count {
+    font-size: $font-size-sm;
+    color: $primary-color;
+    font-weight: $font-weight-medium;
+    margin-bottom: $spacing-md;
+  }
+}
+
+.category-card-subcategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: auto;
+  
+  .subcategory-tag {
+    display: inline-block;
+    padding: $spacing-xs $spacing-sm;
+    background-color: $gray-100;
+    color: $text-secondary;
+    font-size: $font-size-xs;
+    border-radius: $radius-full;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .subcategory-more {
+    display: inline-block;
+    padding: $spacing-xs $spacing-sm;
+    color: $primary-color;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+  }
+  
+  .category-card:hover & {
+    .subcategory-tag {
+      background-color: rgba($primary-color, 0.1);
+      color: $primary-color;
+    }
+  }
+}
+
+.category-card-arrow {
+  position: absolute;
+  bottom: $spacing-lg;
+  right: $spacing-lg;
+  width: 40px;
+  height: 40px;
+  @include flex-center;
+  background-color: $primary-color;
+  color: $white;
+  border-radius: $radius-full;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.3s, transform 0.3s;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ============================================
 // PRODUCT LISTING PAGE
 // ============================================
 
@@ -167,6 +346,7 @@
 
 .cart-page {
   padding: $spacing-xl 0;
+  overflow-x: hidden;
   
   .page-header {
     display: flex;
@@ -193,17 +373,21 @@
   
   @include md-down {
     grid-template-columns: 1fr;
+    gap: $spacing-lg;
   }
 }
 
 .cart-items-section {
+  min-width: 0; // Prevent grid blowout
+  
   .cart-items-list {
     @include card;
     overflow: hidden;
   }
 }
 
-.cart-item {
+// Cart Page specific cart-item (uses grid layout)
+.cart-page .cart-item {
   display: grid;
   grid-template-columns: 100px 1fr auto auto auto auto;
   gap: $spacing-md;
@@ -216,23 +400,52 @@
   }
   
   @include md-down {
-    grid-template-columns: 80px 1fr;
-    grid-template-rows: auto auto auto;
-    gap: $spacing-sm;
+    grid-template-columns: 80px 1fr auto;
+    grid-template-rows: auto auto;
+    gap: $spacing-sm $spacing-md;
+    padding: $spacing-md;
+    position: relative;
     
-    .cart-item-price,
-    .cart-item-quantity,
+    .cart-item-image {
+      grid-row: 1 / 3;
+    }
+    
+    .cart-item-details {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    
+    .cart-item-price {
+      display: none; // Hide individual price on mobile, show total only
+    }
+    
+    .cart-item-quantity {
+      grid-column: 2;
+      grid-row: 2;
+      justify-self: start;
+    }
+    
     .cart-item-total {
       grid-column: 2;
+      grid-row: 2;
+      justify-self: end;
+      align-self: center;
     }
     
     .cart-item-remove {
-      position: absolute;
-      top: $spacing-sm;
-      right: $spacing-sm;
+      grid-column: 3;
+      grid-row: 1 / 3;
+      align-self: center;
     }
+  }
+  
+  @include sm-down {
+    grid-template-columns: 70px 1fr 40px;
     
-    position: relative;
+    .cart-item-image img {
+      width: 70px;
+      height: 70px;
+    }
   }
 }
 
@@ -294,22 +507,24 @@
       @include flex-center;
       width: 36px;
       height: 36px;
-      background: transparent;
+      background: $gray-100;
       border: none;
       cursor: pointer;
       transition: background-color 0.2s;
       
       &:hover:not(:disabled) {
-        background-color: $gray-100;
+        background-color: $gray-200;
       }
       
       &:disabled {
         color: $text-muted;
         cursor: not-allowed;
+        background-color: $gray-50;
       }
       
       svg {
         flex-shrink: 0;
+        stroke-width: 2.5;
       }
     }
     
@@ -321,6 +536,7 @@
       border-left: 1px solid $border-color;
       border-right: 1px solid $border-color;
       font-weight: $font-weight-medium;
+      background: $white;
       
       &::-webkit-inner-spin-button,
       &::-webkit-outer-spin-button {
@@ -329,6 +545,18 @@
       }
       
       -moz-appearance: textfield;
+    }
+    
+    @include sm-down {
+      button {
+        width: 32px;
+        height: 32px;
+      }
+      
+      input {
+        width: 40px;
+        height: 32px;
+      }
     }
   }
 }
