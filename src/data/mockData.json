@@ -1,0 +1,1250 @@
+{
+  "categories": [
+    {
+      "id": "cat-1",
+      "name": "Electronics",
+      "slug": "electronics",
+      "description": "Latest electronics and gadgets",
+      "image": "/images/categories/img1.png",
+      "icon": "laptop",
+      "parentId": null,
+      "children": [
+        {
+          "id": "cat-1-1",
+          "name": "Laptops",
+          "slug": "laptops",
+          "parentId": "cat-1"
+        },
+        {
+          "id": "cat-1-2",
+          "name": "Smartphones",
+          "slug": "smartphones",
+          "parentId": "cat-1"
+        },
+        {
+          "id": "cat-1-3",
+          "name": "Tablets",
+          "slug": "tablets",
+          "parentId": "cat-1"
+        },
+        {
+          "id": "cat-1-4",
+          "name": "Accessories",
+          "slug": "accessories",
+          "parentId": "cat-1"
+        }
+      ],
+      "productCount": 156,
+      "isActive": true,
+      "sortOrder": 1,
+      "createdAt": "2025-01-01T00:00:00Z",
+      "updatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "cat-2",
+      "name": "Fashion",
+      "slug": "fashion",
+      "description": "Trendy fashion and apparel",
+      "image": "/images/categories/img2.png",
+      "icon": "shirt",
+      "parentId": null,
+      "children": [
+        {
+          "id": "cat-2-1",
+          "name": "Men's Clothing",
+          "slug": "mens-clothing",
+          "parentId": "cat-2"
+        },
+        {
+          "id": "cat-2-2",
+          "name": "Women's Clothing",
+          "slug": "womens-clothing",
+          "parentId": "cat-2"
+        },
+        {
+          "id": "cat-2-3",
+          "name": "Shoes",
+          "slug": "shoes",
+          "parentId": "cat-2"
+        }
+      ],
+      "productCount": 243,
+      "isActive": true,
+      "sortOrder": 2,
+      "createdAt": "2025-01-01T00:00:00Z",
+      "updatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "cat-3",
+      "name": "Home & Garden",
+      "slug": "home-garden",
+      "description": "Everything for your home",
+      "image": "/images/categories/img3.png",
+      "icon": "home",
+      "parentId": null,
+      "children": [
+        {
+          "id": "cat-3-1",
+          "name": "Furniture",
+          "slug": "furniture",
+          "parentId": "cat-3"
+        },
+        {
+          "id": "cat-3-2",
+          "name": "Decor",
+          "slug": "decor",
+          "parentId": "cat-3"
+        },
+        {
+          "id": "cat-3-3",
+          "name": "Kitchen",
+          "slug": "kitchen",
+          "parentId": "cat-3"
+        }
+      ],
+      "productCount": 189,
+      "isActive": true,
+      "sortOrder": 3,
+      "createdAt": "2025-01-01T00:00:00Z",
+      "updatedAt": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "cat-4",
+      "name": "Sports & Outdoors",
+      "slug": "sports-outdoors",
+      "description": "Gear for active lifestyle",
+      "image": "/images/categories/img1.jpg",
+      "icon": "activity",
+      "parentId": null,
+      "children": [
+        {
+          "id": "cat-4-1",
+          "name": "Fitness Equipment",
+          "slug": "fitness-equipment",
+          "parentId": "cat-4"
+        },
+        {
+          "id": "cat-4-2",
+          "name": "Camping",
+          "slug": "camping",
+          "parentId": "cat-4"
+        }
+      ],
+      "productCount": 98,
+      "isActive": true,
+      "sortOrder": 4,
+      "createdAt": "2025-01-01T00:00:00Z",
+      "updatedAt": "2025-01-01T00:00:00Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1",
+      "name": "Wireless Bluetooth Headphones Pro",
+      "slug": "wireless-bluetooth-headphones-pro",
+      "description": "Experience premium sound quality with our Wireless Bluetooth Headphones Pro. Featuring active noise cancellation, 40-hour battery life, and ultra-comfortable memory foam ear cushions. Perfect for music lovers, gamers, and professionals who demand the best audio experience.",
+      "shortDescription": "Premium wireless headphones with active noise cancellation and 40-hour battery life.",
+      "sku": "WBH-PRO-001",
+      "price": 149.99,
+      "compareAtPrice": 199.99,
+      "costPrice": 75.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-1",
+      "category": {
+        "id": "cat-1",
+        "name": "Electronics",
+        "slug": "electronics"
+      },
+      "brand": "SoundMax",
+      "tags": ["wireless", "bluetooth", "headphones", "noise-cancelling"],
+      "images": [
+        {
+          "id": "img-1-1",
+          "url": "/images/products/img1.jpg",
+          "alt": "Wireless Bluetooth Headphones Pro - Front View",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-1-2",
+          "url": "/images/products/img2.png",
+          "alt": "Wireless Bluetooth Headphones Pro - Side View",
+          "isPrimary": false,
+          "sortOrder": 2
+        },
+        {
+          "id": "img-1-3",
+          "url": "/images/products/img3.jpg",
+          "alt": "Wireless Bluetooth Headphones Pro - Folded",
+          "isPrimary": false,
+          "sortOrder": 3
+        },
+        {
+          "id": "img-1-4",
+          "url": "/images/products/img4.jpg",
+          "alt": "Wireless Bluetooth Headphones Pro - Case",
+          "isPrimary": false,
+          "sortOrder": 4
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-1-1",
+          "name": "Black",
+          "sku": "WBH-PRO-001-BLK",
+          "price": 149.99,
+          "compareAtPrice": 199.99,
+          "stock": 45,
+          "attributes": {
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-1-2",
+          "name": "White",
+          "sku": "WBH-PRO-001-WHT",
+          "price": 149.99,
+          "compareAtPrice": 199.99,
+          "stock": 32,
+          "attributes": {
+            "color": "White"
+          }
+        },
+        {
+          "id": "var-1-3",
+          "name": "Navy Blue",
+          "sku": "WBH-PRO-001-NVY",
+          "price": 159.99,
+          "compareAtPrice": 209.99,
+          "stock": 18,
+          "attributes": {
+            "color": "Navy"
+          }
+        }
+      ],
+      "averageRating": 4.7,
+      "reviewCount": 324,
+      "stock": 95,
+      "lowStockThreshold": 10,
+      "isActive": true,
+      "isFeatured": true,
+      "metaTitle": "Buy Wireless Bluetooth Headphones Pro | WorldStreet",
+      "metaDescription": "Shop premium wireless headphones with ANC and 40-hour battery",
+      "createdAt": "2025-11-15T10:30:00Z",
+      "updatedAt": "2026-01-20T14:45:00Z"
+    },
+    {
+      "id": "prod-2",
+      "name": "Smart Fitness Watch Ultra",
+      "slug": "smart-fitness-watch-ultra",
+      "description": "Track your fitness journey with the Smart Fitness Watch Ultra. Features include heart rate monitoring, GPS tracking, sleep analysis, and 100+ workout modes. Water-resistant up to 50 meters with a stunning AMOLED display.",
+      "shortDescription": "Advanced fitness tracking with GPS, heart rate monitor, and 7-day battery life.",
+      "sku": "SFW-ULTRA-001",
+      "price": 299.99,
+      "compareAtPrice": 349.99,
+      "costPrice": 150.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-1",
+      "category": {
+        "id": "cat-1",
+        "name": "Electronics",
+        "slug": "electronics"
+      },
+      "brand": "FitTech",
+      "tags": ["smartwatch", "fitness", "gps", "waterproof"],
+      "images": [
+        {
+          "id": "img-2-1",
+          "url": "/images/products/img5.jpg",
+          "alt": "Smart Fitness Watch Ultra - Black",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-2-2",
+          "url": "/images/products/img6.jpg",
+          "alt": "Smart Fitness Watch Ultra - Display",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-2-1",
+          "name": "42mm Black",
+          "sku": "SFW-ULTRA-42-BLK",
+          "price": 299.99,
+          "compareAtPrice": 349.99,
+          "stock": 28,
+          "attributes": {
+            "size": "42mm",
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-2-2",
+          "name": "46mm Black",
+          "sku": "SFW-ULTRA-46-BLK",
+          "price": 329.99,
+          "compareAtPrice": 379.99,
+          "stock": 22,
+          "attributes": {
+            "size": "46mm",
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-2-3",
+          "name": "42mm Silver",
+          "sku": "SFW-ULTRA-42-SLV",
+          "price": 299.99,
+          "compareAtPrice": 349.99,
+          "stock": 15,
+          "attributes": {
+            "size": "42mm",
+            "color": "Silver"
+          }
+        }
+      ],
+      "averageRating": 4.5,
+      "reviewCount": 189,
+      "stock": 65,
+      "lowStockThreshold": 10,
+      "isActive": true,
+      "isFeatured": true,
+      "createdAt": "2025-10-01T09:00:00Z",
+      "updatedAt": "2026-01-18T11:30:00Z"
+    },
+    {
+      "id": "prod-3",
+      "name": "Premium Cotton T-Shirt",
+      "slug": "premium-cotton-tshirt",
+      "description": "Our Premium Cotton T-Shirt is made from 100% organic cotton, ensuring comfort and sustainability. Features a classic fit, reinforced stitching, and pre-shrunk fabric. Available in multiple colors and sizes.",
+      "shortDescription": "100% organic cotton t-shirt with classic fit and premium quality.",
+      "sku": "PCT-001",
+      "price": 34.99,
+      "compareAtPrice": null,
+      "costPrice": 12.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-2",
+      "category": {
+        "id": "cat-2",
+        "name": "Fashion",
+        "slug": "fashion"
+      },
+      "brand": "EcoWear",
+      "tags": ["cotton", "organic", "t-shirt", "casual"],
+      "images": [
+        {
+          "id": "img-3-1",
+          "url": "/images/products/img7.png",
+          "alt": "Premium Cotton T-Shirt - White",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-3-2",
+          "url": "/images/products/img8.jpg",
+          "alt": "Premium Cotton T-Shirt - Back",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-3-1",
+          "name": "White / S",
+          "sku": "PCT-001-WHT-S",
+          "price": 34.99,
+          "stock": 50,
+          "attributes": {
+            "color": "White",
+            "size": "S"
+          }
+        },
+        {
+          "id": "var-3-2",
+          "name": "White / M",
+          "sku": "PCT-001-WHT-M",
+          "price": 34.99,
+          "stock": 75,
+          "attributes": {
+            "color": "White",
+            "size": "M"
+          }
+        },
+        {
+          "id": "var-3-3",
+          "name": "White / L",
+          "sku": "PCT-001-WHT-L",
+          "price": 34.99,
+          "stock": 60,
+          "attributes": {
+            "color": "White",
+            "size": "L"
+          }
+        },
+        {
+          "id": "var-3-4",
+          "name": "Black / S",
+          "sku": "PCT-001-BLK-S",
+          "price": 34.99,
+          "stock": 45,
+          "attributes": {
+            "color": "Black",
+            "size": "S"
+          }
+        },
+        {
+          "id": "var-3-5",
+          "name": "Black / M",
+          "sku": "PCT-001-BLK-M",
+          "price": 34.99,
+          "stock": 80,
+          "attributes": {
+            "color": "Black",
+            "size": "M"
+          }
+        },
+        {
+          "id": "var-3-6",
+          "name": "Black / L",
+          "sku": "PCT-001-BLK-L",
+          "price": 34.99,
+          "stock": 55,
+          "attributes": {
+            "color": "Black",
+            "size": "L"
+          }
+        }
+      ],
+      "averageRating": 4.8,
+      "reviewCount": 567,
+      "stock": 365,
+      "lowStockThreshold": 20,
+      "isActive": true,
+      "isFeatured": false,
+      "createdAt": "2025-06-15T08:00:00Z",
+      "updatedAt": "2026-01-10T16:20:00Z"
+    },
+    {
+      "id": "prod-4",
+      "name": "Ergonomic Office Chair Pro",
+      "slug": "ergonomic-office-chair-pro",
+      "description": "Work in comfort with our Ergonomic Office Chair Pro. Features adjustable lumbar support, breathable mesh back, 4D armrests, and smooth-rolling casters. Designed for long hours of comfortable sitting.",
+      "shortDescription": "Premium ergonomic chair with adjustable lumbar support and breathable mesh.",
+      "sku": "EOC-PRO-001",
+      "price": 449.99,
+      "compareAtPrice": 599.99,
+      "costPrice": 220.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-3",
+      "category": {
+        "id": "cat-3",
+        "name": "Home & Garden",
+        "slug": "home-garden"
+      },
+      "brand": "ComfortPlus",
+      "tags": ["office", "chair", "ergonomic", "furniture"],
+      "images": [
+        {
+          "id": "img-4-1",
+          "url": "/images/products/img9.png",
+          "alt": "Ergonomic Office Chair Pro - Front",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-4-2",
+          "url": "/images/products/img10.png",
+          "alt": "Ergonomic Office Chair Pro - Side",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-4-1",
+          "name": "Black",
+          "sku": "EOC-PRO-001-BLK",
+          "price": 449.99,
+          "compareAtPrice": 599.99,
+          "stock": 12,
+          "attributes": {
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-4-2",
+          "name": "Gray",
+          "sku": "EOC-PRO-001-GRY",
+          "price": 449.99,
+          "compareAtPrice": 599.99,
+          "stock": 8,
+          "attributes": {
+            "color": "Gray"
+          }
+        }
+      ],
+      "averageRating": 4.6,
+      "reviewCount": 98,
+      "stock": 20,
+      "lowStockThreshold": 5,
+      "isActive": true,
+      "isFeatured": true,
+      "createdAt": "2025-09-01T12:00:00Z",
+      "updatedAt": "2026-01-15T09:00:00Z"
+    },
+    {
+      "id": "prod-5",
+      "name": "Professional Running Shoes",
+      "slug": "professional-running-shoes",
+      "description": "Engineered for performance, our Professional Running Shoes feature responsive cushioning, breathable upper mesh, and superior grip. Ideal for marathon runners and daily joggers alike.",
+      "shortDescription": "High-performance running shoes with responsive cushioning and breathable design.",
+      "sku": "PRS-001",
+      "price": 129.99,
+      "compareAtPrice": 159.99,
+      "costPrice": 55.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-4",
+      "category": {
+        "id": "cat-4",
+        "name": "Sports & Outdoors",
+        "slug": "sports-outdoors"
+      },
+      "brand": "SpeedRun",
+      "tags": ["running", "shoes", "sports", "athletics"],
+      "images": [
+        {
+          "id": "img-5-1",
+          "url": "/images/products/img11.png",
+          "alt": "Professional Running Shoes - Blue",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-5-2",
+          "url": "/images/products/img12.png",
+          "alt": "Professional Running Shoes - Sole",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-5-1",
+          "name": "Blue / 9",
+          "sku": "PRS-001-BLU-9",
+          "price": 129.99,
+          "compareAtPrice": 159.99,
+          "stock": 20,
+          "attributes": {
+            "color": "Blue",
+            "size": "9"
+          }
+        },
+        {
+          "id": "var-5-2",
+          "name": "Blue / 10",
+          "sku": "PRS-001-BLU-10",
+          "price": 129.99,
+          "compareAtPrice": 159.99,
+          "stock": 25,
+          "attributes": {
+            "color": "Blue",
+            "size": "10"
+          }
+        },
+        {
+          "id": "var-5-3",
+          "name": "Red / 9",
+          "sku": "PRS-001-RED-9",
+          "price": 129.99,
+          "compareAtPrice": 159.99,
+          "stock": 15,
+          "attributes": {
+            "color": "Red",
+            "size": "9"
+          }
+        },
+        {
+          "id": "var-5-4",
+          "name": "Red / 10",
+          "sku": "PRS-001-RED-10",
+          "price": 129.99,
+          "compareAtPrice": 159.99,
+          "stock": 18,
+          "attributes": {
+            "color": "Red",
+            "size": "10"
+          }
+        }
+      ],
+      "averageRating": 4.4,
+      "reviewCount": 234,
+      "stock": 78,
+      "lowStockThreshold": 15,
+      "isActive": true,
+      "isFeatured": false,
+      "createdAt": "2025-08-20T14:30:00Z",
+      "updatedAt": "2026-01-12T10:00:00Z"
+    },
+    {
+      "id": "prod-6",
+      "name": "4K Ultra HD Smart TV 55\"",
+      "slug": "4k-ultra-hd-smart-tv-55",
+      "description": "Immerse yourself in stunning 4K resolution with our Ultra HD Smart TV. Features HDR10+, Dolby Vision, built-in streaming apps, and voice control. The perfect centerpiece for your living room entertainment.",
+      "shortDescription": "55-inch 4K Smart TV with HDR10+, Dolby Vision, and built-in streaming.",
+      "sku": "TV-4K-55",
+      "price": 699.99,
+      "compareAtPrice": 899.99,
+      "costPrice": 400.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-1",
+      "category": {
+        "id": "cat-1",
+        "name": "Electronics",
+        "slug": "electronics"
+      },
+      "brand": "VisionMax",
+      "tags": ["tv", "4k", "smart", "entertainment"],
+      "images": [
+        {
+          "id": "img-6-1",
+          "url": "/images/products/img13.png",
+          "alt": "4K Ultra HD Smart TV 55 inch",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-6-2",
+          "url": "/images/products/img14.png",
+          "alt": "4K Ultra HD Smart TV - Side View",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [],
+      "averageRating": 4.3,
+      "reviewCount": 156,
+      "stock": 35,
+      "lowStockThreshold": 5,
+      "isActive": true,
+      "isFeatured": true,
+      "createdAt": "2025-07-10T11:00:00Z",
+      "updatedAt": "2026-01-08T15:30:00Z"
+    },
+    {
+      "id": "prod-7",
+      "name": "Portable Bluetooth Speaker",
+      "slug": "portable-bluetooth-speaker",
+      "description": "Take your music anywhere with our Portable Bluetooth Speaker. Features 360° sound, waterproof design (IPX7), 24-hour battery life, and built-in microphone for calls. Compact yet powerful.",
+      "shortDescription": "Waterproof portable speaker with 360° sound and 24-hour battery.",
+      "sku": "PBS-001",
+      "price": 79.99,
+      "compareAtPrice": 99.99,
+      "costPrice": 35.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-1",
+      "category": {
+        "id": "cat-1",
+        "name": "Electronics",
+        "slug": "electronics"
+      },
+      "brand": "SoundMax",
+      "tags": ["speaker", "bluetooth", "portable", "waterproof"],
+      "images": [
+        {
+          "id": "img-7-1",
+          "url": "/images/products/img15.jpg",
+          "alt": "Portable Bluetooth Speaker",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-7-2",
+          "url": "/images/products/img16.jpg",
+          "alt": "Portable Bluetooth Speaker - Side",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-7-1",
+          "name": "Black",
+          "sku": "PBS-001-BLK",
+          "price": 79.99,
+          "compareAtPrice": 99.99,
+          "stock": 100,
+          "attributes": {
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-7-2",
+          "name": "Blue",
+          "sku": "PBS-001-BLU",
+          "price": 79.99,
+          "compareAtPrice": 99.99,
+          "stock": 75,
+          "attributes": {
+            "color": "Blue"
+          }
+        },
+        {
+          "id": "var-7-3",
+          "name": "Red",
+          "sku": "PBS-001-RED",
+          "price": 79.99,
+          "compareAtPrice": 99.99,
+          "stock": 60,
+          "attributes": {
+            "color": "Red"
+          }
+        }
+      ],
+      "averageRating": 4.6,
+      "reviewCount": 412,
+      "stock": 235,
+      "lowStockThreshold": 20,
+      "isActive": true,
+      "isFeatured": false,
+      "createdAt": "2025-05-01T09:00:00Z",
+      "updatedAt": "2026-01-05T12:00:00Z"
+    },
+    {
+      "id": "prod-8",
+      "name": "Yoga Mat Premium",
+      "slug": "yoga-mat-premium",
+      "description": "Elevate your practice with our Premium Yoga Mat. Features non-slip surface, extra thick cushioning (6mm), eco-friendly materials, and alignment lines. Comes with carrying strap.",
+      "shortDescription": "Eco-friendly 6mm yoga mat with non-slip surface and alignment guides.",
+      "sku": "YMP-001",
+      "price": 49.99,
+      "compareAtPrice": null,
+      "costPrice": 18.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-4",
+      "category": {
+        "id": "cat-4",
+        "name": "Sports & Outdoors",
+        "slug": "sports-outdoors"
+      },
+      "brand": "ZenFit",
+      "tags": ["yoga", "fitness", "mat", "exercise"],
+      "images": [
+        {
+          "id": "img-8-1",
+          "url": "/images/products/img17.jpg",
+          "alt": "Yoga Mat Premium - Purple",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-8-2",
+          "url": "/images/products/img18.jpg",
+          "alt": "Yoga Mat Premium - Rolled",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-8-1",
+          "name": "Purple",
+          "sku": "YMP-001-PRP",
+          "price": 49.99,
+          "stock": 80,
+          "attributes": {
+            "color": "Purple"
+          }
+        },
+        {
+          "id": "var-8-2",
+          "name": "Blue",
+          "sku": "YMP-001-BLU",
+          "price": 49.99,
+          "stock": 65,
+          "attributes": {
+            "color": "Blue"
+          }
+        },
+        {
+          "id": "var-8-3",
+          "name": "Black",
+          "sku": "YMP-001-BLK",
+          "price": 49.99,
+          "stock": 90,
+          "attributes": {
+            "color": "Black"
+          }
+        }
+      ],
+      "averageRating": 4.9,
+      "reviewCount": 678,
+      "stock": 235,
+      "lowStockThreshold": 25,
+      "isActive": true,
+      "isFeatured": false,
+      "createdAt": "2025-04-15T10:00:00Z",
+      "updatedAt": "2026-01-02T08:00:00Z"
+    },
+    {
+      "id": "prod-9",
+      "name": "Wireless Gaming Mouse",
+      "slug": "wireless-gaming-mouse",
+      "description": "Dominate your games with our precision Wireless Gaming Mouse. Features 16000 DPI sensor, RGB lighting, programmable buttons, and ultra-low latency wireless connection. Ergonomic design for marathon gaming sessions.",
+      "shortDescription": "High-precision gaming mouse with 16000 DPI and programmable RGB lighting.",
+      "sku": "WGM-001",
+      "price": 89.99,
+      "compareAtPrice": 119.99,
+      "costPrice": 40.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-1",
+      "category": {
+        "id": "cat-1",
+        "name": "Electronics",
+        "slug": "electronics"
+      },
+      "brand": "GamePro",
+      "tags": ["gaming", "mouse", "wireless", "rgb"],
+      "images": [
+        {
+          "id": "img-9-1",
+          "url": "/images/products/img19.jpg",
+          "alt": "Wireless Gaming Mouse - RGB",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-9-2",
+          "url": "/images/products/img20.jpg",
+          "alt": "Wireless Gaming Mouse - Side View",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-9-1",
+          "name": "Black",
+          "sku": "WGM-001-BLK",
+          "price": 89.99,
+          "compareAtPrice": 119.99,
+          "stock": 55,
+          "attributes": {
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-9-2",
+          "name": "White",
+          "sku": "WGM-001-WHT",
+          "price": 89.99,
+          "compareAtPrice": 119.99,
+          "stock": 40,
+          "attributes": {
+            "color": "White"
+          }
+        }
+      ],
+      "averageRating": 4.7,
+      "reviewCount": 289,
+      "stock": 95,
+      "lowStockThreshold": 10,
+      "isActive": true,
+      "isFeatured": true,
+      "createdAt": "2025-09-15T14:00:00Z",
+      "updatedAt": "2026-01-18T10:00:00Z"
+    },
+    {
+      "id": "prod-10",
+      "name": "Leather Crossbody Bag",
+      "slug": "leather-crossbody-bag",
+      "description": "Elegant and practical, our Leather Crossbody Bag is crafted from genuine leather with adjustable strap and multiple compartments. Perfect for everyday use or special occasions.",
+      "shortDescription": "Genuine leather crossbody bag with adjustable strap and multiple pockets.",
+      "sku": "LCB-001",
+      "price": 159.99,
+      "compareAtPrice": 199.99,
+      "costPrice": 70.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-2",
+      "category": {
+        "id": "cat-2",
+        "name": "Fashion",
+        "slug": "fashion"
+      },
+      "brand": "LuxeStyle",
+      "tags": ["bag", "leather", "crossbody", "fashion"],
+      "images": [
+        {
+          "id": "img-10-1",
+          "url": "/images/products/img21.png",
+          "alt": "Leather Crossbody Bag - Brown",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-10-2",
+          "url": "/images/products/img22.jpg",
+          "alt": "Leather Crossbody Bag - Inside",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [
+        {
+          "id": "var-10-1",
+          "name": "Brown",
+          "sku": "LCB-001-BRN",
+          "price": 159.99,
+          "compareAtPrice": 199.99,
+          "stock": 30,
+          "attributes": {
+            "color": "Brown"
+          }
+        },
+        {
+          "id": "var-10-2",
+          "name": "Black",
+          "sku": "LCB-001-BLK",
+          "price": 159.99,
+          "compareAtPrice": 199.99,
+          "stock": 25,
+          "attributes": {
+            "color": "Black"
+          }
+        },
+        {
+          "id": "var-10-3",
+          "name": "Tan",
+          "sku": "LCB-001-TAN",
+          "price": 159.99,
+          "compareAtPrice": 199.99,
+          "stock": 20,
+          "attributes": {
+            "color": "Tan"
+          }
+        }
+      ],
+      "averageRating": 4.8,
+      "reviewCount": 145,
+      "stock": 75,
+      "lowStockThreshold": 10,
+      "isActive": true,
+      "isFeatured": true,
+      "createdAt": "2025-08-01T11:00:00Z",
+      "updatedAt": "2026-01-14T09:30:00Z"
+    },
+    {
+      "id": "prod-11",
+      "name": "Ceramic Coffee Mug Set",
+      "slug": "ceramic-coffee-mug-set",
+      "description": "Start your mornings right with our beautiful Ceramic Coffee Mug Set. Includes 4 handcrafted mugs with modern designs. Microwave and dishwasher safe. Perfect for home or office.",
+      "shortDescription": "Set of 4 handcrafted ceramic mugs, microwave and dishwasher safe.",
+      "sku": "CCM-001",
+      "price": 39.99,
+      "compareAtPrice": null,
+      "costPrice": 15.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-3",
+      "category": {
+        "id": "cat-3",
+        "name": "Home & Garden",
+        "slug": "home-garden"
+      },
+      "brand": "HomeEssentials",
+      "tags": ["mug", "ceramic", "kitchen", "coffee"],
+      "images": [
+        {
+          "id": "img-11-1",
+          "url": "/images/products/img23.jpg",
+          "alt": "Ceramic Coffee Mug Set",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-11-2",
+          "url": "/images/products/img24.jpg",
+          "alt": "Ceramic Coffee Mug Set - Stack",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [],
+      "averageRating": 4.5,
+      "reviewCount": 203,
+      "stock": 120,
+      "lowStockThreshold": 15,
+      "isActive": true,
+      "isFeatured": false,
+      "createdAt": "2025-07-20T15:00:00Z",
+      "updatedAt": "2026-01-10T14:00:00Z"
+    },
+    {
+      "id": "prod-12",
+      "name": "Resistance Bands Set",
+      "slug": "resistance-bands-set",
+      "description": "Get fit anywhere with our complete Resistance Bands Set. Includes 5 different resistance levels, door anchor, handles, and carrying bag. Perfect for home workouts, physical therapy, or travel.",
+      "shortDescription": "Complete 5-piece resistance bands set with accessories for home workouts.",
+      "sku": "RBS-001",
+      "price": 29.99,
+      "compareAtPrice": 39.99,
+      "costPrice": 10.00,
+      "type": "PHYSICAL",
+      "categoryId": "cat-4",
+      "category": {
+        "id": "cat-4",
+        "name": "Sports & Outdoors",
+        "slug": "sports-outdoors"
+      },
+      "brand": "FitGear",
+      "tags": ["fitness", "resistance", "workout", "home-gym"],
+      "images": [
+        {
+          "id": "img-12-1",
+          "url": "/images/products/img25.jpg",
+          "alt": "Resistance Bands Set",
+          "isPrimary": true,
+          "sortOrder": 1
+        },
+        {
+          "id": "img-12-2",
+          "url": "/images/products/img26.jpg",
+          "alt": "Resistance Bands Set - All Components",
+          "isPrimary": false,
+          "sortOrder": 2
+        }
+      ],
+      "variants": [],
+      "averageRating": 4.6,
+      "reviewCount": 456,
+      "stock": 200,
+      "lowStockThreshold": 25,
+      "isActive": true,
+      "isFeatured": false,
+      "createdAt": "2025-06-01T13:00:00Z",
+      "updatedAt": "2026-01-05T11:00:00Z"
+    }
+  ],
+  "reviews": {
+    "prod-1": [
+      {
+        "id": "rev-1-1",
+        "productId": "prod-1",
+        "userId": "user-1",
+        "userName": "John Smith",
+        "rating": 5,
+        "title": "Best headphones I've ever owned!",
+        "comment": "The noise cancellation is incredible. I use these for work calls and music, and they perform flawlessly in both scenarios. Battery life is exactly as advertised - got through a full week of work without charging. Highly recommend!",
+        "isVerified": true,
+        "createdAt": "2026-01-15T14:30:00Z",
+        "updatedAt": "2026-01-15T14:30:00Z"
+      },
+      {
+        "id": "rev-1-2",
+        "productId": "prod-1",
+        "userId": "user-2",
+        "userName": "Sarah Johnson",
+        "rating": 4,
+        "title": "Great sound, minor comfort issue",
+        "comment": "Sound quality is top-notch and the ANC works great. Only giving 4 stars because they get a bit tight after wearing for 3+ hours. Otherwise, fantastic product for the price.",
+        "isVerified": true,
+        "createdAt": "2026-01-10T09:15:00Z",
+        "updatedAt": "2026-01-10T09:15:00Z"
+      },
+      {
+        "id": "rev-1-3",
+        "productId": "prod-1",
+        "userId": "user-3",
+        "userName": "Mike Chen",
+        "rating": 5,
+        "title": "Perfect for my daily commute",
+        "comment": "These headphones have made my subway commute so much better. The noise cancellation blocks out all the train noise. Pairing with my phone was instant, and the touch controls are intuitive.",
+        "isVerified": true,
+        "createdAt": "2026-01-05T16:45:00Z",
+        "updatedAt": "2026-01-05T16:45:00Z"
+      },
+      {
+        "id": "rev-1-4",
+        "productId": "prod-1",
+        "userId": "user-4",
+        "userName": "Emily Davis",
+        "rating": 5,
+        "title": "Exceeded expectations",
+        "comment": "I was skeptical about the 40-hour battery claim, but it's real! I've been using these for two weeks and only charged twice. The carrying case is also really nice quality.",
+        "isVerified": false,
+        "createdAt": "2025-12-28T11:20:00Z",
+        "updatedAt": "2025-12-28T11:20:00Z"
+      },
+      {
+        "id": "rev-1-5",
+        "productId": "prod-1",
+        "userId": "user-5",
+        "userName": "David Wilson",
+        "rating": 4,
+        "title": "Solid headphones",
+        "comment": "Good build quality, comfortable for long listening sessions. The app could use some improvements but the headphones themselves are excellent value.",
+        "isVerified": true,
+        "createdAt": "2025-12-20T08:00:00Z",
+        "updatedAt": "2025-12-20T08:00:00Z"
+      },
+      {
+        "id": "rev-1-6",
+        "productId": "prod-1",
+        "userId": "user-6",
+        "userName": "Lisa Brown",
+        "rating": 5,
+        "title": "Game changer for WFH",
+        "comment": "Working from home with two kids is challenging, but these headphones help me focus. The mic quality on calls is great too - colleagues say I sound crystal clear.",
+        "isVerified": true,
+        "createdAt": "2025-12-15T13:10:00Z",
+        "updatedAt": "2025-12-15T13:10:00Z"
+      },
+      {
+        "id": "rev-1-7",
+        "productId": "prod-1",
+        "userId": "user-7",
+        "userName": "Tom Anderson",
+        "rating": 3,
+        "title": "Good but not great",
+        "comment": "Sound is good but I expected more bass. ANC is decent but my previous headphones (double the price) were better. For this price point though, can't really complain.",
+        "isVerified": true,
+        "createdAt": "2025-12-10T10:30:00Z",
+        "updatedAt": "2025-12-10T10:30:00Z"
+      }
+    ],
+    "prod-2": [
+      {
+        "id": "rev-2-1",
+        "productId": "prod-2",
+        "userId": "user-8",
+        "userName": "Jennifer Martinez",
+        "rating": 5,
+        "title": "Perfect fitness companion",
+        "comment": "This watch has everything I need for my marathon training. GPS is accurate, the heart rate monitor works great, and I love the sleep tracking feature. Battery easily lasts a week.",
+        "isVerified": true,
+        "createdAt": "2026-01-18T07:00:00Z",
+        "updatedAt": "2026-01-18T07:00:00Z"
+      },
+      {
+        "id": "rev-2-2",
+        "productId": "prod-2",
+        "userId": "user-9",
+        "userName": "Robert Taylor",
+        "rating": 4,
+        "title": "Great features, learning curve",
+        "comment": "Took a few days to figure out all the features but once you do, it's amazing. The AMOLED display is gorgeous and very readable in sunlight.",
+        "isVerified": true,
+        "createdAt": "2026-01-12T15:45:00Z",
+        "updatedAt": "2026-01-12T15:45:00Z"
+      },
+      {
+        "id": "rev-2-3",
+        "productId": "prod-2",
+        "userId": "user-10",
+        "userName": "Amanda White",
+        "rating": 5,
+        "title": "Love swimming with it!",
+        "comment": "Waterproof as advertised - I've been swimming with it daily for a month. Tracks my laps perfectly and syncs all my data to the app seamlessly.",
+        "isVerified": true,
+        "createdAt": "2026-01-08T12:00:00Z",
+        "updatedAt": "2026-01-08T12:00:00Z"
+      }
+    ],
+    "prod-4": [
+      {
+        "id": "rev-4-1",
+        "productId": "prod-4",
+        "userId": "user-11",
+        "userName": "Chris Lee",
+        "rating": 5,
+        "title": "Worth every penny",
+        "comment": "I was hesitant about spending this much on a chair, but after 3 months of use, my back pain is gone. The lumbar support is amazing and the build quality is excellent.",
+        "isVerified": true,
+        "createdAt": "2026-01-14T09:00:00Z",
+        "updatedAt": "2026-01-14T09:00:00Z"
+      },
+      {
+        "id": "rev-4-2",
+        "productId": "prod-4",
+        "userId": "user-12",
+        "userName": "Patricia Kim",
+        "rating": 4,
+        "title": "Great chair, tough assembly",
+        "comment": "Took about an hour to assemble, but the end result is worth it. Very comfortable for long work sessions. The armrests could be a bit softer.",
+        "isVerified": true,
+        "createdAt": "2026-01-06T14:20:00Z",
+        "updatedAt": "2026-01-06T14:20:00Z"
+      }
+    ],
+    "prod-9": [
+      {
+        "id": "rev-9-1",
+        "productId": "prod-9",
+        "userId": "user-13",
+        "userName": "Kevin Zhang",
+        "rating": 5,
+        "title": "Perfect for competitive gaming",
+        "comment": "The sensor is incredibly accurate. Zero lag in wireless mode. RGB looks amazing. This mouse has definitely improved my gameplay.",
+        "isVerified": true,
+        "createdAt": "2026-01-17T20:00:00Z",
+        "updatedAt": "2026-01-17T20:00:00Z"
+      }
+    ]
+  },
+  "banners": [
+    {
+      "id": "banner-1",
+      "title": "New Season Arrivals",
+      "subtitle": "Check out our latest collection with up to 40% off",
+      "image": "/images/banners/img1.jpg",
+      "link": "/shop/new-arrivals",
+      "buttonText": "Shop Now",
+      "isActive": true
+    },
+    {
+      "id": "banner-2",
+      "title": "Electronics Sale",
+      "subtitle": "Save big on premium electronics. Limited time offer!",
+      "image": "/images/banners/img2.jpg",
+      "link": "/category/electronics",
+      "buttonText": "Explore Deals",
+      "isActive": true
+    }
+  ],
+  "featuredCategories": [
+    {
+      "id": "cat-1",
+      "name": "Electronics",
+      "slug": "electronics",
+      "image": "/images/categories/img1.png",
+      "productCount": 156
+    },
+    {
+      "id": "cat-2",
+      "name": "Fashion",
+      "slug": "fashion",
+      "image": "/images/categories/img2.png",
+      "productCount": 243
+    },
+    {
+      "id": "cat-3",
+      "name": "Home & Garden",
+      "slug": "home-garden",
+      "image": "/images/categories/img3.png",
+      "productCount": 189
+    },
+    {
+      "id": "cat-4",
+      "name": "Sports & Outdoors",
+      "slug": "sports-outdoors",
+      "image": "/images/categories/img1.jpg",
+      "productCount": 98
+    }
+  ],
+  "priceRange": {
+    "min": 0,
+    "max": 1000
+  }
+}
