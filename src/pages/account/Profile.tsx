@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuthStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isNewProfile, setIsNewProfile] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -47,9 +48,9 @@ export default function ProfilePage() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      phone: '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: user?.phone || '',
       dateOfBirth: '',
       gender: '',
     },
@@ -76,7 +77,8 @@ export default function ProfilePage() {
           gender: (p.gender as ProfileFormData['gender']) ?? '',
         });
       } catch {
-        if (!cancelled) toast.error('Failed to load profile');
+        // No profile yet — this is fine, user will create one
+        if (!cancelled) setIsNewProfile(true);
       } finally {
         if (!cancelled) setIsFetching(false);
       }
@@ -103,6 +105,7 @@ export default function ProfilePage() {
       const res = await profileService.updateProfile(payload as any);
       const updated = res.data;
       setProfile(updated);
+      setIsNewProfile(false);
 
       // Sync first/last name back to auth store so header updates
       updateUser({ firstName: updated.firstName, lastName: updated.lastName });
@@ -143,9 +146,15 @@ export default function ProfilePage() {
   // ─── Initials for avatar ───────────────────────────────────
 
   const initials =
-    ((profile?.firstName?.[0] ?? '') + (profile?.lastName?.[0] ?? '')).toUpperCase() ||
+    ((profile?.firstName || user?.firstName || '')[0] || '')
+      .concat((profile?.lastName || user?.lastName || '')[0] || '')
+      .toUpperCase() ||
     user?.firstName?.[0]?.toUpperCase() ||
     '?';
+
+  const displayFirstName = profile?.firstName || user?.firstName || '';
+  const displayLastName = profile?.lastName || user?.lastName || '';
+  const displayEmail = profile?.email || user?.email || '';
 
   const memberSince = profile?.createdAt
     ? new Date(profile.createdAt).toLocaleDateString('en-US', {
@@ -179,9 +188,9 @@ export default function ProfilePage() {
               </div>
 
               <h2 className="profile-card__name">
-                {profile?.firstName} {profile?.lastName}
+                {displayFirstName} {displayLastName}
               </h2>
-              <p className="profile-card__email">{profile?.email || user?.email}</p>
+              <p className="profile-card__email">{displayEmail}</p>
 
               {memberSince && (
                 <p className="profile-card__member">
@@ -215,9 +224,21 @@ export default function ProfilePage() {
               <div className="profile-section__header">
                 <h1 className="profile-section__title">Personal Information</h1>
                 <p className="profile-section__subtitle">
-                  Manage your personal details and preferences
+                  {isNewProfile
+                    ? 'Complete your profile to get the best shopping experience'
+                    : 'Manage your personal details and preferences'}
                 </p>
               </div>
+
+              {isNewProfile && (
+                <div className="profile-welcome-banner">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                  <div>
+                    <strong>Welcome to WorldStreet Shop!</strong>
+                    <p>Fill in your details below and hit save to set up your profile.</p>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit(onSubmit)} className="profile-form">
                 <div className="profile-form__grid">
@@ -264,7 +285,7 @@ export default function ProfilePage() {
                       id="email"
                       type="email"
                       className="form-field__input form-field__input--disabled"
-                      value={profile?.email || user?.email || ''}
+                      value={displayEmail}
                       disabled
                     />
                     <span className="form-field__hint">
@@ -329,6 +350,8 @@ export default function ProfilePage() {
                         <span className="btn-spinner" />
                         Saving...
                       </>
+                    ) : isNewProfile ? (
+                      'Create Profile'
                     ) : (
                       'Save Changes'
                     )}
@@ -352,7 +375,7 @@ export default function ProfilePage() {
                   <p>Change your account password</p>
                 </div>
                 <a
-                  href={`${import.meta.env.VITE_AUTH_SERVICE_URL || 'https://api.worldstreetgold.com'}/account/security`}
+                  href={`${(import.meta.env.VITE_LOGIN_URL || 'https://worldstreetgold.com/login').replace(/\/login\/?$/, '')}/account/security`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-profile-secondary"

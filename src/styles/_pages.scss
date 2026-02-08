@@ -1985,6 +1985,40 @@
   }
 }
 
+// ─── Welcome Banner ─────────────────────────
+
+.profile-welcome-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  background: rgba($primary-color, 0.08);
+  border: 1px solid rgba($primary-color, 0.25);
+  border-radius: $radius-lg;
+
+  >svg {
+    flex-shrink: 0;
+    color: $primary-dark;
+    margin-top: 2px;
+  }
+
+  strong {
+    display: block;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin: 0;
+    line-height: $line-height-base;
+  }
+}
+
 // ============================================
 // NOT FOUND PAGE
 // ============================================
