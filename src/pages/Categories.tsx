@@ -63,7 +63,7 @@ export default function CategoriesPage() {
     <div className="categories-page">
       <div className="container">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="page-header">
           <h1>Shop by Category</h1>
           <p className="page-subtitle">
@@ -82,19 +82,19 @@ export default function CategoriesPage() {
         ) : (
           <div className="categories-grid-page">
             {categories.map((category) => (
-              <Link 
-                key={category.id} 
+              <Link
+                key={category.id}
                 to={`/category/${category.slug}`}
                 className="category-card"
               >
                 <div className="category-card-image">
-                  <img 
-                    src={category.image || '/images/placeholder-category.jpg'} 
+                  <img
+                    src={category.image || '/images/placeholder-category.jpg'}
                     alt={category.name}
                   />
                   <div className="category-card-overlay" />
                 </div>
-                
+
                 <div className="category-card-content">
                   <h3 className="category-card-title">{category.name}</h3>
                   {category.description && (
@@ -105,7 +105,7 @@ export default function CategoriesPage() {
                       {category.productCount} Products
                     </span>
                   )}
-                  
+
                   {/* Subcategories preview */}
                   {category.children && category.children.length > 0 && (
                     <div className="category-card-subcategories">
@@ -122,10 +122,10 @@ export default function CategoriesPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="category-card-arrow">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
               </Link>

@@ -13,7 +13,7 @@ import {
 
 export default function ProductListingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // State
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -116,7 +116,7 @@ export default function ProductListingPage() {
   // Handle filter changes from ProductFilters component
   const handleFilterChange = (newFilters: Partial<ProductFiltersType>) => {
     const newParams = new URLSearchParams(searchParams);
-    
+
     if (newFilters.categoryId !== undefined) {
       if (newFilters.categoryId) {
         newParams.set('category', newFilters.categoryId);
@@ -124,7 +124,7 @@ export default function ProductListingPage() {
         newParams.delete('category');
       }
     }
-    
+
     if (newFilters.minPrice !== undefined) {
       if (newFilters.minPrice > 0) {
         newParams.set('minPrice', newFilters.minPrice.toString());
@@ -132,7 +132,7 @@ export default function ProductListingPage() {
         newParams.delete('minPrice');
       }
     }
-    
+
     if (newFilters.maxPrice !== undefined) {
       if (newFilters.maxPrice < priceRange.max) {
         newParams.set('maxPrice', newFilters.maxPrice.toString());
@@ -140,7 +140,7 @@ export default function ProductListingPage() {
         newParams.delete('maxPrice');
       }
     }
-    
+
     if (newFilters.inStock !== undefined) {
       if (newFilters.inStock) {
         newParams.set('inStock', 'true');
@@ -148,7 +148,7 @@ export default function ProductListingPage() {
         newParams.delete('inStock');
       }
     }
-    
+
     newParams.set('page', '1');
     setSearchParams(newParams);
   };

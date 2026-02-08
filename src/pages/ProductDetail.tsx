@@ -15,7 +15,7 @@ import {
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  
+
   // State
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -33,19 +33,19 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       if (!slug) return;
-      
+
       setIsLoading(true);
       try {
         const data = await productService.getProductBySlug(slug);
         setProduct(data);
-        
+
         // Fetch related products
         if (data) {
           setRelatedLoading(true);
           const related = await productService.getRelatedProducts(data.id, 8);
           setRelatedProducts(related);
           setRelatedLoading(false);
-          
+
           // Fetch review summary and reviews
           const [summary, reviewsResult] = await Promise.all([
             reviewApi.getSummary(data.id),
@@ -67,20 +67,20 @@ export default function ProductDetailPage() {
   // Handle review submission
   const handleReviewSubmit = async (data: ReviewFormData) => {
     if (!product) return;
-    
+
     try {
       const newReview = await reviewApi.create({
         productId: product.id,
         ...data,
       });
-      
+
       // Add to reviews list
       setReviews(prev => [newReview, ...prev]);
-      
+
       // Refresh summary
       const summary = await reviewApi.getSummary(product.id);
       setReviewSummary(summary);
-      
+
       // Switch to reviews tab
       setActiveTab('reviews');
     } catch (error) {
@@ -200,7 +200,7 @@ export default function ProductDetailPage() {
                 <div className="product-description">
                   <h3>About this product</h3>
                   <p>{product.description}</p>
-                  
+
                   {product.tags && product.tags.length > 0 && (
                     <div className="product-tags">
                       <h4>Tags</h4>
@@ -221,9 +221,9 @@ export default function ProductDetailPage() {
                   reviews={reviews}
                   averageRating={reviewSummary.averageRating}
                   totalCount={reviewSummary.totalReviews}
-                  onWriteReview={() => {}}
+                  onWriteReview={() => { }}
                 />
-                
+
                 <div className="review-form-section">
                   <h3>Write a Review</h3>
                   <ReviewForm

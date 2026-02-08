@@ -61,7 +61,7 @@ export default function HomePage() {
   // Auto-rotate banners
   useEffect(() => {
     if (banners.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentBanner(prev => (prev + 1) % banners.length);
     }, 5000);
@@ -167,31 +167,31 @@ export default function HomePage() {
           <div className="categories-grid">
             {isLoadingCategories
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="category-card-skeleton">
-                    <Skeleton width="100%" height={180} />
-                    <div style={{ marginTop: '1rem' }}>
-                      <Skeleton width={120} height={24} />
-                    </div>
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <Skeleton width={80} height={16} />
-                    </div>
+                <div key={i} className="category-card-skeleton">
+                  <Skeleton width="100%" height={180} />
+                  <div style={{ marginTop: '1rem' }}>
+                    <Skeleton width={120} height={24} />
                   </div>
-                ))
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Skeleton width={80} height={16} />
+                  </div>
+                </div>
+              ))
               : categories.map(category => (
-                  <Link
-                    key={category.id}
-                    to={`/category/${category.slug}`}
-                    className="category-card"
-                  >
-                    <div className="category-image">
-                      <img src={category.image} alt={category.name} />
-                    </div>
-                    <div className="category-info">
-                      <h3>{category.name}</h3>
-                      <span className="product-count">{(category as { productCount?: number }).productCount || 0} Products</span>
-                    </div>
-                  </Link>
-                ))}
+                <Link
+                  key={category.id}
+                  to={`/category/${category.slug}`}
+                  className="category-card"
+                >
+                  <div className="category-image">
+                    <img src={category.image} alt={category.name} />
+                  </div>
+                  <div className="category-info">
+                    <h3>{category.name}</h3>
+                    <span className="product-count">{(category as { productCount?: number }).productCount || 0} Products</span>
+                  </div>
+                </Link>
+              ))}
           </div>
         </div>
       </section>
@@ -209,11 +209,11 @@ export default function HomePage() {
           <div className="products-grid">
             {isLoadingProducts
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <SkeletonProductCard key={i} />
-                ))
+                <SkeletonProductCard key={i} />
+              ))
               : featuredProducts.map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
+                <ProductCard key={product.id} product={product} />
+              ))}
           </div>
         </div>
       </section>

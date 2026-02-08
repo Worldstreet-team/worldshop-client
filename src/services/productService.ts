@@ -1,11 +1,11 @@
 import { api } from './api';
-import type { 
-  Product, 
+import type {
+  Product,
   ProductImage,
   ProductVariant,
-  Category, 
-  Review, 
-  ProductFilters 
+  Category,
+  Review,
+  ProductFilters
 } from '@/types/product.types';
 import type { ApiResponse, PaginatedResponse } from '@/types/common.types';
 
@@ -95,11 +95,11 @@ export const productService = {
   },
 
   // Get product reviews (stays mock for now)
-  getProductReviews: (productId: string, page = 1, limit = 10) => 
+  getProductReviews: (productId: string, page = 1, limit = 10) =>
     api.get<PaginatedResponse<Review>>(`/products/${productId}/reviews`, { page, limit }),
-  
+
   // Add product review (requires auth)
-  addProductReview: (productId: string, data: { rating: number; title?: string; comment: string }) => 
+  addProductReview: (productId: string, data: { rating: number; title?: string; comment: string }) =>
     api.post<ApiResponse<Review>>(`/products/${productId}/reviews`, data),
 };
 
