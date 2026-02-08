@@ -75,14 +75,14 @@ export default function SearchResultsPage() {
             onAction={() => window.location.reload()}
           />
         ) : products.length > 0 ? (
-          <ProductGrid products={products} isLoading={false} />
+          <ProductGrid products={products} loading={false} />
         ) : (
           <EmptyState
             icon="search"
             title="No Results Found"
             description={`We couldn't find any products matching "${query}". Try a different search term.`}
             actionLabel="Browse Shop"
-            actionHref="/shop"
+            actionLink="/shop"
           />
         )}
       </div>

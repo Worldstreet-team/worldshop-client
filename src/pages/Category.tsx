@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { categoryService, productService } from '@/services/productService';
+import { categoryService } from '@/services/productService';
 import type { Product, Category as CategoryType } from '@/types/product.types';
 import type { Pagination } from '@/types/common.types';
 import { Breadcrumb, EmptyState } from '@/components/common';
@@ -98,7 +98,7 @@ export default function CategoryPage() {
             title="Category Not Found"
             description={error || 'The category you are looking for does not exist.'}
             actionLabel="Browse Categories"
-            actionHref="/categories"
+            actionLink="/categories"
           />
         </div>
       </div>
@@ -130,12 +130,12 @@ export default function CategoryPage() {
         )}
 
         <div className="category-toolbar">
-          <ProductSort currentSort={currentSort} onSortChange={handleSortChange} />
+          <ProductSort value={currentSort} onChange={handleSortChange} />
         </div>
 
         {products.length > 0 ? (
           <>
-            <ProductGrid products={products} isLoading={false} />
+            <ProductGrid products={products} loading={false} />
             {pagination && pagination.totalPages > 1 && (
               <div className="pagination-wrapper">
                 <button
@@ -164,7 +164,7 @@ export default function CategoryPage() {
             title="No Products Found"
             description="There are no products in this category yet."
             actionLabel="Browse All Products"
-            actionHref="/shop"
+            actionLink="/shop"
           />
         )}
       </div>
