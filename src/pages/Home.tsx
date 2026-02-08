@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { productApi, categoryApi, bannerApi } from '@/services/mockApi';
+import { bannerApi } from '@/services/mockApi';
+import { productService, categoryService } from '@/services/productService';
 import type { Product, Category } from '@/types/product.types';
 import { Button, Skeleton, SkeletonProductCard } from '@/components/common';
 import { ProductCard } from '@/components/product';
@@ -37,13 +38,13 @@ export default function HomePage() {
 
         // Fetch featured products
         setIsLoadingProducts(true);
-        const productsData = await productApi.getFeatured();
+        const productsData = await productService.getFeaturedProducts();
         setFeaturedProducts(productsData);
         setIsLoadingProducts(false);
 
         // Fetch categories
         setIsLoadingCategories(true);
-        const categoriesData = await categoryApi.getFeatured();
+        const categoriesData = await categoryService.getFeaturedCategories();
         setCategories(categoriesData);
         setIsLoadingCategories(false);
       } catch (error) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Category } from '@/types/product.types';
-import { categoryApi } from '@/services/mockApi';
+import { categoryService } from '@/services/productService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/common';
@@ -15,10 +15,8 @@ export default function CategoriesPage() {
     const fetchCategories = async () => {
       try {
         setIsLoading(true);
-        const data = await categoryApi.getAll();
-        // Filter only parent categories (no parentId)
-        const parentCategories = data.filter(cat => !cat.parentId);
-        setCategories(parentCategories);
+        const data = await categoryService.getCategoryTree();
+        setCategories(data);
       } catch (err) {
         console.error('Error fetching categories:', err);
         setError('Failed to load categories');

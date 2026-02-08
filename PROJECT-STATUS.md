@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 7, 2026  
-**Version:** 0.0.0  
+**Last Updated:** February 8, 2026  
+**Version:** 0.9.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -51,6 +51,7 @@
 
 ### Services Layer
 - **api.ts** - Base Axios configuration
+- **profileService.ts** - Profile API (GET/PATCH /profile on worldshop-server) ✅
 - **mockApi.ts** - Mock API for development (categories, products)
 - **mockCartApi.ts** - Mock cart API
 - **cartService.ts** - Cart operations
@@ -206,11 +207,14 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] Auth state persistence (Zustand + localStorage)
 - [x] Production deployment at shop.worldstreetgold.com
 
-### Phase 9: Real API Integration
-- [ ] Replace mock APIs with real backend endpoints
-- [ ] Connect to worldshop-server
+### Phase 9: Real API Integration (In Progress)
+- [x] Profile API connected to worldshop-server (`GET /profile`, `PATCH /profile`)
+- [x] `profileService.ts` — real API client for profile endpoints
+- [x] Profile page fetches/updates real backend data
+- [x] `VITE_API_BASE_URL` configured for worldshop-server (`http://localhost:8000/api/v1`)
+- [ ] Replace remaining mock APIs with real backend endpoints
+- [ ] Connect products, categories, cart, orders to worldshop-server
 - [ ] API error handling and retries
-- [ ] Request interceptors for auth tokens
 - [ ] Response caching strategies
 - [ ] Optimistic UI updates
 
@@ -218,8 +222,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Persistent cart storage (database)
 - [ ] Cart synchronization across sessions
 - [ ] Real payment gateway integration
-  - [ ] Stripe integration
-  - [ ] PayPal integration
+  - [ ] Paystack integration (NGN ₦)
   - [ ] Other payment methods
 - [ ] Real-time order status updates
 - [ ] Order tracking functionality
@@ -255,10 +258,13 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Email notifications for wishlist items on sale
 - [ ] Move to cart from wishlist
 
-### Phase 15: User Profile
-- [ ] Profile picture upload
-- [ ] Email change with verification
-- [ ] Phone number management
+### Phase 15: User Profile ✅
+- [x] Profile page connected to real backend API
+- [x] Two-column layout with avatar/sidebar + form area
+- [x] Profile auto-creates on first backend access
+- [x] Date of birth, gender, phone fields
+- [x] Save with validation and loading states
+- [ ] Profile picture upload (Cloudflare)
 - [ ] Account deletion
 - [ ] Export user data (GDPR compliance)
 
@@ -492,39 +498,41 @@ worldshop-client/
 ## 🎯 Next Steps
 
 ### Immediate Priorities
-1. **Backend Integration** - Connect frontend to worldshop-server APIs
-2. **Authentication Flow** - Implement real JWT authentication
-3. **Payment Integration** - Set up Stripe/PayPal payment gateways
-4. **Testing** - Add unit and integration tests
-5. **Performance** - Optimize bundle size and loading times
+1. **Products API Integration** - Connect product listing, detail, and home pages to real backend
+2. **Categories API Integration** - Connect category pages and sidebar filters
+3. **Cart Backend** - Persistent cart with guest session + auth merge
+4. **Addresses** - Connect address management page to backend
+5. **Checkout & Orders** - Full checkout flow with real order creation
 
 ### Short Term (1-2 weeks)
-- Complete real API integration for products, cart, orders
-- Implement persistent cart storage
-- Add image upload for products
-- Set up email notifications
+- Paystack payment integration (NGN ₦)
+- Order history and tracking connected to real API
+- Image uploads via Cloudflare
+- Replace all remaining mock APIs
 
 ### Medium Term (1 month)
-- Add comprehensive testing suite
-- Implement advanced search functionality
-- Add review submission and moderation
-- Set up SEO optimization
+- Reviews and ratings system
+- Wishlist backend integration
+- Advanced search with backend
+- Admin panel connected to real APIs
 
 ### Long Term (2-3 months)
-- Multi-language support
-- PWA capabilities
-- Analytics integration
-- Performance monitoring
+- Email notifications
+- Performance optimization
+- Testing suite
+- SEO and analytics
 - Production deployment
 
 ---
 
 ## 📝 Notes
 
-- All pages are using **mock data** from `mockData.json` and mock API services
-- Authentication is **simulated** - no real backend connection yet
+- **Profile** is connected to real worldshop-server API (Service 2 complete)
+- **Authentication** uses external WorldStreet Identity with HttpOnly cookies (Service 1 complete)
+- Most pages still use **mock data** from `mockData.json` and mock API services
 - Cart state is stored in **browser memory** only (resets on refresh)
-- All API calls need to be replaced with real endpoints when backend is ready
+- Remaining API calls need to be replaced with real endpoints as backend services are built
+- Media storage will use **Cloudflare** (not Cloudinary)
 - Mobile responsiveness has been tested but needs more real-device testing
 - Accessibility features need audit
 - Performance optimization needed before production deployment
@@ -546,4 +554,4 @@ When adding new features:
 
 **Status:** 🟢 Active Development  
 **Build Status:** ✅ Passing  
-**Last Build:** February 7, 2026
+**Last Build:** February 8, 2026

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { productApi, categoryApi } from '@/services/mockApi';
+import { productService, categoryService } from '@/services/productService';
 import type { Product, Category, ProductFilters as ProductFiltersType } from '@/types/product.types';
 import { Breadcrumb, Pagination, Skeleton } from '@/components/common';
 import {
@@ -45,8 +45,8 @@ export default function ProductListingPage() {
     const fetchInitialData = async () => {
       try {
         const [categoriesData, priceRangeData] = await Promise.all([
-          categoryApi.getAll(),
-          productApi.getPriceRange(),
+          categoryService.getCategories(),
+          productService.getPriceRange(),
         ]);
         setCategories(categoriesData);
         setPriceRange(priceRangeData);
@@ -66,28 +66,26 @@ export default function ProductListingPage() {
         'newest': 'newest',
         'popularity': 'rating',
         'rating': 'rating',
-        'price-asc': 'price-asc',
-        'price-desc': 'price-desc',
-        'name-asc': 'name-asc',
-        'name-desc': 'name-desc',
+        'price-asc': 'price_asc',
+        'price-desc': 'price_desc',
+        'name-asc': 'name_asc',
+        'name-desc': 'name_desc',
       };
 
-      const result = await productApi.getAll(
-        {
-          categoryId: selectedCategory || undefined,
-          minPrice: minPrice > 0 ? minPrice : undefined,
-          maxPrice: maxPrice < priceRange.max ? maxPrice : undefined,
-          search: searchQuery || undefined,
-          inStock: inStock || undefined,
-          sortBy: sortMap[currentSort] as 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | 'rating' | 'newest',
-        },
-        currentPage,
-        12
-      );
+      const result = await productService.getProducts({
+        categoryId: selectedCategory || undefined,
+        minPrice: minPrice > 0 ? minPrice : undefined,
+        maxPrice: maxPrice < priceRange.max ? maxPrice : undefined,
+        search: searchQuery || undefined,
+        inStock: inStock || undefined,
+        sortBy: sortMap[currentSort] as ProductFiltersType['sortBy'],
+        page: currentPage,
+        limit: 12,
+      });
 
       setProducts(result.data);
-      setTotalProducts(result.total);
-      setTotalPages(result.totalPages);
+      setTotalProducts(result.pagination.total);
+      setTotalPages(result.pagination.totalPages);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {

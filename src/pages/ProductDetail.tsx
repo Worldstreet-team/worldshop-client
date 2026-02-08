@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { productApi, reviewApi } from '@/services/mockApi';
+import { productService } from '@/services/productService';
+import { reviewApi } from '@/services/mockApi';
 import type { Product, Review } from '@/types/product.types';
 import { Breadcrumb, Skeleton, SkeletonText, EmptyState } from '@/components/common';
 import {
@@ -35,13 +36,13 @@ export default function ProductDetailPage() {
       
       setIsLoading(true);
       try {
-        const data = await productApi.getBySlug(slug);
+        const data = await productService.getProductBySlug(slug);
         setProduct(data);
         
         // Fetch related products
         if (data) {
           setRelatedLoading(true);
-          const related = await productApi.getRelated(data.id, 8);
+          const related = await productService.getRelatedProducts(data.id, 8);
           setRelatedProducts(related);
           setRelatedLoading(false);
           
