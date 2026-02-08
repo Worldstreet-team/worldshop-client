@@ -72,9 +72,12 @@ export default function ProfilePage() {
         const p = res.data;
         setProfile(p);
 
+        // Get fresh auth store user for fallback if profile has empty names
+        const freshUser = useAuthStore.getState().user;
+
         reset({
-          firstName: p.firstName,
-          lastName: p.lastName,
+          firstName: p.firstName || freshUser?.firstName || '',
+          lastName: p.lastName || freshUser?.lastName || '',
           phone: p.phone ?? '',
           dateOfBirth: p.dateOfBirth ? p.dateOfBirth.slice(0, 10) : '',
           gender: (p.gender as ProfileFormData['gender']) ?? '',
