@@ -1,14 +1,14 @@
 import axios, { type AxiosInstance } from 'axios';
 import type { User, AuthTokens } from '@/types/user.types';
 import type { ApiResponse } from '@/types/common.types';
-import { getAccessToken, getRefreshToken } from '@/utils/cookies';
 
 // External auth service base URL
 const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'https://api.worldstreetgold.com';
 
 /**
- * Create a separate axios instance for external auth service
- * This won't use the main API interceptors
+ * Create a separate axios instance for external auth service.
+ * withCredentials: true ensures HttpOnly cookies (accessToken, refreshToken)
+ * are sent automatically by the browser — we can NOT read them via JS.
  */
 const authClient: AxiosInstance = axios.create({
     baseURL: AUTH_SERVICE_URL,
@@ -16,25 +16,23 @@ const authClient: AxiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    withCredentials: true, // Important: Send cookies with requests
+    withCredentials: true,
 });
 
 export const externalAuthService = {
     /**
-     * Verify the access token with the auth service
-     * This endpoint returns the user's identity if the token is valid
+     * Verify the current session with the auth service.
+     * The browser sends the HttpOnly accessToken cookie automatically.
+     * We do NOT read the cookie via JS — it's HttpOnly and inaccessible.
+     *
+     * If an explicit token is provided (e.g. from store), it's sent as
+     * Authorization header as a fallback.
      */
-    verifyToken: async (accessToken?: string): Promise<ApiResponse<{ user: User }>> => {
-        const token = accessToken || getAccessToken();
-
-        if (!token) {
-            throw new Error('No access token available');
-        }
+    verifyToken: async (explicitToken?: string): Promise<ApiResponse<{ user: User }>> => {
 
         // Local development mode - skip external verification
         if (import.meta.env.VITE_SKIP_AUTH_VERIFICATION === 'true') {
             console.warn('⚠️ Skipping token verification (local dev mode)');
-            // Return a mock user for testing
             return {
                 success: true,
                 message: 'Token valid (dev mode)',
@@ -54,10 +52,15 @@ export const externalAuthService = {
         }
 
         try {
+            // Build headers — if we have an explicit token, send it in Authorization.
+            // Otherwise rely on the HttpOnly cookie being sent by the browser.
+            const headers: Record<string, string> = {};
+            if (explicitToken) {
+                headers['Authorization'] = `Bearer ${explicitToken}`;
+            }
+
             const response = await authClient.get<ApiResponse<{ user: User }>>('/api/auth/verify', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                headers,
             });
 
             return response.data;
@@ -73,15 +76,12 @@ export const externalAuthService = {
     },
 
     /**
-     * Refresh the access token using the refresh token
-     * Can use refresh token from cookies or provide it explicitly
+     * Refresh the access token.
+     * The browser sends the HttpOnly refreshToken cookie automatically.
+     * If an explicit token is provided, it's sent in the request body.
      */
-    refreshToken: async (refreshToken?: string): Promise<ApiResponse<{ tokens: AuthTokens }>> => {
-        const token = refreshToken || getRefreshToken();
-
-        // If refresh token is provided explicitly, send it in the body
-        // Otherwise, the auth service will read it from the cookie
-        const requestBody = token ? { refreshToken: token } : undefined;
+    refreshToken: async (explicitRefreshToken?: string): Promise<ApiResponse<{ tokens: AuthTokens }>> => {
+        const requestBody = explicitRefreshToken ? { refreshToken: explicitRefreshToken } : undefined;
 
         const response = await authClient.post<ApiResponse<{ tokens: AuthTokens }>>(
             '/api/auth/refresh-token',
@@ -92,13 +92,11 @@ export const externalAuthService = {
     },
 
     /**
-     * Logout - revokes the refresh token on the auth service
-     * The auth service will clear the cookies automatically
+     * Logout - revokes the refresh token on the auth service.
+     * The auth service clears cookies automatically.
      */
-    logout: async (refreshToken?: string): Promise<ApiResponse<{ message: string }>> => {
-        const token = refreshToken || getRefreshToken();
-
-        const requestBody = token ? { refreshToken: token } : undefined;
+    logout: async (explicitRefreshToken?: string): Promise<ApiResponse<{ message: string }>> => {
+        const requestBody = explicitRefreshToken ? { refreshToken: explicitRefreshToken } : undefined;
 
         const response = await authClient.post<ApiResponse<{ message: string }>>(
             '/api/auth/logout',
@@ -109,24 +107,19 @@ export const externalAuthService = {
     },
 
     /**
-     * Logout from all sessions
-     * Requires the access token
+     * Logout from all sessions.
+     * Sends HttpOnly accessToken cookie automatically.
      */
-    logoutAll: async (accessToken?: string): Promise<ApiResponse<{ message: string }>> => {
-        const token = accessToken || getAccessToken();
-
-        if (!token) {
-            throw new Error('No access token available');
+    logoutAll: async (explicitAccessToken?: string): Promise<ApiResponse<{ message: string }>> => {
+        const headers: Record<string, string> = {};
+        if (explicitAccessToken) {
+            headers['Authorization'] = `Bearer ${explicitAccessToken}`;
         }
 
         const response = await authClient.post<ApiResponse<{ message: string }>>(
             '/api/auth/logout-all',
             undefined,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
+            { headers }
         );
 
         return response.data;

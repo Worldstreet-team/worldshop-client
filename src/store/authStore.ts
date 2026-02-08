@@ -3,7 +3,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, AuthTokens } from '@/types/user.types';
 import { externalAuthService } from '@/services/externalAuthService';
 import { useCartStore } from './cartStore';
-import { getAccessToken, getRefreshToken, clearAuthCookies } from '@/utils/cookies';
 
 /**
  * Check if an error is a network/CORS error (service unreachable)
@@ -17,7 +16,6 @@ function isNetworkError(error: unknown): boolean {
     return true; // No response = network error / CORS
   }
 
-  // Check for common network error messages
   if ('message' in error) {
     const msg = (error as { message: string }).message?.toLowerCase() || '';
     if (msg.includes('network error') || msg.includes('cors') || msg.includes('timeout')) {
@@ -26,6 +24,17 @@ function isNetworkError(error: unknown): boolean {
   }
 
   return false;
+}
+
+/**
+ * Get the HTTP status from an axios error, or 0 if network error
+ */
+function getErrorStatus(error: unknown): number {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const resp = (error as { response?: { status: number } }).response;
+    return resp?.status ?? 0;
+  }
+  return 0;
 }
 
 interface AuthState {
@@ -63,53 +72,40 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       ...initialState,
 
       /**
-       * Initialize authentication on app load
-       * - Get access token from cookies
-       * - Verify token with external auth service
-       * - If invalid, try to refresh using refresh token
-       * - If refresh fails, redirect to login
+       * Initialize authentication on app load.
+       *
+       * Cookies are HttpOnly — JS cannot read them. Instead we just
+       * fire the verify request and let the browser attach the cookies.
+       *
+       * Flow:
+       *  1. Call GET /api/auth/verify  (browser sends HttpOnly accessToken cookie)
+       *  2. If 200 → authenticated
+       *  3. If 401 → try POST /api/auth/refresh-token (browser sends HttpOnly refreshToken cookie)
+       *  4. If refresh 200 → verify again
+       *  5. If refresh fails → not authenticated
        */
       initializeAuth: async () => {
         const { isInitialized } = get();
-
-        // Prevent multiple initializations
-        if (isInitialized) {
-          return;
-        }
+        if (isInitialized) return;
 
         set({ isLoading: true, error: null });
 
         try {
-          // Step 1: Get access token — check cookies first, then fall back to persisted store
-          const accessToken = getAccessToken() || get().tokens?.accessToken || null;
-          const refreshToken = getRefreshToken() || get().tokens?.refreshToken || null;
+          // ---------- Step 1: Try to verify (cookie sent automatically) ----------
+          console.log('🔍 Verifying session with auth service...');
 
-          if (!accessToken) {
-            console.log('ℹ️ No access token found (cookies or store). User is not authenticated.');
-            set({
-              isLoading: false,
-              isInitialized: true,
-              isAuthenticated: false,
-              user: null,
-              tokens: null,
-            });
-            return;
-          }
-
-          console.log('🔍 Access token found, verifying with auth service...');
-
-          // Step 2: Verify the access token
           try {
-            const response = await externalAuthService.verifyToken(accessToken);
+            // If we have a token stored from a previous refresh, send it explicitly too
+            const storedToken = get().tokens?.accessToken || undefined;
+            const response = await externalAuthService.verifyToken(storedToken);
             const user = response.data.user;
 
-            console.log('✅ Token verified successfully:', user.email);
-
+            console.log('✅ Session verified:', user.email);
             set({
               user,
               tokens: {
-                accessToken,
-                refreshToken: refreshToken || '',
+                accessToken: 'httponly', // Placeholder — real token is in the cookie
+                refreshToken: 'httponly',
                 expiresAt: Date.now() + (15 * 60 * 1000),
               },
               isAuthenticated: true,
@@ -117,45 +113,22 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               isInitialized: true,
             });
 
-            try {
-              await useCartStore.getState().fetchCart();
-            } catch {
-              // Silent fail
-            }
+            try { await useCartStore.getState().fetchCart(); } catch { /* silent */ }
             return;
 
           } catch (verifyError) {
-            // Was it a network/CORS error or a real auth rejection?
-            if (isNetworkError(verifyError)) {
-              // Auth service is unreachable (CORS, network, timeout)
-              // DON'T clear tokens — they might be valid, service is just down
-              console.warn('⚠️ Auth service unreachable. Keeping tokens for later retry.');
-              console.warn('   This is normal for local dev if auth service is on a different domain.');
+            const status = getErrorStatus(verifyError);
 
-              // If we have persisted user data, use it as best-effort
-              const persistedUser = get().user;
-              if (persistedUser) {
-                console.log('✅ Using cached user data:', persistedUser.email);
-                set({
-                  tokens: {
-                    accessToken,
-                    refreshToken: refreshToken || '',
-                    expiresAt: Date.now() + (15 * 60 * 1000),
-                  },
-                  isAuthenticated: true,
-                  isLoading: false,
-                  isInitialized: true,
-                });
+            if (isNetworkError(verifyError)) {
+              console.warn('⚠️ Auth service unreachable (network/CORS).');
+              // Fall back to cached user if we have one
+              const cached = get().user;
+              if (cached) {
+                console.log('✅ Using cached user:', cached.email);
+                set({ isAuthenticated: true, isLoading: false, isInitialized: true });
                 return;
               }
-
-              // No cached user — mark as not authenticated but don't clear tokens
               set({
-                tokens: {
-                  accessToken,
-                  refreshToken: refreshToken || '',
-                  expiresAt: Date.now() + (15 * 60 * 1000),
-                },
                 isAuthenticated: false,
                 isLoading: false,
                 isInitialized: true,
@@ -164,24 +137,26 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               return;
             }
 
-            // Real auth error (401, 403, etc.) — token is actually invalid
-            console.warn('⚠️ Access token rejected by auth service, attempting refresh...');
+            // 401 means token expired or missing — try refresh
+            if (status === 401) {
+              console.log('🔄 Access token expired/missing, refreshing...');
 
-            // Step 3: Try to refresh
-            if (refreshToken) {
+              // ---------- Step 2: Refresh ----------
               try {
                 const newAccessToken = await get().refreshAccessToken();
 
                 if (newAccessToken) {
-                  console.log('✅ Token refreshed, re-verifying...');
+                  // ---------- Step 3: Re-verify with new token ----------
+                  console.log('🔍 Re-verifying with new token...');
                   const response = await externalAuthService.verifyToken(newAccessToken);
                   const user = response.data.user;
 
+                  console.log('✅ Session restored:', user.email);
                   set({
                     user,
                     tokens: {
                       accessToken: newAccessToken,
-                      refreshToken: getRefreshToken() || get().tokens?.refreshToken || '',
+                      refreshToken: 'httponly',
                       expiresAt: Date.now() + (15 * 60 * 1000),
                     },
                     isAuthenticated: true,
@@ -189,54 +164,35 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                     isInitialized: true,
                   });
 
-                  try {
-                    await useCartStore.getState().fetchCart();
-                  } catch {
-                    // Silent fail
-                  }
+                  try { await useCartStore.getState().fetchCart(); } catch { /* silent */ }
                   return;
                 }
               } catch (refreshError) {
                 if (isNetworkError(refreshError)) {
-                  console.warn('⚠️ Refresh failed due to network error. Keeping tokens.');
-                  set({
-                    isLoading: false,
-                    isInitialized: true,
-                    error: 'Auth service unreachable during refresh.',
-                  });
+                  console.warn('⚠️ Refresh failed — auth service unreachable.');
+                  set({ isLoading: false, isInitialized: true, error: 'Auth service unreachable during refresh.' });
                   return;
                 }
-                console.error('❌ Token refresh rejected:', refreshError);
+                console.error('❌ Refresh token rejected:', refreshError);
               }
             }
 
-            // Step 4: Auth truly failed (not a network issue)
-            console.warn('⚠️ Authentication failed. Tokens are invalid.');
+            // Any other status or refresh failed → not authenticated
+            console.log('ℹ️ User is not authenticated.');
             set({
               ...initialState,
               isLoading: false,
-              isInitialized: true
+              isInitialized: true,
             });
-            clearAuthCookies();
           }
+
         } catch (error) {
           console.error('Auth initialization error:', error);
-
-          if (isNetworkError(error)) {
-            // Network error — don't clear anything
-            set({
-              isLoading: false,
-              isInitialized: true,
-              error: 'Auth service unreachable'
-            });
-            return;
-          }
-
           set({
-            ...initialState,
+            ...(isNetworkError(error) ? {} : initialState),
             isLoading: false,
             isInitialized: true,
-            error: 'Failed to initialize authentication'
+            error: isNetworkError(error) ? 'Auth service unreachable' : 'Failed to initialize authentication',
           });
         }
       },
@@ -251,21 +207,19 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true });
 
         try {
+          // Auth service clears HttpOnly cookies server-side
           await externalAuthService.logout();
         } catch (error) {
           console.error('Logout error:', error);
           // Continue with local logout even if API call fails
         }
 
-        // Clear auth state
+        // Clear local auth state
         set({
           ...initialState,
           isInitialized: true,
-          isLoading: false
+          isLoading: false,
         });
-
-        // Clear cookies
-        clearAuthCookies();
 
         // Clear cart
         useCartStore.getState().clearLocalCart();
@@ -285,20 +239,18 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true });
 
         try {
+          // Auth service clears HttpOnly cookies for all sessions server-side
           await externalAuthService.logoutAll();
         } catch (error) {
           console.error('Logout all error:', error);
         }
 
-        // Clear auth state
+        // Clear local auth state
         set({
           ...initialState,
           isInitialized: true,
-          isLoading: false
+          isLoading: false,
         });
-
-        // Clear cookies
-        clearAuthCookies();
 
         // Clear cart
         useCartStore.getState().clearLocalCart();
@@ -317,16 +269,17 @@ export const useAuthStore = create<AuthState & AuthActions>()(
        */
       refreshAccessToken: async (): Promise<string | null> => {
         try {
+          // Browser sends HttpOnly refreshToken cookie automatically
           const response = await externalAuthService.refreshToken();
           const tokens = response.data.tokens;
 
-          // Update tokens in state (cookies are updated by auth service)
+          // Store tokens locally (as fallback for Authorization header)
           set({
             tokens: {
               accessToken: tokens.accessToken,
-              refreshToken: tokens.refreshToken,
-              expiresAt: Date.now() + (15 * 60 * 1000), // 15 minutes from now
-            }
+              refreshToken: tokens.refreshToken || 'httponly',
+              expiresAt: Date.now() + (15 * 60 * 1000),
+            },
           });
 
           return tokens.accessToken;
@@ -334,7 +287,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           console.error('Token refresh failed:', error);
 
           if (isNetworkError(error)) {
-            // Network error — don't clear anything, service is unreachable
             console.warn('⚠️ Refresh failed due to network error. Keeping existing tokens.');
             return null;
           }
@@ -342,10 +294,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           // Real auth error — refresh token is invalid/revoked
           set({
             ...initialState,
-            isInitialized: true
+            isInitialized: true,
           });
-          // Only clear cookies for real auth failures, not network issues
-          clearAuthCookies();
 
           return null;
         }

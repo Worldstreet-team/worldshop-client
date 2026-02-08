@@ -1,6 +1,5 @@
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/store/authStore';
-import { getAccessToken } from '@/utils/cookies';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -8,6 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  withCredentials: true, // Send HttpOnly cookies with every request
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,8 +16,8 @@ const apiClient = axios.create({
 // Request interceptor - attach auth token (cookies first, then store fallback)
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get access token: cookies first (set by external auth service), then Zustand store
-    const accessToken = getAccessToken() || useAuthStore.getState().tokens?.accessToken;
+    // Use store token for Authorization header (HttpOnly cookies are sent automatically)
+    const accessToken = useAuthStore.getState().tokens?.accessToken;
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
