@@ -33,7 +33,7 @@ const genderOptions: { value: Gender | ''; label: string }[] = [
 // ─── Component ───────────────────────────────────────────────
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuthStore();
+  const { user, updateUser, isInitialized } = useAuthStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isNewProfile, setIsNewProfile] = useState(false);
@@ -56,9 +56,12 @@ export default function ProfilePage() {
     },
   });
 
-  // ─── Fetch profile on mount ────────────────────────────────
+  // ─── Fetch profile on mount (wait for auth) ────────────────
 
   useEffect(() => {
+    // Don't fetch until auth has finished initializing
+    if (!isInitialized) return;
+
     let cancelled = false;
 
     async function load() {
@@ -78,13 +81,14 @@ export default function ProfilePage() {
         });
       } catch {
         // No profile yet or server error — show form with auth store data
+        // Read fresh user from the store to avoid stale closure
+        const freshUser = useAuthStore.getState().user;
         if (!cancelled) {
           setIsNewProfile(true);
-          // Pre-fill from auth store so the user sees their name
           reset({
-            firstName: user?.firstName || '',
-            lastName: user?.lastName || '',
-            phone: user?.phone || '',
+            firstName: freshUser?.firstName || '',
+            lastName: freshUser?.lastName || '',
+            phone: freshUser?.phone || '',
             dateOfBirth: '',
             gender: '',
           });
@@ -96,7 +100,7 @@ export default function ProfilePage() {
 
     load();
     return () => { cancelled = true; };
-  }, [reset]);
+  }, [reset, isInitialized]);
 
   // ─── Submit handler ────────────────────────────────────────
 
