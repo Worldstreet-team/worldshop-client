@@ -91,16 +91,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          // ---------- Step 1: Try to verify (cookie sent automatically) ----------
-          console.log('🔍 Verifying session with auth service...');
-
           try {
             // If we have a token stored from a previous refresh, send it explicitly too
             const storedToken = get().tokens?.accessToken || undefined;
             const response = await externalAuthService.verifyToken(storedToken);
             const user = response.data.user;
 
-            console.log('✅ Session verified:', user.email);
             set({
               user,
               tokens: {
@@ -120,11 +116,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             const status = getErrorStatus(verifyError);
 
             if (isNetworkError(verifyError)) {
-              console.warn('⚠️ Auth service unreachable (network/CORS).');
-              // Fall back to cached user if we have one
               const cached = get().user;
               if (cached) {
-                console.log('✅ Using cached user:', cached.email);
                 set({ isAuthenticated: true, isLoading: false, isInitialized: true });
                 return;
               }
@@ -137,21 +130,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               return;
             }
 
-            // 401 means token expired or missing — try refresh
             if (status === 401) {
-              console.log('🔄 Access token expired/missing, refreshing...');
-
-              // ---------- Step 2: Refresh ----------
               try {
                 const newAccessToken = await get().refreshAccessToken();
 
                 if (newAccessToken) {
-                  // ---------- Step 3: Re-verify with new token ----------
-                  console.log('🔍 Re-verifying with new token...');
                   const response = await externalAuthService.verifyToken(newAccessToken);
                   const user = response.data.user;
-
-                  console.log('✅ Session restored:', user.email);
                   set({
                     user,
                     tokens: {
@@ -169,16 +154,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                 }
               } catch (refreshError) {
                 if (isNetworkError(refreshError)) {
-                  console.warn('⚠️ Refresh failed — auth service unreachable.');
                   set({ isLoading: false, isInitialized: true, error: 'Auth service unreachable during refresh.' });
                   return;
                 }
-                console.error('❌ Refresh token rejected:', refreshError);
               }
             }
 
-            // Any other status or refresh failed → not authenticated
-            console.log('ℹ️ User is not authenticated.');
             set({
               ...initialState,
               isLoading: false,
@@ -187,7 +168,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           }
 
         } catch (error) {
-          console.error('Auth initialization error:', error);
           set({
             ...(isNetworkError(error) ? {} : initialState),
             isLoading: false,
@@ -209,8 +189,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         try {
           // Auth service clears HttpOnly cookies server-side
           await externalAuthService.logout();
-        } catch (error) {
-          console.error('Logout error:', error);
+        } catch {
           // Continue with local logout even if API call fails
         }
 
@@ -241,8 +220,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         try {
           // Auth service clears HttpOnly cookies for all sessions server-side
           await externalAuthService.logoutAll();
-        } catch (error) {
-          console.error('Logout all error:', error);
+        } catch {
+          // Continue with local logout even if API call fails
         }
 
         // Clear local auth state
@@ -263,9 +242,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       /**
-       * Refresh the access token
-       * - Uses refresh token from cookies
-       * - Returns new access token or null if refresh fails
+       * Refresh the access token.
+       * Returns new access token or null if refresh fails.
        */
       refreshAccessToken: async (): Promise<string | null> => {
         try {
@@ -284,10 +262,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
           return tokens.accessToken;
         } catch (error) {
-          console.error('Token refresh failed:', error);
-
           if (isNetworkError(error)) {
-            console.warn('⚠️ Refresh failed due to network error. Keeping existing tokens.');
             return null;
           }
 

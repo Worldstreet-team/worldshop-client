@@ -29,28 +29,6 @@ export const externalAuthService = {
      * Authorization header as a fallback.
      */
     verifyToken: async (explicitToken?: string): Promise<ApiResponse<{ user: User }>> => {
-
-        // Local development mode - skip external verification
-        if (import.meta.env.VITE_SKIP_AUTH_VERIFICATION === 'true') {
-            console.warn('⚠️ Skipping token verification (local dev mode)');
-            return {
-                success: true,
-                message: 'Token valid (dev mode)',
-                data: {
-                    user: {
-                        id: 'dev-user-123',
-                        email: 'test@example.com',
-                        firstName: 'Test',
-                        lastName: 'User',
-                        role: 'ADMIN',
-                        isVerified: true,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                    },
-                },
-            };
-        }
-
         try {
             // Build headers — if we have an explicit token, send it in Authorization.
             // Otherwise rely on the HttpOnly cookie being sent by the browser.
@@ -65,12 +43,6 @@ export const externalAuthService = {
 
             return response.data;
         } catch (error: unknown) {
-            console.error('❌ Token verification failed:', error);
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status: number; data: unknown } };
-                console.error('Response status:', axiosError.response?.status);
-                console.error('Response data:', axiosError.response?.data);
-            }
             throw error;
         }
     },

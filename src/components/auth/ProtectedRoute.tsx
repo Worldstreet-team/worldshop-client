@@ -14,7 +14,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     // Only redirect after auth has been initialized AND no tokens exist at all
     if (isInitialized && !isAuthenticated && !tokens?.accessToken) {
       const returnUrl = `${window.location.origin}${location.pathname}${location.search}`;
-      console.log('🔒 ProtectedRoute: No tokens found. Redirecting to login...');
       redirectToLogin(returnUrl);
     }
   }, [isAuthenticated, isInitialized, tokens, redirectToLogin, location]);
@@ -37,7 +36,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // If tokens exist but auth service was unreachable, show an error instead of redirecting
   if (!isAuthenticated && tokens?.accessToken) {
-    console.warn('⚠️ ProtectedRoute: Has tokens but not verified (auth service unreachable?)');
     return (
       <div style={{
         display: 'flex',
