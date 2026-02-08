@@ -77,8 +77,18 @@ export default function ProfilePage() {
           gender: (p.gender as ProfileFormData['gender']) ?? '',
         });
       } catch {
-        // No profile yet — this is fine, user will create one
-        if (!cancelled) setIsNewProfile(true);
+        // No profile yet or server error — show form with auth store data
+        if (!cancelled) {
+          setIsNewProfile(true);
+          // Pre-fill from auth store so the user sees their name
+          reset({
+            firstName: user?.firstName || '',
+            lastName: user?.lastName || '',
+            phone: user?.phone || '',
+            dateOfBirth: '',
+            gender: '',
+          });
+        }
       } finally {
         if (!cancelled) setIsFetching(false);
       }
