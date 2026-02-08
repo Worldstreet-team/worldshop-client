@@ -24,7 +24,7 @@
 .auth-header {
   text-align: center;
   margin-bottom: $spacing-xl;
-  
+
   .auth-logo img {
     height: 48px;
   }
@@ -40,24 +40,24 @@
     text-align: center;
     margin-bottom: $spacing-sm;
   }
-  
+
   .auth-subtitle {
     text-align: center;
     color: $text-secondary;
     margin-bottom: $spacing-xl;
   }
-  
+
   .auth-footer {
     text-align: center;
     margin-top: $spacing-lg;
     color: $text-secondary;
-    
+
     a {
       color: $primary-dark;
       font-weight: $font-weight-semibold;
     }
   }
-  
+
   .forgot-link {
     font-size: $font-size-sm;
     color: $text-secondary;
@@ -81,20 +81,20 @@
     color: $white;
     padding: $spacing-3xl 0;
     text-align: center;
-    
+
     h1 {
       margin-bottom: $spacing-md;
     }
-    
+
     p {
       font-size: $font-size-lg;
       color: $gray-400;
     }
   }
-  
+
   section {
     padding: $spacing-3xl 0;
-    
+
     h2 {
       text-align: center;
       margin-bottom: $spacing-xl;
@@ -108,15 +108,15 @@
 
 .categories-page {
   padding: $spacing-xl 0;
-  
+
   .page-header {
     text-align: center;
     margin-bottom: $spacing-3xl;
-    
+
     h1 {
       margin-bottom: $spacing-sm;
     }
-    
+
     .page-subtitle {
       color: $text-secondary;
       font-size: $font-size-lg;
@@ -130,11 +130,11 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: $spacing-xl;
-  
+
   @include lg {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   @include sm-down {
     grid-template-columns: 1fr;
     gap: $spacing-lg;
@@ -150,20 +150,20 @@
   transition: transform 0.3s, box-shadow 0.3s;
   text-decoration: none;
   color: inherit;
-  
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: $shadow-lg;
-    
+
     .category-card-overlay {
       opacity: 0.4;
     }
-    
+
     .category-card-arrow {
       opacity: 1;
       transform: translateX(0);
     }
-    
+
     .category-card-image img {
       transform: scale(1.05);
     }
@@ -175,14 +175,14 @@
   width: 100%;
   height: 200px;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.4s ease;
   }
-  
+
   @include sm-down {
     height: 180px;
   }
@@ -202,14 +202,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  
+
   .category-card-title {
     font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     margin-bottom: $spacing-xs;
     color: $text-primary;
   }
-  
+
   .category-card-description {
     font-size: $font-size-sm;
     color: $text-secondary;
@@ -220,7 +220,7 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .category-card-count {
     font-size: $font-size-sm;
     color: $primary-color;
@@ -234,7 +234,7 @@
   flex-wrap: wrap;
   gap: $spacing-xs;
   margin-top: auto;
-  
+
   .subcategory-tag {
     display: inline-block;
     padding: $spacing-xs $spacing-sm;
@@ -244,7 +244,7 @@
     border-radius: $radius-full;
     transition: background-color 0.2s, color 0.2s;
   }
-  
+
   .subcategory-more {
     display: inline-block;
     padding: $spacing-xs $spacing-sm;
@@ -252,7 +252,7 @@
     font-size: $font-size-xs;
     font-weight: $font-weight-medium;
   }
-  
+
   .category-card:hover & {
     .subcategory-tag {
       background-color: rgba($primary-color, 0.1);
@@ -274,7 +274,7 @@
   opacity: 0;
   transform: translateX(-10px);
   transition: opacity 0.3s, transform 0.3s;
-  
+
   svg {
     width: 20px;
     height: 20px;
@@ -289,7 +289,7 @@
 .category-page,
 .search-results-page {
   padding: $spacing-xl 0;
-  
+
   .page-header {
     margin-bottom: $spacing-xl;
   }
@@ -301,7 +301,7 @@
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: $spacing-xl;
-  
+
   @include md-down {
     grid-template-columns: 1fr;
   }
@@ -311,7 +311,7 @@
   @include card;
   padding: $spacing-lg;
   height: fit-content;
-  
+
   @include md-down {
     display: none;
   }
@@ -323,7 +323,7 @@
 
 .product-detail-page {
   padding: $spacing-xl 0;
-  
+
   .breadcrumb {
     margin-bottom: $spacing-lg;
   }
@@ -334,7 +334,7 @@
   grid-template-columns: 1fr 1fr;
   gap: $spacing-xl;
   margin-bottom: $spacing-3xl;
-  
+
   @include md-down {
     grid-template-columns: 1fr;
   }
@@ -347,17 +347,17 @@
 .cart-page {
   padding: $spacing-xl 0;
   overflow-x: hidden;
-  
+
   .page-header {
     display: flex;
     align-items: baseline;
     gap: $spacing-md;
     margin-bottom: $spacing-xl;
-    
+
     h1 {
       margin: 0;
     }
-    
+
     .item-count {
       color: $text-secondary;
       font-size: $font-size-md;
@@ -370,7 +370,7 @@
   grid-template-columns: 1fr 380px;
   gap: $spacing-xl;
   align-items: start;
-  
+
   @include md-down {
     grid-template-columns: 1fr;
     gap: $spacing-lg;
@@ -379,7 +379,7 @@
 
 .cart-items-section {
   min-width: 0; // Prevent grid blowout
-  
+
   .cart-items-list {
     @include card;
     overflow: hidden;
@@ -394,54 +394,54 @@
   align-items: center;
   padding: $spacing-lg;
   border-bottom: 1px solid $border-light;
-  
+
   &:last-child {
     border-bottom: none;
   }
-  
+
   @include md-down {
     grid-template-columns: 80px 1fr auto;
     grid-template-rows: auto auto;
     gap: $spacing-sm $spacing-md;
     padding: $spacing-md;
     position: relative;
-    
+
     .cart-item-image {
       grid-row: 1 / 3;
     }
-    
+
     .cart-item-details {
       grid-column: 2;
       grid-row: 1;
     }
-    
+
     .cart-item-price {
       display: none; // Hide individual price on mobile, show total only
     }
-    
+
     .cart-item-quantity {
       grid-column: 2;
       grid-row: 2;
       justify-self: start;
     }
-    
+
     .cart-item-total {
       grid-column: 2;
       grid-row: 2;
       justify-self: end;
       align-self: center;
     }
-    
+
     .cart-item-remove {
       grid-column: 3;
       grid-row: 1 / 3;
       align-self: center;
     }
   }
-  
+
   @include sm-down {
     grid-template-columns: 70px 1fr 40px;
-    
+
     .cart-item-image img {
       width: 70px;
       height: 70px;
@@ -456,7 +456,7 @@
     object-fit: cover;
     border-radius: $radius-sm;
     border: 1px solid $border-light;
-    
+
     @include md-down {
       width: 80px;
       height: 80px;
@@ -468,21 +468,21 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-xs;
-  
+
   .cart-item-name {
     font-weight: $font-weight-semibold;
     color: $text-primary;
-    
+
     &:hover {
       color: $primary-color;
     }
   }
-  
+
   .cart-item-variant {
     font-size: $font-size-sm;
     color: $text-secondary;
   }
-  
+
   .cart-item-sku {
     font-size: $font-size-xs;
     color: $text-muted;
@@ -502,7 +502,7 @@
     border: 1px solid $border-color;
     border-radius: $radius-sm;
     overflow: hidden;
-    
+
     button {
       @include flex-center;
       width: 36px;
@@ -511,23 +511,23 @@
       border: none;
       cursor: pointer;
       transition: background-color 0.2s;
-      
+
       &:hover:not(:disabled) {
         background-color: $gray-200;
       }
-      
+
       &:disabled {
         color: $text-muted;
         cursor: not-allowed;
         background-color: $gray-50;
       }
-      
+
       svg {
         flex-shrink: 0;
         stroke-width: 2.5;
       }
     }
-    
+
     input {
       width: 50px;
       height: 36px;
@@ -537,22 +537,22 @@
       border-right: 1px solid $border-color;
       font-weight: $font-weight-medium;
       background: $white;
-      
+
       &::-webkit-inner-spin-button,
       &::-webkit-outer-spin-button {
         -webkit-appearance: none;
         margin: 0;
       }
-      
+
       -moz-appearance: textfield;
     }
-    
+
     @include sm-down {
       button {
         width: 32px;
         height: 32px;
       }
-      
+
       input {
         width: 40px;
         height: 32px;
@@ -578,12 +578,12 @@
   cursor: pointer;
   border-radius: $radius-sm;
   transition: all 0.2s;
-  
+
   &:hover:not(:disabled) {
     color: $danger-color;
     background-color: rgba($danger-color, 0.1);
   }
-  
+
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
@@ -592,12 +592,12 @@
 
 .cart-actions {
   margin-top: $spacing-lg;
-  
+
   .btn {
     display: inline-flex;
     align-items: center;
     gap: $spacing-sm;
-    
+
     svg {
       flex-shrink: 0;
     }
@@ -615,24 +615,24 @@
   padding: $spacing-lg;
   position: sticky;
   top: $header-height + $spacing-lg;
-  
+
   h3 {
     margin-bottom: $spacing-lg;
     font-size: $font-size-lg;
   }
-  
+
   .summary-rows {
     margin-bottom: $spacing-md;
   }
-  
+
   .summary-row {
     @include flex-between;
     margin-bottom: $spacing-sm;
     font-size: $font-size-sm;
-    
+
     &.discount {
       color: $success-color;
-      
+
       .remove-coupon {
         background: none;
         border: none;
@@ -640,13 +640,13 @@
         cursor: pointer;
         font-size: $font-size-xs;
         padding: 0 $spacing-xs;
-        
+
         &:hover {
           text-decoration: underline;
         }
       }
     }
-    
+
     &.total {
       font-size: $font-size-lg;
       font-weight: $font-weight-bold;
@@ -655,13 +655,13 @@
       margin-bottom: 0;
     }
   }
-  
+
   hr {
     margin: $spacing-md 0;
     border: none;
     border-top: 1px solid $border-light;
   }
-  
+
   .free-shipping-notice {
     display: flex;
     align-items: center;
@@ -672,47 +672,47 @@
     border-radius: $radius-sm;
     font-size: $font-size-sm;
     margin-top: $spacing-md;
-    
+
     svg {
       flex-shrink: 0;
     }
   }
-  
+
   .coupon-section {
     margin-top: $spacing-lg;
     padding-top: $spacing-lg;
     border-top: 1px solid $border-light;
-    
+
     label {
       display: block;
       font-size: $font-size-sm;
       font-weight: $font-weight-medium;
       margin-bottom: $spacing-sm;
     }
-    
+
     .coupon-input {
       display: flex;
       gap: $spacing-sm;
-      
+
       input {
         flex: 1;
         padding: $spacing-sm $spacing-md;
         border: 1px solid $border-color;
         border-radius: $radius-sm;
         font-size: $font-size-sm;
-        
+
         &:focus {
           outline: none;
           border-color: $primary-color;
         }
       }
-      
+
       .btn {
         margin: 0;
         padding: $spacing-sm $spacing-md;
       }
     }
-    
+
     .coupon-hint {
       display: block;
       margin-top: $spacing-xs;
@@ -720,19 +720,19 @@
       color: $text-muted;
     }
   }
-  
+
   .checkout-btn {
     margin-top: $spacing-lg;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: $spacing-sm;
-    
+
     svg {
       flex-shrink: 0;
     }
   }
-  
+
   .secure-checkout {
     display: flex;
     align-items: center;
@@ -741,7 +741,7 @@
     margin-top: $spacing-md;
     font-size: $font-size-sm;
     color: $text-muted;
-    
+
     svg {
       color: $success-color;
     }
@@ -754,7 +754,7 @@
 
 .checkout-page {
   padding: $spacing-xl 0;
-  
+
   h1 {
     margin-bottom: $spacing-xl;
   }
@@ -766,13 +766,13 @@
   align-items: center;
   gap: $spacing-md;
   margin-bottom: $spacing-xl;
-  
+
   .step {
     display: flex;
     align-items: center;
     gap: $spacing-sm;
     color: $text-muted;
-    
+
     .step-number {
       @include flex-center;
       width: 36px;
@@ -783,29 +783,29 @@
       font-size: $font-size-sm;
       background: $white;
       transition: all 0.3s;
-      
+
       svg {
         width: 16px;
         height: 16px;
       }
     }
-    
+
     .step-label {
       @include md-down {
         display: none;
       }
     }
-    
+
     &.active {
       color: $text-primary;
-      
+
       .step-number {
         background-color: $primary-color;
         border-color: $primary-color;
         color: $white;
       }
     }
-    
+
     &.completed {
       .step-number {
         background-color: $success-color;
@@ -814,12 +814,12 @@
       }
     }
   }
-  
+
   .step-connector {
     width: 60px;
     height: 2px;
     background-color: $gray-300;
-    
+
     @include md-down {
       width: 30px;
     }
@@ -831,7 +831,7 @@
   grid-template-columns: 1fr 380px;
   gap: $spacing-xl;
   align-items: start;
-  
+
   @include md-down {
     grid-template-columns: 1fr;
   }
@@ -844,21 +844,21 @@
 .checkout-step {
   @include card;
   padding: $spacing-xl;
-  
+
   h2 {
     margin-bottom: $spacing-lg;
     font-size: $font-size-xl;
   }
-  
+
   .form-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: $spacing-md;
   }
-  
+
   .form-group {
     margin-bottom: $spacing-md;
-    
+
     label {
       display: block;
       margin-bottom: $spacing-xs;
@@ -866,26 +866,27 @@
       font-weight: $font-weight-medium;
       color: $text-primary;
     }
-    
-    input, select {
+
+    input,
+    select {
       width: 100%;
       padding: $spacing-sm $spacing-md;
       border: 1px solid $border-color;
       border-radius: $radius-sm;
       font-size: $font-size-md;
       transition: border-color 0.2s, box-shadow 0.2s;
-      
+
       &:focus {
         outline: none;
         border-color: $primary-color;
         box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
       }
-      
+
       &::placeholder {
         color: $text-muted;
       }
     }
-    
+
     select {
       cursor: pointer;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
@@ -895,7 +896,7 @@
       appearance: none;
     }
   }
-  
+
   .step-actions {
     display: flex;
     justify-content: space-between;
@@ -903,10 +904,10 @@
     margin-top: $spacing-xl;
     padding-top: $spacing-lg;
     border-top: 1px solid $border-light;
-    
+
     @include sm-down {
       flex-direction: column;
-      
+
       .btn {
         width: 100%;
       }
@@ -917,7 +918,7 @@
 // Payment step specific
 .payment-methods {
   margin-bottom: $spacing-lg;
-  
+
   .payment-method {
     display: flex;
     align-items: center;
@@ -927,19 +928,20 @@
     border-radius: $radius-md;
     cursor: pointer;
     transition: border-color 0.2s;
-    
+
     input {
       width: auto;
     }
-    
+
     .method-content {
       display: flex;
       align-items: center;
       gap: $spacing-sm;
       font-weight: $font-weight-medium;
     }
-    
-    &.active, &:has(input:checked) {
+
+    &.active,
+    &:has(input:checked) {
       border-color: $primary-color;
       background-color: rgba($primary-color, 0.02);
     }
@@ -962,7 +964,7 @@
   padding: $spacing-sm $spacing-md;
   background-color: rgba($success-color, 0.1);
   border-radius: $radius-sm;
-  
+
   svg {
     color: $success-color;
     flex-shrink: 0;
@@ -975,38 +977,38 @@
   padding: $spacing-lg;
   border-radius: $radius-md;
   margin-bottom: $spacing-md;
-  
+
   .review-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: $spacing-sm;
-    
+
     h3 {
       font-size: $font-size-md;
       margin: 0;
     }
-    
+
     .edit-btn {
       background: none;
       border: none;
       color: $primary-color;
       cursor: pointer;
       font-size: $font-size-sm;
-      
+
       &:hover {
         text-decoration: underline;
       }
     }
   }
-  
+
   .review-content {
     p {
       margin: 0;
       line-height: 1.6;
       color: $text-secondary;
       font-size: $font-size-sm;
-      
+
       svg {
         display: inline;
         vertical-align: middle;
@@ -1030,30 +1032,30 @@
   padding: $spacing-sm;
   background: $white;
   border-radius: $radius-sm;
-  
+
   img {
     width: 60px;
     height: 60px;
     object-fit: cover;
     border-radius: $radius-sm;
   }
-  
+
   .item-details {
     flex: 1;
-    
+
     h4 {
       margin: 0 0 $spacing-xs;
       font-size: $font-size-sm;
       font-weight: $font-weight-medium;
     }
-    
+
     .item-qty {
       margin: 0;
       font-size: $font-size-xs;
       color: $text-muted;
     }
   }
-  
+
   .item-price {
     font-weight: $font-weight-semibold;
   }
@@ -1071,33 +1073,33 @@
   padding: $spacing-lg;
   position: sticky;
   top: $header-height + $spacing-lg;
-  
+
   h3 {
     margin-bottom: $spacing-lg;
     font-size: $font-size-lg;
   }
-  
+
   .summary-items {
     max-height: 280px;
     overflow-y: auto;
     margin-bottom: $spacing-md;
   }
-  
+
   .summary-item {
     display: flex;
     align-items: center;
     gap: $spacing-sm;
     padding: $spacing-sm 0;
     border-bottom: 1px solid $border-light;
-    
+
     &:last-child {
       border-bottom: none;
     }
-    
+
     .item-image {
       position: relative;
       flex-shrink: 0;
-      
+
       img {
         width: 50px;
         height: 50px;
@@ -1105,7 +1107,7 @@
         border-radius: $radius-sm;
         border: 1px solid $border-light;
       }
-      
+
       .item-qty-badge {
         position: absolute;
         top: -6px;
@@ -1120,39 +1122,39 @@
         @include flex-center;
       }
     }
-    
+
     .item-info {
       flex: 1;
       min-width: 0;
-      
+
       .item-name {
         display: block;
         font-size: $font-size-sm;
         @include text-truncate;
       }
     }
-    
+
     .item-price {
       font-weight: $font-weight-medium;
       font-size: $font-size-sm;
     }
   }
-  
+
   hr {
     margin: $spacing-md 0;
     border: none;
     border-top: 1px solid $border-light;
   }
-  
+
   .summary-row {
     @include flex-between;
     margin-bottom: $spacing-sm;
     font-size: $font-size-sm;
-    
+
     &.discount {
       color: $success-color;
     }
-    
+
     &.total {
       font-size: $font-size-lg;
       font-weight: $font-weight-bold;
@@ -1188,83 +1190,83 @@
 
 .checkout-success-page {
   padding: $spacing-3xl 0;
-  
+
   .success-content {
     @include card;
     max-width: 640px;
     margin: 0 auto;
     padding: $spacing-3xl;
     text-align: center;
-    
+
     .success-icon {
       margin-bottom: $spacing-lg;
       color: $success-color;
-      
+
       svg {
         width: 80px;
         height: 80px;
       }
     }
-    
+
     h1 {
       margin-bottom: $spacing-md;
       font-size: $font-size-2xl;
     }
-    
+
     .success-message {
       color: $text-secondary;
       font-size: $font-size-md;
       margin-bottom: $spacing-xl;
-      
+
       strong {
         color: $text-primary;
       }
     }
-    
+
     .order-card {
       background-color: $gray-50;
       border-radius: $radius-lg;
       overflow: hidden;
       margin-bottom: $spacing-xl;
       text-align: left;
-      
+
       .order-card-header {
         background-color: $gray-100;
         padding: $spacing-md $spacing-lg;
         border-bottom: 1px solid $border-light;
-        
+
         h2 {
           margin: 0;
           font-size: $font-size-md;
         }
       }
-      
+
       .order-card-body {
         padding: $spacing-lg;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: $spacing-md;
-        
+
         @include sm-down {
           grid-template-columns: 1fr;
         }
       }
-      
+
       .order-detail {
         display: flex;
         flex-direction: column;
         gap: $spacing-xs;
-        
+
         .label {
           font-size: $font-size-sm;
           color: $text-muted;
         }
-        
+
         .value {
           font-weight: $font-weight-semibold;
           color: $text-primary;
         }
-        
+
         &.total {
           grid-column: 1 / -1;
           padding-top: $spacing-md;
@@ -1273,7 +1275,7 @@
           flex-direction: row;
           justify-content: space-between;
           align-items: center;
-          
+
           .value {
             font-size: $font-size-xl;
             color: $primary-color;
@@ -1281,21 +1283,21 @@
         }
       }
     }
-    
+
     .next-steps {
       text-align: left;
       margin-bottom: $spacing-xl;
-      
+
       h3 {
         font-size: $font-size-md;
         margin-bottom: $spacing-md;
       }
-      
+
       ul {
         list-style: none;
         padding: 0;
         margin: 0;
-        
+
         li {
           display: flex;
           align-items: flex-start;
@@ -1303,7 +1305,7 @@
           padding: $spacing-sm 0;
           color: $text-secondary;
           font-size: $font-size-sm;
-          
+
           svg {
             flex-shrink: 0;
             color: $primary-color;
@@ -1312,45 +1314,45 @@
         }
       }
     }
-    
+
     .success-actions {
       display: flex;
       justify-content: center;
       gap: $spacing-md;
       margin-bottom: $spacing-lg;
-      
+
       .btn {
         display: inline-flex;
         align-items: center;
         gap: $spacing-sm;
-        
+
         svg {
           flex-shrink: 0;
         }
       }
-      
+
       @include sm-down {
         flex-direction: column;
-        
+
         .btn {
           width: 100%;
           justify-content: center;
         }
       }
     }
-    
+
     .support-note {
       padding-top: $spacing-lg;
       border-top: 1px solid $border-light;
-      
+
       p {
         margin: 0;
         font-size: $font-size-sm;
         color: $text-muted;
-        
+
         a {
           color: $primary-color;
-          
+
           &:hover {
             text-decoration: underline;
           }
@@ -1366,30 +1368,30 @@
 
 .checkout-failure-page {
   padding: $spacing-3xl 0;
-  
+
   .failure-content {
     @include card;
     max-width: 640px;
     margin: 0 auto;
     padding: $spacing-3xl;
     text-align: center;
-    
+
     .failure-icon {
       margin-bottom: $spacing-lg;
       color: $danger-color;
-      
+
       svg {
         width: 80px;
         height: 80px;
       }
     }
-    
+
     h1 {
       margin-bottom: $spacing-md;
       font-size: $font-size-2xl;
       color: $text-primary;
     }
-    
+
     .failure-message {
       color: $text-secondary;
       font-size: $font-size-md;
@@ -1398,7 +1400,7 @@
       margin-left: auto;
       margin-right: auto;
     }
-    
+
     .error-code {
       display: inline-block;
       background-color: rgba($danger-color, 0.1);
@@ -1407,31 +1409,31 @@
       border-radius: $radius-sm;
       font-size: $font-size-sm;
       margin-bottom: $spacing-xl;
-      
+
       code {
         font-family: monospace;
         font-weight: $font-weight-semibold;
       }
     }
-    
+
     .troubleshooting {
       background-color: $gray-50;
       border-radius: $radius-lg;
       padding: $spacing-lg;
       margin-bottom: $spacing-xl;
       text-align: left;
-      
+
       h3 {
         font-size: $font-size-md;
         margin-bottom: $spacing-md;
         color: $text-primary;
       }
-      
+
       ul {
         list-style: none;
         padding: 0;
         margin: 0;
-        
+
         li {
           display: flex;
           align-items: flex-start;
@@ -1439,7 +1441,7 @@
           padding: $spacing-sm 0;
           color: $text-secondary;
           font-size: $font-size-sm;
-          
+
           svg {
             flex-shrink: 0;
             color: $text-muted;
@@ -1448,54 +1450,54 @@
         }
       }
     }
-    
+
     .failure-actions {
       display: flex;
       justify-content: center;
       gap: $spacing-md;
       margin-bottom: $spacing-xl;
-      
+
       .btn {
         display: inline-flex;
         align-items: center;
         gap: $spacing-sm;
-        
+
         svg {
           flex-shrink: 0;
         }
       }
-      
+
       @include sm-down {
         flex-direction: column;
-        
+
         .btn {
           width: 100%;
           justify-content: center;
         }
       }
     }
-    
+
     .support-section {
       padding-top: $spacing-lg;
       border-top: 1px solid $border-light;
-      
+
       h3 {
         font-size: $font-size-md;
         margin-bottom: $spacing-xs;
       }
-      
-      > p {
+
+      >p {
         color: $text-muted;
         font-size: $font-size-sm;
         margin-bottom: $spacing-md;
       }
-      
+
       .support-options {
         display: flex;
         justify-content: center;
         gap: $spacing-lg;
         flex-wrap: wrap;
-        
+
         .support-link {
           display: inline-flex;
           align-items: center;
@@ -1503,11 +1505,11 @@
           color: $primary-color;
           font-size: $font-size-sm;
           transition: opacity 0.2s;
-          
+
           &:hover {
             opacity: 0.8;
           }
-          
+
           svg {
             flex-shrink: 0;
           }
@@ -1523,7 +1525,7 @@
 
 .account-page {
   padding: $spacing-xl 0;
-  
+
   .account-header {
     margin-bottom: $spacing-xl;
   }
@@ -1533,11 +1535,11 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: $spacing-lg;
-  
+
   @include md-down {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @include sm-down {
     grid-template-columns: 1fr;
   }
@@ -1548,23 +1550,23 @@
   padding: $spacing-xl;
   text-align: center;
   transition: border-color $transition-fast, box-shadow $transition-fast;
-  
+
   &:hover {
     border-color: $primary-color;
     box-shadow: $shadow-md;
   }
-  
+
   .material-icons {
     font-size: 48px;
     color: $primary-color;
     margin-bottom: $spacing-md;
   }
-  
+
   h3 {
     margin-bottom: $spacing-xs;
     color: $text-primary;
   }
-  
+
   p {
     font-size: $font-size-sm;
     color: $text-secondary;
@@ -1575,11 +1577,411 @@
 .order-history-page,
 .addresses-page,
 .wishlist-page,
+// ============================================
+// PROFILE PAGE — Modern Clean eCommerce Design
+// ============================================
+
 .profile-page {
-  padding: $spacing-xl 0;
-  
-  .page-header {
+  padding: $spacing-xl 0 $spacing-3xl;
+  min-height: 60vh;
+}
+
+// ─── Breadcrumb ─────────────────────────────
+
+.profile-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-xl;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+
+  a {
+    color: $text-secondary;
+    text-decoration: none;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $primary-dark;
+    }
+  }
+
+  &__separator {
+    color: $gray-400;
+  }
+
+  span:last-child {
+    color: $text-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+// ─── Layout ─────────────────────────────────
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: $spacing-xl;
+  align-items: start;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ─── Sidebar ────────────────────────────────
+
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.profile-card {
+  background: $white;
+  border: 1px solid $border-light;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  text-align: center;
+
+  &--links {
+    text-align: left;
+    padding: $spacing-lg $spacing-xl;
+  }
+
+  &__avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: $radius-full;
+    margin: 0 auto $spacing-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+    box-shadow: 0 4px 14px rgba($primary-color, 0.3);
+
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: $radius-full;
+      object-fit: cover;
+    }
+  }
+
+  &__initials {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $secondary-color;
+    letter-spacing: 1px;
+  }
+
+  &__name {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin: 0 0 $spacing-xs;
+  }
+
+  &__email {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin: 0 0 $spacing-sm;
+    word-break: break-all;
+  }
+
+  &__member {
+    font-size: $font-size-xs;
+    color: $text-muted;
+    margin: 0;
+  }
+
+  &__heading {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 $spacing-md;
+  }
+}
+
+// ─── Nav Links ──────────────────────────────
+
+.profile-nav {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $radius-md;
+    font-size: $font-size-base;
+    color: $text-primary;
+    text-decoration: none;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: $gray-50;
+      color: $primary-dark;
+
+      svg {
+        color: $primary-dark;
+      }
+    }
+
+    svg {
+      color: $text-secondary;
+      flex-shrink: 0;
+      transition: color $transition-fast;
+    }
+  }
+}
+
+// ─── Main Content ───────────────────────────
+
+.profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
+
+.profile-section {
+  background: $white;
+  border: 1px solid $border-light;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+
+  &--security {
+    padding: $spacing-lg $spacing-xl;
+  }
+
+  &__header {
     margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+    border-bottom: 1px solid $border-light;
+  }
+
+  &__title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin: 0 0 $spacing-xs;
+  }
+
+  &__subtitle {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+// ─── Form ───────────────────────────────────
+
+.profile-form {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-lg;
+
+    @media (max-width: $breakpoint-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__actions {
+    margin-top: $spacing-xl;
+    padding-top: $spacing-lg;
+    border-top: 1px solid $border-light;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+// ─── Form Field ─────────────────────────────
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  &__label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+  }
+
+  &__input {
+    height: $input-height;
+    padding: 0 $input-padding-x;
+    border: 1px solid $border-color;
+    border-radius: $radius-md;
+    font-size: $font-size-base;
+    color: $text-primary;
+    background: $white;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+    }
+
+    &::placeholder {
+      color: $gray-400;
+    }
+
+    &--error {
+      border-color: $danger-color;
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba($danger-color, 0.15);
+      }
+    }
+
+    &--disabled {
+      background: $gray-100;
+      color: $text-secondary;
+      cursor: not-allowed;
+    }
+  }
+
+  select.form-field__input {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%236c757d' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right $input-padding-x center;
+    padding-right: 36px;
+  }
+
+  &__error {
+    font-size: $font-size-xs;
+    color: $danger-color;
+    font-weight: $font-weight-medium;
+  }
+
+  &__hint {
+    font-size: $font-size-xs;
+    color: $text-muted;
+    font-style: italic;
+  }
+}
+
+// ─── Buttons ────────────────────────────────
+
+.btn-profile-save {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $btn-padding-y $btn-padding-x-lg;
+  background: $primary-color;
+  color: $secondary-color;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background: $primary-dark;
+    box-shadow: $shadow-md;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.btn-profile-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: $btn-padding-y-sm $btn-padding-x;
+  border: 1px solid $border-color;
+  border-radius: $radius-md;
+  background: $white;
+  color: $text-primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    border-color: $primary-color;
+    color: $primary-dark;
+    background: rgba($primary-color, 0.04);
+  }
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba($secondary-color, 0.2);
+  border-top-color: $secondary-color;
+  border-radius: $radius-full;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ─── Security Row ───────────────────────────
+
+.profile-security-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  &__info {
+    h4 {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+      margin: 0 0 2px;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+}
+
+// ─── Loading State ──────────────────────────
+
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl 0;
+  color: $text-secondary;
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $gray-200;
+    border-top-color: $primary-color;
+    border-radius: $radius-full;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: $spacing-md;
+  }
+
+  p {
+    font-size: $font-size-base;
+    margin: 0;
   }
 }
 
@@ -1590,7 +1992,7 @@
 .not-found-page {
   padding: $spacing-3xl 0;
   text-align: center;
-  
+
   .not-found-content {
     h1 {
       font-size: 120px;
@@ -1598,11 +2000,11 @@
       line-height: 1;
       margin-bottom: $spacing-md;
     }
-    
+
     h2 {
       margin-bottom: $spacing-md;
     }
-    
+
     p {
       color: $text-secondary;
       margin-bottom: $spacing-xl;
@@ -1615,6 +2017,7 @@
 // ============================================
 
 .home-page {
+
   // Hero Slider
   .hero-section {
     position: relative;
@@ -1660,12 +2063,10 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(
-          90deg,
-          rgba(0, 0, 0, 0.7) 0%,
-          rgba(0, 0, 0, 0.3) 50%,
-          transparent 100%
-        );
+        background: linear-gradient(90deg,
+            rgba(0, 0, 0, 0.7) 0%,
+            rgba(0, 0, 0, 0.3) 50%,
+            transparent 100%);
       }
     }
 
@@ -2323,6 +2724,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

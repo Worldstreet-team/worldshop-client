@@ -11,6 +11,31 @@ export interface User {
   updatedAt: string;
 }
 
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY';
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string | null;
+  avatar: string | null;
+  dateOfBirth: string | null;
+  gender: Gender | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  phone?: string | null;
+  avatar?: string | null;
+  dateOfBirth?: string | null;
+  gender?: Gender | null;
+}
+
 export interface Address {
   id: string;
   userId: string;
@@ -43,7 +68,7 @@ export interface CreateAddressRequest {
   isDefault?: boolean;
 }
 
-export interface UpdateAddressRequest extends Partial<CreateAddressRequest> {}
+export interface UpdateAddressRequest extends Partial<CreateAddressRequest> { }
 
 export interface WishlistItem {
   id: string;

@@ -196,14 +196,15 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 
 ## 🚧 Pending Features
 
-### Phase 8: User Authentication & Backend Integration
-- [ ] Connect auth pages to real API endpoints
-- [ ] JWT token management
-- [ ] Refresh token flow
-- [ ] Session persistence
-- [ ] Social login integration (Google, Facebook)
-- [ ] Email verification
-- [ ] Two-factor authentication (optional)
+### Phase 8: External Authentication Integration ✅
+- [x] External auth service integration (WorldStreet Identity)
+- [x] HttpOnly cookie-based JWT authentication
+- [x] Token verification on page load
+- [x] Automatic token refresh flow
+- [x] Redirect to external login/register pages
+- [x] ProtectedRoute and AdminRoute guards
+- [x] Auth state persistence (Zustand + localStorage)
+- [x] Production deployment at shop.worldstreetgold.com
 
 ### Phase 9: Real API Integration
 - [ ] Replace mock APIs with real backend endpoints
