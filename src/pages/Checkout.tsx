@@ -4,6 +4,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { checkoutService, orderService } from '@/services/orderService';
+import { paymentService } from '@/services/paymentService';
 import { addressService } from '@/services/addressService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
@@ -197,14 +198,12 @@ export default function CheckoutPage() {
 
       const order = response.data;
 
-      // Navigate to success page with order info
-      navigate('/checkout/success', {
-        state: {
-          orderNumber: order.orderNumber,
-          orderId: order.id,
-          total: order.total
-        }
-      });
+      // Initialize Paystack payment
+      const paymentRes = await paymentService.initializePayment(order.id);
+      const paymentData = paymentRes.data;
+
+      // Redirect to Paystack hosted payment page
+      window.location.href = paymentData.authorizationUrl;
     } catch (error) {
       // Navigate to failure page with error info
       const errorMessage = (error as { message?: string })?.message || 'Failed to create order';

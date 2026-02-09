@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
 **Last Updated:** February 9, 2026  
-**Version:** 0.11.0  
+**Version:** 0.14.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -52,12 +52,13 @@
 
 ### Services Layer
 - **api.ts** - Base Axios configuration
-- **profileService.ts** - Profile API (GET/PATCH /profile on worldshop-server) ✅
-- **mockApi.ts** - Mock API for reviews (banners no longer used by Home page)
-- **mockCartApi.ts** - Mock cart API
-- **cartService.ts** - Cart operations
-- **productService.ts** - Product operations
-- **orderService.ts** - Order operations
+- **profileService.ts** - Profile API (GET/PATCH /profile) ✅
+- **addressService.ts** - Address CRUD API (GET/POST/PUT/DELETE /addresses) ✅
+- **cartService.ts** - Cart operations (real API) ✅
+- **orderService.ts** - Order operations (real API) ✅
+- **paymentService.ts** - Payment operations (Paystack integration) ✅
+- **productService.ts** - Product operations ✅
+- **mockApi.ts** - Mock API for reviews (to be replaced)
 - **userService.ts** - User operations
 
 ### Type System
@@ -234,17 +235,29 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] Profile page fetches/updates real backend data
 - [x] `VITE_API_BASE_URL` configured for worldshop-server (`http://localhost:8000/api/v1`)
 - [x] Connect products and categories to worldshop-server
-- [ ] Replace remaining mock APIs with real backend endpoints (reviews, cart, wishlist)
-- [ ] Connect cart and orders to worldshop-server
+- [x] Cart and orders connected to worldshop-server (Services 5-6)
+- [x] Address CRUD connected to worldshop-server (Service 6)
+- [x] Checkout saved address picker with form population
+- [x] Paystack payment integration (Service 8)
+  - [x] `paymentService.ts` — initialize and verify payment API
+  - [x] Checkout flow: create order → initialize payment → redirect to Paystack
+  - [x] CheckoutSuccess handles `?reference=` param, auto-verifies payment on mount
+  - [x] CheckoutFailure handles Paystack redirect failures
+- [ ] Replace remaining mock APIs with real backend endpoints (reviews, wishlist)
 - [ ] API error handling and retries
 - [ ] Response caching strategies
 - [ ] Optimistic UI updates
 
-### Phase 11: Cart & Orders Backend
-- [ ] Persistent cart storage (database)
-- [ ] Cart synchronization across sessions
-- [ ] Real payment gateway integration
-  - [ ] Paystack integration (NGN ₦)
+### Phase 11: Cart & Orders Backend ✅
+- [x] Persistent cart storage (database)
+- [x] Cart synchronization across sessions
+- [x] Guest cart with session ID + merge on login
+- [x] Cart sidebar, Cart page, Checkout page connected to live backend
+- [x] Order creation, listing, detail, cancellation connected
+- [x] Checkout cart validation before order placement
+- [x] Currency normalized to NGN (₦)
+- [x] Real payment gateway integration
+  - [x] Paystack integration (NGN ₦) ✅
   - [ ] Other payment methods
 - [ ] Real-time order status updates
 - [ ] Order tracking functionality
@@ -360,6 +373,7 @@ worldshop-client/
 │   │   │   ├── EmptyState.tsx
 │   │   │   ├── Input.tsx
 │   │   │   ├── Modal.tsx
+│   │   │   ├── AddressFormModal.tsx
 │   │   │   ├── Pagination.tsx
 │   │   │   ├── RatingStars.tsx
 │   │   │   ├── Select.tsx
@@ -426,12 +440,13 @@ worldshop-client/
 │   │   └── index.tsx
 │   ├── services/              # API services
 │   │   ├── api.ts
+│   │   ├── addressService.ts
 │   │   ├── cartService.ts
 │   │   ├── index.ts
 │   │   ├── mockApi.ts
-│   │   ├── mockCartApi.ts
 │   │   ├── orderService.ts
 │   │   ├── productService.ts
+│   │   ├── profileService.ts
 │   │   └── userService.ts
 │   ├── store/                 # Zustand stores
 │   │   ├── authStore.ts
@@ -520,31 +535,29 @@ worldshop-client/
 ## 🎯 Next Steps
 
 ### Immediate Priorities
-1. **Cart Backend (Service 5)** — Build Cart + CartItem Prisma models, cart service/controller/routes, connect frontend
-2. **Addresses (Service 6)** — Address model, CRUD endpoints, connect address management page
-3. **Orders & Checkout (Service 7)** — Order + OrderItem models, checkout flow with real order creation
-4. **Payments / Paystack (Service 8)** — Payment integration with Paystack (NGN ₦)
-5. **Home Page Polish** — Remaining Electro template sections (brand logos, more responsive tweaks)
+1. **Payments / Paystack (Service 8)** — Payment integration with Paystack (NGN ₦), verify webhook, update order status
+2. **Reviews (Service 9)** — Review model, submit/list/moderate reviews, replace mock review API
+3. **Wishlist (Service 10)** — Persistent wishlist backend, connect wishlist page
+4. **Admin Panel Backend** — Connect admin products, orders, categories to real API
+5. **Image Uploads** — Cloudflare R2/Images integration for product and profile images
 
 ### Short Term (1-2 weeks)
-- Complete cart → checkout → order → payment flow end-to-end
-- Replace mockCartApi with real backend cart endpoints
-- Connect order history and tracking to real API
-- Guest cart with session ID + merge on login
+- Complete payment → order status flow end-to-end
+- Replace mockApi.ts with real review endpoints
+- Connect wishlist to persistent backend storage
+- Admin order status management
 
 ### Medium Term (2-4 weeks)
-- Reviews and ratings system (Service 9)
-- Wishlist backend integration (Service 10)
-- Image uploads via Cloudflare
-- Admin panel connected to real APIs
+- Admin product CRUD with image uploads
 - Advanced search with backend
-
-### Long Term (1-2 months)
 - Email notifications
 - Performance optimization (lazy loading, WebP images)
+
+### Long Term (1-2 months)
 - Testing suite (Vitest + Playwright)
 - SEO and analytics
 - Production deployment + CI/CD
+- Multi-vendor support
 
 ---
 
@@ -554,11 +567,14 @@ worldshop-client/
 - **ProductCard** restyled with Electro layout (category → name → image → price+cart icon)
 - **Profile** is connected to real worldshop-server API (Service 2 complete)
 - **Products & Categories** connected to real API (Services 3-4 complete)
+- **Cart** is fully connected to worldshop-server API (Service 5 complete)
+- **Orders & Checkout** connected to real API with cart validation, order creation, cancellation
+- **Addresses** fully connected — CRUD, checkout picker, Nigerian states only (Service 6 complete)
 - **Authentication** uses external WorldStreet Identity with HttpOnly cookies (Service 1 complete)
 - **Hero slider** uses static data — `bannerApi` removed, no mock API dependency
-- Cart state is stored in **browser memory** only (resets on refresh) — needs backend
-- Remaining mock APIs: cart (`mockCartApi`), reviews (`mockApi`)
+- Remaining mock APIs: reviews (`mockApi`)
 - Media storage will use **Cloudflare** (not Cloudinary)
+- Next up: **Payments (Paystack)** → Reviews → Wishlist → Admin panel backend
 - Mobile responsiveness has been tested but needs more real-device testing
 - Accessibility features need audit
 - Performance optimization needed before production deployment

@@ -4,6 +4,68 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.14.0] - 2026-02-09
+
+### Added — Payments Integration (Service 8: Paystack)
+- `paymentService.ts` — API client for payment operations (`initializePayment`, `verifyPayment`)
+- `InitializePaymentData`, `VerifyPaymentData` TypeScript interfaces
+- Exported from `services/index.ts` barrel
+
+### Changed — Checkout Flow
+- `Checkout.tsx` now initializes Paystack payment after creating order, then redirects to Paystack hosted payment page via `window.location.href`
+- Order creation + payment initialization flow: Create Order (CREATED) → Initialize Payment → Redirect to Paystack
+
+### Changed — Checkout Success Page
+- `CheckoutSuccess.tsx` now handles `?reference=` / `?trxref=` URL params from Paystack redirect
+- Auto-verifies payment on mount via `paymentService.verifyPayment(reference)`
+- Shows verification spinner while confirming payment
+- Displays payment-specific success message ("Your payment was successful and your order has been confirmed")
+- Handles failed/abandoned payment states with appropriate messaging and retry links
+- Handles verification errors with fallback UI
+
+### Changed — Checkout Failure Page
+- `CheckoutFailure.tsx` now reads `?reference=` / `?trxref=` URL params from Paystack failed redirects
+- Shows Paystack-specific error message when reference param is present
+
+## [0.13.0] - 2026-02-09
+
+### Added — Addresses System (Service 6)
+- `addressService.ts` — API client for address CRUD (`getAddresses`, `getAddress`, `createAddress`, `updateAddress`, `deleteAddress`, `setDefault`)
+- `nigerianStates.ts` — shared `NIGERIAN_STATES` constant (37 states), `STATE_DISPLAY_NAMES` map, `getStateDisplayName()` helper
+- `AddressFormModal.tsx` — modal form component for create/edit addresses (Nigerian states dropdown, validation, loading states)
+- `Address`, `CreateAddressRequest`, `UpdateAddressRequest` types in `user.types.ts`
+
+### Changed — Addresses Page
+- Completely rewrote `Addresses.tsx` from stub to full CRUD page
+- Address cards with default badge, edit/delete/set-default actions
+- Max 5 limit notice, loading skeletons (3 cards), empty state with SVG icon + "Add Your First Address" CTA
+- Confirm dialog before delete, toast notifications for all actions
+
+### Changed — Checkout Saved Address Picker
+- Checkout.tsx now fetches saved addresses on mount
+- Auto-selects default address and populates shipping form
+- Saved address cards shown above shipping form (click to select and populate)
+- "Use a different address" link to clear and enter new address manually
+- Replaced hardcoded `<option>` elements with shared `NIGERIAN_STATES` from `nigerianStates.ts`
+
+### Styles
+- `.addresses-page` grid layout, `.address-card` with default badge, skeleton loading, empty state styles
+- `.address-form` modal form styles (form groups, rows, checkbox, error states)
+- `.saved-addresses-picker` and `.saved-address-card` styles for checkout page
+- `skeleton-pulse` keyframe animation
+
+## [0.12.0] - 2026-02-09
+
+### Added — Cart & Orders Integration (Service 5)
+- Cart store (`cartStore.ts`) connected to real backend API
+- `cartService.ts` — real API client replacing `mockCartApi.ts`
+- `orderService.ts` — order creation, listing, detail, cancellation
+- `checkoutService` — cart validation before order placement
+- Cart sidebar, Cart page, and Checkout page connected to live backend
+- Order history and order detail pages connected to real API
+- Guest cart with session ID + merge on login
+- Currency normalized to NGN (₦) across all cart and order displays
+
 ## [0.11.0] - 2026-02-09
 
 ### Changed — Electro Template Home Page Redesign

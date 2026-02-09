@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface FailureState {
@@ -8,7 +8,9 @@ interface FailureState {
 
 export default function CheckoutFailurePage() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const failureData = location.state as FailureState | null;
+  const reference = searchParams.get('reference') || searchParams.get('trxref');
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -19,7 +21,12 @@ export default function CheckoutFailurePage() {
     if (failureData?.errorMessage) {
       return failureData.errorMessage;
     }
-    
+
+    // Paystack redirect with reference — payment was abandoned or failed
+    if (reference) {
+      return 'Your payment could not be completed. Your order has been saved — you can retry payment from your orders page.';
+    }
+
     // Default error messages based on error codes
     switch (failureData?.errorCode) {
       case 'PAYMENT_DECLINED':
@@ -41,7 +48,7 @@ export default function CheckoutFailurePage() {
     <div className="checkout-failure-page">
       <div className="container">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="failure-content">
           <div className="failure-icon">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -50,16 +57,16 @@ export default function CheckoutFailurePage() {
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           </div>
-          
+
           <h1>Order Could Not Be Completed</h1>
           <p className="failure-message">{getErrorMessage()}</p>
-          
+
           {failureData?.errorCode && (
             <div className="error-code">
               Error Code: <code>{failureData.errorCode}</code>
             </div>
           )}
-          
+
           <div className="troubleshooting">
             <h3>What You Can Try</h3>
             <ul>
@@ -112,7 +119,7 @@ export default function CheckoutFailurePage() {
               Return to Cart
             </Link>
           </div>
-          
+
           <div className="support-section">
             <h3>Need Help?</h3>
             <p>Our support team is available 24/7 to assist you.</p>
