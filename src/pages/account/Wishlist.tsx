@@ -79,10 +79,10 @@ export default function WishlistPage() {
 
                       return (
                         <>
-                          ${displayPrice.toFixed(2)}
+                          ₦{displayPrice.toLocaleString()}
                           {hasSale && (
                             <span className="compare-price">
-                              ${basePrice.toFixed(2)}
+                              ₦{basePrice.toLocaleString()}
                             </span>
                           )}
                         </>

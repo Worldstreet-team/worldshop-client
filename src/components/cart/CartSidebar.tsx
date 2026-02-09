@@ -26,7 +26,7 @@ export default function CartSidebar() {
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className={`sidebar-overlay ${isCartSidebarOpen ? 'active' : ''}`}
         onClick={closeCartSidebar}
       />
@@ -35,7 +35,7 @@ export default function CartSidebar() {
       <div className={`cart-sidebar ${isCartSidebarOpen ? 'open' : ''}`}>
         <div className="cart-sidebar-header">
           <h3>Shopping Cart</h3>
-          <button 
+          <button
             className="close-btn"
             onClick={closeCartSidebar}
             aria-label="Close cart"
@@ -49,8 +49,8 @@ export default function CartSidebar() {
             <div className="cart-empty">
               <span className="material-icons">shopping_cart</span>
               <p>Your cart is empty</p>
-              <Link 
-                to="/products" 
+              <Link
+                to="/products"
                 className="btn btn-primary"
                 onClick={closeCartSidebar}
               >
@@ -62,13 +62,13 @@ export default function CartSidebar() {
               {cart.items.map((item) => (
                 <li key={item.id} className="cart-item">
                   <div className="cart-item-image">
-                    <img 
-                      src={item.product.images[0]?.url || '/images/placeholder.jpg'} 
-                      alt={item.product.name} 
+                    <img
+                      src={item.product.images[0]?.url || '/images/placeholder.jpg'}
+                      alt={item.product.name}
                     />
                   </div>
                   <div className="cart-item-details">
-                    <Link 
+                    <Link
                       to={`/products/${item.product.slug}`}
                       className="cart-item-name"
                       onClick={closeCartSidebar}
@@ -82,7 +82,7 @@ export default function CartSidebar() {
                       ₦{item.price.toLocaleString()}
                     </div>
                     <div className="cart-item-quantity">
-                      <button 
+                      <button
                         onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                         disabled={isUpdating || item.quantity <= 1}
                         aria-label="Decrease quantity"
@@ -90,7 +90,7 @@ export default function CartSidebar() {
                         -
                       </button>
                       <span>{item.quantity}</span>
-                      <button 
+                      <button
                         onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                         disabled={isUpdating}
                         aria-label="Increase quantity"
@@ -99,7 +99,7 @@ export default function CartSidebar() {
                       </button>
                     </div>
                   </div>
-                  <button 
+                  <button
                     className="cart-item-remove"
                     onClick={() => handleRemove(item.id)}
                     disabled={isUpdating}
@@ -120,15 +120,15 @@ export default function CartSidebar() {
               <span className="subtotal-amount">₦{cart.subtotal.toLocaleString()}</span>
             </div>
             <div className="cart-actions">
-              <Link 
-                to="/cart" 
+              <Link
+                to="/cart"
                 className="btn btn-secondary"
                 onClick={closeCartSidebar}
               >
                 View Cart
               </Link>
-              <Link 
-                to="/checkout" 
+              <Link
+                to="/checkout"
                 className="btn btn-primary"
                 onClick={closeCartSidebar}
               >

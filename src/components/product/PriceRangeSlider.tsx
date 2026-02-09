@@ -55,7 +55,7 @@ export default function PriceRangeSlider({
 
   const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!trackRef.current) return;
-    
+
     const rect = trackRef.current.getBoundingClientRect();
     const percentage = ((e.clientX - rect.left) / rect.width) * 100;
     const clickValue = getValueFromPercentage(percentage);
@@ -141,7 +141,7 @@ export default function PriceRangeSlider({
   return (
     <div className={`price-range-slider ${className}`}>
       {/* Slider Track */}
-      <div 
+      <div
         ref={trackRef}
         className="price-range-slider-track"
         onClick={handleTrackClick}

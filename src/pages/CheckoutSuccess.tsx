@@ -34,7 +34,7 @@ export default function CheckoutSuccessPage() {
     const today = new Date();
     const minDays = 3;
     const maxDays = 5;
-    
+
     const addBusinessDays = (date: Date, days: number) => {
       const result = new Date(date);
       let added = 0;
@@ -46,18 +46,18 @@ export default function CheckoutSuccessPage() {
       }
       return result;
     };
-    
+
     const minDate = addBusinessDays(today, minDays);
     const maxDate = addBusinessDays(today, maxDays);
-    
+
     const formatDate = (date: Date) => {
-      return date.toLocaleDateString('en-US', { 
+      return date.toLocaleDateString('en-US', {
         weekday: 'short',
-        month: 'short', 
-        day: 'numeric' 
+        month: 'short',
+        day: 'numeric'
       });
     };
-    
+
     return `${formatDate(minDate)} - ${formatDate(maxDate)}`;
   };
 
@@ -65,7 +65,7 @@ export default function CheckoutSuccessPage() {
     <div className="checkout-success-page">
       <div className="container">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="success-content">
           <div className="success-icon">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -73,12 +73,12 @@ export default function CheckoutSuccessPage() {
               <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          
+
           <h1>Thank You for Your Order!</h1>
           <p className="success-message">
             Your order has been placed successfully. We'll send you a confirmation email shortly.
           </p>
-          
+
           <div className="order-card">
             <div className="order-card-header">
               <h2>Order Details</h2>
@@ -90,10 +90,10 @@ export default function CheckoutSuccessPage() {
               </div>
               <div className="order-detail">
                 <span className="label">Order Date</span>
-                <span className="value">{new Date().toLocaleDateString('en-US', { 
+                <span className="value">{new Date().toLocaleDateString('en-US', {
                   year: 'numeric',
-                  month: 'long', 
-                  day: 'numeric' 
+                  month: 'long',
+                  day: 'numeric'
                 })}</span>
               </div>
               <div className="order-detail">
@@ -106,7 +106,7 @@ export default function CheckoutSuccessPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="next-steps">
             <h3>What's Next?</h3>
             <ul>
@@ -155,7 +155,7 @@ export default function CheckoutSuccessPage() {
               Continue Shopping
             </Link>
           </div>
-          
+
           <div className="support-note">
             <p>
               Have questions about your order?{' '}

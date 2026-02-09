@@ -71,15 +71,15 @@ export default function AdminOrderDetail() {
             <h2>Summary</h2>
             <div className="summary-row">
               <span>Subtotal</span>
-              <span>$0.00</span>
+              <span>₦0</span>
             </div>
             <div className="summary-row">
               <span>Shipping</span>
-              <span>$0.00</span>
+              <span>₦0</span>
             </div>
             <div className="summary-row total">
               <span>Total</span>
-              <span>$0.00</span>
+              <span>₦0</span>
             </div>
           </section>
 

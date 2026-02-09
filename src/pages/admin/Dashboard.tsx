@@ -2,7 +2,7 @@ export default function AdminDashboard() {
   // Mock stats - will be replaced with API data
   const stats = [
     { label: 'Total Orders', value: '0', icon: 'shopping_cart', change: '+0%' },
-    { label: 'Total Revenue', value: '$0.00', icon: 'payments', change: '+0%' },
+    { label: 'Total Revenue', value: '₦0', icon: 'payments', change: '+0%' },
     { label: 'Products', value: '0', icon: 'inventory', change: '0' },
     { label: 'Customers', value: '0', icon: 'people', change: '+0%' },
   ];

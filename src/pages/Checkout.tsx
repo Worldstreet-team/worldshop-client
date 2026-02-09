@@ -97,14 +97,14 @@ export default function CheckoutPage() {
 
   const handleContinueToReview = async () => {
     if (!validateShipping()) return;
-    
+
     setIsValidating(true);
     setValidationIssues([]);
-    
+
     try {
       // Validate cart with backend (check stock, prices)
       const response = await checkoutService.validateCart();
-      
+
       if (!response.data.valid) {
         setValidationIssues(response.data.issues || ['Unable to proceed with checkout']);
         addToast({ message: 'Please review the issues below', type: 'error' });
@@ -112,7 +112,7 @@ export default function CheckoutPage() {
         await fetchCart();
         return;
       }
-      
+
       setStep(2);
       window.scrollTo(0, 0);
     } catch (error) {
@@ -124,7 +124,7 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     setIsProcessing(true);
-    
+
     try {
       // Create the shipping address object for the API
       const shippingAddress: ShippingAddress = {
@@ -138,21 +138,21 @@ export default function CheckoutPage() {
         country: shipping.country,
         postalCode: shipping.postalCode || undefined,
       };
-      
+
       // Create order via API
       const response = await orderService.createOrder({
         shippingAddress,
       });
-      
+
       const order = response.data;
-      
+
       // Navigate to success page with order info
-      navigate('/checkout/success', { 
-        state: { 
+      navigate('/checkout/success', {
+        state: {
           orderNumber: order.orderNumber,
           orderId: order.id,
           total: order.total
-        } 
+        }
       });
     } catch (error) {
       // Navigate to failure page with error info
@@ -178,7 +178,7 @@ export default function CheckoutPage() {
     <div className="checkout-page">
       <div className="container">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <h1>Checkout</h1>
 
         {/* Checkout Steps Indicator */}
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="email">Email *</label>
@@ -272,7 +272,7 @@ export default function CheckoutPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="street">Street Address *</label>
                     <input
@@ -285,7 +285,7 @@ export default function CheckoutPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="apartment">Apartment, suite, etc. (optional)</label>
                     <input
@@ -297,7 +297,7 @@ export default function CheckoutPage() {
                       placeholder="Apt 4B"
                     />
                   </div>
-                  
+
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="city">City *</label>
@@ -372,7 +372,7 @@ export default function CheckoutPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="form-group">
                     <label htmlFor="country">Country</label>
                     <input
@@ -384,7 +384,7 @@ export default function CheckoutPage() {
                       disabled
                     />
                   </div>
-                  
+
                   <div className="step-actions">
                     <Link to="/cart" className="btn btn-outline">
                       Back to Cart
@@ -401,7 +401,7 @@ export default function CheckoutPage() {
             {step === 2 && (
               <div className="checkout-step review-step">
                 <h2>Review Your Order</h2>
-                
+
                 <div className="review-section">
                   <div className="review-header">
                     <h3>Shipping Address</h3>
@@ -416,7 +416,7 @@ export default function CheckoutPage() {
                     <p>{shipping.phone}</p>
                   </div>
                 </div>
-                
+
                 <div className="review-section">
                   <h3>Order Items</h3>
                   <div className="review-items">
@@ -434,13 +434,13 @@ export default function CheckoutPage() {
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="step-actions">
                   <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>
                     Back
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="btn btn-primary btn-lg"
                     onClick={handlePlaceOrder}
                     disabled={isProcessing}
