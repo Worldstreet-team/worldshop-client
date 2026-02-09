@@ -1,44 +1,13 @@
 import { api } from './api';
 import type {
   Product,
-  ProductImage,
-  ProductVariant,
   Category,
   Review,
   ProductFilters
 } from '@/types/product.types';
 import type { ApiResponse, PaginatedResponse } from '@/types/common.types';
 
-// ─── Field mapping helpers ──────────────────────────────────────
-// Backend Prisma fields → Frontend interface fields
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function mapProduct(raw: any): Product {
-  return {
-    ...raw,
-    price: raw.basePrice ?? raw.price,
-    compareAtPrice: raw.salePrice ?? raw.compareAtPrice,
-    averageRating: raw.avgRating ?? raw.averageRating ?? 0,
-    shortDescription: raw.shortDesc ?? raw.shortDescription,
-    sku: raw.stockKeepingUnit ?? raw.sku ?? '',
-    images: (raw.images ?? []).map((img: any, i: number): ProductImage => ({
-      id: img.id ?? `img-${i}`,
-      url: img.url,
-      alt: img.alt ?? raw.name,
-      isPrimary: img.isPrimary ?? i === 0,
-      sortOrder: img.sortOrder ?? i,
-    })),
-    variants: (raw.variants ?? []).map((v: any): ProductVariant => ({
-      ...v,
-      sku: v.stockKeepingUnit ?? v.sku ?? '',
-    })),
-  };
-}
-
-function mapProducts(rawList: any[]): Product[] {
-  return rawList.map(mapProduct);
-}
-/* eslint-enable @typescript-eslint/no-explicit-any */
+// No field mapping needed — frontend types match backend Prisma fields directly.
 
 // ─── Product Service ────────────────────────────────────────────
 
@@ -49,37 +18,37 @@ export const productService = {
       '/products',
       filters as Record<string, unknown>,
     );
-    return { data: mapProducts(res.data), pagination: res.pagination };
+    return { data: res.data, pagination: res.pagination };
   },
 
   // Get single product by slug
   getProductBySlug: async (slug: string): Promise<Product | null> => {
     const res = await api.get<ApiResponse<Product>>(`/products/${slug}`);
-    return res.data ? mapProduct(res.data) : null;
+    return res.data ?? null;
   },
 
   // Get single product by ID
   getProductById: async (id: string): Promise<Product | null> => {
     const res = await api.get<ApiResponse<Product>>(`/products/id/${id}`);
-    return res.data ? mapProduct(res.data) : null;
+    return res.data ?? null;
   },
 
   // Get featured products
   getFeaturedProducts: async (limit = 8): Promise<Product[]> => {
     const res = await api.get<ApiResponse<Product[]>>('/products/featured', { limit });
-    return mapProducts(res.data);
+    return res.data;
   },
 
   // Get related products
   getRelatedProducts: async (productId: string, limit = 8): Promise<Product[]> => {
     const res = await api.get<ApiResponse<Product[]>>(`/products/${productId}/related`, { limit });
-    return mapProducts(res.data);
+    return res.data;
   },
 
   // Search products
   searchProducts: async (query: string, limit = 10): Promise<Product[]> => {
     const res = await api.get<ApiResponse<Product[]>>('/products/search', { q: query, limit });
-    return mapProducts(res.data);
+    return res.data;
   },
 
   // Get price range for filter UI
@@ -106,19 +75,13 @@ export const productService = {
 // ─── Category Service ───────────────────────────────────────────
 
 export const categoryService = {
-  // Get all categories
+  // Get all categories (flat list with product count)
   getCategories: async (): Promise<Category[]> => {
     const res = await api.get<ApiResponse<Category[]>>('/categories');
     return res.data;
   },
 
-  // Get category tree (hierarchical)
-  getCategoryTree: async (): Promise<Category[]> => {
-    const res = await api.get<ApiResponse<Category[]>>('/categories/tree');
-    return res.data;
-  },
-
-  // Get featured categories for homepage
+  // Get featured categories for homepage (same as getCategories but limited)
   getFeaturedCategories: async (limit = 6): Promise<Category[]> => {
     const res = await api.get<ApiResponse<Category[]>>('/categories/featured', { limit });
     return res.data;
@@ -130,10 +93,6 @@ export const categoryService = {
       `/categories/${slug}`,
       filters as Record<string, unknown>,
     );
-    // Map products in the nested response
-    if (res.data?.products?.data) {
-      res.data.products.data = mapProducts(res.data.products.data);
-    }
     return res.data;
   },
 

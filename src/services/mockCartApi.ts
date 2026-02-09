@@ -35,15 +35,15 @@ const getProductById = (productId: string): Product | undefined => {
 const calculateTotals = (items: CartItem[]): Partial<Cart> => {
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  
+
   // Simple tax calculation (8%)
   const tax = subtotal * 0.08;
-  
+
   // Free shipping over $50
   const shipping = subtotal >= 50 ? 0 : 5.99;
-  
+
   const total = subtotal + tax + shipping;
-  
+
   return {
     itemCount,
     subtotal: Math.round(subtotal * 100) / 100,
@@ -64,7 +64,7 @@ const getStoredCart = (): Cart => {
       // Invalid JSON, create new cart
     }
   }
-  
+
   // Create new empty cart
   const cartId = getCartId();
   const now = new Date().toISOString();
@@ -107,44 +107,44 @@ export const mockCartApi = {
    */
   async addToCart(request: AddToCartRequest): Promise<{ data: Cart }> {
     await delay(300);
-    
+
     const cart = getStoredCart();
     const product = getProductById(request.productId);
-    
+
     if (!product) {
       throw new Error('Product not found');
     }
-    
+
     // Check stock
     if (product.stock < request.quantity) {
       throw new Error('Insufficient stock');
     }
-    
+
     // Get variant if specified
-    const variant = request.variantId 
+    const variant = request.variantId
       ? product.variants?.find(v => v.id === request.variantId)
       : undefined;
-    
+
     // Check if item already exists in cart
-    const existingItemIndex = cart.items.findIndex(item => 
-      item.productId === request.productId && 
+    const existingItemIndex = cart.items.findIndex(item =>
+      item.productId === request.productId &&
       item.variantId === request.variantId
     );
-    
+
     const price = variant?.price ?? product.salePrice ?? product.basePrice;
     const now = new Date().toISOString();
-    
+
     if (existingItemIndex > -1) {
       // Update existing item quantity
       const existingItem = cart.items[existingItemIndex];
       const newQuantity = existingItem.quantity + request.quantity;
-      
+
       // Check stock for new quantity
       const stockLimit = variant?.stock ?? product.stock;
       if (newQuantity > stockLimit) {
         throw new Error('Insufficient stock');
       }
-      
+
       cart.items[existingItemIndex] = {
         ...existingItem,
         quantity: newQuantity,
@@ -166,14 +166,14 @@ export const mockCartApi = {
         createdAt: now,
         updatedAt: now,
       };
-      
+
       cart.items.push(newItem);
     }
-    
+
     // Recalculate totals
     const totals = calculateTotals(cart.items);
     Object.assign(cart, totals);
-    
+
     saveCart(cart);
     return { data: cart };
   },
@@ -183,27 +183,27 @@ export const mockCartApi = {
    */
   async updateCartItem(itemId: string, request: UpdateCartItemRequest): Promise<{ data: Cart }> {
     await delay(250);
-    
+
     const cart = getStoredCart();
     const itemIndex = cart.items.findIndex(item => item.id === itemId);
-    
+
     if (itemIndex === -1) {
       throw new Error('Cart item not found');
     }
-    
+
     const item = cart.items[itemIndex];
     const product = getProductById(item.productId);
-    
+
     if (!product) {
       throw new Error('Product not found');
     }
-    
+
     // Check stock
     const stockLimit = item.variant?.stock ?? product.stock;
     if (request.quantity > stockLimit) {
       throw new Error('Insufficient stock');
     }
-    
+
     if (request.quantity <= 0) {
       // Remove item if quantity is 0 or less
       cart.items.splice(itemIndex, 1);
@@ -217,11 +217,11 @@ export const mockCartApi = {
         updatedAt: now,
       };
     }
-    
+
     // Recalculate totals
     const totals = calculateTotals(cart.items);
     Object.assign(cart, totals);
-    
+
     saveCart(cart);
     return { data: cart };
   },
@@ -231,20 +231,20 @@ export const mockCartApi = {
    */
   async removeCartItem(itemId: string): Promise<{ data: Cart }> {
     await delay(200);
-    
+
     const cart = getStoredCart();
     const itemIndex = cart.items.findIndex(item => item.id === itemId);
-    
+
     if (itemIndex === -1) {
       throw new Error('Cart item not found');
     }
-    
+
     cart.items.splice(itemIndex, 1);
-    
+
     // Recalculate totals
     const totals = calculateTotals(cart.items);
     Object.assign(cart, totals);
-    
+
     saveCart(cart);
     return { data: cart };
   },
@@ -254,10 +254,10 @@ export const mockCartApi = {
    */
   async clearCart(): Promise<{ data: { message: string } }> {
     await delay(200);
-    
+
     localStorage.removeItem(CART_STORAGE_KEY);
     localStorage.removeItem('cartId');
-    
+
     return { data: { message: 'Cart cleared successfully' } };
   },
 
@@ -266,26 +266,26 @@ export const mockCartApi = {
    */
   async applyCoupon(code: string): Promise<{ data: Cart }> {
     await delay(300);
-    
+
     const cart = getStoredCart();
-    
+
     // Mock coupon validation
     const validCoupons: Record<string, number> = {
       'SAVE10': 0.10,
       'SAVE20': 0.20,
       'WELCOME': 0.15,
     };
-    
+
     const discount = validCoupons[code.toUpperCase()];
-    
+
     if (!discount) {
       throw new Error('Invalid coupon code');
     }
-    
+
     cart.couponCode = code.toUpperCase();
     cart.discount = Math.round(cart.subtotal * discount * 100) / 100;
     cart.total = Math.round((cart.subtotal + cart.tax + cart.shipping - cart.discount) * 100) / 100;
-    
+
     saveCart(cart);
     return { data: cart };
   },
@@ -295,13 +295,13 @@ export const mockCartApi = {
    */
   async removeCoupon(): Promise<{ data: Cart }> {
     await delay(200);
-    
+
     const cart = getStoredCart();
-    
+
     cart.couponCode = undefined;
     cart.discount = 0;
     cart.total = Math.round((cart.subtotal + cart.tax + cart.shipping) * 100) / 100;
-    
+
     saveCart(cart);
     return { data: cart };
   },

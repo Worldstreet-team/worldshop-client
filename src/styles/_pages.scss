@@ -2403,55 +2403,55 @@
   }
 
   // Newsletter Section
-  .newsletter-section {
-    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%) !important;
-    color: $white;
-  }
+  // .newsletter-section {
+  //   background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%) !important;
+  //   color: $white;
+  // }
 
-  .newsletter-content {
-    text-align: center;
-    max-width: 600px;
-    margin: 0 auto;
+  // .newsletter-content {
+  //   text-align: center;
+  //   max-width: 600px;
+  //   margin: 0 auto;
 
-    h2 {
-      color: $white;
-      margin-bottom: $spacing-sm;
-    }
+  //   h2 {
+  //     color: $white;
+  //     margin-bottom: $spacing-sm;
+  //   }
 
-    p {
-      opacity: 0.9;
-      margin-bottom: $spacing-lg;
-    }
-  }
+  //   p {
+  //     opacity: 0.9;
+  //     margin-bottom: $spacing-lg;
+  //   }
+  // }
 
-  .newsletter-form {
-    display: flex;
-    gap: $spacing-md;
-    max-width: 500px;
-    margin: 0 auto;
+  // .newsletter-form {
+  //   display: flex;
+  //   gap: $spacing-md;
+  //   max-width: 500px;
+  //   margin: 0 auto;
 
-    @include mobile {
-      flex-direction: column;
-    }
-  }
+  //   @include mobile {
+  //     flex-direction: column;
+  //   }
+  // }
 
-  .newsletter-input {
-    flex: 1;
-    padding: $spacing-md $spacing-lg;
-    border: none;
-    border-radius: $radius-md;
-    font-size: $font-size-base;
-    background: rgba(255, 255, 255, 0.95);
+  // .newsletter-input {
+  //   flex: 1;
+  //   padding: $spacing-md $spacing-lg;
+  //   border: none;
+  //   border-radius: $radius-md;
+  //   font-size: $font-size-base;
+  //   background: rgba(255, 255, 255, 0.95);
 
-    &::placeholder {
-      color: $text-secondary;
-    }
+  //   &::placeholder {
+  //     color: $text-secondary;
+  //   }
 
-    &:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-    }
-  }
+  //   &:focus {
+  //     outline: none;
+  //     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+  //   }
+  // }
 }
 
 // ============================================
@@ -2600,7 +2600,7 @@
   .products-area {
     .products-toolbar {
       @include flex-between;
-      margin-bottom: $spacing-lg;
+      margin-bottom: $spacing-xl;
 
       @include mobile {
         flex-direction: column;

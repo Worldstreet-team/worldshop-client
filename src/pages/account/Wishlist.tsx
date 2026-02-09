@@ -56,9 +56,9 @@ export default function WishlistPage() {
             {items.map((item) => (
               <div key={item.id} className="wishlist-item">
                 <div className="wishlist-item-image">
-                  <img 
-                    src={item.product.images[0]?.url || '/images/placeholder.jpg'} 
-                    alt={item.product.name} 
+                  <img
+                    src={item.product.images[0]?.url || '/images/placeholder.jpg'}
+                    alt={item.product.name}
                   />
                 </div>
                 <div className="wishlist-item-info">
@@ -74,14 +74,14 @@ export default function WishlistPage() {
                     )}
                   </div>
                   <div className="wishlist-item-actions">
-                    <button 
+                    <button
                       className="btn btn-primary btn-sm"
                       onClick={() => handleAddToCart(item.productId)}
                       disabled={item.product.stock === 0}
                     >
                       {item.product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                     </button>
-                    <button 
+                    <button
                       className="btn btn-text text-danger"
                       onClick={() => handleRemove(item.productId)}
                     >
