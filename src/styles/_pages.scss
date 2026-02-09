@@ -850,6 +850,97 @@
     font-size: $font-size-xl;
   }
 
+  // ─── Saved Addresses Picker ──────────────
+  .saved-addresses-loading {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-md 0;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+  }
+
+  .saved-addresses-picker {
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+    border-bottom: 1px solid $border-light;
+
+    .picker-label {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+      margin: 0 0 $spacing-sm;
+    }
+  }
+
+  .saved-addresses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: $spacing-sm;
+  }
+
+  .saved-address-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: $spacing-md;
+    border: 2px solid $border-color;
+    border-radius: $radius-md;
+    background: $white;
+    cursor: pointer;
+    text-align: left;
+    font-size: $font-size-sm;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &:hover {
+      border-color: $gray-400;
+    }
+
+    &.selected {
+      border-color: $primary-color;
+      background: rgba($primary-color, 0.03);
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.15);
+    }
+
+    .default-tag {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      color: $primary-color;
+      margin-bottom: 2px;
+    }
+
+    .addr-name {
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+
+    .addr-line {
+      color: $text-secondary;
+    }
+
+    .addr-phone {
+      color: $text-secondary;
+      margin-top: 2px;
+    }
+  }
+
+  .use-new-address {
+    display: inline-block;
+    margin-top: $spacing-sm;
+    font-size: $font-size-sm;
+    color: $primary-color;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+
+    &:hover {
+      color: $primary-dark;
+    }
+  }
+
   .form-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1575,8 +1666,314 @@
 }
 
 .order-history-page,
-.addresses-page,
-.wishlist-page,
+.wishlist-page {
+  padding: $spacing-xl 0 $spacing-3xl;
+  min-height: 60vh;
+}
+
+// ============================================
+// ADDRESSES PAGE
+// ============================================
+
+.addresses-page {
+  padding: $spacing-xl 0 $spacing-3xl;
+  min-height: 60vh;
+
+  .page-header {
+    margin-bottom: $spacing-lg;
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+      color: $text-secondary;
+      text-decoration: none;
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-md;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: $primary-dark;
+      }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: $font-size-2xl;
+    }
+  }
+
+  .addresses-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
+    flex-wrap: wrap;
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+    }
+  }
+
+  .addresses-limit-notice {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin: 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: $spacing-3xl $spacing-xl;
+
+    svg {
+      color: $gray-400;
+      margin-bottom: $spacing-lg;
+    }
+
+    h2 {
+      margin: 0 0 $spacing-sm;
+      color: $text-primary;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0 0 $spacing-lg;
+    }
+  }
+}
+
+.addresses-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-lg;
+
+  @include md-down {
+    grid-template-columns: 1fr;
+  }
+}
+
+.address-card {
+  @include card;
+  padding: $spacing-lg;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &:hover {
+    box-shadow: $shadow-md;
+  }
+
+  &--default {
+    border-color: $primary-color;
+  }
+
+  &--skeleton {
+    padding: $spacing-xl;
+
+    .skeleton {
+      height: 16px;
+      background: $gray-200;
+      border-radius: $radius-sm;
+      margin-bottom: $spacing-sm;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+.address-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+
+  h3 {
+    margin: 0;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+  }
+}
+
+.default-badge {
+  display: inline-block;
+  padding: 2px $spacing-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: $secondary-color;
+  background: $primary-color;
+  border-radius: $radius-sm;
+}
+
+.address-card-body {
+  margin-bottom: $spacing-md;
+
+  p {
+    margin: 0 0 2px;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    line-height: 1.5;
+  }
+
+  .address-name {
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
+
+  .address-phone {
+    margin-top: $spacing-xs;
+    color: $text-primary;
+  }
+}
+
+.address-card-actions {
+  display: flex;
+  gap: $spacing-sm;
+  padding-top: $spacing-sm;
+  border-top: 1px solid $border-light;
+
+  .btn-text {
+    font-size: $font-size-sm;
+    padding: $spacing-xs $spacing-sm;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $text-secondary;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $primary-dark;
+    }
+
+    &.text-danger:hover {
+      color: $danger-color;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// ─── Address Form Modal ─────────────────────
+
+.address-form {
+  .form-group {
+    margin-bottom: $spacing-md;
+
+    label {
+      display: block;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: $text-primary;
+      margin-bottom: $spacing-xs;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: $spacing-sm $spacing-md;
+      font-size: $font-size-sm;
+      border: 1px solid $border-light;
+      border-radius: $radius-sm;
+      background-color: $white;
+      transition: border-color $transition-fast;
+      color: $text-primary;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.15);
+      }
+
+      &:disabled {
+        background-color: $gray-100;
+        color: $text-muted;
+        cursor: not-allowed;
+      }
+
+      &.input-error {
+        border-color: $danger-color;
+      }
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    .field-error {
+      display: block;
+      font-size: $font-size-xs;
+      color: $danger-color;
+      margin-top: 4px;
+    }
+  }
+
+  .form-group-checkbox {
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      cursor: pointer;
+      font-size: $font-size-sm;
+      color: $text-primary;
+
+      input[type='checkbox'] {
+        width: auto;
+        accent-color: $primary-color;
+      }
+    }
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+
+    @include sm-down {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-row-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+
+    @include md-down {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @include sm-down {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.address-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  padding-top: $spacing-lg;
+  border-top: 1px solid $border-light;
+}
+
+@keyframes skeleton-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
 // ============================================
 // PROFILE PAGE — Modern Clean eCommerce Design
 // ============================================

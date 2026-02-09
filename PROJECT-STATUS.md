@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
 **Last Updated:** February 9, 2026  
-**Version:** 0.10.0  
+**Version:** 0.11.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -53,7 +53,7 @@
 ### Services Layer
 - **api.ts** - Base Axios configuration
 - **profileService.ts** - Profile API (GET/PATCH /profile on worldshop-server) ✅
-- **mockApi.ts** - Mock API for banners and reviews
+- **mockApi.ts** - Mock API for reviews (banners no longer used by Home page)
 - **mockCartApi.ts** - Mock cart API
 - **cartService.ts** - Cart operations
 - **productService.ts** - Product operations
@@ -104,7 +104,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] **SearchBar** - Search input with suggestions
 
 #### Product Components (`/src/components/product/`)
-- [x] **ProductCard** - Product display card with quick actions
+- [x] **ProductCard** - Electro-style product card (category → name → rating → image → price + cart icon)
 - [x] **ProductGrid** - Responsive product grid
 - [x] **ProductFilters** - Category, price, rating filters
 - [x] **ProductQuickView** - Quick view modal
@@ -134,7 +134,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 ### Phase 4: Customer Pages
 
 #### Public Pages
-- [x] **Home** (`/`) - Homepage with featured products, categories
+- [x] **Home** (`/`) - Electro template home page (hero slider, promo banners, deals/tabs, categories, featured products, features strip)
 - [x] **ProductListing** (`/products`) - Product catalog with filters and pagination
 - [x] **ProductDetail** (`/products/:slug`) - Detailed product view with reviews
 - [x] **Category** (`/category/:slug`) - Category-specific products
@@ -189,7 +189,27 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] Cart sidebar mobile optimizations
 - [x] Category cards with image overlays and animations
 
-### Phase 7: Error Handling
+### Phase 7: Electro Template UI Redesign ✅
+- [x] Home page fully redesigned to match Electro HTML template
+  - [x] Hero slider with static background, product images per slide, CSS animations
+  - [x] 3 rotating hero slides (smartwatches, new arrivals, premium electronics)
+  - [x] Promo banner cards (4 tiles)
+  - [x] Deals + countdown timer section
+  - [x] Tabbed product grid (Featured / On Sale / Top Rated) with bordered cells
+  - [x] Category showcase with image cards
+  - [x] Full-width promotional banner
+  - [x] Featured products section
+  - [x] Features strip (free shipping, money back, support, secure payment)
+- [x] ProductCard restyled to Electro template design
+  - [x] Layout: category → name → rating → image → price + cart icon
+  - [x] Blue product name (#2874f0), icon-only yellow cart button
+  - [x] Body/footer card structure
+  - [x] No border-radius, contain images, hover shadow elevation
+  - [x] List variant updated for new structure
+- [x] Removed bannerApi dependency (hero uses static data)
+- [x] Tab products grid bordered cells with responsive nth-child rules
+
+### Phase 8: Error Handling
 - [x] **NotFound** (`/404`) - 404 error page
 - [x] Global error boundaries
 - [x] API error handling
@@ -198,7 +218,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 
 ## 🚧 Pending Features
 
-### Phase 8: External Authentication Integration ✅
+### Phase 9: External Authentication Integration ✅
 - [x] External auth service integration (WorldStreet Identity)
 - [x] HttpOnly cookie-based JWT authentication
 - [x] Token verification on page load
@@ -208,19 +228,19 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] Auth state persistence (Zustand + localStorage)
 - [x] Production deployment at shop.worldstreetgold.com
 
-### Phase 9: Real API Integration (In Progress)
+### Phase 10: Real API Integration (In Progress)
 - [x] Profile API connected to worldshop-server (`GET /profile`, `PATCH /profile`)
 - [x] `profileService.ts` — real API client for profile endpoints
 - [x] Profile page fetches/updates real backend data
 - [x] `VITE_API_BASE_URL` configured for worldshop-server (`http://localhost:8000/api/v1`)
 - [x] Connect products and categories to worldshop-server
-- [ ] Replace remaining mock APIs with real backend endpoints (banners, reviews, cart, wishlist)
+- [ ] Replace remaining mock APIs with real backend endpoints (reviews, cart, wishlist)
 - [ ] Connect cart and orders to worldshop-server
 - [ ] API error handling and retries
 - [ ] Response caching strategies
 - [ ] Optimistic UI updates
 
-### Phase 10: Cart & Orders Backend
+### Phase 11: Cart & Orders Backend
 - [ ] Persistent cart storage (database)
 - [ ] Cart synchronization across sessions
 - [ ] Real payment gateway integration
@@ -230,7 +250,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Order tracking functionality
 - [ ] Email notifications for orders
 
-### Phase 11: Product Management
+### Phase 12: Product Management
 - [ ] Admin product image upload
 - [ ] Multiple image support
 - [ ] Product variants (size, color) management
@@ -239,7 +259,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Product import/export (CSV)
 - [ ] Bulk product editing
 
-### Phase 12: Advanced Search & Filters
+### Phase 13: Advanced Search & Filters
 - [ ] Full-text search with backend
 - [ ] Search suggestions/autocomplete
 - [ ] Advanced filter combinations
@@ -247,20 +267,20 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Recently viewed products
 - [ ] Related products algorithm
 
-### Phase 13: Reviews & Ratings
+### Phase 14: Reviews & Ratings
 - [ ] User review submission
 - [ ] Review moderation (admin)
 - [ ] Review voting (helpful/not helpful)
 - [ ] Image uploads in reviews
 - [ ] Verified purchase badges
 
-### Phase 14: Wishlist Enhancement
+### Phase 15: Wishlist Enhancement
 - [ ] Persistent wishlist (database)
 - [ ] Shareable wishlists
 - [ ] Email notifications for wishlist items on sale
 - [ ] Move to cart from wishlist
 
-### Phase 15: User Profile ✅
+### Phase 16: User Profile ✅
 - [x] Profile page connected to real backend API
 - [x] Two-column layout with avatar/sidebar + form area
 - [x] Profile auto-creates on first backend access
@@ -270,7 +290,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Account deletion
 - [ ] Export user data (GDPR compliance)
 
-### Phase 16: Performance Optimization
+### Phase 17: Performance Optimization
 - [ ] Image lazy loading
 - [ ] Image optimization (WebP, responsive images)
 - [ ] Code splitting optimization
@@ -278,7 +298,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Service worker for offline support
 - [ ] PWA capabilities
 
-### Phase 17: SEO & Analytics
+### Phase 18: SEO & Analytics
 - [ ] Meta tags for all pages
 - [ ] Open Graph tags
 - [ ] Structured data (JSON-LD)
@@ -287,7 +307,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Facebook Pixel integration
 - [ ] Product event tracking
 
-### Phase 18: Additional Features
+### Phase 19: Additional Features
 - [ ] Multi-language support (i18n)
 - [ ] Multi-currency support
 - [ ] Dark mode toggle
@@ -298,7 +318,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Loyalty points system
 - [ ] Live chat support
 
-### Phase 19: Testing
+### Phase 20: Testing
 - [ ] Unit tests (Jest/Vitest)
 - [ ] Component tests (React Testing Library)
 - [ ] E2E tests (Playwright/Cypress)
@@ -306,7 +326,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Accessibility testing
 - [ ] Performance testing
 
-### Phase 20: DevOps & Deployment
+### Phase 21: DevOps & Deployment
 - [ ] CI/CD pipeline setup
 - [ ] Staging environment
 - [ ] Production deployment
@@ -500,40 +520,44 @@ worldshop-client/
 ## 🎯 Next Steps
 
 ### Immediate Priorities
-1. **Products API Integration** - Connect product listing, detail, and home pages to real backend
-2. **Categories API Integration** - Connect category pages and sidebar filters
-3. **Cart Backend** - Persistent cart with guest session + auth merge
-4. **Addresses** - Connect address management page to backend
-5. **Checkout & Orders** - Full checkout flow with real order creation
+1. **Cart Backend (Service 5)** — Build Cart + CartItem Prisma models, cart service/controller/routes, connect frontend
+2. **Addresses (Service 6)** — Address model, CRUD endpoints, connect address management page
+3. **Orders & Checkout (Service 7)** — Order + OrderItem models, checkout flow with real order creation
+4. **Payments / Paystack (Service 8)** — Payment integration with Paystack (NGN ₦)
+5. **Home Page Polish** — Remaining Electro template sections (brand logos, more responsive tweaks)
 
 ### Short Term (1-2 weeks)
-- Paystack payment integration (NGN ₦)
-- Order history and tracking connected to real API
+- Complete cart → checkout → order → payment flow end-to-end
+- Replace mockCartApi with real backend cart endpoints
+- Connect order history and tracking to real API
+- Guest cart with session ID + merge on login
+
+### Medium Term (2-4 weeks)
+- Reviews and ratings system (Service 9)
+- Wishlist backend integration (Service 10)
 - Image uploads via Cloudflare
-- Replace all remaining mock APIs
-
-### Medium Term (1 month)
-- Reviews and ratings system
-- Wishlist backend integration
-- Advanced search with backend
 - Admin panel connected to real APIs
+- Advanced search with backend
 
-### Long Term (2-3 months)
+### Long Term (1-2 months)
 - Email notifications
-- Performance optimization
-- Testing suite
+- Performance optimization (lazy loading, WebP images)
+- Testing suite (Vitest + Playwright)
 - SEO and analytics
-- Production deployment
+- Production deployment + CI/CD
 
 ---
 
 ## 📝 Notes
 
+- **Home page** redesigned to match Electro HTML template (v0.11.0)
+- **ProductCard** restyled with Electro layout (category → name → image → price+cart icon)
 - **Profile** is connected to real worldshop-server API (Service 2 complete)
+- **Products & Categories** connected to real API (Services 3-4 complete)
 - **Authentication** uses external WorldStreet Identity with HttpOnly cookies (Service 1 complete)
-- Most pages still use **mock data** from `mockData.json` and mock API services
-- Cart state is stored in **browser memory** only (resets on refresh)
-- Remaining API calls need to be replaced with real endpoints as backend services are built
+- **Hero slider** uses static data — `bannerApi` removed, no mock API dependency
+- Cart state is stored in **browser memory** only (resets on refresh) — needs backend
+- Remaining mock APIs: cart (`mockCartApi`), reviews (`mockApi`)
 - Media storage will use **Cloudflare** (not Cloudinary)
 - Mobile responsiveness has been tested but needs more real-device testing
 - Accessibility features need audit
@@ -556,4 +580,4 @@ When adding new features:
 
 **Status:** 🟢 Active Development  
 **Build Status:** ✅ Passing  
-**Last Build:** February 8, 2026
+**Last Build:** February 9, 2026
