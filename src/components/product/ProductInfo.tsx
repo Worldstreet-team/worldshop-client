@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Product, ProductVariant } from '@/types/product.types';
 import { useCartStore } from '@/store/cartStore';
+import { toast } from '@/store/uiStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import RatingStars from '@/components/common/RatingStars';
 import Badge, { SaleBadge } from '@/components/common/Badge';
@@ -17,8 +18,10 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
     product.variants.length > 0 ? product.variants[0] : null
   );
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
 
-  const { addToCart, isUpdating } = useCartStore();
+  const { addToCart } = useCartStore();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
 
   const inWishlist = isInWishlist(product.id);
@@ -43,21 +46,38 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
   };
 
   const handleAddToCart = async () => {
-    await addToCart({
-      productId: product.id,
-      variantId: selectedVariant?.id,
-      quantity,
-    });
+    if (isAddingToCart || isBuyingNow) return;
+    setIsAddingToCart(true);
+    try {
+      await addToCart({
+        productId: product.id,
+        variantId: selectedVariant?.id,
+        quantity,
+      });
+      toast.success('Added to cart');
+    } catch (error) {
+      toast.error((error as { message?: string }).message || 'Failed to add to cart');
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   const handleBuyNow = async () => {
-    await addToCart({
-      productId: product.id,
-      variantId: selectedVariant?.id,
-      quantity,
-    });
-    // Navigate to checkout
-    window.location.href = '/checkout';
+    if (isBuyingNow || isAddingToCart) return;
+    setIsBuyingNow(true);
+    try {
+      await addToCart({
+        productId: product.id,
+        variantId: selectedVariant?.id,
+        quantity,
+      });
+      // Navigate to checkout
+      window.location.href = '/checkout';
+    } catch (error) {
+      toast.error((error as { message?: string }).message || 'Failed to add to cart');
+    } finally {
+      setIsBuyingNow(false);
+    }
   };
 
   const handleWishlistToggle = async () => {
@@ -171,9 +191,9 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
             type="button"
             className="btn btn-primary btn-lg product-info-add-to-cart"
             onClick={handleAddToCart}
-            disabled={!inStock || isUpdating}
+            disabled={!inStock || isAddingToCart || isBuyingNow}
           >
-            {isUpdating ? (
+            {isAddingToCart ? (
               <span className="btn-loading">
                 <svg className="spinner" viewBox="0 0 24 24" width="20" height="20">
                   <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" />
@@ -196,9 +216,18 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
             type="button"
             className="btn btn-secondary btn-lg product-info-buy-now"
             onClick={handleBuyNow}
-            disabled={!inStock || isUpdating}
+            disabled={!inStock || isAddingToCart || isBuyingNow}
           >
-            Buy Now
+            {isBuyingNow ? (
+              <span className="btn-loading">
+                <svg className="spinner" viewBox="0 0 24 24" width="20" height="20">
+                  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" />
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              'Buy Now'
+            )}
           </button>
         </div>
       </div>
