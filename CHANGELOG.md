@@ -4,6 +4,36 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.11.0] - 2026-02-09
+
+### Changed — Electro Template Home Page Redesign
+- Completely rewrote Home.tsx to replicate the Electro HTML template home page layout
+- Hero slider redesigned: static background image, product images per slide, CSS slide-in animations (slideInLeft/slideInRight), 3 rotating slides with 6s interval
+- Removed `bannerApi` dependency — hero now uses static `heroSlides` data (no API calls)
+- Promo banner cards section with 4 promotional tiles
+- Deals section with countdown timer + tabbed product grid (Featured / On Sale / Top Rated)
+- Tab products grid improved: bordered cells with padding instead of 1px gap, smart nth-child border removal per breakpoint
+- Category showcase section with image cards
+- Full-width promotional banner section
+- Featured products carousel section
+- Features strip (free shipping, money back, support, secure payment)
+
+### Changed — ProductCard Electro Redesign
+- Restructured ProductCard.tsx to match Electro template card layout
+- New layout order: category → product name → rating → image → price + cart icon
+- Body/footer structure: `.product-card-body` wraps content, `.product-card-footer` has price left + cart icon right
+- Product name color changed to Electro blue (#2874f0)
+- Cart button changed from full-width text to icon-only yellow circle (36px)
+- Removed border-radius on cards, images use `object-fit: contain` with transparent background
+- Hover shows shadow + z-index elevation (no transform)
+- List variant updated for new body/footer structure
+
+### Styles
+- Complete _product.scss card section rewrite (Electro-inspired styles)
+- New _pages.scss hero slider with static background, keyframe animations, slide-offer pricing display
+- Tab products grid bordered cell layout with responsive nth-child border rules
+- Removed `.hero-fallback` styles (no longer needed)
+
 ## [0.10.0] - 2026-02-09
 
 ### Added — Products & Categories Integration

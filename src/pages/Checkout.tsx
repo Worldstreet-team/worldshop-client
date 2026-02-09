@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { checkoutService, orderService } from '@/services/orderService';
+import { addressService } from '@/services/addressService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
+import { NIGERIAN_STATES, getStateDisplayName } from '@/utils/nigerianStates';
 import type { ShippingAddress } from '@/types/order.types';
+import type { Address } from '@/types/user.types';
 
 interface ShippingFormData {
   firstName: string;
@@ -44,6 +47,9 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [validationIssues, setValidationIssues] = useState<string[]>([]);
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -59,6 +65,51 @@ export default function CheckoutPage() {
       navigate('/cart');
     }
   }, [cart, navigate]);
+
+  // Fetch saved addresses
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setIsLoadingAddresses(true);
+    addressService.getAddresses()
+      .then(res => {
+        const addrs = res.data;
+        setSavedAddresses(addrs);
+        // Auto-select default address
+        const defaultAddr = addrs.find((a: Address) => a.isDefault);
+        if (defaultAddr) {
+          populateFromAddress(defaultAddr);
+          setSelectedAddressId(defaultAddr.id);
+        }
+      })
+      .catch(() => { /* silently ignore — user can still type manually */ })
+      .finally(() => setIsLoadingAddresses(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  const populateFromAddress = useCallback((addr: Address) => {
+    setShipping({
+      firstName: addr.firstName,
+      lastName: addr.lastName,
+      email: shipping.email, // keep email — not in address
+      phone: addr.phone,
+      street: addr.street,
+      apartment: addr.apartment || '',
+      city: addr.city,
+      state: addr.state,
+      postalCode: addr.postalCode || '',
+      country: addr.country || 'Nigeria',
+    });
+  }, [shipping.email]);
+
+  const handleSelectAddress = (addr: Address) => {
+    setSelectedAddressId(addr.id);
+    populateFromAddress(addr);
+  };
+
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setShipping({ ...initialShipping, email: shipping.email });
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -218,6 +269,39 @@ export default function CheckoutPage() {
             {step === 1 && (
               <div className="checkout-step shipping-step">
                 <h2>Shipping Address</h2>
+
+                {/* Saved Addresses Picker */}
+                {isLoadingAddresses ? (
+                  <div className="saved-addresses-loading">
+                    <span className="spinner" /> Loading saved addresses…
+                  </div>
+                ) : savedAddresses.length > 0 && (
+                  <div className="saved-addresses-picker">
+                    <p className="picker-label">Choose a saved address:</p>
+                    <div className="saved-addresses-grid">
+                      {savedAddresses.map(addr => (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          className={`saved-address-card${selectedAddressId === addr.id ? ' selected' : ''}`}
+                          onClick={() => handleSelectAddress(addr)}
+                        >
+                          {addr.isDefault && <span className="default-tag">Default</span>}
+                          <span className="addr-name">{addr.firstName} {addr.lastName}</span>
+                          <span className="addr-line">{addr.street}{addr.apartment ? `, ${addr.apartment}` : ''}</span>
+                          <span className="addr-line">{addr.city}, {addr.state}</span>
+                          <span className="addr-phone">{addr.phone}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {selectedAddressId && (
+                      <button type="button" className="btn-link use-new-address" onClick={handleUseNewAddress}>
+                        Use a different address
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <form onSubmit={(e) => { e.preventDefault(); handleContinueToReview(); }}>
                   <div className="form-row">
                     <div className="form-group">
@@ -321,43 +405,9 @@ export default function CheckoutPage() {
                         required
                       >
                         <option value="">Select State</option>
-                        <option value="Abia">Abia</option>
-                        <option value="Adamawa">Adamawa</option>
-                        <option value="Akwa Ibom">Akwa Ibom</option>
-                        <option value="Anambra">Anambra</option>
-                        <option value="Bauchi">Bauchi</option>
-                        <option value="Bayelsa">Bayelsa</option>
-                        <option value="Benue">Benue</option>
-                        <option value="Borno">Borno</option>
-                        <option value="Cross River">Cross River</option>
-                        <option value="Delta">Delta</option>
-                        <option value="Ebonyi">Ebonyi</option>
-                        <option value="Edo">Edo</option>
-                        <option value="Ekiti">Ekiti</option>
-                        <option value="Enugu">Enugu</option>
-                        <option value="FCT">FCT - Abuja</option>
-                        <option value="Gombe">Gombe</option>
-                        <option value="Imo">Imo</option>
-                        <option value="Jigawa">Jigawa</option>
-                        <option value="Kaduna">Kaduna</option>
-                        <option value="Kano">Kano</option>
-                        <option value="Katsina">Katsina</option>
-                        <option value="Kebbi">Kebbi</option>
-                        <option value="Kogi">Kogi</option>
-                        <option value="Kwara">Kwara</option>
-                        <option value="Lagos">Lagos</option>
-                        <option value="Nasarawa">Nasarawa</option>
-                        <option value="Niger">Niger</option>
-                        <option value="Ogun">Ogun</option>
-                        <option value="Ondo">Ondo</option>
-                        <option value="Osun">Osun</option>
-                        <option value="Oyo">Oyo</option>
-                        <option value="Plateau">Plateau</option>
-                        <option value="Rivers">Rivers</option>
-                        <option value="Sokoto">Sokoto</option>
-                        <option value="Taraba">Taraba</option>
-                        <option value="Yobe">Yobe</option>
-                        <option value="Zamfara">Zamfara</option>
+                        {NIGERIAN_STATES.map(s => (
+                          <option key={s} value={s}>{getStateDisplayName(s)}</option>
+                        ))}
                       </select>
                     </div>
                     <div className="form-group">
