@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Cart, CartItem, AddToCartRequest } from '@/types/cart.types';
-import { mockCartApi } from '@/services/mockCartApi';
+import { cartService } from '@/services/cartService';
 
 interface CartState {
   cart: Cart | null;
@@ -17,8 +17,7 @@ interface CartActions {
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
   clearLocalCart: () => void;
-  applyCoupon: (code: string) => Promise<void>;
-  removeCoupon: () => Promise<void>;
+  mergeGuestCart: () => Promise<void>;
   getItemCount: () => number;
   getSubtotal: () => number;
   isInCart: (productId: string, variantId?: string) => CartItem | undefined;
@@ -39,11 +38,11 @@ export const useCartStore = create<CartState & CartActions>()(
       fetchCart: async () => {
         set({ isLoading: true, error: null });
         try {
-          const response = await mockCartApi.getCart();
+          const response = await cartService.getCart();
           set({ cart: response.data, isLoading: false });
         } catch (error) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: (error as { message: string }).message || 'Failed to fetch cart'
           });
         }
@@ -52,11 +51,11 @@ export const useCartStore = create<CartState & CartActions>()(
       addToCart: async (data: AddToCartRequest) => {
         set({ isUpdating: true, error: null });
         try {
-          const response = await mockCartApi.addToCart(data);
+          const response = await cartService.addToCart(data);
           set({ cart: response.data, isUpdating: false });
         } catch (error) {
-          set({ 
-            isUpdating: false, 
+          set({
+            isUpdating: false,
             error: (error as { message: string }).message || 'Failed to add item to cart'
           });
           throw error;
@@ -65,29 +64,29 @@ export const useCartStore = create<CartState & CartActions>()(
 
       updateQuantity: async (itemId: string, quantity: number) => {
         set({ isUpdating: true, error: null });
-        
+
         // Optimistic update
         const currentCart = get().cart;
         if (currentCart) {
-          const updatedItems = currentCart.items.map((item: CartItem) => 
-            item.id === itemId 
+          const updatedItems = currentCart.items.map((item: CartItem) =>
+            item.id === itemId
               ? { ...item, quantity, totalPrice: item.price * quantity }
               : item
           );
           const subtotal = updatedItems.reduce((sum: number, item: CartItem) => sum + item.totalPrice, 0);
-          set({ 
-            cart: { 
-              ...currentCart, 
+          set({
+            cart: {
+              ...currentCart,
               items: updatedItems,
               subtotal,
-              total: subtotal + currentCart.shipping - currentCart.discount + currentCart.tax,
+              total: subtotal + currentCart.shipping - currentCart.discount,
               itemCount: updatedItems.reduce((sum: number, item: CartItem) => sum + item.quantity, 0),
-            } 
+            }
           });
         }
 
         try {
-          const response = await mockCartApi.updateCartItem(itemId, { quantity });
+          const response = await cartService.updateCartItem(itemId, { quantity });
           set({ cart: response.data, isUpdating: false });
         } catch (error) {
           // Revert on error
@@ -98,25 +97,25 @@ export const useCartStore = create<CartState & CartActions>()(
 
       removeItem: async (itemId: string) => {
         set({ isUpdating: true, error: null });
-        
+
         // Optimistic update
         const currentCart = get().cart;
         if (currentCart) {
           const updatedItems = currentCart.items.filter((item: CartItem) => item.id !== itemId);
           const subtotal = updatedItems.reduce((sum: number, item: CartItem) => sum + item.totalPrice, 0);
-          set({ 
-            cart: { 
-              ...currentCart, 
+          set({
+            cart: {
+              ...currentCart,
               items: updatedItems,
               subtotal,
-              total: subtotal + currentCart.shipping - currentCart.discount + currentCart.tax,
+              total: subtotal + currentCart.shipping - currentCart.discount,
               itemCount: updatedItems.reduce((sum: number, item: CartItem) => sum + item.quantity, 0),
-            } 
+            }
           });
         }
 
         try {
-          const response = await mockCartApi.removeCartItem(itemId);
+          const response = await cartService.removeCartItem(itemId);
           set({ cart: response.data, isUpdating: false });
         } catch (error) {
           // Revert on error
@@ -128,11 +127,11 @@ export const useCartStore = create<CartState & CartActions>()(
       clearCart: async () => {
         set({ isUpdating: true, error: null });
         try {
-          await mockCartApi.clearCart();
+          await cartService.clearCart();
           set({ cart: null, isUpdating: false });
         } catch (error) {
-          set({ 
-            isUpdating: false, 
+          set({
+            isUpdating: false,
             error: (error as { message: string }).message || 'Failed to clear cart'
           });
           throw error;
@@ -143,28 +142,16 @@ export const useCartStore = create<CartState & CartActions>()(
         set({ cart: null, isLoading: false, isUpdating: false, error: null });
       },
 
-      applyCoupon: async (code: string) => {
-        set({ isUpdating: true, error: null });
-        try {
-          const response = await mockCartApi.applyCoupon(code);
-          set({ cart: response.data, isUpdating: false });
-        } catch (error) {
-          set({ 
-            isUpdating: false, 
-            error: (error as { message: string }).message || 'Invalid coupon code'
-          });
-          throw error;
-        }
-      },
+      mergeGuestCart: async () => {
+        // Merge guest cart into user's cart after login
+        const sessionId = localStorage.getItem('sessionId');
+        if (!sessionId) return;
 
-      removeCoupon: async () => {
-        set({ isUpdating: true, error: null });
         try {
-          const response = await mockCartApi.removeCoupon();
-          set({ cart: response.data, isUpdating: false });
-        } catch (error) {
-          set({ isUpdating: false });
-          throw error;
+          const response = await cartService.mergeCart(sessionId);
+          set({ cart: response.data });
+        } catch {
+          // Silent fail - guest cart merge is best-effort
         }
       },
 
@@ -181,9 +168,9 @@ export const useCartStore = create<CartState & CartActions>()(
       isInCart: (productId: string, variantId?: string) => {
         const cart = get().cart;
         if (!cart) return undefined;
-        
-        return cart.items.find((item: CartItem) => 
-          item.productId === productId && 
+
+        return cart.items.find((item: CartItem) =>
+          item.productId === productId &&
           (variantId ? item.variantId === variantId : true)
         );
       },

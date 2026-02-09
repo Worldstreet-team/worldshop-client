@@ -284,7 +284,8 @@ export const mockCartApi = {
 
     cart.couponCode = code.toUpperCase();
     cart.discount = Math.round(cart.subtotal * discount * 100) / 100;
-    cart.total = Math.round((cart.subtotal + cart.tax + cart.shipping - cart.discount) * 100) / 100;
+    const tax = cart.tax ?? 0;
+    cart.total = Math.round((cart.subtotal + tax + cart.shipping - cart.discount) * 100) / 100;
 
     saveCart(cart);
     return { data: cart };
@@ -300,7 +301,8 @@ export const mockCartApi = {
 
     cart.couponCode = undefined;
     cart.discount = 0;
-    cart.total = Math.round((cart.subtotal + cart.tax + cart.shipping) * 100) / 100;
+    const tax = cart.tax ?? 0;
+    cart.total = Math.round((cart.subtotal + tax + cart.shipping) * 100) / 100;
 
     saveCart(cart);
     return { data: cart };

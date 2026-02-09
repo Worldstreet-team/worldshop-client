@@ -109,7 +109,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               isInitialized: true,
             });
 
-            try { await useCartStore.getState().fetchCart(); } catch { /* silent */ }
+            try {
+              await useCartStore.getState().mergeGuestCart();
+              await useCartStore.getState().fetchCart();
+            } catch { /* silent */ }
             return;
 
           } catch (verifyError) {
@@ -149,7 +152,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                     isInitialized: true,
                   });
 
-                  try { await useCartStore.getState().fetchCart(); } catch { /* silent */ }
+                  try {
+                    await useCartStore.getState().mergeGuestCart();
+                    await useCartStore.getState().fetchCart();
+                  } catch { /* silent */ }
                   return;
                 }
               } catch (refreshError) {

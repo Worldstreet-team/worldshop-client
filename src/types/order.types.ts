@@ -1,7 +1,4 @@
-import type { Product, ProductVariant } from './product.types';
-import type { Address } from './user.types';
-
-export type OrderStatus = 
+export type OrderStatus =
   | 'CREATED'
   | 'PAID'
   | 'PROCESSING'
@@ -10,46 +7,36 @@ export type OrderStatus =
   | 'CANCELLED'
   | 'REFUNDED';
 
-export type PaymentStatus = 
-  | 'PENDING'
-  | 'SUCCESS'
-  | 'FAILED'
-  | 'REFUNDED'
-  | 'PARTIALLY_REFUNDED';
-
 export interface OrderItem {
   id: string;
   orderId: string;
   productId: string;
-  product: Product;
-  variantId?: string;
-  variant?: ProductVariant;
+  variantId?: string | null;
   productName: string;
-  productImage?: string;
-  sku: string;
+  productImage?: string | null;
+  sku?: string | null;
+  variantName?: string | null;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
   createdAt: string;
+  product?: {
+    id: string;
+    name: string;
+    slug: string;
+    images: unknown;
+  };
+  variant?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface OrderStatusHistory {
   id: string;
   orderId: string;
   status: OrderStatus;
-  note?: string;
-  createdAt: string;
-}
-
-export interface Payment {
-  id: string;
-  orderId: string;
-  amount: number;
-  currency: string;
-  provider: string;
-  providerRef?: string;
-  status: PaymentStatus;
-  paidAt?: string;
+  note?: string | null;
   createdAt: string;
 }
 
@@ -59,29 +46,38 @@ export interface Order {
   userId: string;
   status: OrderStatus;
   items: OrderItem[];
-  shippingAddress: Address;
-  billingAddress?: Address;
+  shippingAddress: ShippingAddress;
+  billingAddress?: ShippingAddress | null;
   subtotal: number;
   discount: number;
   shipping: number;
-  tax: number;
   total: number;
-  couponCode?: string;
-  notes?: string;
-  payment?: Payment;
+  couponCode?: string | null;
+  notes?: string | null;
   statusHistory: OrderStatusHistory[];
   createdAt: string;
   updatedAt: string;
-  paidAt?: string;
-  shippedAt?: string;
-  deliveredAt?: string;
+  paidAt?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
 }
 
 export interface CreateOrderRequest {
-  shippingAddressId: string;
-  billingAddressId?: string;
-  shippingMethod: string;
+  shippingAddress: ShippingAddress;
+  billingAddress?: ShippingAddress;
   notes?: string;
+}
+
+export interface ShippingAddress {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  street: string;
+  apartment?: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode?: string;
 }
 
 export interface ShippingRate {

@@ -16,13 +16,13 @@ export interface CartItem {
 
 export interface Cart {
   id: string;
-  userId?: string;
-  sessionId?: string;
+  userId?: string | null;
+  sessionId?: string | null;
   items: CartItem[];
   itemCount: number;
   subtotal: number;
   discount: number;
-  tax: number;
+  tax?: number;  // Optional - not implemented yet
   shipping: number;
   total: number;
   couponCode?: string;
