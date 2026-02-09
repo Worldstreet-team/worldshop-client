@@ -9,7 +9,7 @@ export interface ProductImage {
 export interface ProductVariant {
   id: string;
   name: string;
-  sku: string;
+  stockKeepingUnit: string;
   price: number;
   compareAtPrice?: number;
   stock: number;
@@ -21,11 +21,10 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
-  shortDescription?: string;
-  sku: string;
-  price: number;
-  compareAtPrice?: number;
-  costPrice?: number;
+  shortDesc?: string;
+  stockKeepingUnit: string;
+  basePrice: number;
+  salePrice?: number;
   type: 'PHYSICAL' | 'DIGITAL';
   categoryId: string;
   category?: Category;
@@ -33,14 +32,12 @@ export interface Product {
   tags: string[];
   images: ProductImage[];
   variants: ProductVariant[];
-  averageRating: number;
+  avgRating: number;
   reviewCount: number;
   stock: number;
   lowStockThreshold: number;
   isActive: boolean;
   isFeatured: boolean;
-  metaTitle?: string;
-  metaDescription?: string;
   createdAt: string;
   updatedAt: string;
 }

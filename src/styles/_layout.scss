@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  
+
   .main-content {
     flex: 1;
   }
@@ -36,7 +36,7 @@
 
 .header-main {
   padding: 0;
-  
+
   .container {
     display: flex;
     align-items: center;
@@ -53,7 +53,7 @@
   border: none;
   color: $text-primary;
   flex-shrink: 0;
-  
+
   @include md {
     display: none;
   }
@@ -64,7 +64,7 @@
   align-items: center;
   gap: $spacing-xs;
   flex-shrink: 0;
-  
+
   .logo-icon {
     border-radius: 6px;
   }
@@ -131,7 +131,7 @@
     list-style: none;
   }
 
-  .nav-item > .nav-link {
+  .nav-item>.nav-link {
     display: block;
     padding: $spacing-xs $spacing-sm;
     color: $text-secondary;
@@ -166,7 +166,7 @@
   flex: 1;
   max-width: 420px;
   min-width: 0;
-  
+
   form {
     display: flex;
     border: 1.5px solid $border-color;
@@ -178,7 +178,7 @@
       border-color: $primary-color;
     }
   }
-  
+
   .search-input {
     flex: 1;
     height: 40px;
@@ -187,12 +187,12 @@
     outline: none;
     font-size: $font-size-sm;
     background: transparent;
-    
+
     &::placeholder {
       color: $text-muted;
     }
   }
-  
+
   .search-btn {
     @include flex-center;
     width: 44px;
@@ -200,12 +200,12 @@
     border: none;
     color: $secondary-color;
     cursor: pointer;
-    
+
     &:hover {
       background-color: $primary-dark;
     }
   }
-  
+
   @include sm-down {
     display: none;
   }
@@ -230,7 +230,7 @@
   cursor: pointer;
   border-radius: $radius-full;
   transition: color 0.15s, background-color 0.15s;
-  
+
   &:hover {
     color: $secondary-color;
     background: $gray-100;
@@ -263,7 +263,7 @@
       margin-left: 4px;
     }
   }
-  
+
   &.mobile-search-toggle {
     @include md {
       display: none;
@@ -307,12 +307,12 @@
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr 1fr;
   gap: $spacing-2xl;
-  
+
   @include md-down {
     grid-template-columns: 1fr 1fr;
     gap: $spacing-xl;
   }
-  
+
   @include sm-down {
     grid-template-columns: 1fr;
     gap: $spacing-lg;
@@ -326,11 +326,11 @@
     margin-bottom: $spacing-md;
     color: $gray-400;
   }
-  
+
   .footer-social {
     display: flex;
     gap: $spacing-sm;
-    
+
     a {
       @include flex-center;
       width: 34px;
@@ -339,7 +339,7 @@
       border-radius: $radius-full;
       color: $gray-400;
       transition: all 0.2s;
-      
+
       &:hover {
         background-color: $primary-color;
         color: $secondary-color;
@@ -361,12 +361,12 @@
   li {
     margin-bottom: $spacing-xs;
   }
-  
+
   a {
     color: $gray-400;
     font-size: $font-size-sm;
     transition: color 0.2s;
-    
+
     &:hover {
       color: $primary-color;
     }
@@ -377,22 +377,22 @@
   display: flex;
   flex-direction: column;
   gap: $spacing-sm;
-  
+
   .newsletter-input {
     @include input-base;
     background-color: $secondary-dark;
     border-color: $secondary-light;
     color: $white;
-    
+
     &::placeholder {
       color: $gray-500;
     }
-    
+
     &:focus {
       border-color: $primary-color;
     }
   }
-  
+
   .newsletter-btn {
     @include button-base;
     @include button-variant($primary-color, $secondary-color, $primary-dark);
@@ -409,12 +409,12 @@
   justify-content: space-between;
   align-items: center;
   gap: $spacing-md;
-  
+
   @include sm-down {
     flex-direction: column;
     text-align: center;
   }
-  
+
   p {
     font-size: $font-size-xs;
     color: $gray-500;
@@ -425,12 +425,12 @@
 .footer-legal {
   display: flex;
   gap: $spacing-md;
-  
+
   a {
     color: $gray-500;
     font-size: $font-size-xs;
     transition: color 0.2s;
-    
+
     &:hover {
       color: $primary-color;
     }
@@ -446,7 +446,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity $transition-base, visibility $transition-base;
-  
+
   &.active {
     opacity: 1;
     visibility: visible;
@@ -470,7 +470,7 @@
   flex-direction: column;
   transform: translateX(100%);
   transition: transform $transition-base;
-  
+
   &.open {
     transform: translateX(0);
   }
@@ -480,11 +480,11 @@
   @include flex-between;
   padding: $spacing-lg;
   border-bottom: 1px solid $border-light;
-  
+
   h3 {
     margin: 0;
   }
-  
+
   .close-btn {
     @include flex-center;
     width: 36px;
@@ -492,7 +492,7 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    
+
     &:hover {
       color: $primary-color;
     }
@@ -504,19 +504,19 @@
   overflow-y: auto;
   padding: $spacing-md;
   padding-bottom: 0;
-  
+
   .cart-empty {
     @include flex-center;
     flex-direction: column;
     text-align: center;
     padding: $spacing-3xl $spacing-lg;
-    
+
     .material-icons {
       font-size: 64px;
       color: $gray-300;
       margin-bottom: $spacing-md;
     }
-    
+
     p {
       color: $text-secondary;
       margin-bottom: $spacing-lg;
@@ -539,17 +539,17 @@
   gap: $spacing-md;
   padding-bottom: $spacing-md;
   border-bottom: 1px solid $border-light;
-  
+
   &:last-child {
     border-bottom: none;
     padding-bottom: 0;
   }
-  
+
   .cart-item-image {
     width: 80px;
     height: 80px;
     flex-shrink: 0;
-    
+
     img {
       width: 100%;
       height: 100%;
@@ -558,35 +558,35 @@
       border: 1px solid $border-light;
     }
   }
-  
+
   .cart-item-details {
     flex: 1;
     min-width: 0;
-    
+
     .cart-item-name {
       display: block;
       font-weight: $font-weight-medium;
       margin-bottom: $spacing-xs;
       @include text-truncate;
-      
+
       &:hover {
         color: $primary-color;
       }
     }
-    
+
     .cart-item-variant {
       display: block;
       font-size: $font-size-sm;
       color: $text-muted;
       margin-bottom: $spacing-xs;
     }
-    
+
     .cart-item-price {
       font-weight: $font-weight-semibold;
       margin-bottom: $spacing-sm;
     }
   }
-  
+
   .cart-item-quantity {
     display: flex;
     align-items: center;
@@ -594,7 +594,7 @@
     border-radius: $radius-sm;
     overflow: hidden;
     width: fit-content;
-    
+
     button {
       @include flex-center;
       width: 32px;
@@ -606,18 +606,18 @@
       font-size: $font-size-lg;
       font-weight: $font-weight-bold;
       transition: background-color 0.2s;
-      
+
       &:hover:not(:disabled) {
         background-color: $gray-200;
       }
-      
+
       &:disabled {
         color: $text-muted;
         cursor: not-allowed;
         background-color: $gray-50;
       }
     }
-    
+
     span {
       min-width: 36px;
       height: 32px;
@@ -629,7 +629,7 @@
       border-right: 1px solid $border-color;
     }
   }
-  
+
   .cart-item-remove {
     @include flex-center;
     width: 32px;
@@ -640,11 +640,11 @@
     cursor: pointer;
     flex-shrink: 0;
     align-self: flex-start;
-    
+
     &:hover {
       color: $danger-color;
     }
-    
+
     .material-icons {
       font-size: 20px;
     }
@@ -660,7 +660,7 @@
 .cart-subtotal {
   @include flex-between;
   margin-bottom: $spacing-md;
-  
+
   .subtotal-amount {
     font-size: $font-size-lg;
     font-weight: $font-weight-bold;
@@ -682,7 +682,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity $transition-base, visibility $transition-base;
-  
+
   &.active {
     opacity: 1;
     visibility: visible;
@@ -702,7 +702,7 @@
   flex-direction: column;
   transform: translateX(-100%);
   transition: transform $transition-base;
-  
+
   &.open {
     transform: translateX(0);
   }
@@ -712,7 +712,7 @@
   @include flex-between;
   padding: $spacing-md $spacing-lg;
   border-bottom: 1px solid $border-light;
-  
+
   .mobile-menu-brand {
     display: flex;
     align-items: center;
@@ -729,7 +729,7 @@
     color: $secondary-color;
     letter-spacing: -0.02em;
   }
-  
+
   .close-btn {
     @include flex-center;
     width: 36px;
@@ -737,7 +737,7 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    
+
     &:hover {
       color: $primary-color;
     }
@@ -750,7 +750,7 @@
   padding: $spacing-md $spacing-lg;
   background-color: $gray-100;
   font-weight: $font-weight-medium;
-  
+
   .material-icons {
     color: $primary-color;
   }
@@ -760,10 +760,12 @@
   flex: 1;
   overflow-y: auto;
   padding: $spacing-md 0;
-  
+
   ul {
     li {
-      a, button {
+
+      a,
+      button {
         display: flex;
         align-items: center;
         gap: $spacing-sm;
@@ -775,12 +777,12 @@
         border: none;
         text-align: left;
         cursor: pointer;
-        
+
         &:hover {
           background-color: $gray-100;
           color: $primary-color;
         }
-        
+
         .material-icons {
           font-size: 20px;
           color: $text-muted;
@@ -788,10 +790,10 @@
       }
     }
   }
-  
+
   .mobile-menu-logout {
     color: $danger-color !important;
-    
+
     .material-icons {
       color: $danger-color !important;
     }
@@ -891,6 +893,7 @@
     color: $text-secondary;
   }
 }
+
 // ============================================
 // CATEGORY DROPDOWN
 // ============================================
@@ -1021,6 +1024,7 @@
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1028,8 +1032,15 @@
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 // ============================================
