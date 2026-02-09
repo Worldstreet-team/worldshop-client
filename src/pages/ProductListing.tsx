@@ -27,16 +27,16 @@ export default function ProductListingPage() {
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const currentSort = (searchParams.get('sort') || 'newest') as SortOption;
   const selectedCategory = searchParams.get('category') || '';
-  const minPrice = parseFloat(searchParams.get('minPrice') || '0');
-  const maxPrice = parseFloat(searchParams.get('maxPrice') || '1000');
+  const minPrice = searchParams.has('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined;
+  const maxPrice = searchParams.has('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
   const searchQuery = searchParams.get('q') || '';
   const inStock = searchParams.get('inStock') === 'true';
 
   // Create filters object for ProductFilters component
   const filters: ProductFiltersType = {
     categoryId: selectedCategory || undefined,
-    minPrice: minPrice > 0 ? minPrice : undefined,
-    maxPrice: maxPrice < priceRange.max ? maxPrice : undefined,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
     inStock: inStock || undefined,
   };
 
@@ -74,8 +74,8 @@ export default function ProductListingPage() {
 
       const result = await productService.getProducts({
         categoryId: selectedCategory || undefined,
-        minPrice: minPrice > 0 ? minPrice : undefined,
-        maxPrice: maxPrice < priceRange.max ? maxPrice : undefined,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
         search: searchQuery || undefined,
         inStock: inStock || undefined,
         sortBy: sortMap[currentSort] as ProductFiltersType['sortBy'],
@@ -91,7 +91,7 @@ export default function ProductListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, currentSort, selectedCategory, minPrice, maxPrice, searchQuery, inStock, priceRange.max]);
+  }, [currentPage, currentSort, selectedCategory, minPrice, maxPrice, searchQuery, inStock]);
 
   useEffect(() => {
     fetchProducts();
@@ -158,7 +158,7 @@ export default function ProductListingPage() {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = selectedCategory || minPrice > 0 || maxPrice < priceRange.max || inStock;
+  const hasActiveFilters = selectedCategory || (minPrice !== undefined && minPrice > 0) || (maxPrice !== undefined && maxPrice < priceRange.max) || inStock;
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -173,13 +173,13 @@ export default function ProductListingPage() {
 
         <div className="page-header">
           <h1>{searchQuery ? `Search: "${searchQuery}"` : 'Shop All Products'}</h1>
-          <p className="results-count">
+          <span className="results-count">
             {isLoading ? (
               <Skeleton width={150} height={20} />
             ) : (
               `Showing ${products.length} of ${totalProducts} products`
             )}
-          </p>
+          </span>
         </div>
 
         {/* Mobile filter toggle */}
@@ -226,8 +226,8 @@ export default function ProductListingPage() {
               <PriceRangeSlider
                 min={priceRange.min}
                 max={priceRange.max}
-                minValue={minPrice}
-                maxValue={maxPrice < priceRange.max ? maxPrice : priceRange.max}
+                minValue={minPrice ?? priceRange.min}
+                maxValue={maxPrice ?? priceRange.max}
                 onChange={(min, max) => {
                   handleFilterChange({ minPrice: min, maxPrice: max });
                 }}

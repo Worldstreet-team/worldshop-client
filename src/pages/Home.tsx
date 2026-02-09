@@ -265,7 +265,7 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter Section */}
-      <section className="newsletter-section">
+      {/* <section className="newsletter-section">
         <div className="container">
           <div className="newsletter-content">
             <h2>Stay Updated</h2>
@@ -282,7 +282,7 @@ export default function HomePage() {
             </form>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

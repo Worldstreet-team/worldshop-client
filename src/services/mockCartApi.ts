@@ -131,7 +131,7 @@ export const mockCartApi = {
       item.variantId === request.variantId
     );
     
-    const price = variant?.price ?? product.price;
+    const price = variant?.price ?? product.salePrice ?? product.basePrice;
     const now = new Date().toISOString();
     
     if (existingItemIndex > -1) {

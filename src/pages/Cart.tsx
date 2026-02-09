@@ -11,7 +11,7 @@ export default function CartPage() {
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
-    
+
     setIsApplyingCoupon(true);
     try {
       await applyCoupon(couponCode);
@@ -74,7 +74,7 @@ export default function CartPage() {
     <div className="cart-page">
       <div className="container">
         <Breadcrumb items={breadcrumbItems} />
-        
+
         <div className="page-header">
           <h1>Shopping Cart</h1>
           <p className="item-count">{cart.itemCount} item{cart.itemCount !== 1 ? 's' : ''}</p>
@@ -88,13 +88,13 @@ export default function CartPage() {
                 <div key={item.id} className="cart-item">
                   <div className="cart-item-image">
                     <Link to={`/products/${item.product.slug}`}>
-                      <img 
-                        src={item.product.images[0]?.url || '/images/placeholder-product.png'} 
-                        alt={item.product.name} 
+                      <img
+                        src={item.product.images[0]?.url || '/images/placeholder-product.png'}
+                        alt={item.product.name}
                       />
                     </Link>
                   </div>
-                  
+
                   <div className="cart-item-details">
                     <Link to={`/products/${item.product.slug}`} className="cart-item-name">
                       {item.product.name}
@@ -104,14 +104,14 @@ export default function CartPage() {
                     )}
                     <span className="cart-item-sku">SKU: {item.product.stockKeepingUnit}</span>
                   </div>
-                  
+
                   <div className="cart-item-price">
                     <span className="price">${item.price.toFixed(2)}</span>
                   </div>
-                  
+
                   <div className="cart-item-quantity">
                     <div className="quantity-input">
-                      <button 
+                      <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         disabled={isUpdating || item.quantity <= 1}
                         aria-label="Decrease quantity"
@@ -120,14 +120,14 @@ export default function CartPage() {
                           <path d="M5 12h14" />
                         </svg>
                       </button>
-                      <input 
-                        type="number" 
-                        value={item.quantity} 
+                      <input
+                        type="number"
+                        value={item.quantity}
                         min="1"
                         readOnly
                         aria-label="Quantity"
                       />
-                      <button 
+                      <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         disabled={isUpdating}
                         aria-label="Increase quantity"
@@ -138,12 +138,12 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="cart-item-total">
                     <span className="total">${item.totalPrice.toFixed(2)}</span>
                   </div>
-                  
-                  <button 
+
+                  <button
                     className="cart-item-remove"
                     onClick={() => handleRemoveItem(item.id, item.product.name)}
                     disabled={isUpdating}
@@ -156,7 +156,7 @@ export default function CartPage() {
                 </div>
               ))}
             </div>
-            
+
             <div className="cart-actions">
               <Link to="/products" className="btn btn-outline">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
@@ -171,20 +171,20 @@ export default function CartPage() {
           <div className="cart-summary-section">
             <div className="cart-summary">
               <h3>Order Summary</h3>
-              
+
               <div className="summary-rows">
                 <div className="summary-row">
                   <span>Subtotal ({cart.itemCount} items)</span>
                   <span>${cart.subtotal.toFixed(2)}</span>
                 </div>
-                
+
                 {cart.discount > 0 && (
                   <div className="summary-row discount">
                     <span>
                       Discount
                       {cart.couponCode && (
-                        <button 
-                          className="remove-coupon" 
+                        <button
+                          className="remove-coupon"
                           onClick={handleRemoveCoupon}
                           title="Remove coupon"
                         >
@@ -195,25 +195,25 @@ export default function CartPage() {
                     <span>-${cart.discount.toFixed(2)}</span>
                   </div>
                 )}
-                
+
                 <div className="summary-row">
                   <span>Shipping</span>
                   <span>{cart.shipping === 0 ? 'FREE' : `$${cart.shipping.toFixed(2)}`}</span>
                 </div>
-                
+
                 <div className="summary-row">
                   <span>Estimated Tax</span>
                   <span>${cart.tax.toFixed(2)}</span>
                 </div>
               </div>
-              
+
               <hr />
-              
+
               <div className="summary-row total">
                 <span>Total</span>
                 <span>${cart.total.toFixed(2)}</span>
               </div>
-              
+
               {cart.subtotal < 50 && (
                 <div className="free-shipping-notice">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
@@ -222,7 +222,7 @@ export default function CartPage() {
                   Add ${(50 - cart.subtotal).toFixed(2)} more for FREE shipping!
                 </div>
               )}
-              
+
               {/* Coupon Code */}
               {!cart.couponCode && (
                 <div className="coupon-section">
@@ -236,7 +236,7 @@ export default function CartPage() {
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       disabled={isApplyingCoupon}
                     />
-                    <button 
+                    <button
                       onClick={handleApplyCoupon}
                       disabled={isApplyingCoupon || !couponCode.trim()}
                       className="btn btn-secondary"
@@ -247,14 +247,14 @@ export default function CartPage() {
                   <small className="coupon-hint">Try: SAVE10, SAVE20, WELCOME</small>
                 </div>
               )}
-              
+
               <Link to="/checkout" className="btn btn-primary btn-block checkout-btn">
                 Proceed to Checkout
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </Link>
-              
+
               <div className="secure-checkout">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round" />

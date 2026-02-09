@@ -66,10 +66,10 @@ export default function WishlistPage() {
                     {item.product.name}
                   </Link>
                   <div className="item-price">
-                    ${item.product.price.toFixed(2)}
-                    {item.product.compareAtPrice && (
+                    ${(item.product.salePrice ?? item.product.basePrice).toFixed(2)}
+                    {item.product.salePrice && item.product.salePrice < item.product.basePrice && (
                       <span className="compare-price">
-                        ${item.product.compareAtPrice.toFixed(2)}
+                        ${item.product.basePrice.toFixed(2)}
                       </span>
                     )}
                   </div>

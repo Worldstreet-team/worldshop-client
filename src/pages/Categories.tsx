@@ -15,7 +15,7 @@ export default function CategoriesPage() {
     const fetchCategories = async () => {
       try {
         setIsLoading(true);
-        const data = await categoryService.getCategoryTree();
+        const data = await categoryService.getCategories();
         setCategories(data);
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -100,26 +100,10 @@ export default function CategoriesPage() {
                   {category.description && (
                     <p className="category-card-description">{category.description}</p>
                   )}
-                  {category.productCount && (
+                  {(category as { productCount?: number }).productCount !== undefined && (
                     <span className="category-card-count">
-                      {category.productCount} Products
+                      {(category as { productCount?: number }).productCount} Products
                     </span>
-                  )}
-
-                  {/* Subcategories preview */}
-                  {category.children && category.children.length > 0 && (
-                    <div className="category-card-subcategories">
-                      {category.children.slice(0, 4).map((sub) => (
-                        <span key={sub.id} className="subcategory-tag">
-                          {sub.name}
-                        </span>
-                      ))}
-                      {category.children.length > 4 && (
-                        <span className="subcategory-more">
-                          +{category.children.length - 4} more
-                        </span>
-                      )}
-                    </div>
                   )}
                 </div>
 

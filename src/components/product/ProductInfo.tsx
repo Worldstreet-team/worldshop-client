@@ -94,7 +94,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
           <span className="product-info-category">{product.category.name}</span>
         )}
         <h1 className="product-info-title">{product.name}</h1>
-        
+
         <div className="product-info-meta">
           <RatingStars
             rating={product.avgRating}
