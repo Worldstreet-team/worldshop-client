@@ -76,64 +76,8 @@ export default function ProductCard({
   return (
     <article className={cardClass}>
       <Link to={`/products/${product.slug}`} className="product-card-link">
-        {/* Image Container */}
-        <div className="product-card-image-wrapper">
-          <img
-            src={product.images[0]?.url || '/images/placeholder-product.png'}
-            alt={product.images[0]?.alt || product.name}
-            className="product-card-image"
-            loading="lazy"
-          />
-
-          {/* Badges */}
-          <div className="product-card-badges">
-            {discountPercentage > 0 && <SaleBadge percentage={discountPercentage} />}
-            {isNew && <NewBadge />}
-          </div>
-
-          {/* Hover Actions */}
-          <div className="product-card-actions">
-            {showWishlist && (
-              <button
-                type="button"
-                className={`product-card-action ${inWishlist ? 'active' : ''}`}
-                onClick={handleWishlistToggle}
-                aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-              >
-                <svg viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" width="20" height="20">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            )}
-            {showQuickView && (
-              <button
-                type="button"
-                className="product-card-action"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // TODO: Implement quick view modal
-                }}
-                aria-label="Quick view"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Out of Stock Overlay */}
-          {!inStock && (
-            <div className="product-card-overlay">
-              <span>Out of Stock</span>
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="product-card-content">
+        {/* Top: Category + Name (Electro layout) */}
+        <div className="product-card-body">
           {/* Category */}
           {product.category && (
             <span className="product-card-category">{product.category.name}</span>
@@ -144,14 +88,73 @@ export default function ProductCard({
 
           {/* Rating */}
           {product.avgRating !== undefined && (
-            <RatingStars
-              rating={product.avgRating}
-              size="sm"
-              reviewCount={product.reviewCount}
-            />
+            <div className="product-card-rating">
+              <RatingStars
+                rating={product.avgRating}
+                size="sm"
+                reviewCount={product.reviewCount}
+              />
+            </div>
           )}
 
-          {/* Price */}
+          {/* Image Container */}
+          <div className="product-card-image-wrapper">
+            <img
+              src={product.images[0]?.url || '/images/placeholder-product.png'}
+              alt={product.images[0]?.alt || product.name}
+              className="product-card-image"
+              loading="lazy"
+            />
+
+            {/* Badges */}
+            <div className="product-card-badges">
+              {discountPercentage > 0 && <SaleBadge percentage={discountPercentage} />}
+              {isNew && <NewBadge />}
+            </div>
+
+            {/* Hover Actions */}
+            <div className="product-card-actions">
+              {showWishlist && (
+                <button
+                  type="button"
+                  className={`product-card-action ${inWishlist ? 'active' : ''}`}
+                  onClick={handleWishlistToggle}
+                  aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                >
+                  <svg viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
+              {showQuickView && (
+                <button
+                  type="button"
+                  className="product-card-action"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  aria-label="Quick view"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Out of Stock Overlay */}
+            {!inStock && (
+              <div className="product-card-overlay">
+                <span>Out of Stock</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom: Price + Add-to-cart footer */}
+        <div className="product-card-footer">
           <div className="product-card-price">
             <span className="product-card-price-current">{formatPrice(product.salePrice ?? product.basePrice)}</span>
             {product.salePrice && product.salePrice < product.basePrice && (
@@ -166,30 +169,24 @@ export default function ProductCard({
             <p className="product-card-description">{product.description}</p>
           )}
 
-          {/* Add to Cart Button */}
           {showAddToCart && inStock && (
             <button
               type="button"
-              className={`product-card-add-to-cart ${inCart ? 'in-cart' : ''}`}
+              className={`product-card-cart-btn ${inCart ? 'in-cart' : ''}`}
               onClick={handleAddToCart}
               disabled={!!inCart}
+              aria-label={inCart ? 'In cart' : 'Add to cart'}
             >
               {inCart ? (
-                <>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span>In Cart</span>
-                </>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               ) : (
-                <>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                    <circle cx="9" cy="21" r="1" />
-                    <circle cx="20" cy="21" r="1" />
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span>Add to Cart</span>
-                </>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               )}
             </button>
           )}
