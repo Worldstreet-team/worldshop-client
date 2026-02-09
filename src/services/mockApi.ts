@@ -13,6 +13,18 @@ const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, m
 const randomDelay = (min: number = 300, max: number = 800) => 
   delay(Math.floor(Math.random() * (max - min + 1)) + min);
 
+type LegacyProduct = Product & {
+  price?: number;
+  compareAtPrice?: number;
+  averageRating?: number;
+};
+
+const getProductPrice = (product: LegacyProduct) =>
+  product.salePrice ?? product.basePrice ?? product.price ?? 0;
+
+const getProductRating = (product: LegacyProduct) =>
+  product.avgRating ?? product.averageRating ?? 0;
+
 /**
  * Category API
  */
@@ -75,7 +87,7 @@ export const productApi = {
   ): Promise<PaginatedResponse<Product>> {
     await randomDelay(400, 1000);
     
-    let products = [...mockData.products] as unknown as Product[];
+    let products = [...mockData.products] as unknown as LegacyProduct[];
 
     // Apply filters
     if (filters.categoryId) {
@@ -83,11 +95,11 @@ export const productApi = {
     }
 
     if (filters.minPrice !== undefined) {
-      products = products.filter(p => p.price >= filters.minPrice!);
+      products = products.filter(p => getProductPrice(p) >= filters.minPrice!);
     }
 
     if (filters.maxPrice !== undefined) {
-      products = products.filter(p => p.price <= filters.maxPrice!);
+      products = products.filter(p => getProductPrice(p) <= filters.maxPrice!);
     }
 
     if (filters.brand) {
@@ -112,10 +124,10 @@ export const productApi = {
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case 'price-asc':
-          products.sort((a, b) => a.price - b.price);
+          products.sort((a, b) => getProductPrice(a) - getProductPrice(b));
           break;
         case 'price-desc':
-          products.sort((a, b) => b.price - a.price);
+          products.sort((a, b) => getProductPrice(b) - getProductPrice(a));
           break;
         case 'name-asc':
           products.sort((a, b) => a.name.localeCompare(b.name));
@@ -124,7 +136,7 @@ export const productApi = {
           products.sort((a, b) => b.name.localeCompare(a.name));
           break;
         case 'rating':
-          products.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+          products.sort((a, b) => getProductRating(b) - getProductRating(a));
           break;
         case 'newest':
           products.sort((a, b) => 

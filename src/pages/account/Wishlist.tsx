@@ -66,12 +66,28 @@ export default function WishlistPage() {
                     {item.product.name}
                   </Link>
                   <div className="item-price">
-                    ${(item.product.salePrice ?? item.product.basePrice).toFixed(2)}
-                    {item.product.salePrice && item.product.salePrice < item.product.basePrice && (
-                      <span className="compare-price">
-                        ${item.product.basePrice.toFixed(2)}
-                      </span>
-                    )}
+                    {(() => {
+                      const displayPrice = item.product.salePrice
+                        ?? item.product.basePrice
+                        ?? item.product.price
+                        ?? 0;
+                      const basePrice = item.product.basePrice
+                        ?? item.product.price
+                        ?? displayPrice;
+                      const hasSale = item.product.salePrice !== undefined
+                        && item.product.salePrice < basePrice;
+
+                      return (
+                        <>
+                          ${displayPrice.toFixed(2)}
+                          {hasSale && (
+                            <span className="compare-price">
+                              ${basePrice.toFixed(2)}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="wishlist-item-actions">
                     <button

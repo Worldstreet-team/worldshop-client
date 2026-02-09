@@ -78,7 +78,9 @@ export interface WishlistItem {
     id: string;
     name: string;
     slug: string;
-    price: number;
+    basePrice?: number;
+    salePrice?: number;
+    price?: number;
     compareAtPrice?: number;
     images: Array<{ url: string; alt: string }>;
     stock: number;
