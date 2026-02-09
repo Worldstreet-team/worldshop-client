@@ -65,7 +65,7 @@ export default function ProductGrid({
   }
 
   return (
-    <div className={gridClass}>
+    <div className={gridClass} style={{ marginTop: 30 }}>
       {products.map((product) => (
         <ProductCard
           key={product.id}

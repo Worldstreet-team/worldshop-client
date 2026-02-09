@@ -28,8 +28,8 @@ export default function ProductCard({
   const inWishlist = isInWishlist(product.id);
   const inCart = isInCart(product.id);
 
-  const discountPercentage = product.compareAtPrice
-    ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
+  const discountPercentage = product.salePrice
+    ? Math.round(((product.basePrice - product.salePrice) / product.basePrice) * 100)
     : 0;
 
   const isNew = product.createdAt
@@ -143,9 +143,9 @@ export default function ProductCard({
           <h3 className="product-card-name">{product.name}</h3>
 
           {/* Rating */}
-          {product.averageRating !== undefined && (
+          {product.avgRating !== undefined && (
             <RatingStars
-              rating={product.averageRating}
+              rating={product.avgRating}
               size="sm"
               reviewCount={product.reviewCount}
             />
@@ -153,10 +153,10 @@ export default function ProductCard({
 
           {/* Price */}
           <div className="product-card-price">
-            <span className="product-card-price-current">{formatPrice(product.price)}</span>
-            {product.compareAtPrice && product.compareAtPrice > product.price && (
+            <span className="product-card-price-current">{formatPrice(product.salePrice ?? product.basePrice)}</span>
+            {product.salePrice && product.salePrice < product.basePrice && (
               <span className="product-card-price-original">
-                {formatPrice(product.compareAtPrice)}
+                {formatPrice(product.basePrice)}
               </span>
             )}
           </div>

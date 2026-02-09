@@ -31,7 +31,7 @@ export default function MobileMenu() {
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className={`mobile-menu-overlay ${isMobileMenuOpen ? 'active' : ''}`}
         onClick={closeMobileMenu}
       />
@@ -43,7 +43,7 @@ export default function MobileMenu() {
             <img src="/images/logo-dark.svg" alt="WorldStreet" className="mobile-menu-logo" width="32" height="32" />
             <span className="mobile-menu-brand-text">WorldStreet</span>
           </Link>
-          <button 
+          <button
             className="close-btn"
             onClick={closeMobileMenu}
             aria-label="Close menu"

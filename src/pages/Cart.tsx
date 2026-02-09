@@ -102,7 +102,7 @@ export default function CartPage() {
                     {item.variant && (
                       <span className="cart-item-variant">{item.variant.name}</span>
                     )}
-                    <span className="cart-item-sku">SKU: {item.product.sku}</span>
+                    <span className="cart-item-sku">SKU: {item.product.stockKeepingUnit}</span>
                   </div>
                   
                   <div className="cart-item-price">

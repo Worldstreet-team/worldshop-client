@@ -24,15 +24,15 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
   const inWishlist = isInWishlist(product.id);
 
   // Get current price and stock based on variant or product
-  const currentPrice = selectedVariant?.price ?? product.price;
-  const compareAtPrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
+  const currentPrice = selectedVariant?.price ?? product.salePrice ?? product.basePrice;
+  const originalPrice = product.salePrice ? product.basePrice : (selectedVariant?.compareAtPrice ?? undefined);
   const currentStock = selectedVariant?.stock ?? product.stock;
   const inStock = currentStock > 0;
 
   // Calculate discount percentage
   const discountPercentage =
-    compareAtPrice && compareAtPrice > currentPrice
-      ? Math.round(((compareAtPrice - currentPrice) / compareAtPrice) * 100)
+    originalPrice && originalPrice > currentPrice
+      ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
       : 0;
 
   const formatPrice = (price: number) => {
@@ -73,7 +73,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
       try {
         await navigator.share({
           title: product.name,
-          text: product.shortDescription || product.description,
+          text: product.shortDesc || product.description,
           url: window.location.href,
         });
       } catch {
@@ -97,12 +97,12 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
         
         <div className="product-info-meta">
           <RatingStars
-            rating={product.averageRating}
+            rating={product.avgRating}
             size="md"
             reviewCount={product.reviewCount}
           />
-          {product.sku && (
-            <span className="product-info-sku">SKU: {product.sku}</span>
+          {product.stockKeepingUnit && (
+            <span className="product-info-sku">SKU: {product.stockKeepingUnit}</span>
           )}
         </div>
       </div>
@@ -110,10 +110,10 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
       {/* Price Section */}
       <div className="product-info-price">
         <span className="product-info-price-current">{formatPrice(currentPrice)}</span>
-        {compareAtPrice && compareAtPrice > currentPrice && (
+        {originalPrice && originalPrice > currentPrice && (
           <>
             <span className="product-info-price-original">
-              {formatPrice(compareAtPrice)}
+              {formatPrice(originalPrice)}
             </span>
             <SaleBadge percentage={discountPercentage} />
           </>
@@ -140,8 +140,8 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
       </div>
 
       {/* Short Description */}
-      {product.shortDescription && (
-        <p className="product-info-description">{product.shortDescription}</p>
+      {product.shortDesc && (
+        <p className="product-info-description">{product.shortDesc}</p>
       )}
 
       {/* Variant Selector */}

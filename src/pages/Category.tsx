@@ -110,24 +110,13 @@ export default function CategoryPage() {
       <div className="container">
         <Breadcrumb items={breadcrumbItems} />
 
-        <div className="category-header">
+        <div className="category-header" style={{ marginBottom: 10 }}>
           <h1>{category.name}</h1>
           {category.description && <p>{category.description}</p>}
           {pagination && (
             <span className="product-count">{pagination.total} product{pagination.total !== 1 ? 's' : ''}</span>
           )}
         </div>
-
-        {/* Sub-categories */}
-        {category.children && category.children.length > 0 && (
-          <div className="sub-categories">
-            {category.children.map((child) => (
-              <a key={child.id} href={`/category/${child.slug}`} className="sub-category-chip">
-                {child.name}
-              </a>
-            ))}
-          </div>
-        )}
 
         <div className="category-toolbar">
           <ProductSort value={currentSort} onChange={handleSortChange} />
