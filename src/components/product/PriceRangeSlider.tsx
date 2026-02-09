@@ -32,9 +32,9 @@ export default function PriceRangeSlider({
   }, [minValue, maxValue]);
 
   const defaultFormatPrice = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NGN',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -187,7 +187,7 @@ export default function PriceRangeSlider({
         <div className="price-range-slider-input-group">
           <label htmlFor="price-min" className="price-range-slider-label">Min</label>
           <div className="price-range-slider-input-wrapper">
-            <span className="price-range-slider-currency">$</span>
+            <span className="price-range-slider-currency">₦</span>
             <input
               type="number"
               id="price-min"
@@ -207,7 +207,7 @@ export default function PriceRangeSlider({
         <div className="price-range-slider-input-group">
           <label htmlFor="price-max" className="price-range-slider-label">Max</label>
           <div className="price-range-slider-input-wrapper">
-            <span className="price-range-slider-currency">$</span>
+            <span className="price-range-slider-currency">₦</span>
             <input
               type="number"
               id="price-max"

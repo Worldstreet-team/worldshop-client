@@ -79,7 +79,7 @@ export default function CartSidebar() {
                       <span className="cart-item-variant">{item.variant.name}</span>
                     )}
                     <div className="cart-item-price">
-                      ${item.price.toFixed(2)}
+                      ₦{item.price.toLocaleString()}
                     </div>
                     <div className="cart-item-quantity">
                       <button 
@@ -117,7 +117,7 @@ export default function CartSidebar() {
           <div className="cart-sidebar-footer">
             <div className="cart-subtotal">
               <span>Subtotal:</span>
-              <span className="subtotal-amount">${cart.subtotal.toFixed(2)}</span>
+              <span className="subtotal-amount">₦{cart.subtotal.toLocaleString()}</span>
             </div>
             <div className="cart-actions">
               <Link 

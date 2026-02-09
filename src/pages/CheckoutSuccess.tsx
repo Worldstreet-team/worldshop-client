@@ -4,7 +4,7 @@ import Breadcrumb from '@/components/common/Breadcrumb';
 
 interface OrderState {
   orderNumber: string;
-  email: string;
+  orderId: string;
   total: number;
 }
 
@@ -76,8 +76,7 @@ export default function CheckoutSuccessPage() {
           
           <h1>Thank You for Your Order!</h1>
           <p className="success-message">
-            Your order has been placed successfully. We've sent a confirmation email to{' '}
-            <strong>{orderData?.email || 'your email address'}</strong>.
+            Your order has been placed successfully. We'll send you a confirmation email shortly.
           </p>
           
           <div className="order-card">
@@ -103,7 +102,7 @@ export default function CheckoutSuccessPage() {
               </div>
               <div className="order-detail total">
                 <span className="label">Order Total</span>
-                <span className="value">${orderData?.total?.toFixed(2) || '0.00'}</span>
+                <span className="value">₦{orderData?.total?.toLocaleString() || '0'}</span>
               </div>
             </div>
           </div>

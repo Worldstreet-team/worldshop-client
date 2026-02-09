@@ -1,16 +1,71 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/common';
+import { orderService } from '@/services/orderService';
+import type { Order } from '@/types/order.types';
 
 export default function OrderHistoryPage() {
-  // Mock orders for now - will be replaced with API call
-  const orders: Array<{
-    id: string;
-    orderNumber: string;
-    date: string;
-    status: string;
-    total: number;
-    itemCount: number;
-  }> = [];
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        const response = await orderService.getOrders();
+        setOrders(response.data || []);
+      } catch (err) {
+        setError('Failed to load orders');
+        console.error('Error fetching orders:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-NG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const getStatusClass = (status: string) => {
+    const statusMap: Record<string, string> = {
+      CREATED: 'status-pending',
+      PAID: 'status-paid',
+      PROCESSING: 'status-processing',
+      SHIPPED: 'status-shipped',
+      DELIVERED: 'status-delivered',
+      CANCELLED: 'status-cancelled',
+      REFUNDED: 'status-refunded',
+    };
+    return statusMap[status] || 'status-default';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="order-history-page">
+        <div className="container">
+          <div className="loading-spinner">Loading orders...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="order-history-page">
+        <div className="container">
+          <div className="error-message">{error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="order-history-page">
@@ -42,15 +97,15 @@ export default function OrderHistoryPage() {
                 <div className="order-header">
                   <div>
                     <h3>Order #{order.orderNumber}</h3>
-                    <span className="order-date">{order.date}</span>
+                    <span className="order-date">{formatDate(order.createdAt)}</span>
                   </div>
-                  <span className={`order-status status-${order.status.toLowerCase()}`}>
+                  <span className={`order-status ${getStatusClass(order.status)}`}>
                     {order.status}
                   </span>
                 </div>
                 <div className="order-body">
-                  <p>{order.itemCount} items</p>
-                  <p className="order-total">${order.total.toFixed(2)}</p>
+                  <p>{order.items.length} item{order.items.length !== 1 ? 's' : ''}</p>
+                  <p className="order-total">₦{order.total.toLocaleString()}</p>
                 </div>
                 <div className="order-footer">
                   <Link to={`/account/orders/${order.id}`} className="btn btn-secondary">

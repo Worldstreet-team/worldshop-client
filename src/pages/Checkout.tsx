@@ -2,57 +2,56 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
+import { useAuthStore } from '@/store/authStore';
+import { checkoutService, orderService } from '@/services/orderService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
+import type { ShippingAddress } from '@/types/order.types';
 
-interface ShippingAddress {
+interface ShippingFormData {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  address: string;
+  street: string;
   apartment: string;
   city: string;
   state: string;
-  zipCode: string;
+  postalCode: string;
   country: string;
 }
 
-interface PaymentInfo {
-  cardNumber: string;
-  cardName: string;
-  expiryDate: string;
-  cvv: string;
-}
-
-const initialShipping: ShippingAddress = {
+const initialShipping: ShippingFormData = {
   firstName: '',
   lastName: '',
   email: '',
   phone: '',
-  address: '',
+  street: '',
   apartment: '',
   city: '',
   state: '',
-  zipCode: '',
-  country: 'United States',
-};
-
-const initialPayment: PaymentInfo = {
-  cardNumber: '',
-  cardName: '',
-  expiryDate: '',
-  cvv: '',
+  postalCode: '',
+  country: 'Nigeria',
 };
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, clearCart } = useCartStore();
+  const { cart, fetchCart } = useCartStore();
   const { addToast } = useUIStore();
+  const { isAuthenticated } = useAuthStore();
   const [step, setStep] = useState(1);
-  const [shipping, setShipping] = useState<ShippingAddress>(initialShipping);
-  const [payment, setPayment] = useState<PaymentInfo>(initialPayment);
+  const [shipping, setShipping] = useState<ShippingFormData>(initialShipping);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationIssues, setValidationIssues] = useState<string[]>([]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      addToast({ message: 'Please log in to checkout', type: 'info' });
+      navigate('/login?returnUrl=/checkout');
+    }
+  }, [isAuthenticated, navigate, addToast]);
 
   // Redirect to cart if empty
   useEffect(() => {
@@ -60,6 +59,10 @@ export default function CheckoutPage() {
       navigate('/cart');
     }
   }, [cart, navigate]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -81,70 +84,41 @@ export default function CheckoutPage() {
     setShipping(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    
-    // Format card number with spaces
-    if (e.target.name === 'cardNumber') {
-      value = value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-    }
-    // Format expiry date
-    if (e.target.name === 'expiryDate') {
-      value = value.replace(/\D/g, '').slice(0, 4);
-      if (value.length >= 2) {
-        value = value.slice(0, 2) + '/' + value.slice(2);
-      }
-    }
-    
-    setPayment(prev => ({ ...prev, [e.target.name]: value }));
-  };
-
   const validateShipping = () => {
-    const required = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
+    const required = ['firstName', 'lastName', 'phone', 'street', 'city', 'state'];
     for (const field of required) {
-      if (!shipping[field as keyof ShippingAddress]) {
+      if (!shipping[field as keyof ShippingFormData]) {
         addToast({ message: `Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, type: 'error' });
         return false;
       }
     }
-    if (!/^\S+@\S+\.\S+$/.test(shipping.email)) {
-      addToast({ message: 'Please enter a valid email address', type: 'error' });
-      return false;
-    }
     return true;
   };
 
-  const validatePayment = () => {
-    if (!payment.cardNumber || payment.cardNumber.replace(/\s/g, '').length < 16) {
-      addToast({ message: 'Please enter a valid card number', type: 'error' });
-      return false;
-    }
-    if (!payment.cardName) {
-      addToast({ message: 'Please enter the name on card', type: 'error' });
-      return false;
-    }
-    if (!payment.expiryDate || payment.expiryDate.length < 5) {
-      addToast({ message: 'Please enter a valid expiry date', type: 'error' });
-      return false;
-    }
-    if (!payment.cvv || payment.cvv.length < 3) {
-      addToast({ message: 'Please enter a valid CVV', type: 'error' });
-      return false;
-    }
-    return true;
-  };
-
-  const handleContinueToPayment = () => {
-    if (validateShipping()) {
+  const handleContinueToReview = async () => {
+    if (!validateShipping()) return;
+    
+    setIsValidating(true);
+    setValidationIssues([]);
+    
+    try {
+      // Validate cart with backend (check stock, prices)
+      const response = await checkoutService.validateCart();
+      
+      if (!response.data.valid) {
+        setValidationIssues(response.data.issues || ['Unable to proceed with checkout']);
+        addToast({ message: 'Please review the issues below', type: 'error' });
+        // Refresh cart to get updated data
+        await fetchCart();
+        return;
+      }
+      
       setStep(2);
       window.scrollTo(0, 0);
-    }
-  };
-
-  const handleContinueToReview = () => {
-    if (validatePayment()) {
-      setStep(3);
-      window.scrollTo(0, 0);
+    } catch (error) {
+      addToast({ message: 'Failed to validate cart. Please try again.', type: 'error' });
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -152,38 +126,41 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     
     try {
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create the shipping address object for the API
+      const shippingAddress: ShippingAddress = {
+        firstName: shipping.firstName,
+        lastName: shipping.lastName,
+        phone: shipping.phone,
+        street: shipping.street,
+        apartment: shipping.apartment || undefined,
+        city: shipping.city,
+        state: shipping.state,
+        country: shipping.country,
+        postalCode: shipping.postalCode || undefined,
+      };
       
-      // Simulate random failure for testing (10% chance)
-      // In production, this would be replaced with actual API error handling
-      const shouldFail = Math.random() < 0.1;
+      // Create order via API
+      const response = await orderService.createOrder({
+        shippingAddress,
+      });
       
-      if (shouldFail) {
-        throw new Error('PAYMENT_DECLINED');
-      }
-      
-      // Generate order number
-      const orderNumber = `WS-${Date.now().toString(36).toUpperCase()}`;
-      
-      // Clear cart
-      await clearCart();
+      const order = response.data;
       
       // Navigate to success page with order info
       navigate('/checkout/success', { 
         state: { 
-          orderNumber,
-          email: shipping.email,
-          total: cart.total
+          orderNumber: order.orderNumber,
+          orderId: order.id,
+          total: order.total
         } 
       });
     } catch (error) {
       // Navigate to failure page with error info
-      const errorCode = error instanceof Error ? error.message : 'UNKNOWN_ERROR';
+      const errorMessage = (error as { message?: string })?.message || 'Failed to create order';
       navigate('/checkout/failed', {
         state: {
-          errorCode,
-          errorMessage: undefined // Let the failure page determine the message
+          errorCode: 'ORDER_FAILED',
+          errorMessage
         }
       });
     } finally {
@@ -217,22 +194,23 @@ export default function CheckoutPage() {
             <span className="step-label">Shipping</span>
           </div>
           <div className="step-connector" />
-          <div className={`step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-            <span className="step-number">
-              {step > 2 ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : '2'}
-            </span>
-            <span className="step-label">Payment</span>
-          </div>
-          <div className="step-connector" />
-          <div className={`step ${step >= 3 ? 'active' : ''}`}>
-            <span className="step-number">3</span>
-            <span className="step-label">Review</span>
+          <div className={`step ${step >= 2 ? 'active' : ''}`}>
+            <span className="step-number">2</span>
+            <span className="step-label">Review & Pay</span>
           </div>
         </div>
+
+        {/* Validation Issues */}
+        {validationIssues.length > 0 && (
+          <div className="validation-issues">
+            <h4>Please resolve these issues:</h4>
+            <ul>
+              {validationIssues.map((issue, index) => (
+                <li key={index}>{issue}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="checkout-layout">
           <div className="checkout-form-section">
@@ -240,7 +218,7 @@ export default function CheckoutPage() {
             {step === 1 && (
               <div className="checkout-step shipping-step">
                 <h2>Shipping Address</h2>
-                <form onSubmit={(e) => { e.preventDefault(); handleContinueToPayment(); }}>
+                <form onSubmit={(e) => { e.preventDefault(); handleContinueToReview(); }}>
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="firstName">First Name *</label>
@@ -296,12 +274,12 @@ export default function CheckoutPage() {
                   </div>
                   
                   <div className="form-group">
-                    <label htmlFor="address">Street Address *</label>
+                    <label htmlFor="street">Street Address *</label>
                     <input
                       type="text"
-                      id="address"
-                      name="address"
-                      value={shipping.address}
+                      id="street"
+                      name="street"
+                      value={shipping.street}
                       onChange={handleShippingChange}
                       placeholder="123 Main Street"
                       required
@@ -335,153 +313,92 @@ export default function CheckoutPage() {
                     </div>
                     <div className="form-group">
                       <label htmlFor="state">State *</label>
-                      <input
-                        type="text"
+                      <select
                         id="state"
                         name="state"
                         value={shipping.state}
                         onChange={handleShippingChange}
-                        placeholder="NY"
                         required
-                      />
+                      >
+                        <option value="">Select State</option>
+                        <option value="Abia">Abia</option>
+                        <option value="Adamawa">Adamawa</option>
+                        <option value="Akwa Ibom">Akwa Ibom</option>
+                        <option value="Anambra">Anambra</option>
+                        <option value="Bauchi">Bauchi</option>
+                        <option value="Bayelsa">Bayelsa</option>
+                        <option value="Benue">Benue</option>
+                        <option value="Borno">Borno</option>
+                        <option value="Cross River">Cross River</option>
+                        <option value="Delta">Delta</option>
+                        <option value="Ebonyi">Ebonyi</option>
+                        <option value="Edo">Edo</option>
+                        <option value="Ekiti">Ekiti</option>
+                        <option value="Enugu">Enugu</option>
+                        <option value="FCT">FCT - Abuja</option>
+                        <option value="Gombe">Gombe</option>
+                        <option value="Imo">Imo</option>
+                        <option value="Jigawa">Jigawa</option>
+                        <option value="Kaduna">Kaduna</option>
+                        <option value="Kano">Kano</option>
+                        <option value="Katsina">Katsina</option>
+                        <option value="Kebbi">Kebbi</option>
+                        <option value="Kogi">Kogi</option>
+                        <option value="Kwara">Kwara</option>
+                        <option value="Lagos">Lagos</option>
+                        <option value="Nasarawa">Nasarawa</option>
+                        <option value="Niger">Niger</option>
+                        <option value="Ogun">Ogun</option>
+                        <option value="Ondo">Ondo</option>
+                        <option value="Osun">Osun</option>
+                        <option value="Oyo">Oyo</option>
+                        <option value="Plateau">Plateau</option>
+                        <option value="Rivers">Rivers</option>
+                        <option value="Sokoto">Sokoto</option>
+                        <option value="Taraba">Taraba</option>
+                        <option value="Yobe">Yobe</option>
+                        <option value="Zamfara">Zamfara</option>
+                      </select>
                     </div>
                     <div className="form-group">
-                      <label htmlFor="zipCode">ZIP Code *</label>
+                      <label htmlFor="postalCode">Postal Code</label>
                       <input
                         type="text"
-                        id="zipCode"
-                        name="zipCode"
-                        value={shipping.zipCode}
+                        id="postalCode"
+                        name="postalCode"
+                        value={shipping.postalCode}
                         onChange={handleShippingChange}
-                        placeholder="10001"
-                        required
+                        placeholder="100001"
                       />
                     </div>
                   </div>
                   
                   <div className="form-group">
                     <label htmlFor="country">Country</label>
-                    <select
+                    <input
+                      type="text"
                       id="country"
                       name="country"
                       value={shipping.country}
-                      onChange={handleShippingChange}
-                    >
-                      <option value="United States">United States</option>
-                      <option value="Canada">Canada</option>
-                      <option value="United Kingdom">United Kingdom</option>
-                    </select>
+                      readOnly
+                      disabled
+                    />
                   </div>
                   
                   <div className="step-actions">
                     <Link to="/cart" className="btn btn-outline">
                       Back to Cart
                     </Link>
-                    <button type="submit" className="btn btn-primary">
-                      Continue to Payment
+                    <button type="submit" className="btn btn-primary" disabled={isValidating}>
+                      {isValidating ? 'Validating...' : 'Continue to Review'}
                     </button>
                   </div>
                 </form>
               </div>
             )}
 
-            {/* Step 2: Payment */}
+            {/* Step 2: Review & Pay */}
             {step === 2 && (
-              <div className="checkout-step payment-step">
-                <h2>Payment Method</h2>
-                <form onSubmit={(e) => { e.preventDefault(); handleContinueToReview(); }}>
-                  <div className="payment-methods">
-                    <label className="payment-method active">
-                      <input type="radio" name="method" value="card" defaultChecked />
-                      <span className="method-content">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                          <line x1="1" y1="10" x2="23" y2="10" />
-                        </svg>
-                        Credit / Debit Card
-                      </span>
-                    </label>
-                  </div>
-                  
-                  <div className="card-form">
-                    <div className="form-group">
-                      <label htmlFor="cardNumber">Card Number *</label>
-                      <input
-                        type="text"
-                        id="cardNumber"
-                        name="cardNumber"
-                        value={payment.cardNumber}
-                        onChange={handlePaymentChange}
-                        placeholder="1234 5678 9012 3456"
-                        maxLength={19}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="cardName">Name on Card *</label>
-                      <input
-                        type="text"
-                        id="cardName"
-                        name="cardName"
-                        value={payment.cardName}
-                        onChange={handlePaymentChange}
-                        placeholder="JOHN DOE"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="expiryDate">Expiry Date *</label>
-                        <input
-                          type="text"
-                          id="expiryDate"
-                          name="expiryDate"
-                          value={payment.expiryDate}
-                          onChange={handlePaymentChange}
-                          placeholder="MM/YY"
-                          maxLength={5}
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label htmlFor="cvv">CVV *</label>
-                        <input
-                          type="text"
-                          id="cvv"
-                          name="cvv"
-                          value={payment.cvv}
-                          onChange={handlePaymentChange}
-                          placeholder="123"
-                          maxLength={4}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="secure-notice">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Your payment information is encrypted and secure
-                  </div>
-                  
-                  <div className="step-actions">
-                    <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>
-                      Back
-                    </button>
-                    <button type="submit" className="btn btn-primary">
-                      Review Order
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Step 3: Review */}
-            {step === 3 && (
               <div className="checkout-step review-step">
                 <h2>Review Your Order</h2>
                 
@@ -492,27 +409,11 @@ export default function CheckoutPage() {
                   </div>
                   <div className="review-content">
                     <p>{shipping.firstName} {shipping.lastName}</p>
-                    <p>{shipping.address}{shipping.apartment && `, ${shipping.apartment}`}</p>
-                    <p>{shipping.city}, {shipping.state} {shipping.zipCode}</p>
+                    <p>{shipping.street}{shipping.apartment && `, ${shipping.apartment}`}</p>
+                    <p>{shipping.city}, {shipping.state} {shipping.postalCode}</p>
                     <p>{shipping.country}</p>
                     <p>{shipping.email}</p>
                     <p>{shipping.phone}</p>
-                  </div>
-                </div>
-                
-                <div className="review-section">
-                  <div className="review-header">
-                    <h3>Payment Method</h3>
-                    <button type="button" className="edit-btn" onClick={() => setStep(2)}>Edit</button>
-                  </div>
-                  <div className="review-content">
-                    <p>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                        <line x1="1" y1="10" x2="23" y2="10" />
-                      </svg>
-                      **** **** **** {payment.cardNumber.slice(-4)}
-                    </p>
                   </div>
                 </div>
                 
@@ -527,7 +428,7 @@ export default function CheckoutPage() {
                           <p className="item-qty">Qty: {item.quantity}</p>
                         </div>
                         <div className="item-price">
-                          ${item.totalPrice.toFixed(2)}
+                          ₦{item.totalPrice.toLocaleString()}
                         </div>
                       </div>
                     ))}
@@ -535,7 +436,7 @@ export default function CheckoutPage() {
                 </div>
                 
                 <div className="step-actions">
-                  <button type="button" className="btn btn-outline" onClick={() => setStep(2)}>
+                  <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>
                     Back
                   </button>
                   <button 
@@ -550,7 +451,7 @@ export default function CheckoutPage() {
                         Processing...
                       </>
                     ) : (
-                      <>Place Order - ${cart.total.toFixed(2)}</>
+                      <>Place Order - ₦{cart.total.toLocaleString()}</>
                     )}
                   </button>
                 </div>
@@ -572,33 +473,29 @@ export default function CheckoutPage() {
                     <div className="item-info">
                       <span className="item-name">{item.product.name}</span>
                     </div>
-                    <span className="item-price">${item.totalPrice.toFixed(2)}</span>
+                    <span className="item-price">₦{item.totalPrice.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
               <hr />
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>${cart.subtotal.toFixed(2)}</span>
+                <span>₦{cart.subtotal.toLocaleString()}</span>
               </div>
               {cart.discount > 0 && (
                 <div className="summary-row discount">
                   <span>Discount {cart.couponCode && `(${cart.couponCode})`}</span>
-                  <span>-${cart.discount.toFixed(2)}</span>
+                  <span>-₦{cart.discount.toLocaleString()}</span>
                 </div>
               )}
               <div className="summary-row">
                 <span>Shipping</span>
-                <span>{cart.shipping === 0 ? 'Free' : `$${cart.shipping.toFixed(2)}`}</span>
-              </div>
-              <div className="summary-row">
-                <span>Tax</span>
-                <span>${cart.tax.toFixed(2)}</span>
+                <span>{cart.shipping === 0 ? 'Free' : `₦${cart.shipping.toLocaleString()}`}</span>
               </div>
               <hr />
               <div className="summary-row total">
                 <span>Total</span>
-                <span>${cart.total.toFixed(2)}</span>
+                <span>₦{cart.total.toLocaleString()}</span>
               </div>
             </div>
           </div>
