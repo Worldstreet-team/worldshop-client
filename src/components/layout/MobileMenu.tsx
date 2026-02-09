@@ -1,10 +1,27 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useCategoryStore } from '@/store/categoryStore';
+
+// Map category slugs to icons (material icons)
+const categoryIcons: Record<string, string> = {
+  electronics: 'devices',
+  fashion: 'checkroom',
+  'home-garden': 'home',
+  'sports-outdoors': 'fitness_center',
+};
 
 export default function MobileMenu() {
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const { isAuthenticated, user, logout } = useAuthStore();
+  const { categories, fetchCategories } = useCategoryStore();
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      fetchCategories();
+    }
+  }, [isMobileMenuOpen, fetchCategories]);
 
   const handleLogout = async () => {
     await logout();
@@ -22,8 +39,9 @@ export default function MobileMenu() {
       {/* Menu */}
       <div className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-menu-header">
-          <Link to="/" onClick={closeMobileMenu}>
-            <img src="/logo.svg" alt="WorldStreet" className="mobile-menu-logo" />
+          <Link to="/" onClick={closeMobileMenu} className="mobile-menu-brand">
+            <img src="/images/logo-dark.svg" alt="WorldStreet" className="mobile-menu-logo" width="32" height="32" />
+            <span className="mobile-menu-brand-text">WorldStreet</span>
           </Link>
           <button 
             className="close-btn"
@@ -46,19 +64,55 @@ export default function MobileMenu() {
         <nav className="mobile-menu-nav">
           <ul>
             <li>
-              <Link to="/" onClick={closeMobileMenu}>Home</Link>
+              <Link to="/" onClick={closeMobileMenu}>
+                <span className="material-icons">home</span>
+                Home
+              </Link>
             </li>
             <li>
-              <Link to="/products" onClick={closeMobileMenu}>Shop</Link>
+              <Link to="/products" onClick={closeMobileMenu}>
+                <span className="material-icons">storefront</span>
+                Shop
+              </Link>
+            </li>
+          </ul>
+
+          {/* Categories */}
+          {categories.length > 0 && (
+            <>
+              <div className="mobile-menu-section-title">Categories</div>
+              <ul>
+                {categories.map((cat) => (
+                  <li key={cat.id}>
+                    <Link to={`/category/${cat.slug}`} onClick={closeMobileMenu}>
+                      <span className="material-icons">
+                        {categoryIcons[cat.slug] ?? 'category'}
+                      </span>
+                      {cat.name}
+                      {cat.productCount !== undefined && (
+                        <span className="mobile-menu-badge">{cat.productCount}</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          <hr className="mobile-menu-divider" />
+
+          <ul>
+            <li>
+              <Link to="/products?featured=true" onClick={closeMobileMenu}>
+                <span className="material-icons">star</span>
+                Featured
+              </Link>
             </li>
             <li>
-              <Link to="/category/electronics" onClick={closeMobileMenu}>Electronics</Link>
-            </li>
-            <li>
-              <Link to="/category/fashion" onClick={closeMobileMenu}>Fashion</Link>
-            </li>
-            <li>
-              <Link to="/category/home-garden" onClick={closeMobileMenu}>Home & Garden</Link>
+              <Link to="/products?sale=true" onClick={closeMobileMenu}>
+                <span className="material-icons mobile-menu-sale-icon">local_offer</span>
+                Sale
+              </Link>
             </li>
           </ul>
 
