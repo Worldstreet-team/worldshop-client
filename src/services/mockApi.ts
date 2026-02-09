@@ -10,7 +10,7 @@ import type { Product, Category, Review } from '@/types/product.types';
 const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Random delay between min and max
-const randomDelay = (min: number = 300, max: number = 800) => 
+const randomDelay = (min: number = 300, max: number = 800) =>
   delay(Math.floor(Math.random() * (max - min + 1)) + min);
 
 type LegacyProduct = Product & {
@@ -86,7 +86,7 @@ export const productApi = {
     pageSize: number = 12
   ): Promise<PaginatedResponse<Product>> {
     await randomDelay(400, 1000);
-    
+
     let products = [...mockData.products] as unknown as LegacyProduct[];
 
     // Apply filters
@@ -139,7 +139,7 @@ export const productApi = {
           products.sort((a, b) => getProductRating(b) - getProductRating(a));
           break;
         case 'newest':
-          products.sort((a, b) => 
+          products.sort((a, b) =>
             new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
           );
           break;
@@ -216,7 +216,7 @@ export const productApi = {
   async search(query: string, limit: number = 10): Promise<Product[]> {
     await randomDelay(200, 500);
     const queryLower = query.toLowerCase();
-    
+
     return mockData.products
       .filter(
         p =>
@@ -265,7 +265,7 @@ export const reviewApi = {
     pageSize: number = 5
   ): Promise<PaginatedResponse<Review>> {
     await randomDelay(300, 700);
-    
+
     const productReviews = (mockData.reviews as Record<string, Review[]>)[productId] || [];
     let reviews = [...productReviews];
 
@@ -278,12 +278,12 @@ export const reviewApi = {
     if (filters.sortBy) {
       switch (filters.sortBy) {
         case 'newest':
-          reviews.sort((a, b) => 
+          reviews.sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
           break;
         case 'oldest':
-          reviews.sort((a, b) => 
+          reviews.sort((a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
           break;
@@ -320,7 +320,7 @@ export const reviewApi = {
     distribution: { rating: number; count: number; percentage: number }[];
   }> {
     await delay(200);
-    
+
     const productReviews = (mockData.reviews as Record<string, Review[]>)[productId] || [];
     const total = productReviews.length;
 
@@ -365,7 +365,7 @@ export const reviewApi = {
     comment: string;
   }): Promise<Review> {
     await randomDelay(500, 1000);
-    
+
     // Simulate created review
     const newReview: Review = {
       id: `rev-${Date.now()}`,

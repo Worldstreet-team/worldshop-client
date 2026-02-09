@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 8, 2026  
-**Version:** 0.9.0  
+**Last Updated:** February 9, 2026  
+**Version:** 0.10.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -46,13 +46,14 @@
 ### State Management (Zustand Stores)
 - **authStore.ts** - User authentication state
 - **cartStore.ts** - Shopping cart state
+- **categoryStore.ts** - Shared category data (header/mobile nav)
 - **wishlistStore.ts** - Wishlist state  
 - **uiStore.ts** - UI state (modals, toasts, loading)
 
 ### Services Layer
 - **api.ts** - Base Axios configuration
 - **profileService.ts** - Profile API (GET/PATCH /profile on worldshop-server) ✅
-- **mockApi.ts** - Mock API for development (categories, products)
+- **mockApi.ts** - Mock API for banners and reviews
 - **mockCartApi.ts** - Mock cart API
 - **cartService.ts** - Cart operations
 - **productService.ts** - Product operations
@@ -212,8 +213,9 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] `profileService.ts` — real API client for profile endpoints
 - [x] Profile page fetches/updates real backend data
 - [x] `VITE_API_BASE_URL` configured for worldshop-server (`http://localhost:8000/api/v1`)
-- [ ] Replace remaining mock APIs with real backend endpoints
-- [ ] Connect products, categories, cart, orders to worldshop-server
+- [x] Connect products and categories to worldshop-server
+- [ ] Replace remaining mock APIs with real backend endpoints (banners, reviews, cart, wishlist)
+- [ ] Connect cart and orders to worldshop-server
 - [ ] API error handling and retries
 - [ ] Response caching strategies
 - [ ] Optimistic UI updates

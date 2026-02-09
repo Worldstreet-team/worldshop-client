@@ -4,6 +4,21 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.10.0] - 2026-02-09
+
+### Added — Products & Categories Integration
+- Product and category pages now use real API data for listings, detail, and search flows
+- Shared category store for navigation and mobile menu
+
+### Changed — Navigation & Branding
+- Simplified header layout with inline nav and improved category dropdown
+- Logo applied across header, mobile menu, and footer
+- Favicon and web manifest wired to new brand assets
+
+### Fixed
+- Wishlist price display now supports base/sale price and legacy mock fields
+- Mock product helpers now handle base price and average rating naming
+
 ## [0.9.0] - 2026-02-08
 
 ### Added — Profile Integration (Service 2)
