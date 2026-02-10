@@ -33,10 +33,11 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
         set({ isLoading: true, error: null });
         try {
           const response = await wishlistService.getWishlist();
-          set({ wishlist: response.data, isLoading: false });
+          const body = response.data as unknown as { success: boolean; wishlist: Wishlist };
+          set({ wishlist: body.wishlist, isLoading: false });
         } catch (error) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: (error as { message: string }).message || 'Failed to fetch wishlist'
           });
         }
@@ -46,10 +47,11 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
         set({ isLoading: true, error: null });
         try {
           const response = await wishlistService.addToWishlist(productId);
-          set({ wishlist: response.data, isLoading: false });
+          const body = response.data as unknown as { success: boolean; wishlist: Wishlist };
+          set({ wishlist: body.wishlist, isLoading: false });
         } catch (error) {
-          set({ 
-            isLoading: false, 
+          set({
+            isLoading: false,
             error: (error as { message: string }).message || 'Failed to add to wishlist'
           });
           throw error;
@@ -58,7 +60,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
 
       removeFromWishlist: async (productId: string) => {
         const currentWishlist = get().wishlist;
-        
+
         // Optimistic update
         if (currentWishlist) {
           set({
@@ -71,7 +73,8 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
 
         try {
           const response = await wishlistService.removeFromWishlist(productId);
-          set({ wishlist: response.data });
+          const body = response.data as unknown as { success: boolean; wishlist: Wishlist };
+          set({ wishlist: body.wishlist });
         } catch (error) {
           // Revert on error
           set({ wishlist: currentWishlist });

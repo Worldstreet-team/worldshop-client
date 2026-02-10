@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartStore } from '@/store/cartStore';
@@ -5,8 +6,12 @@ import { toast } from '@/store/uiStore';
 import { EmptyState } from '@/components/common';
 
 export default function WishlistPage() {
-  const { wishlist, removeFromWishlist } = useWishlistStore();
+  const { wishlist, isLoading, fetchWishlist, removeFromWishlist } = useWishlistStore();
   const { addToCart } = useCartStore();
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const handleAddToCart = async (productId: string) => {
     try {
@@ -39,7 +44,11 @@ export default function WishlistPage() {
           <h1>My Wishlist</h1>
         </div>
 
-        {items.length === 0 ? (
+        {isLoading && !wishlist ? (
+          <div className="loading-state" style={{ textAlign: 'center', padding: '3rem' }}>
+            <p>Loading your wishlist...</p>
+          </div>
+        ) : items.length === 0 ? (
           <EmptyState
             title="Your wishlist is empty"
             description="Save items you love to your wishlist to buy them later."

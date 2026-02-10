@@ -4,6 +4,22 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.16.0] - 2026-02-10
+
+### Added — Reviews Integration (Service 9)
+- `reviewService.ts` — real API client for product reviews (`getProductReviews`, `getSummary`, `getMyReview`, `create`, `update`, `delete`)
+- Connected to backend at `/api/v1/products/:productId/reviews`
+
+### Changed — ProductDetail Reviews
+- `ProductDetail.tsx` — replaced `reviewApi` (mockApi) import with real `reviewService`
+- Review summary now uses `ReviewSummary` type from reviewService (with `totalCount` and `distribution` object)
+- Review fetch wrapped in try/catch — gracefully falls back to empty state if no reviews exist
+- Review submission calls `reviewService.create(productId, data)` with proper payload shape
+
+### Changed — Wishlist Integration (Service 10)
+- `wishlistStore.ts` — fixed response extraction to use `response.data.wishlist` instead of `response.data` (backend returns `{ success, wishlist }`)
+- `Wishlist.tsx` — added `useEffect` to call `fetchWishlist()` on mount, added loading state before content renders
+
 ## [0.15.0] - 2026-02-09
 
 ### Changed — Order Pages Redesign (Electro-Inspired)

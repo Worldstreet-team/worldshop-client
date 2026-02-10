@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 9, 2026  
-**Version:** 0.15.0  
+**Last Updated:** February 10, 2026  
+**Version:** 0.16.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -58,8 +58,9 @@
 - **orderService.ts** - Order operations (real API) ✅
 - **paymentService.ts** - Payment operations (Paystack integration) ✅
 - **productService.ts** - Product operations ✅
-- **mockApi.ts** - Mock API for reviews (to be replaced)
-- **userService.ts** - User operations
+- **reviewService.ts** - Review operations (real API) ✅
+- **mockApi.ts** - Mock API (banners only, reviews replaced)
+- **userService.ts** - User operations (auth, address, wishlist) ✅
 
 ### Type System
 Comprehensive TypeScript interfaces in `/src/types/`:
@@ -243,7 +244,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
   - [x] Checkout flow: create order → initialize payment → redirect to Paystack
   - [x] CheckoutSuccess handles `?reference=` param, auto-verifies payment on mount
   - [x] CheckoutFailure handles Paystack redirect failures
-- [ ] Replace remaining mock APIs with real backend endpoints (reviews, wishlist)
+- [x] Replace remaining mock APIs with real backend endpoints (reviews ✅, wishlist ✅)
 - [ ] API error handling and retries
 - [ ] Response caching strategies
 - [ ] Optimistic UI updates

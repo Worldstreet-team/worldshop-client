@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { productService } from '@/services/productService';
-import { reviewApi } from '@/services/mockApi';
+import { reviewService, type ReviewSummary } from '@/services/reviewService';
 import type { Product, Review } from '@/types/product.types';
 import { Breadcrumb, Skeleton, SkeletonText, EmptyState } from '@/components/common';
 import {
@@ -20,11 +20,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [reviewSummary, setReviewSummary] = useState<{
-    averageRating: number;
-    totalReviews: number;
-    distribution: { rating: number; count: number; percentage: number }[];
-  } | null>(null);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [relatedLoading, setRelatedLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
@@ -47,12 +43,18 @@ export default function ProductDetailPage() {
           setRelatedLoading(false);
 
           // Fetch review summary and reviews
-          const [summary, reviewsResult] = await Promise.all([
-            reviewApi.getSummary(data.id),
-            reviewApi.getByProductId(data.id, { sortBy: 'newest' }, 1, 10),
-          ]);
-          setReviewSummary(summary);
-          setReviews(reviewsResult.data);
+          try {
+            const [summary, reviewsResult] = await Promise.all([
+              reviewService.getSummary(data.id),
+              reviewService.getProductReviews(data.id, { sortBy: 'newest' }, 1, 10),
+            ]);
+            setReviewSummary(summary);
+            setReviews(reviewsResult.data);
+          } catch {
+            // Reviews may fail if none exist yet — use defaults
+            setReviewSummary({ averageRating: 0, totalCount: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
+            setReviews([]);
+          }
         }
       } catch (error) {
         console.error('Error fetching product:', error);
@@ -69,16 +71,17 @@ export default function ProductDetailPage() {
     if (!product) return;
 
     try {
-      const newReview = await reviewApi.create({
-        productId: product.id,
-        ...data,
+      const newReview = await reviewService.create(product.id, {
+        rating: data.rating,
+        title: data.title || undefined,
+        comment: data.comment,
       });
 
       // Add to reviews list
       setReviews(prev => [newReview, ...prev]);
 
       // Refresh summary
-      const summary = await reviewApi.getSummary(product.id);
+      const summary = await reviewService.getSummary(product.id);
       setReviewSummary(summary);
 
       // Switch to reviews tab
@@ -190,7 +193,7 @@ export default function ProductDetailPage() {
               className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
               onClick={() => setActiveTab('reviews')}
             >
-              Reviews ({reviewSummary?.totalReviews || 0})
+              Reviews ({reviewSummary?.totalCount || 0})
             </button>
           </div>
 
@@ -220,7 +223,7 @@ export default function ProductDetailPage() {
                 <ProductReviews
                   reviews={reviews}
                   averageRating={reviewSummary.averageRating}
-                  totalCount={reviewSummary.totalReviews}
+                  totalCount={reviewSummary.totalCount}
                   onWriteReview={() => { }}
                 />
 
