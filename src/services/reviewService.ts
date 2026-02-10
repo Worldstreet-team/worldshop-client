@@ -1,6 +1,5 @@
 import { api } from './api';
 import type { Review } from '@/types/product.types';
-import type { ApiResponse } from '@/types/common.types';
 
 export interface ReviewSummary {
     averageRating: number;
@@ -47,11 +46,10 @@ export const reviewService = {
         if (options.sortBy) params.set('sortBy', options.sortBy);
         if (options.rating) params.set('rating', String(options.rating));
 
-        const res = await api.get<ApiResponse<ReviewsResponse>>(
+        const payload = await api.get<{ success: boolean; data: Review[]; summary: ReviewSummary; pagination: ReviewsResponse['pagination'] }>(
             `/products/${productId}/reviews?${params.toString()}`,
         );
         // The backend returns { success, data, summary, pagination }
-        const payload = res.data as unknown as { success: boolean; data: Review[]; summary: ReviewSummary; pagination: ReviewsResponse['pagination'] };
         return {
             data: payload.data,
             summary: payload.summary,
@@ -61,36 +59,36 @@ export const reviewService = {
 
     /** Get review summary for a product */
     getSummary: async (productId: string): Promise<ReviewSummary> => {
-        const res = await api.get<ApiResponse<{ summary: ReviewSummary }>>(
+        const res = await api.get<{ success: boolean; summary: ReviewSummary }>(
             `/products/${productId}/reviews/summary`,
         );
-        return (res.data as unknown as { summary: ReviewSummary }).summary;
+        return res.summary;
     },
 
     /** Get current user's review for a product */
     getMyReview: async (productId: string): Promise<Review | null> => {
-        const res = await api.get<ApiResponse<{ review: Review | null }>>(
+        const res = await api.get<{ success: boolean; review: Review | null }>(
             `/products/${productId}/reviews/mine`,
         );
-        return (res.data as unknown as { review: Review | null }).review;
+        return res.review;
     },
 
     /** Create a review */
     create: async (productId: string, data: CreateReviewInput): Promise<Review> => {
-        const res = await api.post<ApiResponse<{ review: Review }>>(
+        const res = await api.post<{ success: boolean; review: Review }>(
             `/products/${productId}/reviews`,
             data,
         );
-        return (res.data as unknown as { review: Review }).review;
+        return res.review;
     },
 
     /** Update own review */
     update: async (productId: string, reviewId: string, data: UpdateReviewInput): Promise<Review> => {
-        const res = await api.put<ApiResponse<{ review: Review }>>(
+        const res = await api.put<{ success: boolean; review: Review }>(
             `/products/${productId}/reviews/${reviewId}`,
             data,
         );
-        return (res.data as unknown as { review: Review }).review;
+        return res.review;
     },
 
     /** Delete own review */

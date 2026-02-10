@@ -32,8 +32,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
       fetchWishlist: async () => {
         set({ isLoading: true, error: null });
         try {
-          const response = await wishlistService.getWishlist();
-          const body = response.data as unknown as { success: boolean; wishlist: Wishlist };
+          const body = await wishlistService.getWishlist() as unknown as { success: boolean; wishlist: Wishlist };
           set({ wishlist: body.wishlist, isLoading: false });
         } catch (error) {
           set({
@@ -46,8 +45,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
       addToWishlist: async (productId: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await wishlistService.addToWishlist(productId);
-          const body = response.data as unknown as { success: boolean; wishlist: Wishlist };
+          const body = await wishlistService.addToWishlist(productId) as unknown as { success: boolean; wishlist: Wishlist };
           set({ wishlist: body.wishlist, isLoading: false });
         } catch (error) {
           set({
@@ -72,8 +70,7 @@ export const useWishlistStore = create<WishlistState & WishlistActions>()(
         }
 
         try {
-          const response = await wishlistService.removeFromWishlist(productId);
-          const body = response.data as unknown as { success: boolean; wishlist: Wishlist };
+          const body = await wishlistService.removeFromWishlist(productId) as unknown as { success: boolean; wishlist: Wishlist };
           set({ wishlist: body.wishlist });
         } catch (error) {
           // Revert on error

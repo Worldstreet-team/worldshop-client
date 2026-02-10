@@ -78,17 +78,17 @@ export const addressService = {
 export const wishlistService = {
   // Get wishlist
   getWishlist: () => 
-    api.get<ApiResponse<Wishlist>>('/wishlist'),
+    api.get<{ success: boolean; wishlist: Wishlist }>('/wishlist'),
   
   // Add item to wishlist
   addToWishlist: (productId: string) => 
-    api.post<ApiResponse<Wishlist>>('/wishlist/items', { productId }),
+    api.post<{ success: boolean; wishlist: Wishlist }>('/wishlist/items', { productId }),
   
   // Remove from wishlist
   removeFromWishlist: (productId: string) => 
-    api.delete<ApiResponse<Wishlist>>(`/wishlist/items/${productId}`),
+    api.delete<{ success: boolean; wishlist: Wishlist }>(`/wishlist/items/${productId}`),
   
   // Check if product is in wishlist
   isInWishlist: (productId: string) => 
-    api.get<ApiResponse<{ inWishlist: boolean }>>(`/wishlist/check/${productId}`),
+    api.get<{ success: boolean; inWishlist: boolean }>(`/wishlist/check/${productId}`),
 };
