@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
 **Last Updated:** February 9, 2026  
-**Version:** 0.14.0  
+**Version:** 0.15.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -458,6 +458,7 @@ worldshop-client/
 │   │   ├── _components.scss
 │   │   ├── _layout.scss
 │   │   ├── _mixins.scss
+│   │   ├── _orders.scss
 │   │   ├── _pages.scss
 │   │   ├── _variables.scss
 │   │   └── main.scss
@@ -535,7 +536,7 @@ worldshop-client/
 ## 🎯 Next Steps
 
 ### Immediate Priorities
-1. **Payments / Paystack (Service 8)** — Payment integration with Paystack (NGN ₦), verify webhook, update order status
+1. ~~**Payments / Paystack (Service 8)**~~ ✅ — Payment integration with Paystack (NGN ₦) complete
 2. **Reviews (Service 9)** — Review model, submit/list/moderate reviews, replace mock review API
 3. **Wishlist (Service 10)** — Persistent wishlist backend, connect wishlist page
 4. **Admin Panel Backend** — Connect admin products, orders, categories to real API
@@ -569,12 +570,14 @@ worldshop-client/
 - **Products & Categories** connected to real API (Services 3-4 complete)
 - **Cart** is fully connected to worldshop-server API (Service 5 complete)
 - **Orders & Checkout** connected to real API with cart validation, order creation, cancellation
+- **Order pages** redesigned (v0.15.0) — polished Electro-style table/card layout with status badges, timeline, skeleton loading
 - **Addresses** fully connected — CRUD, checkout picker, Nigerian states only (Service 6 complete)
+- **Payments** — Paystack integration complete with email receipts via Resend (Service 8 complete)
 - **Authentication** uses external WorldStreet Identity with HttpOnly cookies (Service 1 complete)
 - **Hero slider** uses static data — `bannerApi` removed, no mock API dependency
 - Remaining mock APIs: reviews (`mockApi`)
 - Media storage will use **Cloudflare** (not Cloudinary)
-- Next up: **Payments (Paystack)** → Reviews → Wishlist → Admin panel backend
+- Next up: **Reviews (Service 9)** → Wishlist (Service 10) → Admin panel backend
 - Mobile responsiveness has been tested but needs more real-device testing
 - Accessibility features need audit
 - Performance optimization needed before production deployment

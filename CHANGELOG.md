@@ -4,6 +4,21 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.15.0] - 2026-02-09
+
+### Changed — Order Pages Redesign (Electro-Inspired)
+- `OrderHistory.tsx` completely rewritten — WooCommerce-style order table with product thumbnails, status badges, responsive card layout on mobile, skeleton loading, status filter tabs
+- `OrderDetail.tsx` completely rewritten — sectioned layout with order info header, items table with images, shipping address card, order timeline with status markers, order summary totals, cancel button for CREATED orders
+- Created `_orders.scss` — comprehensive SCSS partial for customer-facing order pages
+
+### Styles — Order Pages
+- `.orders-page` with status filter tabs, skeleton loading, empty state
+- `.order-card` with product thumbnail strip, status badges (CREATED/PAID/PROCESSING/SHIPPED/DELIVERED/CANCELLED/REFUNDED), responsive mobile layout
+- `.order-detail-page` with info header, items table, address card, timeline, summary section
+- Status badge colors: yellow (CREATED), green (PAID/DELIVERED), blue (PROCESSING/SHIPPED), red (CANCELLED/REFUNDED)
+- Responsive: table → stacked cards on mobile, timeline adapts for small screens
+- Follows existing design system: `$primary-color`, `$secondary-color`, `@include card` mixin, BEM naming
+
 ## [0.14.0] - 2026-02-09
 
 ### Added — Payments Integration (Service 8: Paystack)

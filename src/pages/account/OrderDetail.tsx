@@ -4,6 +4,26 @@ import { orderService } from '@/services/orderService';
 import { useUIStore } from '@/store/uiStore';
 import type { Order } from '@/types/order.types';
 
+const STATUS_LABELS: Record<string, string> = {
+  CREATED: 'Pending',
+  PAID: 'Paid',
+  PROCESSING: 'Processing',
+  SHIPPED: 'Shipped',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+  REFUNDED: 'Refunded',
+};
+
+const STATUS_CLASS: Record<string, string> = {
+  CREATED: 'status-created',
+  PAID: 'status-paid',
+  PROCESSING: 'status-processing',
+  SHIPPED: 'status-shipped',
+  DELIVERED: 'status-delivered',
+  CANCELLED: 'status-cancelled',
+  REFUNDED: 'status-refunded',
+};
+
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { addToast } = useUIStore();
@@ -30,36 +50,26 @@ export default function OrderDetailPage() {
     fetchOrder();
   }, [id]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-NG', {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-NG', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
+      day: 'numeric',
+    });
+
+  const formatDateTime = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-NG', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
 
-  const getStatusClass = (status: string) => {
-    const statusMap: Record<string, string> = {
-      CREATED: 'status-pending',
-      PAID: 'status-paid',
-      PROCESSING: 'status-processing',
-      SHIPPED: 'status-shipped',
-      DELIVERED: 'status-delivered',
-      CANCELLED: 'status-cancelled',
-      REFUNDED: 'status-refunded',
-    };
-    return statusMap[status] || 'status-default';
-  };
-
-  const canCancel = (status: string) => {
-    return status === 'CREATED';
-  };
+  const canCancel = (status: string) => status === 'CREATED';
 
   const handleCancelOrder = async () => {
     if (!order || !canCancel(order.status)) return;
-
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
 
     setIsCancelling(true);
@@ -75,22 +85,82 @@ export default function OrderDetailPage() {
     }
   };
 
+  // ----- Loading Skeleton -----
   if (isLoading) {
     return (
       <div className="order-detail-page">
         <div className="container">
-          <div className="loading-spinner">Loading order details...</div>
+          <div className="page-header">
+            <Link to="/account/orders" className="back-link">
+              <span className="material-icons">arrow_back</span>
+              Back to Orders
+            </Link>
+            <h1>Order Details</h1>
+          </div>
+          <div className="detail-skeleton">
+            <div className="skeleton-header">
+              <div>
+                <div className="skeleton-line w-200 h-20" />
+                <div className="skeleton-line w-150" style={{ marginTop: 8 }} />
+              </div>
+              <div className="skeleton-line w-80" />
+            </div>
+            <div className="skeleton-grid">
+              <div>
+                <div className="skeleton-section">
+                  <div className="skeleton-section-title">
+                    <div className="skeleton-line w-120" />
+                  </div>
+                  <div className="skeleton-section-body">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="skeleton-item-row">
+                        <div className="skeleton-line h-64" />
+                        <div style={{ flex: 1 }}>
+                          <div className="skeleton-line w-200" />
+                          <div className="skeleton-line w-100" />
+                        </div>
+                        <div className="skeleton-line w-80" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="skeleton-section">
+                  <div className="skeleton-section-title">
+                    <div className="skeleton-line w-120" />
+                  </div>
+                  <div className="skeleton-section-body">
+                    <div className="skeleton-line w-full" />
+                    <div className="skeleton-line w-full" />
+                    <div className="skeleton-line w-150" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ----- Error -----
   if (error || !order) {
     return (
       <div className="order-detail-page">
         <div className="container">
-          <div className="error-message">{error || 'Order not found'}</div>
-          <Link to="/account/orders" className="btn btn-primary">Back to Orders</Link>
+          <div className="page-header">
+            <Link to="/account/orders" className="back-link">
+              <span className="material-icons">arrow_back</span>
+              Back to Orders
+            </Link>
+            <h1>Order Details</h1>
+          </div>
+          <div className="detail-error">
+            <span className="material-icons error-icon">error_outline</span>
+            <p>{error || 'Order not found'}</p>
+            <Link to="/account/orders" className="btn-back">Back to Orders</Link>
+          </div>
         </div>
       </div>
     );
@@ -99,6 +169,7 @@ export default function OrderDetailPage() {
   return (
     <div className="order-detail-page">
       <div className="container">
+        {/* Page Header */}
         <div className="page-header">
           <Link to="/account/orders" className="back-link">
             <span className="material-icons">arrow_back</span>
@@ -107,22 +178,34 @@ export default function OrderDetailPage() {
           <h1>Order Details</h1>
         </div>
 
-        <div className="order-detail-content">
-          <div className="order-info-card">
-            <div className="order-info-header">
-              <div>
-                <h2>Order #{order.orderNumber}</h2>
-                <div className="order-meta">
-                  <span>Placed on: {formatDate(order.createdAt)}</span>
-                </div>
-              </div>
-              <span className={`order-status ${getStatusClass(order.status)}`}>
-                {order.status}
+        {/* Order Info Header */}
+        <div className="order-info-header">
+          <div className="info-left">
+            <h2>Order #{order.orderNumber}</h2>
+            <div className="order-meta">
+              <span className="meta-item">
+                <span className="material-icons">calendar_today</span>
+                {formatDate(order.createdAt)}
               </span>
+              <span className="meta-item">
+                <span className="material-icons">inventory_2</span>
+                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+              </span>
+              {order.paidAt && (
+                <span className="meta-item">
+                  <span className="material-icons">payments</span>
+                  Paid {formatDate(order.paidAt)}
+                </span>
+              )}
             </div>
+          </div>
+          <div className="info-right">
+            <span className={STATUS_CLASS[order.status] || 'status-default'}>
+              {STATUS_LABELS[order.status] || order.status}
+            </span>
             {canCancel(order.status) && (
               <button
-                className="btn btn-outline-danger"
+                className="btn-cancel"
                 onClick={handleCancelOrder}
                 disabled={isCancelling}
               >
@@ -130,87 +213,155 @@ export default function OrderDetailPage() {
               </button>
             )}
           </div>
+        </div>
 
-          <div className="order-sections">
-            <section className="order-items-section">
-              <h3>Order Items ({order.items.length})</h3>
-              <div className="order-items-list">
-                {order.items.map((item) => (
-                  <div key={item.id} className="order-item">
-                    <div className="item-image">
-                      <img
-                        src={item.productImage || '/placeholder.jpg'}
-                        alt={item.productName}
-                      />
-                    </div>
-                    <div className="item-info">
-                      <h4>{item.productName}</h4>
-                      {item.sku && <p className="item-sku">SKU: {item.sku}</p>}
-                      {item.variantName && (
-                        <p className="item-variant">Variant: {item.variantName}</p>
-                      )}
-                      <p className="item-qty">Qty: {item.quantity}</p>
-                    </div>
-                    <div className="item-price">
-                      <span className="unit-price">₦{item.unitPrice.toLocaleString()} each</span>
-                      <span className="total-price">₦{item.totalPrice.toLocaleString()}</span>
-                    </div>
-                  </div>
-                ))}
+        {/* Two-column grid: items on left, sidebar on right */}
+        <div className="order-detail-grid">
+          {/* Main content */}
+          <div className="order-main">
+            {/* Items */}
+            <div className="section-card">
+              <h3 className="section-title">
+                <span className="material-icons">shopping_bag</span>
+                Order Items ({order.items.length})
+              </h3>
+              <div className="section-body" style={{ padding: 0 }}>
+                <table className="order-items-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Price</th>
+                      <th>Qty</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.items.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          <div className="item-product">
+                            <div className="item-image">
+                              <img
+                                src={item.productImage || '/images/products/placeholder.jpg'}
+                                alt={item.productName}
+                              />
+                            </div>
+                            <div className="item-details">
+                              <p className="item-name">{item.productName}</p>
+                              {item.sku && <p className="item-sku">SKU: {item.sku}</p>}
+                              {item.variantName && (
+                                <p className="item-variant">{item.variantName}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="item-price">₦{item.unitPrice.toLocaleString()}</td>
+                        <td className="item-qty">{item.quantity}</td>
+                        <td className="item-total">₦{item.totalPrice.toLocaleString()}</td>
+
+                        {/* Mobile row (hidden on desktop via CSS) */}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </section>
+            </div>
 
-            <section className="order-shipping-section">
-              <h3>Shipping Address</h3>
-              <div className="address-card">
-                <p className="name">{order.shippingAddress.firstName} {order.shippingAddress.lastName}</p>
-                <p>{order.shippingAddress.street}</p>
-                {order.shippingAddress.apartment && <p>{order.shippingAddress.apartment}</p>}
-                <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode}</p>
-                <p>{order.shippingAddress.country}</p>
-                <p className="phone">{order.shippingAddress.phone}</p>
-              </div>
-            </section>
-
+            {/* Order Timeline */}
             {order.statusHistory && order.statusHistory.length > 0 && (
-              <section className="order-history-section">
-                <h3>Order Timeline</h3>
-                <div className="timeline">
-                  {order.statusHistory.map((history, index) => (
-                    <div key={history.id} className={`timeline-item ${index === 0 ? 'current' : ''}`}>
-                      <div className="timeline-marker"></div>
-                      <div className="timeline-content">
-                        <span className="timeline-status">{history.status}</span>
-                        <span className="timeline-date">{formatDate(history.createdAt)}</span>
-                        {history.note && <p className="timeline-note">{history.note}</p>}
+              <div className="section-card">
+                <h3 className="section-title">
+                  <span className="material-icons">timeline</span>
+                  Order Timeline
+                </h3>
+                <div className="section-body">
+                  <div className="order-timeline">
+                    {order.statusHistory.map((history, index) => (
+                      <div
+                        key={history.id}
+                        className={`timeline-step ${index === 0 ? 'current' : 'completed'}`}
+                      >
+                        <div className="timeline-marker" />
+                        <div className="timeline-content">
+                          <span className="timeline-status">
+                            {STATUS_LABELS[history.status] || history.status}
+                          </span>
+                          <span className="timeline-date">{formatDateTime(history.createdAt)}</span>
+                          {history.note && (
+                            <p className="timeline-note">{history.note}</p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </section>
+              </div>
             )}
+          </div>
 
-            <section className="order-summary-section">
-              <h3>Order Summary</h3>
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>₦{order.subtotal.toLocaleString()}</span>
-              </div>
-              {order.discount > 0 && (
-                <div className="summary-row discount">
-                  <span>Discount {order.couponCode && `(${order.couponCode})`}</span>
-                  <span>-₦{order.discount.toLocaleString()}</span>
+          {/* Sidebar */}
+          <div className="order-sidebar">
+            {/* Order Summary */}
+            <div className="section-card order-summary-card">
+              <h3 className="section-title">
+                <span className="material-icons">receipt_long</span>
+                Order Summary
+              </h3>
+              <div className="section-body">
+                <div className="summary-rows">
+                  <div className="summary-row">
+                    <span className="label">Subtotal</span>
+                    <span className="value">₦{order.subtotal.toLocaleString()}</span>
+                  </div>
+                  {order.discount > 0 && (
+                    <div className="summary-row discount">
+                      <span className="label">
+                        Discount {order.couponCode && `(${order.couponCode})`}
+                      </span>
+                      <span className="value">-₦{order.discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="summary-row">
+                    <span className="label">Shipping</span>
+                    <span className="value">
+                      {order.shipping === 0 ? 'Free' : `₦${order.shipping.toLocaleString()}`}
+                    </span>
+                  </div>
+                  <div className="summary-row total">
+                    <span className="label">Total</span>
+                    <span className="value">₦{order.total.toLocaleString()}</span>
+                  </div>
                 </div>
-              )}
-              <div className="summary-row">
-                <span>Shipping</span>
-                <span>{order.shipping === 0 ? 'Free' : `₦${order.shipping.toLocaleString()}`}</span>
               </div>
-              <div className="summary-row total">
-                <span>Total</span>
-                <span>₦{order.total.toLocaleString()}</span>
+            </div>
+
+            {/* Shipping Address */}
+            <div className="section-card">
+              <h3 className="section-title">
+                <span className="material-icons">local_shipping</span>
+                Shipping Address
+              </h3>
+              <div className="section-body">
+                <div className="address-info">
+                  <p className="address-name">
+                    {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                  </p>
+                  <p className="address-line">{order.shippingAddress.street}</p>
+                  {order.shippingAddress.apartment && (
+                    <p className="address-line">{order.shippingAddress.apartment}</p>
+                  )}
+                  <p className="address-line">
+                    {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                    {order.shippingAddress.postalCode}
+                  </p>
+                  <p className="address-line">{order.shippingAddress.country}</p>
+                  <div className="address-phone">
+                    <span className="material-icons">phone</span>
+                    {order.shippingAddress.phone}
+                  </div>
+                </div>
               </div>
-            </section>
+            </div>
           </div>
         </div>
       </div>
