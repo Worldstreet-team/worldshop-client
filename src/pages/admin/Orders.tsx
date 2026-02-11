@@ -68,7 +68,7 @@ export default function AdminOrders() {
   }, [fetchOrders]);
 
   useEffect(() => {
-    adminService.getOrderStats('30d').then(setStats).catch(() => {});
+    adminService.getOrderStats('30d').then(setStats).catch(() => { });
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

@@ -62,7 +62,7 @@ export default function AdminInventory() {
   }, [fetchInventory]);
 
   useEffect(() => {
-    adminService.getInventoryStats().then(setStats).catch(() => {});
+    adminService.getInventoryStats().then(setStats).catch(() => { });
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -88,7 +88,7 @@ export default function AdminInventory() {
       setAdjustReason('');
       fetchInventory();
       // Refresh stats
-      adminService.getInventoryStats().then(setStats).catch(() => {});
+      adminService.getInventoryStats().then(setStats).catch(() => { });
     } catch (err: any) {
       addToast({ type: 'error', message: err.message || 'Failed to adjust stock' });
     } finally {

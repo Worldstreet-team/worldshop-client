@@ -172,9 +172,9 @@ export default function AdminOrderDetail() {
             {order.statusHistory && order.statusHistory.length > 0 ? (
               <div className="status-timeline">
                 {[...order.statusHistory].reverse().map((entry) => (
-                  <div key={entry.id} className="timeline-item" style={{ 
-                    display: 'flex', gap: '1rem', padding: '0.75rem 0', 
-                    borderBottom: '1px solid #eee' 
+                  <div key={entry.id} className="timeline-item" style={{
+                    display: 'flex', gap: '1rem', padding: '0.75rem 0',
+                    borderBottom: '1px solid #eee'
                   }}>
                     <span className={getStatusBadgeClass(entry.status)} style={{ minWidth: 100, textAlign: 'center' }}>
                       {entry.status}
