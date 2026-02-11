@@ -72,7 +72,7 @@ export default function AdminCategories() {
     try {
       const results = await adminService.uploadImages(Array.from(files), 'categories');
       if (results.length > 0) {
-        setFormImage(results[0].url);
+        setFormImage(results[0].signedUrl);
         addToast({ type: 'success', message: 'Category image uploaded.' });
       }
     } catch (err: any) {

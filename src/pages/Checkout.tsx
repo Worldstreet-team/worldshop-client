@@ -9,7 +9,7 @@ import { addressService } from '@/services/addressService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
 import { NIGERIAN_STATES, getStateDisplayName } from '@/utils/nigerianStates';
-import type { ShippingAddress, CreateOrderRequest } from '@/types/order.types';
+import type { CreateOrderRequest } from '@/types/order.types';
 import type { Address } from '@/types/user.types';
 
 interface ShippingFormData {
