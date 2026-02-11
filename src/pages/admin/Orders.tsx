@@ -41,7 +41,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<AdminOrderFilters>({
     page: 1,
-    limit: 20,
+    limit: 15,
     sortBy: 'newest',
   });
   const [search, setSearch] = useState('');

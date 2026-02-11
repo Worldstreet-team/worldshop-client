@@ -132,8 +132,6 @@ export default function HomePage() {
   }, [totalSlides, startSlider]);
 
   const goToBanner = (index: number) => { setCurrentBanner(index); startSlider(); };
-  const nextBanner = () => { setCurrentBanner(prev => (prev + 1) % totalSlides); startSlider(); };
-  const prevBanner = () => { setCurrentBanner(prev => (prev - 1 + totalSlides) % totalSlides); startSlider(); };
 
   // Deal product
   const dealProduct = featuredProducts.find(p => p.salePrice && p.salePrice < p.basePrice) || featuredProducts[0];
@@ -187,19 +185,11 @@ export default function HomePage() {
               ))}
             </div>
             {totalSlides > 1 && (
-              <>
-                <button className="slider-btn prev" onClick={prevBanner} aria-label="Previous slide">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <button className="slider-btn next" onClick={nextBanner} aria-label="Next slide">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5l7 7-7 7" /></svg>
-                </button>
-                <div className="slider-pagination">
-                  {heroSlides.map((_, index) => (
-                    <button key={index} className={`pagination-bar ${index === currentBanner ? 'active' : ''}`} onClick={() => goToBanner(index)} aria-label={`Slide ${index + 1}`} />
-                  ))}
-                </div>
-              </>
+              <div className="slider-pagination">
+                {heroSlides.map((_, index) => (
+                  <button key={index} className={`pagination-bar ${index === currentBanner ? 'active' : ''}`} onClick={() => goToBanner(index)} aria-label={`Slide ${index + 1}`} />
+                ))}
+              </div>
             )}
           </div>
         </div>

@@ -75,6 +75,12 @@ export default function MobileMenu() {
                 Shop
               </Link>
             </li>
+            <li>
+              <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer">
+                <span className="material-icons">dashboard</span>
+                Main Dashboard
+              </a>
+            </li>
           </ul>
 
           {/* Categories */}

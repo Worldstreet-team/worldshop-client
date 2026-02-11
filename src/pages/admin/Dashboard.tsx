@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService, type DashboardStats } from '@/services/adminService';
 import { useUIStore } from '@/store/uiStore';
@@ -9,20 +9,24 @@ const formatCurrency = (v: number) =>
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const addToast = useUIStore((s) => s.addToast);
 
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminService.getDashboardStats(page, 15);
+      setStats(data);
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.message || 'Failed to load dashboard' });
+    } finally {
+      setLoading(false);
+    }
+  }, [page, addToast]);
+
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await adminService.getDashboardStats();
-        setStats(data);
-      } catch (err: any) {
-        addToast({ type: 'error', message: err.message || 'Failed to load dashboard' });
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [addToast]);
+    fetchDashboard();
+  }, [fetchDashboard]);
 
   const cards = stats
     ? [
@@ -94,30 +98,49 @@ export default function AdminDashboard() {
             <p>No recent orders to display.</p>
           </div>
         ) : (
-          <div className="data-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Order #</th>
-                  <th>Customer</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.recentOrders.map((o: any) => (
-                  <tr key={o.id}>
-                    <td><Link to={`/admin/orders/${o.id}`}>{o.orderNumber || o.id.slice(-8)}</Link></td>
-                    <td>{o.customerName || '—'}</td>
-                    <td>{formatCurrency(o.total)}</td>
-                    <td><span className={`badge badge-${o.status?.toLowerCase()}`}>{o.status}</span></td>
-                    <td>{new Date(o.createdAt).toLocaleDateString()}</td>
+          <>
+            <div className="data-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {stats.recentOrders.map((o: any) => (
+                    <tr key={o.id}>
+                      <td><Link to={`/admin/orders/${o.id}`}>{o.orderNumber || o.id.slice(-8)}</Link></td>
+                      <td>{o.customerName || '—'}</td>
+                      <td>{formatCurrency(o.total)}</td>
+                      <td><span className={`badge badge-${o.status?.toLowerCase()}`}>{o.status}</span></td>
+                      <td>{new Date(o.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {stats.recentOrdersPagination && stats.recentOrdersPagination.totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  disabled={!stats.recentOrdersPagination.hasPrevPage}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Previous
+                </button>
+                <span>Page {stats.recentOrdersPagination.page} of {stats.recentOrdersPagination.totalPages}</span>
+                <button
+                  disabled={!stats.recentOrdersPagination.hasNextPage}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

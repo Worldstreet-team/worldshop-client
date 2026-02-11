@@ -207,7 +207,7 @@ export default function Header() {
               onClick={openCartSidebar}
               aria-label={`Shopping cart with ${cartItemCount} items`}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="26" height="26">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
                 <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" strokeLinejoin="round" />
@@ -281,6 +281,22 @@ export default function Header() {
           <span className="header-promo-text">
             Free Shipping on Orders ₦50,000+
           </span>
+
+          {/* Main Dashboard Link */}
+          <a
+            href="https://dashboard.worldstreetgold.com"
+            className="header-dashboard-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            Main Dashboard
+          </a>
         </div>
       </div>
 
