@@ -108,10 +108,6 @@ export default function WishlistPage() {
                       {item.product.name}
                     </Link>
 
-                    {item.product.category && (
-                      <p className="wishlist-card-category">{item.product.category.name}</p>
-                    )}
-
                     <div className="wishlist-card-price">
                       <span className="price-current">₦{displayPrice.toLocaleString()}</span>
                       {hasSale && (
