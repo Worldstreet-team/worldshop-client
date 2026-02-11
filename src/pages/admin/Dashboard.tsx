@@ -60,22 +60,22 @@ export default function AdminDashboard() {
       </div>
 
       {/* Alerts Row */}
-      {stats && (stats.outOfStock > 0 || stats.lowStock > 0) && (
+      {stats && (stats.outOfStockProducts > 0 || stats.lowStockProducts > 0) && (
         <div className="stats-grid" style={{ marginTop: '1rem' }}>
-          {stats.outOfStock > 0 && (
+          {stats.outOfStockProducts > 0 && (
             <div className="stat-card stat-card--danger">
               <div className="stat-icon"><span className="material-icons">error</span></div>
               <div className="stat-content">
-                <h3>{stats.outOfStock}</h3>
+                <h3>{stats.outOfStockProducts}</h3>
                 <p>Out of Stock</p>
               </div>
             </div>
           )}
-          {stats.lowStock > 0 && (
+          {stats.lowStockProducts > 0 && (
             <div className="stat-card stat-card--warning">
               <div className="stat-icon"><span className="material-icons">warning</span></div>
               <div className="stat-content">
-                <h3>{stats.lowStock}</h3>
+                <h3>{stats.lowStockProducts}</h3>
                 <p>Low Stock</p>
               </div>
             </div>
