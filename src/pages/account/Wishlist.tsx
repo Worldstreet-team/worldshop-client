@@ -62,60 +62,97 @@ export default function WishlistPage() {
           />
         ) : (
           <div className="wishlist-grid">
-            {items.map((item) => (
-              <div key={item.id} className="wishlist-item">
-                <div className="wishlist-item-image">
-                  <img
-                    src={item.product.images[0]?.url || '/images/placeholder.jpg'}
-                    alt={item.product.name}
-                  />
-                </div>
-                <div className="wishlist-item-info">
-                  <Link to={`/products/${item.product.slug}`} className="item-name">
-                    {item.product.name}
-                  </Link>
-                  <div className="item-price">
-                    {(() => {
-                      const displayPrice = item.product.salePrice
-                        ?? item.product.basePrice
-                        ?? item.product.price
-                        ?? 0;
-                      const basePrice = item.product.basePrice
-                        ?? item.product.price
-                        ?? displayPrice;
-                      const hasSale = item.product.salePrice !== undefined
-                        && item.product.salePrice < basePrice;
+            {items.map((item) => {
+              const displayPrice = item.product.salePrice
+                ?? item.product.basePrice
+                ?? item.product.price
+                ?? 0;
+              const basePrice = item.product.basePrice
+                ?? item.product.price
+                ?? displayPrice;
+              const hasSale = item.product.salePrice !== undefined
+                && item.product.salePrice < basePrice;
+              const discount = hasSale
+                ? Math.round(((basePrice - displayPrice) / basePrice) * 100)
+                : 0;
 
-                      return (
-                        <>
-                          ₦{displayPrice.toLocaleString()}
-                          {hasSale && (
-                            <span className="compare-price">
-                              ₦{basePrice.toLocaleString()}
-                            </span>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
-                  <div className="wishlist-item-actions">
+              return (
+                <div key={item.id} className="wishlist-card">
+                  <button
+                    className="wishlist-remove-btn"
+                    onClick={() => handleRemove(item.productId)}
+                    aria-label="Remove from wishlist"
+                    title="Remove from wishlist"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                      <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+
+                  <Link to={`/products/${item.product.slug}`} className="wishlist-card-image">
+                    <img
+                      src={item.product.images[0]?.url || '/images/placeholder.jpg'}
+                      alt={item.product.name}
+                      loading="lazy"
+                    />
+                    {hasSale && discount > 0 && (
+                      <span className="product-badge product-badge-sale">-{discount}%</span>
+                    )}
+                    {item.product.stock === 0 && (
+                      <span className="product-badge product-badge-stock">Out of Stock</span>
+                    )}
+                  </Link>
+
+                  <div className="wishlist-card-content">
+                    <Link to={`/products/${item.product.slug}`} className="wishlist-card-title">
+                      {item.product.name}
+                    </Link>
+
+                    {item.product.category && (
+                      <p className="wishlist-card-category">{item.product.category.name}</p>
+                    )}
+
+                    <div className="wishlist-card-price">
+                      <span className="price-current">₦{displayPrice.toLocaleString()}</span>
+                      {hasSale && (
+                        <span className="price-original">₦{basePrice.toLocaleString()}</span>
+                      )}
+                    </div>
+
+                    {item.product.stock > 0 && item.product.stock <= 5 && (
+                      <p className="wishlist-card-stock-warning">
+                        Only {item.product.stock} left in stock
+                      </p>
+                    )}
+
                     <button
-                      className="btn btn-primary btn-sm"
+                      className="btn btn-primary btn-block wishlist-add-btn"
                       onClick={() => handleAddToCart(item.productId)}
                       disabled={item.product.stock === 0}
                     >
-                      {item.product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                    </button>
-                    <button
-                      className="btn btn-text text-danger"
-                      onClick={() => handleRemove(item.productId)}
-                    >
-                      Remove
+                      {item.product.stock === 0 ? (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M15 9l-6 6M9 9l6 6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Out of Stock
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          Add to Cart
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

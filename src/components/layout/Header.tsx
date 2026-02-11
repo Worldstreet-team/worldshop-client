@@ -157,6 +157,22 @@ export default function Header() {
                   </Link>
                 </li>
               ))}
+              {isAuthenticated && user?.role === 'ADMIN' && (
+                <li className="nav-item">
+                  <Link
+                    to="/admin"
+                    className={`nav-link nav-link-admin ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{ marginRight: '4px' }}>
+                      <rect x="3" y="3" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" />
+                      <rect x="14" y="3" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" />
+                      <rect x="14" y="14" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" />
+                      <rect x="3" y="14" width="7" height="7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Dashboard
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
 

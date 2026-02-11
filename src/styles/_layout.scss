@@ -159,6 +159,27 @@
         background: #fff5f5;
       }
     }
+
+    &.nav-link-admin {
+      display: flex;
+      align-items: center;
+      color: $primary-color;
+      font-weight: 600;
+
+      svg {
+        margin-right: 4px;
+      }
+
+      &:hover {
+        background: lighten($primary-color, 45%);
+        color: darken($primary-color, 10%);
+      }
+
+      &.active {
+        background: lighten($primary-color, 42%);
+        color: $primary-color;
+      }
+    }
   }
 }
 
