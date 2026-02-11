@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 11, 2026  
-**Version:** 0.17.0  
+**Last Updated:** February 12, 2026  
+**Version:** 0.19.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -59,15 +59,18 @@
 - **paymentService.ts** - Payment operations (Paystack integration) ✅
 - **productService.ts** - Product operations ✅
 - **reviewService.ts** - Review operations (real API) ✅
-- **mockApi.ts** - Mock API (banners only, reviews replaced)
+- **adminService.ts** - Admin API client (dashboard, products, categories, uploads, digital assets) ✅
+- **downloadService.ts** - Download operations (list downloads, generate URLs) ✅
+- **mockApi.ts** - Mock API (banners only)
 - **userService.ts** - User operations (auth, address, wishlist) ✅
 
 ### Type System
 Comprehensive TypeScript interfaces in `/src/types/`:
-- **product.types.ts** - Product, Category, Review, ProductVariant, ProductImage, ProductFilters
+- **product.types.ts** - Product, Category, Review, ProductVariant, ProductImage, ProductFilters, DigitalAsset
 - **cart.types.ts** - Cart, CartItem, CartSummary, AddToCartRequest, UpdateCartItemRequest
 - **order.types.ts** - Order, OrderItem, Payment, OrderStatusHistory, CreateOrderRequest, ShippingRate
 - **user.types.ts** - User, Address, Wishlist, AuthTokens, LoginRequest, RegisterRequest
+- **download.types.ts** - DownloadRecord, DownloadUrl
 - **common.types.ts** - ApiResponse, PaginatedResponse, Pagination, Toast, BreadcrumbItem, SelectOption
 
 ---
@@ -178,8 +181,12 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 
 #### Admin Dashboard (`/admin/*`)
 - [x] **Dashboard** (`/admin`) - Admin overview with stats
-- [x] **Products** (`/admin/products`) - Product management list
-- [x] **ProductEdit** (`/admin/products/:id/edit`) - Product edit form
+- [x] **Products** (`/admin/products`) - Product management list with Type column (Physical/Digital)
+- [x] **ProductEdit** (`/admin/products/:id/edit`) - Product edit form with digital product support
+  - [x] Product type selector (Physical/Digital)
+  - [x] Digital file upload UI with file list
+  - [x] Auto-sets stock for digital products
+  - [x] R2 signed URL image handling
 - [x] **Orders** (`/admin/orders`) - Order management
 - [x] **OrderDetail** (`/admin/orders/:id`) - Order processing view
 - [x] **Categories** (`/admin/categories`) - Category management
@@ -188,6 +195,32 @@ Comprehensive TypeScript interfaces in `/src/types/`:
   - [x] Conditional rendering based on user role
   - [x] Active state highlighting
   - [x] Dashboard icon (grid pattern)
+
+### Phase 6: Digital Products & Downloads ✅
+
+- [x] **Digital Product Display**
+  - [x] "Digital" badge on ProductCard
+  - [x] "Digital Product" badge in ProductInfo (replaces stock status)
+  - [x] "Instant Download" + "Email Delivery" features
+
+- [x] **Digital Checkout Flow**
+  - [x] Auto-detect digital-only carts
+  - [x] Skip shipping step for digital orders
+  - [x] Shipping address conditionally sent
+  - [x] "Digital Delivery" section in order review
+  - [x] Digital-specific success page messaging
+
+- [x] **Downloads Page** (`/account/downloads`)
+  - [x] Download cards with file info (name, size, mime type)
+  - [x] Download count/limit display
+  - [x] Expiry date tracking
+  - [x] Download button with disabled states (limit reached/expired)
+  - [x] Loading skeleton and empty state
+
+- [x] **Order Detail Downloads**
+  - [x] "Digital Downloads" section for paid orders
+  - [x] Download buttons with progress tracking
+  - [x] Shipping address null guard for digital orders
 
 ### Phase 6: Styling & Responsiveness
 - [x] Mobile-first responsive design
@@ -293,12 +326,14 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [ ] Order tracking functionality
 - [ ] Email notifications for orders
 
-### Phase 12: Product Management
-- [ ] Admin product image upload
-- [ ] Multiple image support
+### Phase 12: Product Management ✅ (Partial)
+- [x] Admin product image upload
+- [x] Multiple image support
+- [x] Product type selector (Physical/Digital)
+- [x] Digital file upload and management
 - [ ] Product variants (size, color) management
-- [ ] Stock level tracking
-- [ ] Low stock alerts
+- [ ] Stock level tracking (admin UI)
+- [ ] Low stock alerts (admin UI)
 - [ ] Product import/export (CSV)
 - [ ] Bulk product editing
 
@@ -425,6 +460,7 @@ worldshop-client/
 │   │   │   ├── ProductQuickView.tsx
 │   │   │   ├── ProductReviews.tsx
 │   │   │   └── ProductVariantSelector.tsx
+│   │   └── ProductInfo.tsx
 │   │   └── ui/                 # UI utilities
 │   │       ├── LoadingSpinner.tsx
 │   │       └── Toast.tsx
@@ -438,6 +474,7 @@ worldshop-client/
 │   │   ├── account/           # Account pages
 │   │   │   ├── Account.tsx
 │   │   │   ├── Addresses.tsx
+│   │   │   ├── Downloads.tsx
 │   │   │   ├── OrderDetail.tsx
 │   │   │   ├── OrderHistory.tsx
 │   │   │   ├── Profile.tsx
@@ -471,12 +508,16 @@ worldshop-client/
 │   ├── services/              # API services
 │   │   ├── api.ts
 │   │   ├── addressService.ts
+│   │   ├── adminService.ts
 │   │   ├── cartService.ts
+│   │   ├── downloadService.ts
 │   │   ├── index.ts
 │   │   ├── mockApi.ts
 │   │   ├── orderService.ts
+│   │   ├── paymentService.ts
 │   │   ├── productService.ts
 │   │   ├── profileService.ts
+│   │   ├── reviewService.ts
 │   │   └── userService.ts
 │   ├── store/                 # Zustand stores
 │   │   ├── authStore.ts
@@ -495,6 +536,7 @@ worldshop-client/
 │   ├── types/                 # TypeScript types
 │   │   ├── cart.types.ts
 │   │   ├── common.types.ts
+│   │   ├── download.types.ts
 │   │   ├── order.types.ts
 │   │   ├── product.types.ts
 │   │   └── user.types.ts
@@ -543,6 +585,7 @@ worldshop-client/
 | `/account/orders` | OrderHistory | Order history | ✅ |
 | `/account/orders/:id` | OrderDetail | Order details | ✅ |
 | `/account/addresses` | Addresses | Manage addresses | ✅ |
+| `/account/downloads` | Downloads | My downloads | ✅ |
 | `/account/wishlist` | Wishlist | User wishlist | ✅ |
 
 ### Admin Routes (Require Admin Role)
@@ -566,23 +609,21 @@ worldshop-client/
 ## 🎯 Next Steps
 
 ### Immediate Priorities
-1. ~~**Payments / Paystack (Service 8)**~~ ✅ — Payment integration with Paystack (NGN ₦) complete
-2. **Reviews (Service 9)** — Review model, submit/list/moderate reviews, replace mock review API
-3. **Wishlist (Service 10)** — Persistent wishlist backend, connect wishlist page
-4. **Admin Panel Backend** — Connect admin products, orders, categories to real API
-5. **Image Uploads** — Cloudflare R2/Images integration for product and profile images
+1. **Admin Order Management** — Order status updates, order processing workflow
+2. **Admin Inventory Management** — Stock adjustments, low-stock alerts UI
+3. **Admin Dashboard Enhancement** — Revenue charts, order trends, top products
 
 ### Short Term (1-2 weeks)
-- Complete payment → order status flow end-to-end
-- Replace mockApi.ts with real review endpoints
-- Connect wishlist to persistent backend storage
-- Admin order status management
+- Profile picture upload (Cloudflare R2)
+- Advanced search with backend (autocomplete, full-text)
+- Order tracking and shipping status
+- Review moderation (admin)
 
 ### Medium Term (2-4 weeks)
-- Admin product CRUD with image uploads
-- Advanced search with backend
-- Email notifications
+- Discount codes / coupon system
+- Email notification preferences
 - Performance optimization (lazy loading, WebP images)
+- Product variants management (admin)
 
 ### Long Term (1-2 months)
 - Testing suite (Vitest + Playwright)
@@ -604,10 +645,15 @@ worldshop-client/
 - **Addresses** fully connected — CRUD, checkout picker, Nigerian states only (Service 6 complete)
 - **Payments** — Paystack integration complete with email receipts via Resend (Service 8 complete)
 - **Authentication** uses external WorldStreet Identity with HttpOnly cookies (Service 1 complete)
+- **Reviews** connected to real API (Service 9 complete)
+- **Wishlist** connected to real API (Service 10 complete)
+- **Admin Panel** — Dashboard, products, categories fully wired to real API (v0.18.0)
+- **Digital Products** — Full digital product support: type selector, file upload, digital checkout, downloads page, delivery email (v0.19.0)
+- **R2 Signed URLs** — All images use presigned R2 URLs (auto-expiring)
 - **Hero slider** uses static data — `bannerApi` removed, no mock API dependency
-- Remaining mock APIs: reviews (`mockApi`)
-- Media storage will use **Cloudflare** (not Cloudinary)
-- Next up: **Reviews (Service 9)** → Wishlist (Service 10) → Admin panel backend
+- Remaining mock APIs: banners only (`mockApi`)
+- Media storage uses **Cloudflare R2** with presigned URLs
+- Next up: **Admin Order Management** → Admin Inventory → Dashboard Enhancement
 - Mobile responsiveness has been tested but needs more real-device testing
 - Accessibility features need audit
 - Performance optimization needed before production deployment
@@ -629,4 +675,4 @@ When adding new features:
 
 **Status:** 🟢 Active Development  
 **Build Status:** ✅ Passing  
-**Last Build:** February 9, 2026
+**Last Build:** February 12, 2026

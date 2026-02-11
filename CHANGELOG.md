@@ -4,6 +4,47 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.19.0] - 2026-02-12
+
+### Added — Digital Products & Downloads Support
+
+#### Types & Interfaces
+- `src/types/product.types.ts` — added `DigitalAsset` interface (`id, productId, fileName, r2Key?, signedUrl?, mimeType, fileSize, sortOrder, createdAt?`), added `digitalAssets?: DigitalAsset[]` and `type` field to `Product` interface
+- `src/types/order.types.ts` — `Order.shippingAddress` changed to `ShippingAddress | null` (optional for digital orders), `CreateOrderRequest.shippingAddress` made optional
+- `src/types/download.types.ts` — **new file**: `DownloadRecord` interface (with nested `asset` and `orderItem`), `DownloadUrl` interface (`downloadUrl, fileName, expiresAt, downloadsRemaining`)
+- Exported from `src/types/index.ts`
+
+#### Services
+- `src/services/adminService.ts` — `UploadResult.url` renamed to `UploadResult.signedUrl`; added methods: `uploadDigitalFiles`, `getDigitalAssets`, `attachDigitalAssets`, `deleteDigitalAsset`
+- `src/services/downloadService.ts` — **new file**: `getMyDownloads()`, `getOrderDownloads(orderId)`, `generateDownloadUrl(downloadId)`
+- `src/services/paymentService.ts` — added `hasDigitalProducts?: boolean` to `VerifyPaymentData`
+- Exported from `src/services/index.ts`
+
+#### Checkout Flow (Digital-Aware)
+- `src/pages/Checkout.tsx` — detects `isDigitalOnly` carts, auto-skips shipping step, conditionally sends `shippingAddress`, review section shows "Digital Delivery" for digital orders, back button navigates to cart for digital
+- `src/pages/CheckoutSuccess.tsx` — digital-specific "What's Next" messaging (download page link, 2-download/7-day limit notice), hides estimated delivery for digital orders
+
+#### Downloads Page
+- `src/pages/account/Downloads.tsx` — **new page**: loading skeleton, empty state, download cards with file info (name, size, mime type), order link, download count/limit, expiry date, download button with disabled states
+- `src/pages/account/Account.tsx` — added "Downloads" menu item with `cloud_download` icon
+- `src/router/index.tsx` — added `/account/downloads` route with lazy loading
+
+#### Order Detail (Digital Downloads)
+- `src/pages/account/OrderDetail.tsx` — fetches order downloads for paid/processing/shipped/delivered orders, "Digital Downloads" section with download buttons, shipping address guarded (shows "Digital Delivery" when null)
+
+#### Admin Product Edit (Digital Products)
+- `src/pages/admin/ProductEdit.tsx` — product type selector (`PHYSICAL` / `DIGITAL`), digital file upload UI with file list (name, size, mime type, remove button), auto-sets stock to 999999 for digital, hides inventory section for digital, attaches temp digital assets on product creation; fixed `r.url` → `r.signedUrl` for image uploads
+- `src/pages/admin/Products.tsx` — added "Type" column with Physical/Digital badge
+- `src/pages/admin/Categories.tsx` — fixed `results[0].url` → `results[0].signedUrl` for category image upload
+
+#### Product UI Components (Digital Badges)
+- `src/components/product/ProductCard.tsx` — "Digital" badge in product card badges section
+- `src/components/product/ProductInfo.tsx` — shows "Digital Product" badge instead of stock status, "Instant Download" + "Email Delivery" features instead of "Free Shipping" + "30-Day Returns"
+
+### Fixed
+- `TS6196`: Removed unused `ShippingAddress` import from `Checkout.tsx`
+- `TS2339`: Fixed `results[0].url` → `results[0].signedUrl` in `Categories.tsx` (matching updated `UploadResult` type)
+
 ## [0.18.0] - 2026-02-12
 
 ### Added — Phase 5: Admin Panel (Products & Categories)
