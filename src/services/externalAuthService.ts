@@ -102,7 +102,7 @@ export const externalAuthService = {
      */
     redirectToLogin: (returnUrl?: string) => {
         const loginUrl = import.meta.env.VITE_LOGIN_URL || 'https://worldstreetgold.com/login';
-        const url = returnUrl ? `${loginUrl}?returnUrl=${encodeURIComponent(returnUrl)}` : loginUrl;
+        const url = returnUrl ? `${loginUrl}?redirect=${encodeURIComponent(returnUrl)}` : loginUrl;
         window.location.href = url;
     },
 
@@ -111,7 +111,7 @@ export const externalAuthService = {
      */
     redirectToRegister: (returnUrl?: string) => {
         const registerUrl = import.meta.env.VITE_REGISTER_URL || 'https://worldstreetgold.com/register';
-        const url = returnUrl ? `${registerUrl}?returnUrl=${encodeURIComponent(returnUrl)}` : registerUrl;
+        const url = returnUrl ? `${registerUrl}?redirect=${encodeURIComponent(returnUrl)}` : registerUrl;
         window.location.href = url;
     },
 };
