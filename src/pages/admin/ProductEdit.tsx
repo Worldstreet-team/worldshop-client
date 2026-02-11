@@ -321,60 +321,60 @@ export default function AdminProductEdit() {
 
             {/* Inventory — only for physical products */}
             {productType === 'PHYSICAL' && (
-            <section className="form-section">
-              <h2>Inventory</h2>
+              <section className="form-section">
+                <h2>Inventory</h2>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="stock">Stock Quantity</label>
-                  <input id="stock" type="number" min="0" placeholder="0"
-                    value={stock} onChange={(e) => setStock(e.target.value)} />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="stock">Stock Quantity</label>
+                    <input id="stock" type="number" min="0" placeholder="0"
+                      value={stock} onChange={(e) => setStock(e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="lowStockThreshold">Low Stock Threshold</label>
+                    <input id="lowStockThreshold" type="number" min="0" placeholder="10"
+                      value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="lowStockThreshold">Low Stock Threshold</label>
-                  <input id="lowStockThreshold" type="number" min="0" placeholder="10"
-                    value={lowStockThreshold} onChange={(e) => setLowStockThreshold(e.target.value)} />
-                </div>
-              </div>
-            </section>
+              </section>
             )}
 
             {/* Digital Files — only for digital products */}
             {productType === 'DIGITAL' && (
-            <section className="form-section">
-              <h2>Digital Files</h2>
+              <section className="form-section">
+                <h2>Digital Files</h2>
 
-              {digitalAssets.length > 0 && (
-                <div className="digital-assets-list">
-                  {digitalAssets.map((asset, i) => (
-                    <div key={asset.id} className="digital-asset-item">
-                      <span className="material-icons">description</span>
-                      <div className="asset-info">
-                        <span className="asset-name">{asset.fileName}</span>
-                        <span className="asset-meta">
-                          {(asset.fileSize / 1024 / 1024).toFixed(1)} MB &middot; {asset.mimeType}
-                        </span>
+                {digitalAssets.length > 0 && (
+                  <div className="digital-assets-list">
+                    {digitalAssets.map((asset, i) => (
+                      <div key={asset.id} className="digital-asset-item">
+                        <span className="material-icons">description</span>
+                        <div className="asset-info">
+                          <span className="asset-name">{asset.fileName}</span>
+                          <span className="asset-meta">
+                            {(asset.fileSize / 1024 / 1024).toFixed(1)} MB &middot; {asset.mimeType}
+                          </span>
+                        </div>
+                        <button type="button" onClick={() => removeDigitalAsset(i)}
+                          className="btn-icon-sm btn-icon-danger" title="Remove">
+                          <span className="material-icons">close</span>
+                        </button>
                       </div>
-                      <button type="button" onClick={() => removeDigitalAsset(i)}
-                        className="btn-icon-sm btn-icon-danger" title="Remove">
-                        <span className="material-icons">close</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              <label className="image-upload-zone">
-                <span className="material-icons">{uploadingDigital ? 'hourglass_empty' : 'cloud_upload'}</span>
-                <p>{uploadingDigital ? 'Uploading...' : 'Click to upload digital files (max 100MB each)'}</p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                  PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, ZIP, RAR, EPUB
-                </p>
-                <input type="file" multiple hidden
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.gz,.epub"
-                  onChange={handleDigitalUpload} disabled={uploadingDigital} />
-              </label>
-            </section>
+                <label className="image-upload-zone">
+                  <span className="material-icons">{uploadingDigital ? 'hourglass_empty' : 'cloud_upload'}</span>
+                  <p>{uploadingDigital ? 'Uploading...' : 'Click to upload digital files (max 100MB each)'}</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                    PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, ZIP, RAR, EPUB
+                  </p>
+                  <input type="file" multiple hidden
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.gz,.epub"
+                    onChange={handleDigitalUpload} disabled={uploadingDigital} />
+                </label>
+              </section>
             )}
 
             {/* Images */}

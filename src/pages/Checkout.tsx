@@ -9,7 +9,7 @@ import { addressService } from '@/services/addressService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
 import { NIGERIAN_STATES, getStateDisplayName } from '@/utils/nigerianStates';
-import type { ShippingAddress } from '@/types/order.types';
+import type { ShippingAddress, CreateOrderRequest } from '@/types/order.types';
 import type { Address } from '@/types/user.types';
 
 interface ShippingFormData {
@@ -51,6 +51,16 @@ export default function CheckoutPage() {
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+
+  // Detect digital-only cart
+  const isDigitalOnly = cart?.items.every(item => item.product.type === 'DIGITAL') ?? false;
+
+  // Auto-advance to review step for digital-only orders
+  useEffect(() => {
+    if (isDigitalOnly && step === 1) {
+      setStep(2);
+    }
+  }, [isDigitalOnly, step]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -137,6 +147,7 @@ export default function CheckoutPage() {
   };
 
   const validateShipping = () => {
+    if (isDigitalOnly) return true; // No shipping needed for digital products
     const required = ['firstName', 'lastName', 'phone', 'street', 'city', 'state'];
     for (const field of required) {
       if (!shipping[field as keyof ShippingFormData]) {
@@ -165,6 +176,7 @@ export default function CheckoutPage() {
         return;
       }
 
+      // For digital-only carts, skip directly to step 2
       setStep(2);
       window.scrollTo(0, 0);
     } catch (error) {
@@ -178,23 +190,25 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // Create the shipping address object for the API
-      const shippingAddress: ShippingAddress = {
-        firstName: shipping.firstName,
-        lastName: shipping.lastName,
-        phone: shipping.phone,
-        street: shipping.street,
-        apartment: shipping.apartment || undefined,
-        city: shipping.city,
-        state: shipping.state,
-        country: shipping.country,
-        postalCode: shipping.postalCode || undefined,
-      };
+      // Create the order request — skip shipping address for digital-only orders
+      const orderRequest: CreateOrderRequest = {};
+
+      if (!isDigitalOnly) {
+        orderRequest.shippingAddress = {
+          firstName: shipping.firstName,
+          lastName: shipping.lastName,
+          phone: shipping.phone,
+          street: shipping.street,
+          apartment: shipping.apartment || undefined,
+          city: shipping.city,
+          state: shipping.state,
+          country: shipping.country,
+          postalCode: shipping.postalCode || undefined,
+        };
+      }
 
       // Create order via API
-      const response = await orderService.createOrder({
-        shippingAddress,
-      });
+      const response = await orderService.createOrder(orderRequest);
 
       const order = response.data;
 
@@ -233,19 +247,23 @@ export default function CheckoutPage() {
 
         {/* Checkout Steps Indicator */}
         <div className="checkout-steps">
-          <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-            <span className="step-number">
-              {step > 1 ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : '1'}
-            </span>
-            <span className="step-label">Shipping</span>
-          </div>
-          <div className="step-connector" />
-          <div className={`step ${step >= 2 ? 'active' : ''}`}>
-            <span className="step-number">2</span>
+          {!isDigitalOnly && (
+            <>
+              <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
+                <span className="step-number">
+                  {step > 1 ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : '1'}
+                </span>
+                <span className="step-label">Shipping</span>
+              </div>
+              <div className="step-connector" />
+            </>
+          )}
+          <div className={`step ${step >= 2 || isDigitalOnly ? 'active' : ''}`}>
+            <span className="step-number">{isDigitalOnly ? '1' : '2'}</span>
             <span className="step-label">Review & Pay</span>
           </div>
         </div>
@@ -451,20 +469,34 @@ export default function CheckoutPage() {
               <div className="checkout-step review-step">
                 <h2>Review Your Order</h2>
 
-                <div className="review-section">
-                  <div className="review-header">
-                    <h3>Shipping Address</h3>
-                    <button type="button" className="edit-btn" onClick={() => setStep(1)}>Edit</button>
+                {!isDigitalOnly && (
+                  <div className="review-section">
+                    <div className="review-header">
+                      <h3>Shipping Address</h3>
+                      <button type="button" className="edit-btn" onClick={() => setStep(1)}>Edit</button>
+                    </div>
+                    <div className="review-content">
+                      <p>{shipping.firstName} {shipping.lastName}</p>
+                      <p>{shipping.street}{shipping.apartment && `, ${shipping.apartment}`}</p>
+                      <p>{shipping.city}, {shipping.state} {shipping.postalCode}</p>
+                      <p>{shipping.country}</p>
+                      <p>{shipping.email}</p>
+                      <p>{shipping.phone}</p>
+                    </div>
                   </div>
-                  <div className="review-content">
-                    <p>{shipping.firstName} {shipping.lastName}</p>
-                    <p>{shipping.street}{shipping.apartment && `, ${shipping.apartment}`}</p>
-                    <p>{shipping.city}, {shipping.state} {shipping.postalCode}</p>
-                    <p>{shipping.country}</p>
-                    <p>{shipping.email}</p>
-                    <p>{shipping.phone}</p>
+                )}
+
+                {isDigitalOnly && (
+                  <div className="review-section">
+                    <div className="review-header">
+                      <h3>Digital Delivery</h3>
+                    </div>
+                    <div className="review-content">
+                      <p>Your digital products will be delivered via email after payment.</p>
+                      <p>You can also download them from your account.</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="review-section">
                   <h3>Order Items</h3>
@@ -485,9 +517,13 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="step-actions">
-                  <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>
-                    Back
-                  </button>
+                  {isDigitalOnly ? (
+                    <Link to="/cart" className="btn btn-outline">Back to Cart</Link>
+                  ) : (
+                    <button type="button" className="btn btn-outline" onClick={() => setStep(1)}>
+                      Back
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn btn-primary btn-lg"

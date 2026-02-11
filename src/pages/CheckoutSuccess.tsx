@@ -7,6 +7,7 @@ interface OrderState {
   orderNumber: string;
   orderId: string;
   total: number;
+  hasDigitalProducts?: boolean;
 }
 
 export default function CheckoutSuccessPage() {
@@ -31,6 +32,7 @@ export default function CheckoutSuccessPage() {
             orderNumber: data.order.orderNumber,
             orderId: data.order.id,
             total: data.amount,
+            hasDigitalProducts: data.hasDigitalProducts,
           });
         })
         .catch((err) => {
@@ -184,10 +186,12 @@ export default function CheckoutSuccessPage() {
                     day: 'numeric'
                   })}</span>
                 </div>
-                <div className="order-detail">
-                  <span className="label">Estimated Delivery</span>
-                  <span className="value">{getDeliveryDate()}</span>
-                </div>
+                {!orderData?.hasDigitalProducts && (
+                  <div className="order-detail">
+                    <span className="label">Estimated Delivery</span>
+                    <span className="value">{getDeliveryDate()}</span>
+                  </div>
+                )}
                 <div className="order-detail total">
                   <span className="label">Order Total</span>
                   <span className="value">₦{orderData?.total?.toLocaleString() || '0'}</span>
@@ -203,24 +207,47 @@ export default function CheckoutSuccessPage() {
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                     <polyline points="22,6 12,13 2,6" />
                   </svg>
-                  <span>Check your email for order confirmation and tracking details</span>
+                  <span>Check your email for order confirmation{orderData?.hasDigitalProducts ? ' and download links' : ' and tracking details'}</span>
                 </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="1" y="3" width="15" height="13" />
-                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-                    <circle cx="5.5" cy="18.5" r="2.5" />
-                    <circle cx="18.5" cy="18.5" r="2.5" />
-                  </svg>
-                  <span>We'll notify you when your order ships</span>
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                  <span>Enjoy your new products once they arrive!</span>
-                </li>
+                {orderData?.hasDigitalProducts ? (
+                  <>
+                    <li>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      <span>Download your digital products from your <Link to="/account/downloads">Downloads</Link> page</span>
+                    </li>
+                    <li>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      <span>Each file can be downloaded up to 2 times within 7 days</span>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="1" y="3" width="15" height="13" />
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+                        <circle cx="5.5" cy="18.5" r="2.5" />
+                        <circle cx="18.5" cy="18.5" r="2.5" />
+                      </svg>
+                      <span>We'll notify you when your order ships</span>
+                    </li>
+                    <li>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                      <span>Enjoy your new products once they arrive!</span>
+                    </li>
+                  </>
+                )}
               </ul>
             </div>
 

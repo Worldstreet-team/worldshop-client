@@ -5,29 +5,35 @@ export default function AccountPage() {
   const { user } = useAuthStore();
 
   const menuItems = [
-    { 
-      path: '/account/orders', 
-      icon: 'shopping_bag', 
+    {
+      path: '/account/orders',
+      icon: 'shopping_bag',
       title: 'My Orders',
-      description: 'View your order history' 
+      description: 'View your order history'
     },
-    { 
-      path: '/account/addresses', 
-      icon: 'location_on', 
+    {
+      path: '/account/addresses',
+      icon: 'location_on',
       title: 'Addresses',
-      description: 'Manage delivery addresses' 
+      description: 'Manage delivery addresses'
     },
-    { 
-      path: '/account/wishlist', 
-      icon: 'favorite', 
+    {
+      path: '/account/wishlist',
+      icon: 'favorite',
       title: 'Wishlist',
-      description: 'Products you saved' 
+      description: 'Products you saved'
     },
-    { 
-      path: '/account/profile', 
-      icon: 'person', 
+    {
+      path: '/account/downloads',
+      icon: 'cloud_download',
+      title: 'Downloads',
+      description: 'Your digital purchases'
+    },
+    {
+      path: '/account/profile',
+      icon: 'person',
       title: 'Profile',
-      description: 'Update your information' 
+      description: 'Update your information'
     },
   ];
 
