@@ -21,28 +21,44 @@
 // HEADER
 // ============================================
 
+// ── Electro two-row header ──────────────────────────────
+
 .site-header {
   background-color: $white;
-  border-bottom: 1px solid $border-light;
   position: sticky;
   top: 0;
   z-index: $z-index-sticky;
   transition: box-shadow 0.2s;
+
+  &.header-scrolled {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
 }
 
-.header-top-bar {
-  display: none; // Removed — content folded into main header
-}
+// ── Row 1: Logo + Search + Icons ────────────────────────
 
 .header-main {
+  border-bottom: 1px solid $border-light;
   padding: 0;
 
-  .container {
+  >.container {
     display: flex;
     align-items: center;
     gap: $spacing-md;
-    height: 64px;
+    height: 72px;
+
+    @include sm-down {
+      height: 56px;
+      gap: $spacing-sm;
+    }
   }
+}
+
+.header-logo-group {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  flex-shrink: 0;
 }
 
 .mobile-menu-toggle {
@@ -53,6 +69,7 @@
   border: none;
   color: $text-primary;
   flex-shrink: 0;
+  order: -1;
 
   @include md {
     display: none;
@@ -70,7 +87,7 @@
   }
 
   .logo-text {
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     font-weight: 800;
     color: $secondary-color;
     letter-spacing: -0.02em;
@@ -81,117 +98,17 @@
   }
 }
 
-// Inline navigation (merged into header row)
-.header-nav-inline {
-  display: none;
-  align-items: center;
-  gap: $spacing-xs;
-  flex: 0 0 auto;
-
-  @include md {
-    display: flex;
-  }
-
-  .nav-categories-trigger {
-    position: relative;
-  }
-
-  .categories-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: $spacing-xs $spacing-sm;
-    background: $secondary-color;
-    color: $white;
-    border: none;
-    font-weight: 600;
-    font-size: $font-size-sm;
-    cursor: pointer;
-    border-radius: $border-radius;
-    transition: background-color 0.2s;
-    white-space: nowrap;
-
-    &:hover {
-      background: darken($secondary-color, 5%);
-    }
-
-    .chevron {
-      transition: transform 0.2s;
-    }
-
-    &[aria-expanded="true"] .chevron {
-      transform: rotate(180deg);
-    }
-  }
-
-  .nav-menu {
-    display: flex;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .nav-item>.nav-link {
-    display: block;
-    padding: $spacing-xs $spacing-sm;
-    color: $text-secondary;
-    font-weight: 500;
-    font-size: $font-size-sm;
-    border-radius: $border-radius;
-    transition: color 0.15s, background-color 0.15s;
-    white-space: nowrap;
-
-    &:hover,
-    &.active {
-      color: $secondary-color;
-      background: $gray-100;
-    }
-
-    &.active {
-      font-weight: 600;
-    }
-
-    &.nav-link-sale {
-      color: #e53e3e;
-      font-weight: 600;
-
-      &:hover {
-        background: #fff5f5;
-      }
-    }
-
-    &.nav-link-admin {
-      display: flex;
-      align-items: center;
-      color: $primary-color;
-      font-weight: 600;
-
-      svg {
-        margin-right: 4px;
-      }
-
-      &:hover {
-        background: lighten($primary-color, 45%);
-        color: darken($primary-color, 10%);
-      }
-
-      &.active {
-        background: lighten($primary-color, 42%);
-        color: $primary-color;
-      }
-    }
-  }
-}
-
+// Desktop search bar with category select
 .header-search {
   flex: 1;
-  max-width: 420px;
   min-width: 0;
+  max-width: 640px;
 
-  form {
+  .search-form {
     display: flex;
-    border: 1.5px solid $border-color;
-    border-radius: 99px;
+    align-items: stretch;
+    border: 2px solid $border-color;
+    border-radius: $border-radius;
     overflow: hidden;
     transition: border-color 0.2s;
 
@@ -202,40 +119,78 @@
 
   .search-input {
     flex: 1;
-    height: 40px;
+    height: 44px;
     padding: 0 $spacing-md;
     border: none;
     outline: none;
     font-size: $font-size-sm;
     background: transparent;
+    min-width: 0;
 
     &::placeholder {
       color: $text-muted;
     }
   }
 
+  .search-category-divider {
+    width: 1px;
+    background: $border-color;
+    align-self: stretch;
+    margin: 8px 0;
+  }
+
+  .search-category-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0 $spacing-md;
+    border: none;
+    outline: none;
+    font-size: $font-size-xs;
+    font-weight: 500;
+    color: $text-secondary;
+    background: $gray-50 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+    max-width: 150px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    &:hover {
+      background-color: $gray-100;
+    }
+
+    @include sm-down {
+      display: none;
+    }
+  }
+
   .search-btn {
     @include flex-center;
-    width: 44px;
+    width: 52px;
     background-color: $primary-color;
     border: none;
     color: $secondary-color;
     cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
 
     &:hover {
       background-color: $primary-dark;
     }
   }
 
-  @include sm-down {
-    display: none;
+  &.desktop-search {
+    @include sm-down {
+      display: none;
+    }
   }
 }
 
+// Header action icons
 .header-icons {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
 }
@@ -243,8 +198,8 @@
 .header-icon-btn {
   @include flex-center;
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   background: transparent;
   border: none;
   color: $text-secondary;
@@ -255,6 +210,15 @@
   &:hover {
     color: $secondary-color;
     background: $gray-100;
+  }
+
+  // Muted icons (compare + wishlist)
+  &.icon-muted {
+    opacity: 0.5;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 
   .icon-badge {
@@ -285,13 +249,37 @@
     }
   }
 
+  .cart-total {
+    display: none;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    color: $secondary-color;
+    margin-left: 4px;
+    white-space: nowrap;
+
+    @include md {
+      display: block;
+    }
+  }
+
   &.mobile-search-toggle {
     @include md {
       display: none;
     }
   }
 
-  &.wishlist-btn,
+  &.compare-btn {
+    @include sm-down {
+      display: none;
+    }
+  }
+
+  &.wishlist-btn {
+    @include sm-down {
+      display: none;
+    }
+  }
+
   &.account-btn {
     @include sm-down {
       display: none;
@@ -299,15 +287,128 @@
   }
 }
 
-// Remove old separate nav bar — navigation is now inline
-.header-nav {
-  display: none;
+// ── Row 2: Departments + Nav + Free Shipping ────────────
+
+.header-bottom {
+  background: $secondary-color;
+
+  >.container {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    gap: 0;
+  }
+
+  @include sm-down {
+    display: none;
+  }
 }
 
-.header-nav .container,
-.header-nav .nav-menu,
-.header-nav .nav-contact {
-  display: none;
+.nav-categories-trigger {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.categories-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 $spacing-md;
+  background: $primary-color;
+  color: $secondary-color;
+  border: none;
+  font-weight: 700;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background: $primary-dark;
+  }
+
+  .chevron {
+    transition: transform 0.2s;
+  }
+
+  &[aria-expanded="true"] .chevron {
+    transform: rotate(180deg);
+  }
+}
+
+// Secondary inline nav inside bottom bar
+.header-nav-inline {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  padding-left: $spacing-sm;
+
+  .nav-menu {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-item>.nav-link {
+    display: block;
+    padding: $spacing-xs $spacing-md;
+    color: rgba($white, 0.85);
+    font-weight: 500;
+    font-size: $font-size-sm;
+    border-radius: $border-radius;
+    transition: color 0.15s, background-color 0.15s;
+    white-space: nowrap;
+
+    &:hover,
+    &.active {
+      color: $white;
+      background: rgba($white, 0.1);
+    }
+
+    &.active {
+      font-weight: 600;
+    }
+
+    &.nav-link-sale {
+      color: $primary-color;
+      font-weight: 700;
+
+      &:hover {
+        color: lighten($primary-color, 5%);
+        background: rgba($white, 0.08);
+      }
+    }
+
+    &.nav-link-admin {
+      display: flex;
+      align-items: center;
+      color: $primary-color;
+      font-weight: 600;
+
+      &:hover {
+        background: rgba($white, 0.08);
+        color: lighten($primary-color, 5%);
+      }
+
+      &.active {
+        background: rgba($white, 0.12);
+        color: $primary-color;
+      }
+    }
+  }
+}
+
+.header-promo-text {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  color: rgba($white, 0.7);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-right: $spacing-sm;
 }
 
 // ============================================

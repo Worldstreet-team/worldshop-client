@@ -87,6 +87,7 @@ export interface DashboardStats {
         orderNumber: string;
         status: string;
         total: number;
+        customerName: string | null;
         createdAt: string;
         items: Array<{ productName: string; quantity: number; unitPrice: number }>;
     }>;

@@ -109,8 +109,8 @@ export default function AdminDashboard() {
                 {stats.recentOrders.map((o: any) => (
                   <tr key={o.id}>
                     <td><Link to={`/admin/orders/${o.id}`}>{o.orderNumber || o.id.slice(-8)}</Link></td>
-                    <td>{o.user?.firstName ?? '—'} {o.user?.lastName ?? ''}</td>
-                    <td>{formatCurrency(o.totalAmount)}</td>
+                    <td>{o.customerName || '—'}</td>
+                    <td>{formatCurrency(o.total)}</td>
                     <td><span className={`badge badge-${o.status?.toLowerCase()}`}>{o.status}</span></td>
                     <td>{new Date(o.createdAt).toLocaleDateString()}</td>
                   </tr>
