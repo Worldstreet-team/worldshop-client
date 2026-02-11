@@ -50,7 +50,7 @@ export interface Category {
   image?: string;
   icon?: string;
   parentId?: string;
-  parent?: Category;
+  parent?: Category | null;
   children?: Category[];
   productCount?: number;
   isActive: boolean;
