@@ -14,14 +14,11 @@ const navLinks = [
   { to: '/products?sale=true', label: 'Gift Cards' },
 ];
 
-const formatPrice = (price: number) =>
-  '₦' + price.toLocaleString('en-NG', { minimumFractionDigits: 2 });
-
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user } = useAuthStore();
-  const { getItemCount, getSubtotal } = useCartStore();
+  const { getItemCount } = useCartStore();
   const { getItemCount: getWishlistCount } = useWishlistStore();
   const { toggleMobileMenu, openCartSidebar } = useUIStore();
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoryStore();
@@ -35,7 +32,6 @@ export default function Header() {
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const cartItemCount = getItemCount();
-  const cartTotal = getSubtotal();
   const wishlistCount = getWishlistCount();
 
   useEffect(() => {
@@ -163,18 +159,7 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* Compare — reduced opacity */}
-            <Link
-              to="/products"
-              className="header-icon-btn compare-btn icon-muted"
-              aria-label="Compare"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-
-            {/* Wishlist — reduced opacity */}
+            {/* Wishlist */}
             <Link
               to={isAuthenticated ? '/account/wishlist' : '/auth/login'}
               className="header-icon-btn wishlist-btn icon-muted"
@@ -213,7 +198,6 @@ export default function Header() {
                 <path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               {cartItemCount > 0 && <span className="icon-badge">{cartItemCount}</span>}
-              <span className="cart-total">{formatPrice(cartTotal)}</span>
             </button>
           </div>
         </div>
@@ -236,7 +220,7 @@ export default function Header() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                 <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span>All Departments</span>
+              <span>Categories</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12" className="chevron">
                 <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
