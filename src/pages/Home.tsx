@@ -320,7 +320,7 @@ export default function HomePage() {
           </div>
           <div className="categories-grid">
             {isLoadingCategories
-              ? Array.from({ length: 6 }).map((_, i) => (
+              ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="category-card-skeleton">
                   <Skeleton width="100%" height={140} />
                   <div style={{ padding: '0.75rem', textAlign: 'center' }}><Skeleton width={100} height={18} /></div>

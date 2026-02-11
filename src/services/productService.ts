@@ -82,7 +82,7 @@ export const categoryService = {
   },
 
   // Get featured categories for homepage (same as getCategories but limited)
-  getFeaturedCategories: async (limit = 6): Promise<Category[]> => {
+  getFeaturedCategories: async (limit = 4): Promise<Category[]> => {
     const res = await api.get<ApiResponse<Category[]>>('/categories/featured', { limit });
     return res.data;
   },
