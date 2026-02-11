@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { orderService } from '@/services/orderService';
+import { downloadService } from '@/services/downloadService';
 import { useUIStore } from '@/store/uiStore';
 import type { Order } from '@/types/order.types';
+import type { DownloadRecord } from '@/types/download.types';
 
 const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Pending',
@@ -31,6 +33,8 @@ export default function OrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -49,6 +53,31 @@ export default function OrderDetailPage() {
 
     fetchOrder();
   }, [id]);
+
+  // Fetch downloads for this order
+  useEffect(() => {
+    if (!id || !order || !['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(order.status)) return;
+    downloadService.getOrderDownloads(id)
+      .then(res => setDownloads(res.data || []))
+      .catch(() => { /* no downloads */ });
+  }, [id, order?.status]);
+
+  const handleDownload = async (downloadId: string) => {
+    setDownloadingId(downloadId);
+    try {
+      const res = await downloadService.generateDownloadUrl(downloadId);
+      window.open(res.data.downloadUrl, '_blank');
+      // Refresh download records to update count
+      if (id) {
+        const updated = await downloadService.getOrderDownloads(id);
+        setDownloads(updated.data || []);
+      }
+    } catch (err: any) {
+      addToast({ message: err.message || 'Download failed', type: 'error' });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-NG', {
@@ -267,6 +296,45 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
+            {/* Digital Downloads */}
+            {downloads.length > 0 && (
+              <div className="section-card">
+                <h3 className="section-title">
+                  <span className="material-icons">download</span>
+                  Digital Downloads
+                </h3>
+                <div className="section-body">
+                  <div className="downloads-list">
+                    {downloads.map((dl) => (
+                      <div key={dl.id} className="download-item">
+                        <div className="download-info">
+                          <span className="material-icons">description</span>
+                          <div>
+                            <p className="download-filename">{dl.asset.fileName}</p>
+                            <p className="download-meta">
+                              {(dl.asset.fileSize / 1024 / 1024).toFixed(1)} MB
+                              &middot; {dl.downloadCount}/{dl.maxDownloads} downloads used
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => handleDownload(dl.id)}
+                          disabled={downloadingId === dl.id || dl.downloadCount >= dl.maxDownloads}
+                        >
+                          {downloadingId === dl.id
+                            ? 'Generating...'
+                            : dl.downloadCount >= dl.maxDownloads
+                              ? 'Limit Reached'
+                              : 'Download'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Order Timeline */}
             {order.statusHistory && order.statusHistory.length > 0 && (
               <div className="section-card">
@@ -336,32 +404,44 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Shipping Address */}
-            <div className="section-card">
-              <h3 className="section-title">
-                <span className="material-icons">local_shipping</span>
-                Shipping Address
-              </h3>
-              <div className="section-body">
-                <div className="address-info">
-                  <p className="address-name">
-                    {order.shippingAddress.firstName} {order.shippingAddress.lastName}
-                  </p>
-                  <p className="address-line">{order.shippingAddress.street}</p>
-                  {order.shippingAddress.apartment && (
-                    <p className="address-line">{order.shippingAddress.apartment}</p>
-                  )}
-                  <p className="address-line">
-                    {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
-                    {order.shippingAddress.postalCode}
-                  </p>
-                  <p className="address-line">{order.shippingAddress.country}</p>
-                  <div className="address-phone">
-                    <span className="material-icons">phone</span>
-                    {order.shippingAddress.phone}
+            {order.shippingAddress ? (
+              <div className="section-card">
+                <h3 className="section-title">
+                  <span className="material-icons">local_shipping</span>
+                  Shipping Address
+                </h3>
+                <div className="section-body">
+                  <div className="address-info">
+                    <p className="address-name">
+                      {order.shippingAddress.firstName} {order.shippingAddress.lastName}
+                    </p>
+                    <p className="address-line">{order.shippingAddress.street}</p>
+                    {order.shippingAddress.apartment && (
+                      <p className="address-line">{order.shippingAddress.apartment}</p>
+                    )}
+                    <p className="address-line">
+                      {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                      {order.shippingAddress.postalCode}
+                    </p>
+                    <p className="address-line">{order.shippingAddress.country}</p>
+                    <div className="address-phone">
+                      <span className="material-icons">phone</span>
+                      {order.shippingAddress.phone}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="section-card">
+                <h3 className="section-title">
+                  <span className="material-icons">cloud_download</span>
+                  Digital Delivery
+                </h3>
+                <div className="section-body">
+                  <p>This is a digital order. Products are delivered via email and available for download in your account.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -142,7 +142,16 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
 
       {/* Stock Status */}
       <div className="product-info-stock">
-        {inStock ? (
+        {product.type === 'DIGITAL' ? (
+          <Badge variant="info" size="sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Digital Product
+          </Badge>
+        ) : inStock ? (
           <Badge variant="success" size="sm">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
               <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
@@ -152,7 +161,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
         ) : (
           <Badge variant="danger" size="sm">Out of Stock</Badge>
         )}
-        {inStock && currentStock <= 10 && (
+        {product.type !== 'DIGITAL' && inStock && currentStock <= 10 && (
           <span className="product-info-stock-low">
             Only {currentStock} left!
           </span>
@@ -276,36 +285,74 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
 
       {/* Product Features */}
       <div className="product-info-features">
-        <div className="product-info-feature">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-            <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
-            <path d="M16 8h4a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" />
-          </svg>
-          <div>
-            <strong>Free Shipping</strong>
-            <span>On orders over $50</span>
-          </div>
-        </div>
-        <div className="product-info-feature">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-            <polyline points="23 4 23 10 17 10" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div>
-            <strong>30-Day Returns</strong>
-            <span>Hassle-free returns</span>
-          </div>
-        </div>
-        <div className="product-info-feature">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <div>
-            <strong>Secure Payment</strong>
-            <span>100% secure checkout</span>
-          </div>
-        </div>
+        {product.type === 'DIGITAL' ? (
+          <>
+            <div className="product-info-feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <div>
+                <strong>Instant Download</strong>
+                <span>Available after payment</span>
+              </div>
+            </div>
+            <div className="product-info-feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+              <div>
+                <strong>Email Delivery</strong>
+                <span>Download link sent to your email</span>
+              </div>
+            </div>
+            <div className="product-info-feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div>
+                <strong>Secure Payment</strong>
+                <span>100% secure checkout</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="product-info-feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
+                <path d="M16 8h4a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" />
+              </svg>
+              <div>
+                <strong>Free Shipping</strong>
+                <span>On orders over $50</span>
+              </div>
+            </div>
+            <div className="product-info-feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <polyline points="23 4 23 10 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div>
+                <strong>30-Day Returns</strong>
+                <span>Hassle-free returns</span>
+              </div>
+            </div>
+            <div className="product-info-feature">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div>
+                <strong>Secure Payment</strong>
+                <span>100% secure checkout</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Tags */}

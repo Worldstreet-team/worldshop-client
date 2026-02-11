@@ -108,6 +108,9 @@ export default function ProductCard({
 
             {/* Badges */}
             <div className="product-card-badges">
+              {product.type === 'DIGITAL' && (
+                <span className="badge badge-info" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>Digital</span>
+              )}
               {discountPercentage > 0 && <SaleBadge percentage={discountPercentage} />}
               {isNew && <NewBadge />}
             </div>

@@ -19,6 +19,7 @@ export interface VerifyPaymentData {
         orderNumber: string;
         status: string;
     };
+    hasDigitalProducts?: boolean;
 }
 
 // ─── Payment service ────────────────────────────────────────────
