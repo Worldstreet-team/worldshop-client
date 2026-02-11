@@ -46,7 +46,7 @@ export interface Order {
   userId: string;
   status: OrderStatus;
   items: OrderItem[];
-  shippingAddress: ShippingAddress;
+  shippingAddress?: ShippingAddress | null;
   billingAddress?: ShippingAddress | null;
   subtotal: number;
   discount: number;
@@ -63,7 +63,7 @@ export interface Order {
 }
 
 export interface CreateOrderRequest {
-  shippingAddress: ShippingAddress;
+  shippingAddress?: ShippingAddress;
   billingAddress?: ShippingAddress;
   notes?: string;
 }

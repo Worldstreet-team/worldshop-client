@@ -16,6 +16,18 @@ export interface ProductVariant {
   attributes: Record<string, string>;
 }
 
+export interface DigitalAsset {
+  id: string;
+  productId: string;
+  fileName: string;
+  r2Key?: string;
+  signedUrl?: string;
+  mimeType: string;
+  fileSize: number;
+  sortOrder: number;
+  createdAt?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -32,6 +44,7 @@ export interface Product {
   tags: string[];
   images: ProductImage[];
   variants: ProductVariant[];
+  digitalAssets?: DigitalAsset[];
   avgRating: number;
   reviewCount: number;
   stock: number;
