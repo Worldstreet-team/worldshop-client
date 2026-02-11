@@ -12,17 +12,17 @@
   display: flex;
   min-height: 100vh;
   background-color: $gray-100;
-  
+
   &.sidebar-collapsed {
     .admin-sidebar {
       width: $sidebar-collapsed-width;
-      
+
       .nav-label,
       .sidebar-header .sidebar-logo {
         display: none;
       }
     }
-    
+
     .admin-main {
       margin-left: $sidebar-collapsed-width;
     }
@@ -50,11 +50,11 @@
   @include flex-between;
   padding: $spacing-lg;
   border-bottom: 1px solid $secondary-dark;
-  
+
   .sidebar-logo {
     height: 32px;
   }
-  
+
   .sidebar-toggle {
     @include flex-center;
     width: 32px;
@@ -63,7 +63,7 @@
     border: none;
     color: $gray-400;
     cursor: pointer;
-    
+
     &:hover {
       color: $white;
     }
@@ -84,16 +84,16 @@
   color: $gray-400;
   text-decoration: none;
   transition: background-color $transition-fast, color $transition-fast;
-  
+
   .material-icons {
     font-size: 22px;
   }
-  
+
   &:hover {
     background-color: $secondary-dark;
     color: $white;
   }
-  
+
   &.active {
     background-color: $secondary-dark;
     color: $primary-color;
@@ -124,7 +124,7 @@
   padding: $spacing-md $spacing-xl;
   background-color: $white;
   border-bottom: 1px solid $border-light;
-  
+
   .admin-title {
     font-size: $font-size-lg;
     margin: 0;
@@ -135,11 +135,11 @@
   display: flex;
   align-items: center;
   gap: $spacing-lg;
-  
+
   .user-name {
     font-weight: $font-weight-medium;
   }
-  
+
   .logout-btn {
     @include flex-center;
     gap: $spacing-xs;
@@ -149,12 +149,12 @@
     border-radius: $radius-sm;
     color: $text-secondary;
     cursor: pointer;
-    
+
     &:hover {
       border-color: $danger-color;
       color: $danger-color;
     }
-    
+
     .material-icons {
       font-size: 18px;
     }
@@ -173,7 +173,7 @@
 .admin-dashboard {
   .dashboard-header {
     margin-bottom: $spacing-xl;
-    
+
     p {
       color: $text-secondary;
       margin: 0;
@@ -186,11 +186,11 @@
   grid-template-columns: repeat(4, 1fr);
   gap: $spacing-lg;
   margin-bottom: $spacing-xl;
-  
+
   @include lg-down {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @include sm-down {
     grid-template-columns: 1fr;
   }
@@ -202,32 +202,32 @@
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  
+
   .stat-icon {
     @include flex-center;
     width: 56px;
     height: 56px;
     background-color: rgba($primary-color, 0.1);
     border-radius: $radius-md;
-    
+
     .material-icons {
       font-size: 28px;
       color: $primary-dark;
     }
   }
-  
+
   .stat-content {
     h3 {
       font-size: $font-size-2xl;
       margin-bottom: $spacing-xs;
     }
-    
+
     p {
       color: $text-secondary;
       font-size: $font-size-sm;
       margin: 0;
     }
-    
+
     .stat-change {
       font-size: $font-size-sm;
       color: $success-color;
@@ -239,7 +239,7 @@
   @include card;
   padding: $spacing-lg;
   margin-bottom: $spacing-lg;
-  
+
   h2 {
     font-size: $font-size-lg;
     margin-bottom: $spacing-lg;
@@ -258,7 +258,7 @@
   .page-header {
     @include flex-between;
     margin-bottom: $spacing-xl;
-    
+
     h1 {
       margin: 0;
     }
@@ -272,7 +272,7 @@
 .admin-product-edit {
   .page-header {
     margin-bottom: $spacing-xl;
-    
+
     h1 {
       margin: 0;
     }
@@ -284,28 +284,28 @@
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: $spacing-xl;
-    
+
     @include md-down {
       grid-template-columns: 1fr;
     }
   }
-  
+
   .form-main {
     display: flex;
     flex-direction: column;
     gap: $spacing-lg;
   }
-  
+
   .form-sidebar {
     display: flex;
     flex-direction: column;
     gap: $spacing-lg;
   }
-  
+
   .form-section {
     @include card;
     padding: $spacing-lg;
-    
+
     h2 {
       font-size: $font-size-md;
       margin-bottom: $spacing-lg;
@@ -313,7 +313,7 @@
       border-bottom: 1px solid $border-light;
     }
   }
-  
+
   .form-actions {
     position: sticky;
     top: $spacing-lg;
@@ -333,16 +333,16 @@
   text-align: center;
   cursor: pointer;
   transition: border-color $transition-fast;
-  
+
   &:hover {
     border-color: $primary-color;
   }
-  
+
   .material-icons {
     font-size: 48px;
     color: $gray-400;
   }
-  
+
   p {
     color: $text-secondary;
   }
@@ -356,7 +356,7 @@
   .page-header {
     @include flex-between;
     margin-bottom: $spacing-xl;
-    
+
     h1 {
       margin: 0;
     }
@@ -367,7 +367,7 @@
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: $spacing-xl;
-  
+
   @include md-down {
     grid-template-columns: 1fr;
   }
@@ -381,11 +381,311 @@
 .category-edit-panel {
   @include card;
   padding: $spacing-lg;
-  
+
   h2 {
     font-size: $font-size-md;
     margin-bottom: $spacing-lg;
   }
+}
+
+// ============================================
+// CATEGORY LIST & ITEMS
+// ============================================
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: background-color $transition-fast;
+
+  &:hover {
+    background-color: $gray-100;
+  }
+
+  &.selected {
+    background-color: rgba($primary-color, 0.08);
+    border-left: 3px solid $primary-color;
+  }
+
+  &.inactive {
+    opacity: 0.6;
+  }
+}
+
+.category-item-info {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+
+  .category-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-sm;
+    object-fit: cover;
+  }
+
+  strong {
+    display: block;
+    font-size: $font-size-sm;
+  }
+
+  small {
+    color: $text-secondary;
+    font-size: $font-size-xs;
+  }
+}
+
+.category-item-actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.category-image-preview {
+  position: relative;
+  display: inline-block;
+  margin-bottom: $spacing-sm;
+
+  img {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: $radius-sm;
+    border: 1px solid $border-light;
+  }
+
+  .btn-icon-sm {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+  }
+}
+
+.image-upload-zone.small {
+  padding: $spacing-lg;
+
+  .material-icons {
+    font-size: 28px;
+  }
+}
+
+// ============================================
+// PRODUCT TABLE CELLS
+// ============================================
+
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.product-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: $radius-sm;
+  object-fit: cover;
+  border: 1px solid $border-light;
+}
+
+.price-sale {
+  font-weight: $font-weight-semibold;
+  color: $danger-color;
+}
+
+.price-original {
+  text-decoration: line-through;
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  margin-left: $spacing-xs;
+}
+
+// ============================================
+// UPLOADED IMAGES GRID (Product Edit)
+// ============================================
+
+.uploaded-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.uploaded-image {
+  position: relative;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color $transition-fast;
+
+  &.is-primary {
+    border-color: $primary-color;
+  }
+
+  img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.primary-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: $primary-color;
+  color: $white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.image-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity $transition-fast;
+
+  .uploaded-image:hover & {
+    opacity: 1;
+  }
+}
+
+// ============================================
+// ACTION BUTTONS & ICON BUTTONS
+// ============================================
+
+.action-buttons {
+  display: flex;
+  gap: $spacing-xs;
+}
+
+.btn-icon {
+  @include flex-center;
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-sm;
+  border: 1px solid $border-color;
+  background: $white;
+  cursor: pointer;
+  color: $text-secondary;
+  transition: all $transition-fast;
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background-color: $gray-100;
+    color: $text-primary;
+  }
+}
+
+.btn-icon-danger {
+  @extend .btn-icon;
+  border-color: transparent;
+
+  &:hover {
+    background-color: rgba($danger-color, 0.1);
+    color: $danger-color;
+  }
+}
+
+.btn-icon-sm {
+  @include flex-center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: $white;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+
+  .material-icons {
+    font-size: 14px;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+// ============================================
+// STAT CARD VARIANTS
+// ============================================
+
+.stat-card--danger .stat-icon {
+  background-color: rgba($danger-color, 0.1);
+
+  .material-icons {
+    color: $danger-color;
+  }
+}
+
+.stat-card--warning .stat-icon {
+  background-color: rgba($warning-color, 0.1);
+
+  .material-icons {
+    color: $warning-color;
+  }
+}
+
+// ============================================
+// MISC ADMIN UTILITIES
+// ============================================
+
+.badge-secondary {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-sm;
+  background-color: $gray-200;
+  color: $text-secondary;
+}
+
+.skeleton-row {
+  height: 56px;
+  background: $gray-100;
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-sm;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+
+  input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.text-muted {
+  color: $text-secondary;
 }
 
 // ============================================
@@ -395,7 +695,7 @@
 .admin-order-detail {
   .page-header {
     margin-bottom: $spacing-xl;
-    
+
     h1 {
       margin: 0;
     }
@@ -406,7 +706,7 @@
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: $spacing-xl;
-  
+
   @include md-down {
     grid-template-columns: 1fr;
   }
@@ -422,32 +722,32 @@
 .detail-section {
   @include card;
   padding: $spacing-lg;
-  
+
   .section-header {
     @include flex-between;
     margin-bottom: $spacing-lg;
-    
+
     h2 {
       margin: 0;
     }
   }
-  
+
   h2 {
     font-size: $font-size-md;
     margin-bottom: $spacing-md;
   }
-  
+
   .status-select {
     @include input-base;
     width: auto;
     height: auto;
     padding: $spacing-sm $spacing-md;
   }
-  
+
   .summary-row {
     @include flex-between;
     margin-bottom: $spacing-sm;
-    
+
     &.total {
       font-weight: $font-weight-bold;
       padding-top: $spacing-sm;
@@ -464,13 +764,14 @@
 
 .items-table {
   width: 100%;
-  
-  th, td {
+
+  th,
+  td {
     padding: $spacing-sm;
     text-align: left;
     border-bottom: 1px solid $border-light;
   }
-  
+
   th {
     font-weight: $font-weight-medium;
     color: $text-secondary;

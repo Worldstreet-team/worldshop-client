@@ -4,6 +4,75 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.18.0] - 2026-02-12
+
+### Added — Phase 5: Admin Panel (Products & Categories)
+
+#### Admin API Service
+- `src/services/adminService.ts` — complete admin API client with types
+  - `DashboardStats`, `AdminProductFilters`, `CreateProductData`, `UpdateProductData`, `AdminCategory`, `CreateCategoryData`, `UpdateCategoryData`, `UploadResult`
+  - Methods: `getDashboardStats`, `getProducts`, `getProduct`, `createProduct`, `updateProduct`, `deleteProduct`, `getCategories`, `getCategory`, `createCategory`, `updateCategory`, `deleteCategory`, `uploadImages`, `deleteUploadedImages`
+
+#### Admin Dashboard (wired to real API)
+- Stat cards: Total Orders, Revenue, Active/Total Products, Categories
+- Out of Stock & Low Stock alert cards (conditional rendering)
+- Recent Orders table with links to order detail
+- Loading skeleton states
+
+#### Admin Products (wired to real API)
+- Product listing with thumbnails, SKU, category, price (sale support), stock badges, active status
+- Filter by category, status (active/inactive/all), stock level
+- Search by name/SKU
+- Pagination controls
+- Delete with confirmation dialog + toast notifications
+
+#### Admin Product Edit (wired to real API)
+- Full create/edit form: name, description, shortDesc, SKU, category, brand, tags, pricing, stock, flags
+- Image upload to Cloudflare R2 via `adminService.uploadImages`
+- Image management: set primary, remove (with R2 cleanup), grid display
+- Auto-loads product data in edit mode
+
+#### Admin Categories (wired to real API)
+- Category list with thumbnails, product counts, parent display
+- Selected/inactive visual states
+- Create/edit form: name, description, image upload, icon, parent select, sort order, active toggle
+- Delete (soft deactivation) with confirmation
+
+#### Admin SCSS Additions
+- `.category-item`, `.category-item-info`, `.category-item-actions` — interactive list items
+- `.category-image-preview` — preview with remove button
+- `.product-cell`, `.product-thumb` — table cell with thumbnail
+- `.uploaded-images-grid`, `.uploaded-image`, `.primary-badge`, `.image-actions` — image management grid
+- `.btn-icon`, `.btn-icon-danger`, `.btn-icon-sm` — icon-only action buttons
+- `.stat-card--danger`, `.stat-card--warning` — alert stat card variants
+- `.badge-secondary`, `.skeleton-row`, `.checkbox-label`, `.text-muted` — utilities
+
+## [0.17.0] - 2026-02-11
+
+### Added — Admin Dashboard Navigation
+- Dashboard link in header navigation for admin users (conditional rendering based on user role)
+- Dashboard icon (grid icon) with active state highlighting
+- Styled with primary color theme in `_layout.scss`
+- Automatically shown/hidden based on `user?.role === 'ADMIN'`
+
+### Changed — Wishlist UI Redesign
+- Complete redesign of wishlist page with modern card-based layout
+- Product cards now feature:
+  - Hover effects with shadow transitions
+  - Clickable product images and titles (navigate to product detail)
+  - Remove button (X icon) positioned top-right
+  - Sale badges showing discount percentage
+  - Out of stock badges for unavailable items
+  - Stock warnings for low inventory (≤5 items)
+  - Price display with original/sale price strikethrough
+  - Add to cart buttons with icons and disabled states
+- Responsive grid layout: 2 columns (mobile), auto-fill 280px cards (desktop)
+- All wishlist styles added to `_pages.scss` with proper SCSS variables
+
+### Fixed
+- TypeScript error: Removed category property from wishlist items (not returned by backend)
+- Product navigation from wishlist now fully functional
+
 ## [0.16.0] - 2026-02-10
 
 ### Added — Reviews Integration (Service 9)
