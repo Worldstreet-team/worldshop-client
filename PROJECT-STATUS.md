@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 10, 2026  
-**Version:** 0.16.0  
+**Last Updated:** February 11, 2026  
+**Version:** 0.17.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -168,7 +168,11 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] **OrderHistory** (`/account/orders`) - Order history list
 - [x] **OrderDetail** (`/account/orders/:id`) - Individual order details
 - [x] **Addresses** (`/account/addresses`) - Saved addresses management
-- [x] **Wishlist** (`/account/wishlist`) - User wishlist
+- [x] **Wishlist** (`/account/wishlist`) - User wishlist with improved UI
+  - [x] Modern card-based layout with hover effects
+  - [x] Clickable product images and titles
+  - [x] Sale badges and stock warnings
+  - [x] Responsive grid (2 columns mobile, auto-fill desktop)
 
 ### Phase 5: Admin Pages
 
@@ -180,6 +184,10 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] **OrderDetail** (`/admin/orders/:id`) - Order processing view
 - [x] **Categories** (`/admin/categories`) - Category management
 - [x] **Inventory** (`/admin/inventory`) - Stock management
+- [x] **Admin Navigation** - Dashboard link in header for admin users
+  - [x] Conditional rendering based on user role
+  - [x] Active state highlighting
+  - [x] Dashboard icon (grid pattern)
 
 ### Phase 6: Styling & Responsiveness
 - [x] Mobile-first responsive design
@@ -224,6 +232,27 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] External auth service integration (WorldStreet Identity)
 - [x] HttpOnly cookie-based JWT authentication
 - [x] Token verification on page load
+- [x] Auto-redirect to login on 401
+- [x] Protected routes (customer and admin)
+
+### Phase 10: Reviews & Wishlist Integration ✅
+- [x] **Reviews** - Full customer review system
+  - [x] Product detail page review display
+  - [x] Review submission form with rating
+  - [x] Review summary with rating distribution
+  - [x] Edit/delete own reviews
+  - [x] Verified purchase badges
+- [x] **Wishlist** - Save products for later
+  - [x] Add/remove from wishlist
+  - [x] Wishlist page with product cards
+  - [x] Wishlist count in header
+  - [x] Modern card-based UI redesign
+  - [x] Product navigation from wishlist
+
+### Phase 11: Admin Dashboard Enhancement ✅
+- [x] Admin dashboard link in main navigation
+- [x] Role-based conditional rendering
+- [x] Active state for admin routes
 - [x] Automatic token refresh flow
 - [x] Redirect to external login/register pages
 - [x] ProtectedRoute and AdminRoute guards
