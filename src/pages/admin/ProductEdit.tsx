@@ -130,7 +130,8 @@ export default function AdminProductEdit() {
           sortOrder: digitalAssets.length + i,
         }));
         const attached = await adminService.attachDigitalAssets(id, assets);
-        setDigitalAssets((prev) => [...prev, ...attached]);
+        // Server returns ALL assets for the product, so replace the full list
+        setDigitalAssets(attached);
         addToast({ type: 'success', message: `${results.length} digital file(s) uploaded.` });
       } else {
         // For new products, store temporarily — will attach after create
@@ -348,12 +349,30 @@ export default function AdminProductEdit() {
                   <div className="digital-assets-list">
                     {digitalAssets.map((asset, i) => (
                       <div key={asset.id} className="digital-asset-item">
-                        <span className="material-icons">description</span>
+                        {asset.signedUrl && asset.mimeType === 'application/pdf' ? (
+                          <div className="asset-preview asset-preview-pdf">
+                            <iframe
+                              src={`${asset.signedUrl}#toolbar=0&navpanes=0`}
+                              title={asset.fileName}
+                              style={{ width: 48, height: 60, border: 'none', borderRadius: 4, pointerEvents: 'none', overflow: 'hidden' }}
+                            />
+                          </div>
+                        ) : asset.signedUrl && asset.mimeType?.startsWith('image/') ? (
+                          <img src={asset.signedUrl} alt={asset.fileName} className="asset-preview asset-preview-img" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 4 }} />
+                        ) : (
+                          <span className="material-icons">description</span>
+                        )}
                         <div className="asset-info">
                           <span className="asset-name">{asset.fileName}</span>
                           <span className="asset-meta">
                             {(asset.fileSize / 1024 / 1024).toFixed(1)} MB &middot; {asset.mimeType}
                           </span>
+                          {asset.signedUrl && (
+                            <a href={asset.signedUrl} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>
+                              Preview
+                            </a>
+                          )}
                         </div>
                         <button type="button" onClick={() => removeDigitalAsset(i)}
                           className="btn-icon-sm btn-icon-danger" title="Remove">
