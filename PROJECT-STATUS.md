@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 12, 2026  
-**Version:** 0.19.0  
+**Last Updated:** February 13, 2026  
+**Version:** 0.20.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -59,7 +59,7 @@
 - **paymentService.ts** - Payment operations (Paystack integration) ✅
 - **productService.ts** - Product operations ✅
 - **reviewService.ts** - Review operations (real API) ✅
-- **adminService.ts** - Admin API client (dashboard, products, categories, uploads, digital assets) ✅
+- **adminService.ts** - Admin API client (dashboard with pagination, products, categories, uploads, digital assets) ✅
 - **downloadService.ts** - Download operations (list downloads, generate URLs) ✅
 - **mockApi.ts** - Mock API (banners only)
 - **userService.ts** - User operations (auth, address, wishlist) ✅
@@ -139,7 +139,7 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 ### Phase 4: Customer Pages
 
 #### Public Pages
-- [x] **Home** (`/`) - Electro template home page (hero slider, promo banners, deals/tabs, categories, featured products, features strip)
+- [x] **Home** (`/`) - Electro template home page (auto-sliding hero, promo banners, deals/tabs, categories, featured products, features strip)
 - [x] **ProductListing** (`/products`) - Product catalog with filters and pagination
 - [x] **ProductDetail** (`/products/:slug`) - Detailed product view with reviews
 - [x] **Category** (`/category/:slug`) - Category-specific products
@@ -291,6 +291,15 @@ Comprehensive TypeScript interfaces in `/src/types/`:
 - [x] ProtectedRoute and AdminRoute guards
 - [x] Auth state persistence (Zustand + localStorage)
 - [x] Production deployment at shop.worldstreetgold.com
+
+### Phase 12: UI Polish & Admin Pagination ✅
+- [x] Cart icon enlarged (26×26 SVG) with auto-width styling
+- [x] Hero slider simplified to auto-slide only (removed prev/next arrow buttons)
+- [x] Admin Dashboard recent orders server-side pagination (15 per page)
+- [x] Admin Orders default limit changed to 15 per page
+- [x] Admin Products default limit changed to 15 per page
+- [x] Main Dashboard external link (`dashboard.worldstreetgold.com`) in desktop header and mobile menu
+- [x] `.header-dashboard-link` styled with yellow text and hover effect
 
 ### Phase 10: Real API Integration (In Progress)
 - [x] Profile API connected to worldshop-server (`GET /profile`, `PATCH /profile`)

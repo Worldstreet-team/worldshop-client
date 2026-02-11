@@ -91,6 +91,14 @@ export interface DashboardStats {
         createdAt: string;
         items: Array<{ productName: string; quantity: number; unitPrice: number }>;
     }>;
+    recentOrdersPagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasPrevPage: boolean;
+        hasNextPage: boolean;
+    };
 }
 
 // ─── Admin Order Types ──────────────────────────────────────────
@@ -200,8 +208,10 @@ export interface UploadResult {
 // ─── Admin Service ──────────────────────────────────────────────
 export const adminService = {
     // Dashboard
-    getDashboardStats: async (): Promise<DashboardStats> => {
-        const res = await api.get<ApiResponse<DashboardStats>>('/admin/dashboard/stats');
+    getDashboardStats: async (page = 1, limit = 15): Promise<DashboardStats> => {
+        const res = await api.get<ApiResponse<DashboardStats>>('/admin/dashboard/stats', {
+            params: { page, limit },
+        });
         return res.data;
     },
 

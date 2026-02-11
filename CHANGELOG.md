@@ -4,6 +4,34 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.20.0] - 2026-02-13
+
+### Changed — Storefront UI Improvements
+
+#### Header & Cart
+- `src/components/layout/Header.tsx` — cart icon SVG increased from 22×22 to 26×26 for better visibility
+- `src/styles/_layout.scss` — `.cart-btn` set to `width: auto` with padding and gap; `.cart-total` font bumped from `$font-size-xs` to `$font-size-sm`, margin increased to 6px
+
+#### Hero Slider
+- `src/pages/Home.tsx` — removed prev/next arrow buttons from hero slider; now auto-slides only (6s interval) with pagination dots; removed `prevBanner` and `nextBanner` handler functions
+
+### Added — Main Dashboard Navigation
+
+#### Desktop & Mobile
+- `src/components/layout/Header.tsx` — added external "Main Dashboard" link (`https://dashboard.worldstreetgold.com`) in header bottom nav bar with grid icon SVG
+- `src/components/layout/MobileMenu.tsx` — added "Main Dashboard" link with `dashboard` Material Icon in mobile slide-out nav
+- `src/styles/_layout.scss` — added `.header-dashboard-link` styles (yellow text, subtle background, hover effect)
+
+### Changed — Admin Pagination (15 per page)
+
+#### Dashboard
+- `src/pages/admin/Dashboard.tsx` — added server-side pagination for recent orders (15 per page); `useCallback` fetch with `page` dependency; Previous/Next pagination UI controls
+- `src/services/adminService.ts` — `getDashboardStats()` now accepts `(page, limit)` params, passes as query params; added `recentOrdersPagination` field to `DashboardStats` type (`page, limit, total, totalPages, hasPrevPage, hasNextPage`)
+
+#### Orders & Products
+- `src/pages/admin/Orders.tsx` — default pagination limit changed from 20 to 15
+- `src/pages/admin/Products.tsx` — default pagination limit changed from 20 to 15
+
 ## [0.19.0] - 2026-02-12
 
 ### Added — Digital Products & Downloads Support

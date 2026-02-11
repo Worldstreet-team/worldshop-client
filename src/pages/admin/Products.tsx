@@ -13,7 +13,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<AdminProductFilters>({
     page: 1,
-    limit: 20,
+    limit: 15,
     status: 'all',
     stock: 'all',
     sortBy: 'newest',
