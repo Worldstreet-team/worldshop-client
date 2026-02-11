@@ -33,6 +33,7 @@ const OrderDetailPage = lazy(() => import('@/pages/account/OrderDetail'));
 const AddressesPage = lazy(() => import('@/pages/account/Addresses'));
 const WishlistPage = lazy(() => import('@/pages/account/Wishlist'));
 const ProfilePage = lazy(() => import('@/pages/account/Profile'));
+const DownloadsPage = lazy(() => import('@/pages/account/Downloads'));
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
@@ -143,6 +144,10 @@ const router = createBrowserRouter([
           {
             path: 'profile',
             element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper>,
+          },
+          {
+            path: 'downloads',
+            element: <SuspenseWrapper><DownloadsPage /></SuspenseWrapper>,
           },
         ],
       },

@@ -125,6 +125,7 @@ export default function AdminProducts() {
           <thead>
             <tr>
               <th>Product</th>
+              <th>Type</th>
               <th>SKU</th>
               <th>Category</th>
               <th>Price</th>
@@ -137,12 +138,12 @@ export default function AdminProducts() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  <td colSpan={7}><div className="skeleton-row" /></td>
+                  <td colSpan={8}><div className="skeleton-row" /></td>
                 </tr>
               ))
             ) : products.length === 0 ? (
               <tr>
-                <td colSpan={7} className="empty-row">
+                <td colSpan={8} className="empty-row">
                   <p>No products found. {!search && <Link to="/admin/products/new">Add your first product!</Link>}</p>
                 </td>
               </tr>
@@ -164,6 +165,11 @@ export default function AdminProducts() {
                           {product.brand && <small className="text-muted"> · {product.brand}</small>}
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      <span className={`badge ${product.type === 'DIGITAL' ? 'badge-info' : 'badge-default'}`}>
+                        {product.type === 'DIGITAL' ? 'Digital' : 'Physical'}
+                      </span>
                     </td>
                     <td>{product.stockKeepingUnit || '—'}</td>
                     <td>{product.category?.name || '—'}</td>

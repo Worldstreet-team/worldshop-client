@@ -93,7 +93,7 @@ export interface DashboardStats {
 
 // ─── Upload Types ───────────────────────────────────────────────
 export interface UploadResult {
-    url: string;
+    signedUrl: string;
     key: string;
     originalName: string;
     size: number;
@@ -174,5 +174,33 @@ export const adminService = {
 
     deleteUploadedImages: async (keys: string[]): Promise<void> => {
         await apiClient.delete('/admin/upload/images', { data: { keys } });
+    },
+
+    // Digital File Uploads
+    uploadDigitalFiles: async (files: File[]): Promise<UploadResult[]> => {
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
+
+        const res = await apiClient.post<{ success: boolean; data: UploadResult[] }>(
+            '/admin/upload/digital-files',
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } },
+        );
+        return res.data.data;
+    },
+
+    // Digital Assets for a product
+    getDigitalAssets: async (productId: string) => {
+        const res = await api.get<ApiResponse<any[]>>(`/admin/products/${productId}/digital-assets`);
+        return res.data;
+    },
+
+    attachDigitalAssets: async (productId: string, assets: Array<{ fileName: string; r2Key: string; mimeType: string; fileSize: number; sortOrder?: number }>) => {
+        const res = await api.post<ApiResponse<any[]>>(`/admin/products/${productId}/digital-assets`, { assets });
+        return res.data;
+    },
+
+    deleteDigitalAsset: async (assetId: string): Promise<void> => {
+        await api.delete(`/admin/digital-assets/${assetId}`);
     },
 };
