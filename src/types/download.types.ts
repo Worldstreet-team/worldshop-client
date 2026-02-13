@@ -1,28 +1,19 @@
 export interface DownloadRecord {
     id: string;
     orderItemId: string;
-    userId: string;
     assetId: string;
+    fileName: string;
+    mimeType: string;
+    fileSize: number;
+    productName: string;
+    productSlug: string;
     downloadCount: number;
     maxDownloads: number;
+    remainingDownloads: number;
     expiresAt: string;
+    isExpired: boolean;
+    canDownload: boolean;
     createdAt: string;
-    updatedAt: string;
-    asset: {
-        id: string;
-        fileName: string;
-        mimeType: string;
-        fileSize: number;
-    };
-    orderItem?: {
-        id: string;
-        productName: string;
-        productImage?: string | null;
-        order?: {
-            id: string;
-            orderNumber: string;
-        };
-    };
 }
 
 export interface DownloadUrl {

@@ -95,16 +95,16 @@ export default function DownloadsPage() {
                                     <span className="material-icons">description</span>
                                 </div>
                                 <div className="download-card-info">
-                                    <h4 className="download-card-filename">{dl.asset.fileName}</h4>
+                                    <h4 className="download-card-filename">{dl.fileName}</h4>
                                     <div className="download-card-meta">
-                                        <span>{formatFileSize(dl.asset.fileSize)}</span>
+                                        <span>{formatFileSize(dl.fileSize)}</span>
                                         <span>&middot;</span>
-                                        <span>{dl.asset.mimeType}</span>
-                                        {dl.orderItem?.order && (
+                                        <span>{dl.mimeType}</span>
+                                        {dl.productName && (
                                             <>
                                                 <span>&middot;</span>
-                                                <Link to={`/account/orders/${dl.orderItem.order.id}`}>
-                                                    Order #{dl.orderItem.order.orderNumber}
+                                                <Link to={`/products/${dl.productSlug}`}>
+                                                    {dl.productName}
                                                 </Link>
                                             </>
                                         )}
@@ -118,13 +118,13 @@ export default function DownloadsPage() {
                                 <button
                                     className="btn btn-primary"
                                     onClick={() => handleDownload(dl.id)}
-                                    disabled={downloadingId === dl.id || dl.downloadCount >= dl.maxDownloads || new Date(dl.expiresAt) < new Date()}
+                                    disabled={downloadingId === dl.id || !dl.canDownload}
                                 >
                                     {downloadingId === dl.id
                                         ? 'Generating...'
                                         : dl.downloadCount >= dl.maxDownloads
                                             ? 'Limit Reached'
-                                            : new Date(dl.expiresAt) < new Date()
+                                            : dl.isExpired
                                                 ? 'Expired'
                                                 : 'Download'}
                                 </button>
