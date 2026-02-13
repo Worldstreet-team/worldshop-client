@@ -3742,6 +3742,7 @@
     transform: translateY(0);
   }
 }
+
 // ============================================
 // WISHLIST PAGE
 // ============================================
@@ -3956,7 +3957,7 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-xs;
-  
+
   svg {
     display: block;
   }
@@ -3968,6 +3969,302 @@
 
     &:hover {
       background: $gray-300;
+    }
+  }
+}
+
+// ============================================
+// DOWNLOADS PAGE
+// ============================================
+
+.downloads-page {
+  padding: $spacing-xl 0 $spacing-3xl;
+  min-height: 60vh;
+  background: linear-gradient(180deg, $gray-50 0%, $white 100%);
+
+  .container {
+    @include container;
+  }
+
+  // ----- Page Header -----
+  .page-header {
+    margin-bottom: $spacing-2xl;
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+      color: $text-secondary;
+      font-size: $font-size-sm;
+      text-decoration: none;
+      margin-bottom: $spacing-md;
+      transition: color $transition-fast;
+
+      .material-icons {
+        font-size: 18px;
+      }
+
+      &:hover {
+        color: $primary-dark;
+      }
+    }
+
+    h1 {
+      @include heading($font-size-2xl);
+      color: $text-primary;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+
+      &::before {
+        content: 'cloud_download';
+        font-family: 'Material Icons';
+        font-size: 32px;
+        color: $primary-color;
+      }
+    }
+  }
+
+  // ----- Empty State -----
+  .empty-state {
+    @include card;
+    padding: $spacing-3xl;
+    text-align: center;
+    max-width: 480px;
+    margin: $spacing-2xl auto;
+
+    .material-icons {
+      font-size: 72px !important;
+      color: $gray-300 !important;
+      margin-bottom: $spacing-lg;
+    }
+
+    h3 {
+      @include heading($font-size-xl);
+      color: $text-primary;
+      margin: 0 0 $spacing-sm;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0 0 $spacing-xl;
+      line-height: $line-height-lg;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+    }
+  }
+
+  // ----- Downloads List -----
+  .downloads-list-page {
+    display: grid;
+    gap: $spacing-lg;
+  }
+
+  // ----- Download Card -----
+  .download-card {
+    @include card;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: $spacing-lg;
+    padding: $spacing-lg $spacing-xl;
+    transition: transform $transition-fast, box-shadow $transition-fast;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba($black, 0.08);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: $spacing-md;
+      padding: $spacing-lg;
+    }
+  }
+
+  .download-card-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+    border-radius: $radius-md;
+    flex-shrink: 0;
+
+    .material-icons {
+      font-size: 28px;
+      color: $secondary-color;
+    }
+
+    @media (max-width: 768px) {
+      width: 48px;
+      height: 48px;
+
+      .material-icons {
+        font-size: 24px;
+      }
+    }
+  }
+
+  .download-card-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  .download-card-filename {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin: 0;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .download-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+
+    a {
+      color: $info-color;
+      text-decoration: none;
+      font-weight: $font-weight-medium;
+      transition: color $transition-fast;
+
+      &:hover {
+        color: darken($info-color, 10%);
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .download-card-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: $font-size-xs;
+    color: $text-muted;
+    margin-top: $spacing-xs;
+
+    // Progress indicator for downloads used
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: $success-color;
+      margin-right: $spacing-xs;
+    }
+  }
+
+  // Status indicators based on download availability
+  .download-card:has(button:disabled) .download-card-status::before {
+    background-color: $danger-color;
+  }
+
+  // ----- Download Button -----
+  .download-card .btn {
+    flex-shrink: 0;
+    min-width: 140px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-xs;
+    padding: $spacing-sm $spacing-lg;
+    font-weight: $font-weight-semibold;
+    border-radius: $radius-md;
+    transition: all $transition-fast;
+
+    &:not(:disabled):hover {
+      transform: scale(1.02);
+    }
+
+    &:disabled {
+      background: $gray-200;
+      color: $text-muted;
+      cursor: not-allowed;
+      border-color: $gray-200;
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+  }
+
+  // ----- Loading Skeleton -----
+  .downloads-skeleton {
+    display: grid;
+    gap: $spacing-lg;
+  }
+
+  .skeleton-card {
+    @include card;
+    padding: $spacing-xl;
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+
+    &::before {
+      content: '';
+      width: 56px;
+      height: 56px;
+      border-radius: $radius-md;
+      background: linear-gradient(90deg, $gray-200 25%, $gray-100 50%, $gray-200 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+  }
+
+  .skeleton-line {
+    height: 14px;
+    border-radius: $radius-sm;
+    background: linear-gradient(90deg, $gray-200 25%, $gray-100 50%, $gray-200 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+
+    &.w-200 {
+      width: 200px;
+    }
+
+    &.w-150 {
+      width: 150px;
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+// Download card variants for expired/limit reached
+.download-card.expired,
+.download-card.limit-reached {
+  opacity: 0.7;
+
+  .download-card-icon {
+    background: linear-gradient(135deg, $gray-300 0%, $gray-400 100%);
+
+    .material-icons {
+      color: $gray-600;
     }
   }
 }
