@@ -310,9 +310,9 @@ export default function OrderDetailPage() {
                         <div className="download-info">
                           <span className="material-icons">description</span>
                           <div>
-                            <p className="download-filename">{dl.asset.fileName}</p>
+                            <p className="download-filename">{dl.fileName}</p>
                             <p className="download-meta">
-                              {(dl.asset.fileSize / 1024 / 1024).toFixed(1)} MB
+                              {(dl.fileSize / 1024 / 1024).toFixed(1)} MB
                               &middot; {dl.downloadCount}/{dl.maxDownloads} downloads used
                             </p>
                           </div>
@@ -320,12 +320,12 @@ export default function OrderDetailPage() {
                         <button
                           className="btn btn-sm btn-primary"
                           onClick={() => handleDownload(dl.id)}
-                          disabled={downloadingId === dl.id || dl.downloadCount >= dl.maxDownloads}
+                          disabled={downloadingId === dl.id || !dl.canDownload}
                         >
                           {downloadingId === dl.id
                             ? 'Generating...'
-                            : dl.downloadCount >= dl.maxDownloads
-                              ? 'Limit Reached'
+                            : !dl.canDownload
+                              ? (dl.isExpired ? 'Expired' : 'Limit Reached')
                               : 'Download'}
                         </button>
                       </div>
