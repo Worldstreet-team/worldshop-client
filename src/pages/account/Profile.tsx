@@ -33,7 +33,7 @@ const genderOptions: { value: Gender | ''; label: string }[] = [
 // ─── Component ───────────────────────────────────────────────
 
 export default function ProfilePage() {
-  const { user, updateUser, isInitialized } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isNewProfile, setIsNewProfile] = useState(false);
@@ -59,9 +59,6 @@ export default function ProfilePage() {
   // ─── Fetch profile on mount (wait for auth) ────────────────
 
   useEffect(() => {
-    // Don't fetch until auth has finished initializing
-    if (!isInitialized) return;
-
     let cancelled = false;
 
     async function load() {
@@ -103,7 +100,7 @@ export default function ProfilePage() {
 
     load();
     return () => { cancelled = true; };
-  }, [reset, isInitialized]);
+  }, [reset]);
 
   // ─── Submit handler ────────────────────────────────────────
 

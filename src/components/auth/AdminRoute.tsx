@@ -30,7 +30,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
   // Not signed in — show login prompt without auto-redirect
   if (!isSignedIn) {
     const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
-    
+
     return (
       <div style={{
         display: 'flex',
@@ -47,7 +47,7 @@ export default function AdminRoute({ children }: AdminRouteProps) {
         <p style={{ marginBottom: '2rem', color: '#666', maxWidth: '400px' }}>
           Please log in with an admin account to access this page.
         </p>
-        <Link 
+        <Link
           to={`/auth/login?returnUrl=${returnUrl}`}
           style={{
             display: 'inline-block',

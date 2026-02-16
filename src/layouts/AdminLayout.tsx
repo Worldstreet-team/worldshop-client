@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useClerk } from '@clerk/clerk-react';
 import { useAuthStore } from '@/store/authStore';
 import ToastContainer from '@/components/ui/ToastContainer';
 
@@ -14,11 +15,13 @@ const navItems = [
 export default function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, logout } = useAuthStore();
+  const { signOut } = useClerk();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/auth/login');
+    await signOut();
+    logout();
+    navigate('/');
   };
 
   return (
@@ -27,7 +30,7 @@ export default function AdminLayout() {
       <aside className="admin-sidebar">
         <div className="sidebar-header">
           <img src="/logo.svg" alt="WorldStreet Admin" className="sidebar-logo" />
-          <button 
+          <button
             className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -40,11 +43,11 @@ export default function AdminLayout() {
 
         <nav className="sidebar-nav">
           {navItems.map((item) => (
-            <NavLink 
-              key={item.path} 
+            <NavLink
+              key={item.path}
               to={item.path}
               end={item.path === '/admin'}
-              className={({ isActive }) => 
+              className={({ isActive }) =>
                 `sidebar-nav-item ${isActive ? 'active' : ''}`
               }
             >

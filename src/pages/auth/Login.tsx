@@ -1,26 +1,34 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { useAuthStore } from '@/store/authStore';
 
 export default function LoginPage() {
   const location = useLocation();
-  const { isAuthenticated, redirectToLogin } = useAuthStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { redirectToLogin } = useAuthStore();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
-  const returnUrl = from
-    ? `${window.location.origin}${from}`
-    : window.location.origin;
+  const returnUrlParam = searchParams.get('returnUrl');
+  const returnUrl = returnUrlParam
+    ? `${window.location.origin}${returnUrlParam}`
+    : from
+      ? `${window.location.origin}${from}`
+      : window.location.origin;
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoaded) return;
+
+    if (isSignedIn) {
+      // Already signed in, redirect to return URL or home
+      navigate(returnUrlParam || from || '/', { replace: true });
+    } else {
+      // Not signed in, redirect to external login
       redirectToLogin(returnUrl);
     }
-  }, [isAuthenticated, redirectToLogin, returnUrl]);
-
-  // If already authenticated, render nothing — router will handle navigation
-  if (isAuthenticated) {
-    return null;
-  }
+  }, [isLoaded, isSignedIn, redirectToLogin, returnUrl, navigate, from, returnUrlParam]);
 
   return (
     <div style={{
