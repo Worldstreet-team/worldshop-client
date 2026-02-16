@@ -161,7 +161,7 @@ export default function Header() {
 
             {/* Wishlist */}
             <Link
-              to={isAuthenticated ? '/account/wishlist' : '/auth/login'}
+              to="/account/wishlist"
               className="header-icon-btn wishlist-btn icon-muted"
               aria-label="Wishlist"
             >
@@ -173,7 +173,7 @@ export default function Header() {
 
             {/* Account (mobile only) */}
             <Link
-              to={isAuthenticated ? '/account' : '/auth/login'}
+              to="/account"
               className="header-icon-btn account-btn"
               aria-label={isAuthenticated ? 'Account' : 'Sign In'}
             >
