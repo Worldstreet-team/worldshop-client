@@ -8,11 +8,11 @@ interface AdminRouteProps {
 
 export default function AdminRoute({ children }: AdminRouteProps) {
   const { isLoaded, isSignedIn } = useAuth();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const location = useLocation();
 
-  // Show loading state while Clerk is initializing
-  if (!isLoaded) {
+  // Show loading state while Clerk is initializing or profile is syncing
+  if (!isLoaded || (isSignedIn && isLoading)) {
     return (
       <div style={{
         display: 'flex',
