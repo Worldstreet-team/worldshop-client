@@ -1,22 +1,34 @@
 import { useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import AppRouter from '@/router';
+import ClerkTokenProvider from '@/components/auth/ClerkTokenProvider';
 import { useAuthStore } from '@/store/authStore';
 import '@/styles/main.scss';
 
 function App() {
-  const { initializeAuth, isInitialized } = useAuthStore();
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const { syncClerkUser, clearUser } = useAuthStore();
 
   useEffect(() => {
-    initializeAuth();
-
     // Generate session ID for guest cart if not exists
     if (!localStorage.getItem('sessionId')) {
       localStorage.setItem('sessionId', crypto.randomUUID());
     }
-  }, [initializeAuth]);
+  }, []);
 
-  // Show loading state while initializing auth
-  if (!isInitialized) {
+  // Sync auth state when Clerk loads
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (isSignedIn && userId) {
+      syncClerkUser();
+    } else {
+      clearUser();
+    }
+  }, [isLoaded, isSignedIn, userId, syncClerkUser, clearUser]);
+
+  // Show loading state while Clerk is loading
+  if (!isLoaded) {
     return (
       <div style={{
         display: 'flex',
@@ -31,7 +43,11 @@ function App() {
     );
   }
 
-  return <AppRouter />;
+  return (
+    <ClerkTokenProvider>
+      <AppRouter />
+    </ClerkTokenProvider>
+  );
 }
 
 export default App;
