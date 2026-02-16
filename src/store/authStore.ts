@@ -55,21 +55,21 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           // Dynamic import to avoid circular dependency with api.ts
           const { default: apiClient } = await import('@/services/api');
           const response = await apiClient.get('/profile');
-          const profile = (response.data as { data?: { profile?: User }; profile?: User })?.data?.profile
-            || (response.data as { profile?: User })?.profile
-            || response.data;
+
+          // Extract profile from response (handle both wrapper structures)
+          const profile = response.data?.data || response.data;
 
           const user: User = {
-            id: (profile as User).id || '',
-            email: (profile as User).email || '',
-            firstName: (profile as User).firstName || '',
-            lastName: (profile as User).lastName || '',
-            phone: (profile as User).phone || undefined,
-            avatar: (profile as User).avatar || undefined,
-            role: (profile as User).role || 'CUSTOMER',
+            id: profile.id || profile.userId || '',
+            email: profile.email || '',
+            firstName: profile.firstName || '',
+            lastName: profile.lastName || '',
+            phone: profile.phone || undefined,
+            avatar: profile.avatar || undefined,
+            role: profile.role || 'CUSTOMER',
             isVerified: true, // Clerk handles verification
-            createdAt: (profile as User).createdAt || new Date().toISOString(),
-            updatedAt: (profile as User).updatedAt || new Date().toISOString(),
+            createdAt: profile.createdAt || new Date().toISOString(),
+            updatedAt: profile.updatedAt || new Date().toISOString(),
           };
 
           set({

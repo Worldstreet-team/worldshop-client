@@ -21,11 +21,12 @@ function App() {
     if (!isLoaded) return;
 
     if (isSignedIn && userId) {
+      // Always sync to get fresh profile data (including role changes)
       syncClerkUser();
     } else {
       clearUser();
     }
-  }, [isLoaded, isSignedIn, userId, syncClerkUser, clearUser]);
+  }, [isLoaded, isSignedIn, userId]); // Removed syncClerkUser, clearUser from deps to avoid re-triggering
 
   // Show loading state while Clerk is loading
   if (!isLoaded) {
