@@ -1,68 +1,38 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { User, AuthTokens } from '@/types/user.types';
-import { externalAuthService } from '@/services/externalAuthService';
+import type { User } from '@/types/user.types';
 import { useCartStore } from './cartStore';
 
-/**
- * Check if an error is a network/CORS error (service unreachable)
- * vs an actual authentication error (401/403)
- */
-function isNetworkError(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-
-  // Axios wraps network errors without a response
-  if ('response' in error && !(error as { response?: unknown }).response) {
-    return true; // No response = network error / CORS
-  }
-
-  if ('message' in error) {
-    const msg = (error as { message: string }).message?.toLowerCase() || '';
-    if (msg.includes('network error') || msg.includes('cors') || msg.includes('timeout')) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Get the HTTP status from an axios error, or 0 if network error
- */
-function getErrorStatus(error: unknown): number {
-  if (error && typeof error === 'object' && 'response' in error) {
-    const resp = (error as { response?: { status: number } }).response;
-    return resp?.status ?? 0;
-  }
-  return 0;
-}
+const LOGIN_URL = 'https://www.worldstreetgold.com/login';
+const REGISTER_URL = 'https://www.worldstreetgold.com/register';
 
 interface AuthState {
   user: User | null;
-  tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  isInitialized: boolean;
   error: string | null;
 }
 
 interface AuthActions {
-  initializeAuth: () => Promise<void>;
-  logout: () => Promise<void>;
-  logoutAll: () => Promise<void>;
-  refreshAccessToken: () => Promise<string | null>;
+  /** Called when Clerk session becomes active — fetches profile from our API */
+  syncClerkUser: () => Promise<void>;
+  /** Called when Clerk session ends */
+  clearUser: () => void;
+  /** Update local user state (e.g. after profile edit) */
   updateUser: (user: Partial<User>) => void;
   clearError: () => void;
+  /** Redirect to WorldStreetGold login page */
   redirectToLogin: (returnUrl?: string) => void;
+  /** Redirect to WorldStreetGold register page */
   redirectToRegister: (returnUrl?: string) => void;
+  /** Sign out via Clerk (should be called from component with useClerk) */
+  logout: () => void;
 }
 
 const initialState: AuthState = {
   user: null,
-  tokens: null,
   isAuthenticated: false,
   isLoading: false,
-  isInitialized: false,
   error: null,
 };
 
@@ -72,214 +42,62 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       ...initialState,
 
       /**
-       * Initialize authentication on app load.
-       *
-       * Cookies are HttpOnly — JS cannot read them. Instead we just
-       * fire the verify request and let the browser attach the cookies.
-       *
-       * Flow:
-       *  1. Call GET /api/auth/verify  (browser sends HttpOnly accessToken cookie)
-       *  2. If 200 → authenticated
-       *  3. If 401 → try POST /api/auth/refresh-token (browser sends HttpOnly refreshToken cookie)
-       *  4. If refresh 200 → verify again
-       *  5. If refresh fails → not authenticated
+       * Sync user data from our API after Clerk authenticates.
+       * The API call goes through the Clerk-authenticated axios interceptor,
+       * which attaches the Clerk session token.
+       * The server's /profile endpoint auto-creates a UserProfile if needed.
        */
-      initializeAuth: async () => {
-        const { isInitialized } = get();
-        if (isInitialized) return;
-
+      syncClerkUser: async () => {
+        if (get().isLoading) return;
         set({ isLoading: true, error: null });
 
         try {
-          try {
-            // If we have a token stored from a previous refresh, send it explicitly too
-            const storedToken = get().tokens?.accessToken || undefined;
-            const response = await externalAuthService.verifyToken(storedToken);
-            const user = response.data.user;
+          // Dynamic import to avoid circular dependency with api.ts
+          const { default: apiClient } = await import('@/services/api');
+          const response = await apiClient.get('/v1/profile');
+          const profile = (response.data as { data?: { profile?: User }; profile?: User })?.data?.profile
+            || (response.data as { profile?: User })?.profile
+            || response.data;
 
-            set({
-              user,
-              tokens: {
-                accessToken: 'httponly', // Placeholder — real token is in the cookie
-                refreshToken: 'httponly',
-                expiresAt: Date.now() + (15 * 60 * 1000),
-              },
-              isAuthenticated: true,
-              isLoading: false,
-              isInitialized: true,
-            });
+          const user: User = {
+            id: (profile as User).id || '',
+            email: (profile as User).email || '',
+            firstName: (profile as User).firstName || '',
+            lastName: (profile as User).lastName || '',
+            phone: (profile as User).phone || undefined,
+            avatar: (profile as User).avatar || undefined,
+            role: (profile as User).role || 'CUSTOMER',
+            isVerified: true, // Clerk handles verification
+            createdAt: (profile as User).createdAt || new Date().toISOString(),
+            updatedAt: (profile as User).updatedAt || new Date().toISOString(),
+          };
 
-            try {
-              await useCartStore.getState().mergeGuestCart();
-              await useCartStore.getState().fetchCart();
-            } catch { /* silent */ }
-            return;
-
-          } catch (verifyError) {
-            const status = getErrorStatus(verifyError);
-
-            if (isNetworkError(verifyError)) {
-              const cached = get().user;
-              if (cached) {
-                set({ isAuthenticated: true, isLoading: false, isInitialized: true });
-                return;
-              }
-              set({
-                isAuthenticated: false,
-                isLoading: false,
-                isInitialized: true,
-                error: 'Auth service unreachable. Please try again later.',
-              });
-              return;
-            }
-
-            if (status === 401) {
-              try {
-                const newAccessToken = await get().refreshAccessToken();
-
-                if (newAccessToken) {
-                  const response = await externalAuthService.verifyToken(newAccessToken);
-                  const user = response.data.user;
-                  set({
-                    user,
-                    tokens: {
-                      accessToken: newAccessToken,
-                      refreshToken: 'httponly',
-                      expiresAt: Date.now() + (15 * 60 * 1000),
-                    },
-                    isAuthenticated: true,
-                    isLoading: false,
-                    isInitialized: true,
-                  });
-
-                  try {
-                    await useCartStore.getState().mergeGuestCart();
-                    await useCartStore.getState().fetchCart();
-                  } catch { /* silent */ }
-                  return;
-                }
-              } catch (refreshError) {
-                if (isNetworkError(refreshError)) {
-                  set({ isLoading: false, isInitialized: true, error: 'Auth service unreachable during refresh.' });
-                  return;
-                }
-              }
-            }
-
-            set({
-              ...initialState,
-              isLoading: false,
-              isInitialized: true,
-            });
-          }
-
-        } catch (error) {
           set({
-            ...(isNetworkError(error) ? {} : initialState),
+            user,
+            isAuthenticated: true,
             isLoading: false,
-            isInitialized: true,
-            error: isNetworkError(error) ? 'Auth service unreachable' : 'Failed to initialize authentication',
-          });
-        }
-      },
-
-      /**
-       * Logout from current session
-       * - Call external auth service to revoke refresh token
-       * - Clear local state and cookies
-       * - Generate new session ID for guest cart
-       */
-      logout: async () => {
-        set({ isLoading: true });
-
-        try {
-          // Auth service clears HttpOnly cookies server-side
-          await externalAuthService.logout();
-        } catch {
-          // Continue with local logout even if API call fails
-        }
-
-        // Clear local auth state
-        set({
-          ...initialState,
-          isInitialized: true,
-          isLoading: false,
-        });
-
-        // Clear cart
-        useCartStore.getState().clearLocalCart();
-
-        // Generate new session ID for guest cart
-        localStorage.setItem('sessionId', crypto.randomUUID());
-
-        // Redirect to login
-        externalAuthService.redirectToLogin();
-      },
-
-      /**
-       * Logout from all sessions
-       * - Revokes all refresh tokens for the user
-       */
-      logoutAll: async () => {
-        set({ isLoading: true });
-
-        try {
-          // Auth service clears HttpOnly cookies for all sessions server-side
-          await externalAuthService.logoutAll();
-        } catch {
-          // Continue with local logout even if API call fails
-        }
-
-        // Clear local auth state
-        set({
-          ...initialState,
-          isInitialized: true,
-          isLoading: false,
-        });
-
-        // Clear cart
-        useCartStore.getState().clearLocalCart();
-
-        // Generate new session ID for guest cart
-        localStorage.setItem('sessionId', crypto.randomUUID());
-
-        // Redirect to login
-        externalAuthService.redirectToLogin();
-      },
-
-      /**
-       * Refresh the access token.
-       * Returns new access token or null if refresh fails.
-       */
-      refreshAccessToken: async (): Promise<string | null> => {
-        try {
-          // Browser sends HttpOnly refreshToken cookie automatically
-          const response = await externalAuthService.refreshToken();
-          const tokens = response.data.tokens;
-
-          // Store tokens locally (as fallback for Authorization header)
-          set({
-            tokens: {
-              accessToken: tokens.accessToken,
-              refreshToken: tokens.refreshToken || 'httponly',
-              expiresAt: Date.now() + (15 * 60 * 1000),
-            },
           });
 
-          return tokens.accessToken;
+          // Merge guest cart into user cart
+          try {
+            await useCartStore.getState().mergeGuestCart();
+            await useCartStore.getState().fetchCart();
+          } catch { /* silent */ }
         } catch (error) {
-          if (isNetworkError(error)) {
-            return null;
-          }
-
-          // Real auth error — refresh token is invalid/revoked
+          console.error('Failed to sync user profile:', error);
           set({
-            ...initialState,
-            isInitialized: true,
+            isLoading: false,
+            error: 'Failed to load profile. Please try again.',
           });
-
-          return null;
         }
+      },
+
+      clearUser: () => {
+        set({
+          ...initialState,
+        });
+        useCartStore.getState().clearLocalCart();
+        localStorage.setItem('sessionId', crypto.randomUUID());
       },
 
       updateUser: (userData) => {
@@ -291,18 +109,26 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       clearError: () => set({ error: null }),
 
-      /**
-       * Redirect to external login page
-       */
       redirectToLogin: (returnUrl?: string) => {
-        externalAuthService.redirectToLogin(returnUrl);
+        const url = returnUrl
+          ? `${LOGIN_URL}?redirect=${encodeURIComponent(returnUrl)}`
+          : LOGIN_URL;
+        window.location.href = url;
       },
 
-      /**
-       * Redirect to external register page
-       */
       redirectToRegister: (returnUrl?: string) => {
-        externalAuthService.redirectToRegister(returnUrl);
+        const url = returnUrl
+          ? `${REGISTER_URL}?redirect=${encodeURIComponent(returnUrl)}`
+          : REGISTER_URL;
+        window.location.href = url;
+      },
+
+      logout: () => {
+        // The actual Clerk signOut is called from the component.
+        // This just cleans up local state.
+        set({ ...initialState });
+        useCartStore.getState().clearLocalCart();
+        localStorage.setItem('sessionId', crypto.randomUUID());
       },
     }),
     {
@@ -310,7 +136,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
     }
