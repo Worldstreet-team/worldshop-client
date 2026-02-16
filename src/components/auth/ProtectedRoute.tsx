@@ -1,25 +1,16 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@clerk/clerk-react';
+import { useLocation, Link } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isInitialized, tokens, error, redirectToLogin } = useAuthStore();
+  const { isLoaded, isSignedIn } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    // Only redirect after auth has been initialized AND no tokens exist at all
-    if (isInitialized && !isAuthenticated && !tokens?.accessToken) {
-      const returnUrl = `${window.location.origin}${location.pathname}${location.search}`;
-      redirectToLogin(returnUrl);
-    }
-  }, [isAuthenticated, isInitialized, tokens, redirectToLogin, location]);
-
-  // Show loading state while waiting for auth initialization
-  if (!isInitialized) {
+  // Show loading state while Clerk is initializing
+  if (!isLoaded) {
     return (
       <div style={{
         display: 'flex',
@@ -34,43 +25,46 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // If tokens exist but auth service was unreachable, show an error instead of redirecting
-  if (!isAuthenticated && tokens?.accessToken) {
+  // Not signed in — show login prompt without auto-redirect
+  if (!isSignedIn) {
+    const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
+
     return (
       <div style={{
         display: 'flex',
-        flexDirection: 'column' as const,
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '50vh',
-        gap: '1rem',
+        minHeight: '60vh',
         padding: '2rem',
-        textAlign: 'center' as const,
+        textAlign: 'center'
       }}>
-        <p style={{ fontSize: '1.1rem', color: '#666' }}>
-          Unable to verify your session. The authentication service may be temporarily unavailable.
+        <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem', color: '#333' }}>
+          Authentication Required
+        </h2>
+        <p style={{ marginBottom: '2rem', color: '#666', maxWidth: '400px' }}>
+          Please log in to access this page. You'll be redirected back here after signing in.
         </p>
-        {error && <p style={{ fontSize: '0.9rem', color: '#999' }}>{error}</p>}
-        <button
-          onClick={() => window.location.reload()}
+        <Link
+          to={`/auth/login?returnUrl=${returnUrl}`}
           style={{
-            padding: '0.5rem 1.5rem',
-            fontSize: '1rem',
-            cursor: 'pointer',
+            display: 'inline-block',
+            padding: '0.75rem 2rem',
+            backgroundColor: '#007bff',
+            color: 'white',
+            textDecoration: 'none',
             borderRadius: '4px',
-            border: '1px solid #ccc',
-            background: '#fff',
+            fontSize: '1rem',
+            fontWeight: '500',
+            transition: 'background-color 0.2s'
           }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
         >
-          Try Again
-        </button>
+          Go to Login
+        </Link>
       </div>
     );
-  }
-
-  // No tokens at all — will redirect via useEffect above
-  if (!isAuthenticated) {
-    return null;
   }
 
   return <>{children}</>;

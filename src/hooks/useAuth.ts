@@ -1,104 +1,68 @@
+import { useAuth as useClerkAuth, useClerk } from '@clerk/clerk-react';
 import { useAuthStore } from '@/store/authStore';
 
 /**
- * Custom hook for easy access to authentication functionality
- * 
- * @example
- * ```tsx
- * function MyComponent() {
- *   const { user, isAuthenticated, logout } = useAuth();
- *   
- *   if (!isAuthenticated) {
- *     return <div>Please log in</div>;
- *   }
- *   
- *   return <div>Welcome, {user.firstName}!</div>;
- * }
- * ```
+ * Custom hook for easy access to authentication functionality.
+ * Combines Clerk auth state with our store's user profile data.
  */
 export function useAuth() {
-    const {
-        user,
-        isAuthenticated,
-        isLoading,
-        isInitialized,
-        error,
-        logout,
-        logoutAll,
-        redirectToLogin,
-        redirectToRegister,
-        clearError,
-    } = useAuthStore();
+  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { signOut } = useClerk();
+  const {
+    user,
+    isLoading,
+    error,
+    logout: storeLogout,
+    redirectToLogin,
+    redirectToRegister,
+    clearError,
+  } = useAuthStore();
 
-    return {
-        // State
-        user,
-        isAuthenticated,
-        isLoading,
-        isInitialized,
-        error,
+  const logout = async () => {
+    await signOut();
+    storeLogout();
+  };
 
-        // Derived state
-        isAdmin: user?.role === 'ADMIN',
-        isVerified: user?.isVerified ?? false,
+  return {
+    // State
+    user,
+    isAuthenticated: !!isSignedIn,
+    isLoading: !isLoaded || isLoading,
+    isInitialized: isLoaded,
+    error,
 
-        // Actions
-        logout,
-        logoutAll,
-        login: redirectToLogin,
-        register: redirectToRegister,
-        clearError,
-    };
+    // Derived state
+    isAdmin: user?.role === 'ADMIN',
+    isVerified: true, // Clerk handles verification
+
+    // Actions
+    logout,
+    login: redirectToLogin,
+    register: redirectToRegister,
+    clearError,
+  };
 }
 
 /**
  * Hook to check if user has a specific role
- * 
- * @example
- * ```tsx
- * function AdminPanel() {
- *   const hasAccess = useHasRole('ADMIN');
- *   
- *   if (!hasAccess) {
- *     return <div>Access Denied</div>;
- *   }
- *   
- *   return <div>Admin Panel</div>;
- * }
- * ```
  */
 export function useHasRole(role: string) {
-    const { user, isAuthenticated } = useAuthStore();
-    return isAuthenticated && user?.role === role;
+  const { isSignedIn } = useClerkAuth();
+  const { user } = useAuthStore();
+  return !!isSignedIn && user?.role === role;
 }
 
 /**
- * Hook to require authentication
- * If not authenticated, redirects to login
- * 
- * @example
- * ```tsx
- * function ProfilePage() {
- *   const { user, isLoading } = useRequireAuth();
- *   
- *   if (isLoading) return <div>Loading...</div>;
- *   
- *   return <div>Profile: {user.firstName}</div>;
- * }
- * ```
+ * Hook to check authentication status without redirecting.
+ * Components should handle unauthenticated state themselves.
  */
 export function useRequireAuth() {
-    const { user, isAuthenticated, isInitialized, isLoading, redirectToLogin } = useAuthStore();
+  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { user, isLoading } = useAuthStore();
 
-    // Redirect to login if not authenticated after initialization
-    if (isInitialized && !isAuthenticated) {
-        const returnUrl = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-        redirectToLogin(returnUrl);
-    }
-
-    return {
-        user,
-        isLoading: !isInitialized || isLoading,
-        isAuthenticated,
-    };
+  return {
+    user,
+    isLoading: !isLoaded || isLoading,
+    isAuthenticated: !!isSignedIn,
+  };
 }

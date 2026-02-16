@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useClerk } from '@clerk/clerk-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { useCategoryStore } from '@/store/categoryStore';
@@ -16,6 +17,7 @@ export default function MobileMenu() {
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const { isAuthenticated, user, logout } = useAuthStore();
   const { categories, fetchCategories } = useCategoryStore();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -24,7 +26,8 @@ export default function MobileMenu() {
   }, [isMobileMenuOpen, fetchCategories]);
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
+    logout();
     closeMobileMenu();
   };
 
