@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         try {
           // Dynamic import to avoid circular dependency with api.ts
           const { default: apiClient } = await import('@/services/api');
-          const response = await apiClient.get('/v1/profile');
+          const response = await apiClient.get('/profile');
           const profile = (response.data as { data?: { profile?: User }; profile?: User })?.data?.profile
             || (response.data as { profile?: User })?.profile
             || response.data;
