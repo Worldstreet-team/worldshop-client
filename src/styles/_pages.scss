@@ -335,6 +335,10 @@
   gap: $spacing-xl;
   margin-bottom: $spacing-3xl;
 
+  > * {
+    min-width: 0;
+  }
+
   @include md-down {
     grid-template-columns: 1fr;
   }
@@ -3609,6 +3613,10 @@
     grid-template-columns: 1fr 1fr;
     gap: $spacing-xl;
     margin-bottom: $spacing-3xl;
+
+    > * {
+      min-width: 0;
+    }
 
     @include md-down {
       grid-template-columns: 1fr;
