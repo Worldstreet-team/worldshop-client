@@ -46,7 +46,7 @@ const heroSlides = [
     price: '₦74,999',
     priceSup: '00',
     cta: 'Start Buying',
-    link: '/shop',
+    link: '/products',
     productImage: '/images/416X420/img1.png',
   },
   {
@@ -58,7 +58,7 @@ const heroSlides = [
     price: '₦49,999',
     priceSup: '00',
     cta: 'Shop Now',
-    link: '/shop/new-arrivals',
+    link: '/products?sale=true',
     productImage: '/images/416X420/img2.png',
   },
   {
