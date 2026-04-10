@@ -1,7 +1,8 @@
 import { Link, useLocation, useSearchParams, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
-import { paymentService, type VerifyPaymentData } from '@/services/paymentService';
+import { paymentService } from '@/services/paymentService';
+import type { VerifyPaymentResult } from '@/types/order.types';
 
 interface OrderState {
   orderNumber: string;
@@ -16,24 +17,26 @@ export default function CheckoutSuccessPage() {
   const [orderData, setOrderData] = useState<OrderState | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
-  const [paymentResult, setPaymentResult] = useState<VerifyPaymentData | null>(null);
+  const [paymentResult, setPaymentResult] = useState<VerifyPaymentResult | null>(null);
 
   const reference = searchParams.get('reference') || searchParams.get('trxref');
 
   useEffect(() => {
-    // Priority 1: Paystack redirect — verify payment using the reference param
     if (reference) {
       setIsVerifying(true);
       paymentService.verifyPayment(reference)
         .then(res => {
           const data = res.data;
           setPaymentResult(data);
-          setOrderData({
-            orderNumber: data.order.orderNumber,
-            orderId: data.order.id,
-            total: data.amount,
-            hasDigitalProducts: data.hasDigitalProducts,
-          });
+          // Use first order for display; total from payment
+          const firstOrder = data.orders[0];
+          if (firstOrder) {
+            setOrderData({
+              orderNumber: firstOrder.orderNumber,
+              orderId: firstOrder.id,
+              total: data.amount,
+            });
+          }
         })
         .catch((err) => {
           setVerifyError(
@@ -44,7 +47,6 @@ export default function CheckoutSuccessPage() {
       return;
     }
 
-    // Priority 2: Direct navigation state from checkout
     if (location.state) {
       setOrderData(location.state as OrderState);
     }
@@ -105,7 +107,7 @@ export default function CheckoutSuccessPage() {
                 <path d="M21 12a9 9 0 11-6.219-8.56" />
               </svg>
               <h2>Verifying Payment…</h2>
-              <p>Please wait while we confirm your payment with Paystack.</p>
+              <p>Please wait while we confirm your payment.</p>
             </div>
           </div>
         )}
@@ -139,10 +141,10 @@ export default function CheckoutSuccessPage() {
                 <line x1="9" y1="9" x2="15" y2="15" />
               </svg>
             </div>
-            <h1>Payment {paymentResult.status === 'abandoned' ? 'Cancelled' : 'Failed'}</h1>
+            <h1>Payment {paymentResult.status === 'pending' ? 'Pending' : 'Failed'}</h1>
             <p className="failure-message">
-              {paymentResult.status === 'abandoned'
-                ? 'You cancelled the payment. Your order has been saved — you can retry payment anytime.'
+              {paymentResult.status === 'pending'
+                ? 'Your payment is still being processed. Please check back later or contact support.'
                 : 'Your payment could not be completed. Please try again or use a different payment method.'}
             </p>
             <div className="success-actions">
@@ -174,10 +176,25 @@ export default function CheckoutSuccessPage() {
                 <h2>Order Details</h2>
               </div>
               <div className="order-card-body">
-                <div className="order-detail">
-                  <span className="label">Order Number</span>
-                  <span className="value">{orderData?.orderNumber || '#WS-XXXXX'}</span>
-                </div>
+                {paymentResult && paymentResult.orders.length > 1 ? (
+                  <>
+                    <div className="order-detail">
+                      <span className="label">Orders Created</span>
+                      <span className="value">{paymentResult.orders.length} orders (split by vendor)</span>
+                    </div>
+                    {paymentResult.orders.map((o) => (
+                      <div key={o.id} className="order-detail">
+                        <span className="label">{o.orderNumber}</span>
+                        <span className="value">{o.status}</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <div className="order-detail">
+                    <span className="label">Order Number</span>
+                    <span className="value">{orderData?.orderNumber || '#WS-XXXXX'}</span>
+                  </div>
+                )}
                 <div className="order-detail">
                   <span className="label">Order Date</span>
                   <span className="value">{new Date().toLocaleDateString('en-US', {

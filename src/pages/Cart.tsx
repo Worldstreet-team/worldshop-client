@@ -1,7 +1,16 @@
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useCartStore } from '@/store/cartStore';
 import { EmptyState, Breadcrumb } from '@/components/common';
 import { toast } from '@/store/uiStore';
+import type { CartItem } from '@/types/cart.types';
+
+interface VendorCartGroup {
+  vendorId: string | null;
+  storeName: string;
+  storeSlug: string | null;
+  items: CartItem[];
+}
 
 export default function CartPage() {
   const { cart, removeItem, updateQuantity, isUpdating } = useCartStore();
@@ -14,6 +23,25 @@ export default function CartPage() {
       toast.error('Failed to remove item');
     }
   };
+
+  // Group cart items by vendor
+  const vendorGroups = useMemo<VendorCartGroup[]>(() => {
+    if (!cart || cart.items.length === 0) return [];
+    const groupMap = new Map<string, VendorCartGroup>();
+    for (const item of cart.items) {
+      const key = item.product.vendorId ?? '__platform__';
+      if (!groupMap.has(key)) {
+        groupMap.set(key, {
+          vendorId: item.product.vendorId ?? null,
+          storeName: item.product.vendor?.storeName ?? 'WorldShop',
+          storeSlug: item.product.vendor?.storeSlug ?? null,
+          items: [],
+        });
+      }
+      groupMap.get(key)!.items.push(item);
+    }
+    return Array.from(groupMap.values());
+  }, [cart]);
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -56,8 +84,22 @@ export default function CartPage() {
         <div className="cart-layout">
           {/* Cart Items */}
           <div className="cart-items-section">
-            <div className="cart-items-list">
-              {cart.items.map((item) => (
+            {vendorGroups.map((group) => (
+              <div key={group.vendorId ?? 'platform'} className="vendor-group">
+                <div className="vendor-group-header">
+                  <span className="vendor-group-label">From{' '}
+                    {group.storeSlug ? (
+                      <Link to={`/store/${group.storeSlug}`} className="vendor-group-link">
+                        {group.storeName}
+                      </Link>
+                    ) : (
+                      <strong>{group.storeName}</strong>
+                    )}
+                  </span>
+                </div>
+
+                <div className="cart-items-list">
+                  {group.items.map((item) => (
                 <div key={item.id} className="cart-item">
                   <div className="cart-item-image">
                     <Link to={`/products/${item.product.slug}`}>
@@ -129,6 +171,8 @@ export default function CartPage() {
                 </div>
               ))}
             </div>
+              </div>
+            ))}
 
             <div className="cart-actions">
               <Link to="/products" className="btn btn-outline">

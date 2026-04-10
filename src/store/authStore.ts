@@ -68,6 +68,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             avatar: profile.avatar || undefined,
             role: profile.role || 'CUSTOMER',
             isVerified: true, // Clerk handles verification
+            isVendor: profile.isVendor || false,
+            vendorStatus: profile.vendorStatus || null,
+            storeName: profile.storeName || null,
+            storeSlug: profile.storeSlug || null,
+            storeDescription: profile.storeDescription || null,
+            vendorSince: profile.vendorSince || null,
             createdAt: profile.createdAt || new Date().toISOString(),
             updatedAt: profile.updatedAt || new Date().toISOString(),
           };

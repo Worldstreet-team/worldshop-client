@@ -3,7 +3,8 @@ import type {
   Product,
   Category,
   Review,
-  ProductFilters
+  ProductFilters,
+  StoreInfo
 } from '@/types/product.types';
 import type { ApiResponse, PaginatedResponse } from '@/types/common.types';
 
@@ -70,6 +71,22 @@ export const productService = {
   // Add product review (requires auth)
   addProductReview: (productId: string, data: { rating: number; title?: string; comment: string }) =>
     api.post<ApiResponse<Review>>(`/products/${productId}/reviews`, data),
+};
+
+// ─── Store Service ──────────────────────────────────────────────
+
+export const storeService = {
+  getStoreBySlug: async (slug: string, filters?: ProductFilters): Promise<{ store: StoreInfo; products: PaginatedResponse<Product> } | null> => {
+    try {
+      const res = await api.get<{ success: boolean; store: StoreInfo; data: Product[]; pagination: PaginatedResponse<Product>['pagination'] }>(
+        `/store/${slug}`,
+        filters as Record<string, unknown>,
+      );
+      return { store: res.store, products: { data: res.data, pagination: res.pagination } };
+    } catch {
+      return null;
+    }
+  },
 };
 
 // ─── Category Service ───────────────────────────────────────────

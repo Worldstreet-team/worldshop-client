@@ -1,40 +1,25 @@
 import { api } from './api';
 import type { ApiResponse } from '@/types/common.types';
+import type { VerifyPaymentResult } from '@/types/order.types';
 
-// ─── Response types ─────────────────────────────────────────────
-export interface InitializePaymentData {
-    authorizationUrl: string;
-    accessCode: string;
-    reference: string;
-}
-
-export interface VerifyPaymentData {
-    status: string;         // "success", "failed", "abandoned"
-    reference: string;
-    amount: number;         // in NGN
-    channel: string;
-    paidAt: string;
-    order: {
-        id: string;
-        orderNumber: string;
-        status: string;
-    };
-    hasDigitalProducts?: boolean;
-}
-
-// ─── Payment service ────────────────────────────────────────────
+// ─── Payment service (mock provider) ────────────────────────────
 export const paymentService = {
-    /**
-     * Initialize a Paystack payment for an order.
-     * Returns the authorization URL to redirect the user to.
-     */
-    initializePayment: (orderId: string) =>
-        api.post<ApiResponse<InitializePaymentData>>('/payments/initialize', { orderId }),
+  /**
+   * Verify a payment after mock confirm/decline.
+   * Called with the transactionRef.
+   */
+  verifyPayment: (transactionRef: string) =>
+    api.get<ApiResponse<VerifyPaymentResult>>(
+      `/payments/verify/${encodeURIComponent(transactionRef)}`,
+    ),
 
-    /**
-     * Verify a payment after returning from Paystack.
-     * Called with the reference query parameter.
-     */
-    verifyPayment: (reference: string) =>
-        api.get<ApiResponse<VerifyPaymentData>>(`/payments/verify/${encodeURIComponent(reference)}`),
+  /**
+   * Send a webhook action (confirm or decline) for a checkout session.
+   * Used by the MockPayment page.
+   */
+  sendWebhook: (checkoutSessionId: string, action: 'confirm' | 'decline') =>
+    api.post<ApiResponse<{ status: string }>>('/payments/webhook', {
+      checkoutSessionId,
+      action,
+    }),
 };

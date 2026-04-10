@@ -58,6 +58,18 @@
   margin-bottom: $spacing-xs;
 }
 
+.product-card-vendor {
+  display: block;
+  font-size: $font-size-xs;
+  color: #2874f0;
+  margin-bottom: $spacing-xs;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .product-card-name {
   font-size: $font-size-base;
   font-weight: $font-weight-bold;
@@ -1179,6 +1191,22 @@
 .product-info-sku {
   font-size: $font-size-sm;
   color: $text-muted;
+}
+
+.product-info-vendor {
+  font-size: $font-size-sm;
+  color: $text-muted;
+  margin-top: $spacing-xs;
+}
+
+.product-info-vendor-link {
+  color: #2874f0;
+  text-decoration: none;
+  font-weight: $font-weight-semibold;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .product-info-price {

@@ -287,12 +287,37 @@
 
 .product-listing-page,
 .category-page,
-.search-results-page {
+.search-results-page,
+.store-page {
   padding: $spacing-xl 0;
 
   .page-header {
     margin-bottom: $spacing-xl;
   }
+}
+
+.store-header {
+  margin-bottom: $spacing-lg;
+
+  h1 {
+    margin: 0 0 $spacing-xs;
+  }
+
+  .store-description {
+    color: $text-muted;
+    margin: 0 0 $spacing-xs;
+  }
+
+  .product-count {
+    font-size: $font-size-sm;
+    color: $text-muted;
+  }
+}
+
+.store-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-lg;
 }
 
 .product-listing-layout,
@@ -387,6 +412,40 @@
   .cart-items-list {
     @include card;
     overflow: hidden;
+  }
+}
+
+.vendor-group {
+  &:not(:first-child) {
+    margin-top: $spacing-lg;
+  }
+
+  .vendor-group-header {
+    padding: $spacing-sm $spacing-md;
+    background: $background-alt;
+    border: 1px solid $border-light;
+    border-bottom: none;
+    border-radius: $radius-md $radius-md 0 0;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+
+    .vendor-group-link {
+      font-weight: $font-weight-semibold;
+      color: $primary-color;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    strong {
+      font-weight: $font-weight-semibold;
+      color: $text-primary;
+    }
+  }
+
+  .cart-items-list {
+    border-radius: 0 0 $radius-md $radius-md;
   }
 }
 
@@ -1156,6 +1215,31 @@
   }
 }
 
+.vendor-order-group {
+  .review-header h3 a {
+    color: $primary-color;
+    font-weight: $font-weight-semibold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .vendor-group-totals {
+    margin-top: $spacing-md;
+    padding-top: $spacing-sm;
+    border-top: 1px solid $border-light;
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      padding: $spacing-xs 0;
+    }
+  }
+}
+
 // Checkout summary sidebar
 .checkout-summary-section {
   @include md-down {
@@ -1454,6 +1538,127 @@
         }
       }
     }
+  }
+}
+
+// ============================================
+// ============================================
+// MOCK PAYMENT PAGE
+// ============================================
+
+.mock-payment-page {
+  padding: $spacing-3xl 0;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+
+  .container {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.mock-payment-card {
+  @include card;
+  max-width: 480px;
+  width: 100%;
+  padding: $spacing-3xl;
+  text-align: center;
+}
+
+.mock-payment-header {
+  margin-bottom: $spacing-xl;
+
+  .mock-badge {
+    display: inline-block;
+    background: $warning-bg;
+    color: $warning-color;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-bold;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-full;
+    margin-bottom: $spacing-md;
+    letter-spacing: 0.05em;
+  }
+
+  h1 {
+    font-size: $font-size-xl;
+    margin: 0 0 $spacing-xs;
+  }
+
+  .mock-subtitle {
+    color: $text-muted;
+    font-size: $font-size-sm;
+    margin: 0;
+  }
+}
+
+.mock-payment-details {
+  background: $gray-50;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-xl;
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: $spacing-xs 0;
+    font-size: $font-size-sm;
+
+    .detail-label {
+      color: $text-muted;
+    }
+
+    .detail-value {
+      font-weight: $font-weight-medium;
+      font-family: monospace;
+    }
+  }
+}
+
+.mock-payment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+
+  .mock-confirm-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-sm;
+  }
+
+  .mock-decline-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-sm;
+    color: $text-secondary;
+    border-color: $border-light;
+
+    &:hover {
+      color: $danger-color;
+      border-color: $danger-color;
+    }
+  }
+}
+
+.mock-disclaimer {
+  color: $text-muted;
+  font-size: $font-size-xs;
+  margin: 0;
+}
+
+.mock-payment-error {
+  h2 {
+    font-size: $font-size-lg;
+    margin: 0 0 $spacing-sm;
+  }
+
+  p {
+    color: $text-secondary;
+    margin: 0 0 $spacing-lg;
   }
 }
 

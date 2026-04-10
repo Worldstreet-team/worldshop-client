@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Product, ProductVariant } from '@/types/product.types';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from '@/store/uiStore';
@@ -125,6 +126,16 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
             <span className="product-info-sku">SKU: {product.stockKeepingUnit}</span>
           )}
         </div>
+
+        {/* Vendor Attribution */}
+        {product.vendor && (
+          <div className="product-info-vendor">
+            Sold by{' '}
+            <Link to={`/store/${product.vendor.storeSlug}`} className="product-info-vendor-link">
+              {product.vendor.storeName}
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Price Section */}

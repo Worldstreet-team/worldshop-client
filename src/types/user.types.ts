@@ -1,3 +1,5 @@
+export type VendorStatus = 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+
 export interface User {
   id: string;
   email: string;
@@ -7,6 +9,12 @@ export interface User {
   avatar?: string;
   role: 'CUSTOMER' | 'ADMIN';
   isVerified: boolean;
+  isVendor: boolean;
+  vendorStatus: VendorStatus | null;
+  storeName: string | null;
+  storeSlug: string | null;
+  storeDescription: string | null;
+  vendorSince: string | null;
   createdAt: string;
   updatedAt: string;
 }

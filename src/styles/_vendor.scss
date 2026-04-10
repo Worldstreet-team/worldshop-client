@@ -1,0 +1,640 @@
+// WorldStreet Shop - Vendor Styles
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ============================================
+// VENDOR LAYOUT
+// ============================================
+
+.vendor-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: $gray-100;
+
+  &.sidebar-collapsed {
+    .vendor-sidebar {
+      width: $sidebar-collapsed-width;
+
+      .nav-label,
+      .sidebar-header .sidebar-brand {
+        display: none;
+      }
+    }
+
+    .vendor-main {
+      margin-left: $sidebar-collapsed-width;
+    }
+  }
+}
+
+// ============================================
+// VENDOR SIDEBAR
+// ============================================
+
+.vendor-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: $sidebar-width;
+  height: 100vh;
+  background-color: $sidebar-bg;
+  display: flex;
+  flex-direction: column;
+  z-index: $z-index-fixed;
+  transition: width $transition-base;
+
+  .sidebar-header {
+    .sidebar-brand {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: $white;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
+    }
+  }
+}
+
+// ============================================
+// VENDOR MAIN
+// ============================================
+
+.vendor-main {
+  flex: 1;
+  margin-left: $sidebar-width;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left $transition-base;
+}
+
+.vendor-header {
+  @include flex-between;
+  padding: $spacing-md $spacing-xl;
+  background-color: $white;
+  border-bottom: 1px solid $border-light;
+
+  .vendor-title {
+    font-size: $font-size-lg;
+    margin: 0;
+  }
+}
+
+.vendor-header-right {
+  .vendor-user-menu {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+
+    .user-name {
+      font-weight: $font-weight-medium;
+    }
+
+    .logout-btn {
+      @include flex-center;
+      gap: $spacing-xs;
+      padding: $spacing-sm $spacing-md;
+      background: transparent;
+      border: 1px solid $border-color;
+      border-radius: $radius-sm;
+      color: $text-secondary;
+      cursor: pointer;
+
+      &:hover {
+        border-color: $danger-color;
+        color: $danger-color;
+      }
+
+      .material-icons {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+.vendor-content {
+  flex: 1;
+  padding: $spacing-xl;
+}
+
+// ============================================
+// VENDOR DASHBOARD
+// ============================================
+
+.vendor-dashboard {
+  .dashboard-header {
+    margin-bottom: $spacing-xl;
+
+    h1 {
+      margin: 0 0 $spacing-xs;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+
+  .dashboard-placeholder {
+    @include card;
+    padding: $spacing-xl;
+    text-align: center;
+    color: $text-secondary;
+
+    .material-icons {
+      font-size: 48px;
+      margin-bottom: $spacing-md;
+      color: $gray-400;
+    }
+
+    h3 {
+      margin: 0 0 $spacing-sm;
+      color: $text-primary;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+}
+
+// ============================================
+// VENDOR REGISTRATION
+// ============================================
+
+.vendor-registration {
+  max-width: 600px;
+  margin: $spacing-xl auto;
+  padding: 0 $spacing-lg;
+
+  .registration-header {
+    text-align: center;
+    margin-bottom: $spacing-xl;
+
+    h1 {
+      margin: 0 0 $spacing-sm;
+    }
+
+    p {
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+
+  .registration-form {
+    @include card;
+    padding: $spacing-xl;
+  }
+
+  .form-group {
+    margin-bottom: $spacing-lg;
+
+    label {
+      display: block;
+      font-weight: $font-weight-medium;
+      margin-bottom: $spacing-xs;
+      color: $text-primary;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $border-color;
+      border-radius: $radius-sm;
+      font-size: $font-size-base;
+      transition: border-color $transition-fast;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .field-error {
+      color: $danger-color;
+      font-size: $font-size-sm;
+      margin-top: $spacing-xs;
+    }
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: $spacing-md;
+    background-color: $primary-color;
+    color: $white;
+    border: none;
+    border-radius: $radius-sm;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    cursor: pointer;
+    transition: background-color $transition-fast;
+
+    &:hover:not(:disabled) {
+      background-color: darken($primary-color, 10%);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .error-message {
+    @include card;
+    padding: $spacing-md;
+    margin-bottom: $spacing-lg;
+    background-color: lighten($danger-color, 35%);
+    border-color: $danger-color;
+    color: $danger-color;
+  }
+}
+
+// ============================================
+// VENDOR PRODUCTS PAGE
+// ============================================
+
+.vendor-products {
+  .page-header {
+    @include flex-between;
+    margin-bottom: $spacing-lg;
+
+    h1 {
+      margin: 0;
+
+      small {
+        font-size: $font-size-sm;
+        color: $text-secondary;
+        font-weight: $font-weight-normal;
+      }
+    }
+  }
+
+  .filters-bar {
+    display: flex;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+    flex-wrap: wrap;
+
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $border-color;
+      border-radius: $radius-sm;
+      font-size: $font-size-base;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+
+    .filter-select {
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $border-color;
+      border-radius: $radius-sm;
+      font-size: $font-size-sm;
+      background: $white;
+    }
+  }
+
+  .product-cell {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+
+    .product-thumb {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: $radius-sm;
+    }
+
+    .text-muted {
+      color: $text-secondary;
+      font-size: $font-size-sm;
+    }
+  }
+
+  .price-sale {
+    color: $danger-color;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-xs;
+  }
+
+  .price-original {
+    text-decoration: line-through;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+  }
+
+  .badge-toggle {
+    cursor: pointer;
+    border: none;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: $spacing-xs;
+  }
+
+  .empty-row {
+    text-align: center;
+    padding: $spacing-xl;
+    color: $text-secondary;
+
+    a {
+      color: $primary-color;
+    }
+  }
+
+  .skeleton-row {
+    height: 20px;
+    background: $gray-200;
+    border-radius: $radius-sm;
+    animation: pulse 1.5s infinite;
+  }
+
+  .pagination {
+    @include flex-center;
+    gap: $spacing-md;
+    margin-top: $spacing-lg;
+
+    button {
+      padding: $spacing-sm $spacing-md;
+      border: 1px solid $border-color;
+      border-radius: $radius-sm;
+      background: $white;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// ============================================
+// VENDOR PRODUCT EDIT
+// ============================================
+
+.vendor-product-edit {
+  .page-header {
+    margin-bottom: $spacing-lg;
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+      color: $text-secondary;
+      text-decoration: none;
+      margin-bottom: $spacing-sm;
+
+      &:hover {
+        color: $primary-color;
+      }
+
+      .material-icons {
+        font-size: 18px;
+      }
+    }
+
+    h1 {
+      margin: 0;
+    }
+  }
+
+  .approval-banner {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md $spacing-lg;
+    border-radius: $radius-sm;
+    margin-bottom: $spacing-lg;
+    font-weight: $font-weight-medium;
+
+    &.approval-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    &.approval-rejected {
+      background-color: lighten($danger-color, 35%);
+      color: $danger-color;
+    }
+  }
+
+  .product-form {
+    .form-layout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: $spacing-lg;
+      align-items: start;
+
+      @include md-down {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-main,
+    .form-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-lg;
+    }
+
+    .form-section {
+      @include card;
+      padding: $spacing-lg;
+
+      h2 {
+        font-size: $font-size-base;
+        font-weight: $font-weight-semibold;
+        margin: 0 0 $spacing-md;
+        padding-bottom: $spacing-sm;
+        border-bottom: 1px solid $border-light;
+      }
+
+      .section-header {
+        @include flex-between;
+        margin-bottom: $spacing-md;
+        padding-bottom: $spacing-sm;
+        border-bottom: 1px solid $border-light;
+
+        h2 {
+          margin: 0;
+          padding: 0;
+          border: none;
+        }
+      }
+    }
+
+    .form-group {
+      margin-bottom: $spacing-md;
+
+      label {
+        display: block;
+        font-weight: $font-weight-medium;
+        font-size: $font-size-sm;
+        margin-bottom: $spacing-xs;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: $spacing-sm $spacing-md;
+        border: 1px solid $border-color;
+        border-radius: $radius-sm;
+        font-size: $font-size-base;
+
+        &:focus {
+          outline: none;
+          border-color: $primary-color;
+        }
+      }
+
+      textarea {
+        resize: vertical;
+      }
+    }
+
+    .form-row {
+      display: flex;
+      gap: $spacing-md;
+
+      .form-group {
+        flex: 1;
+      }
+
+      @include sm-down {
+        flex-direction: column;
+      }
+    }
+
+    .form-actions {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-sm;
+
+      @include card;
+      padding: $spacing-lg;
+    }
+  }
+
+  // Image grid
+  .uploaded-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+  }
+
+  .uploaded-image {
+    position: relative;
+    border: 2px solid $border-light;
+    border-radius: $radius-sm;
+    overflow: hidden;
+
+    &.is-primary {
+      border-color: $primary-color;
+    }
+
+    img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+    }
+
+    .image-actions {
+      position: absolute;
+      top: $spacing-xs;
+      right: $spacing-xs;
+      display: flex;
+      gap: 2px;
+    }
+
+    .primary-badge {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba($primary-color, 0.9);
+      color: $white;
+      font-size: 10px;
+      text-align: center;
+      padding: 2px;
+    }
+  }
+
+  .image-url-input {
+    .btn {
+      margin-top: $spacing-sm;
+    }
+  }
+
+  // Variants
+  .variants-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+  }
+
+  .variant-card {
+    border: 1px solid $border-light;
+    border-radius: $radius-sm;
+    padding: $spacing-md;
+
+    .variant-header {
+      @include flex-between;
+      margin-bottom: $spacing-sm;
+    }
+  }
+
+  // Status badge
+  .status-badge {
+    display: inline-block;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-sm;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+
+    &.status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    &.status-approved {
+      background-color: lighten($success-color, 40%);
+      color: $success-color;
+    }
+
+    &.status-rejected {
+      background-color: lighten($danger-color, 35%);
+      color: $danger-color;
+    }
+  }
+
+  .text-muted {
+    color: $text-secondary;
+    font-size: $font-size-sm;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

@@ -37,6 +37,21 @@ export default function AccountPage() {
     },
   ];
 
+  // Vendor CTA - show "Become a Vendor" or "Vendor Dashboard" based on status
+  const vendorItem = user?.isVendor
+    ? {
+        path: '/vendor',
+        icon: 'storefront',
+        title: 'Vendor Dashboard',
+        description: `Manage ${user.storeName || 'your store'}`,
+      }
+    : {
+        path: '/vendor/register',
+        icon: 'add_business',
+        title: 'Become a Vendor',
+        description: 'Start selling on WorldStreet',
+      };
+
   return (
     <div className="account-page">
       <div className="container">
@@ -53,6 +68,11 @@ export default function AccountPage() {
               <p>{item.description}</p>
             </Link>
           ))}
+          <Link to={vendorItem.path} className="account-card vendor-cta">
+            <span className="material-icons">{vendorItem.icon}</span>
+            <h3>{vendorItem.title}</h3>
+            <p>{vendorItem.description}</p>
+          </Link>
         </div>
       </div>
     </div>

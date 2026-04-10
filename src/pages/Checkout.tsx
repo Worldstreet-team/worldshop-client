@@ -3,13 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
-import { checkoutService, orderService } from '@/services/orderService';
-import { paymentService } from '@/services/paymentService';
+import { checkoutService } from '@/services/orderService';
 import { addressService } from '@/services/addressService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
 import { NIGERIAN_STATES, getStateDisplayName } from '@/utils/nigerianStates';
-import type { CreateOrderRequest } from '@/types/order.types';
+import type {
+  CheckoutSessionPreview,
+  CheckoutSessionResult,
+} from '@/types/order.types';
 import type { Address } from '@/types/user.types';
 
 interface ShippingFormData {
@@ -43,24 +45,16 @@ export default function CheckoutPage() {
   const { cart, fetchCart } = useCartStore();
   const { addToast } = useUIStore();
   const { isAuthenticated } = useAuthStore();
+
+  // Steps: 1 = Shipping, 2 = Review & Pay
   const [step, setStep] = useState(1);
   const [shipping, setShipping] = useState<ShippingFormData>(initialShipping);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationIssues, setValidationIssues] = useState<string[]>([]);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [preview, setPreview] = useState<CheckoutSessionPreview | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
-
-  // Detect digital-only cart
-  const isDigitalOnly = cart?.items.every(item => item.product.type === 'DIGITAL') ?? false;
-
-  // Auto-advance to review step for digital-only orders
-  useEffect(() => {
-    if (isDigitalOnly && step === 1) {
-      setStep(2);
-    }
-  }, [isDigitalOnly, step]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -77,6 +71,13 @@ export default function CheckoutPage() {
     }
   }, [cart, navigate]);
 
+  // Load preview on mount
+  useEffect(() => {
+    if (!isAuthenticated || !cart || cart.items.length === 0) return;
+    loadPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
   // Fetch saved addresses
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -85,23 +86,38 @@ export default function CheckoutPage() {
       .then(res => {
         const addrs = res.data;
         setSavedAddresses(addrs);
-        // Auto-select default address
         const defaultAddr = addrs.find((a: Address) => a.isDefault);
         if (defaultAddr) {
           populateFromAddress(defaultAddr);
           setSelectedAddressId(defaultAddr.id);
         }
       })
-      .catch(() => { /* silently ignore — user can still type manually */ })
+      .catch(() => { /* silently ignore */ })
       .finally(() => setIsLoadingAddresses(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  const loadPreview = async () => {
+    setIsPreviewing(true);
+    try {
+      const res = await checkoutService.previewSession();
+      setPreview(res.data);
+      // Auto-advance to review if no shipping needed
+      if (!res.data.requiresShipping) {
+        setStep(2);
+      }
+    } catch {
+      addToast({ message: 'Failed to load checkout preview', type: 'error' });
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
 
   const populateFromAddress = useCallback((addr: Address) => {
     setShipping({
       firstName: addr.firstName,
       lastName: addr.lastName,
-      email: shipping.email, // keep email — not in address
+      email: shipping.email,
       phone: addr.phone,
       street: addr.street,
       apartment: addr.apartment || '',
@@ -122,9 +138,7 @@ export default function CheckoutPage() {
     setShipping({ ...initialShipping, email: shipping.email });
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -147,7 +161,7 @@ export default function CheckoutPage() {
   };
 
   const validateShipping = () => {
-    if (isDigitalOnly) return true; // No shipping needed for digital products
+    if (preview && !preview.requiresShipping) return true;
     const required = ['firstName', 'lastName', 'phone', 'street', 'city', 'state'];
     for (const field of required) {
       if (!shipping[field as keyof ShippingFormData]) {
@@ -160,77 +174,68 @@ export default function CheckoutPage() {
 
   const handleContinueToReview = async () => {
     if (!validateShipping()) return;
-
-    setIsValidating(true);
-    setValidationIssues([]);
-
-    try {
-      // Validate cart with backend (check stock, prices)
-      const response = await checkoutService.validateCart();
-
-      if (!response.data.valid) {
-        setValidationIssues(response.data.issues || ['Unable to proceed with checkout']);
-        addToast({ message: 'Please review the issues below', type: 'error' });
-        // Refresh cart to get updated data
-        await fetchCart();
-        return;
-      }
-
-      // For digital-only carts, skip directly to step 2
-      setStep(2);
-      window.scrollTo(0, 0);
-    } catch (error) {
-      addToast({ message: 'Failed to validate cart. Please try again.', type: 'error' });
-    } finally {
-      setIsValidating(false);
-    }
+    // Refresh preview before advancing
+    await loadPreview();
+    setStep(2);
+    window.scrollTo(0, 0);
   };
 
   const handlePlaceOrder = async () => {
+    if (!preview) return;
     setIsProcessing(true);
 
     try {
-      // Create the order request — skip shipping address for digital-only orders
-      const orderRequest: CreateOrderRequest = {};
-
-      if (!isDigitalOnly) {
-        orderRequest.shippingAddress = {
-          firstName: shipping.firstName,
-          lastName: shipping.lastName,
-          phone: shipping.phone,
-          street: shipping.street,
-          apartment: shipping.apartment || undefined,
-          city: shipping.city,
-          state: shipping.state,
-          country: shipping.country,
-          postalCode: shipping.postalCode || undefined,
-        };
+      // 1. Confirm checkout session
+      let result: CheckoutSessionResult;
+      try {
+        const confirmRes = await checkoutService.confirmSession({
+          snapshotToken: preview.snapshotToken,
+          shippingAddress: preview.requiresShipping ? {
+            firstName: shipping.firstName,
+            lastName: shipping.lastName,
+            phone: shipping.phone,
+            street: shipping.street,
+            apartment: shipping.apartment || undefined,
+            city: shipping.city,
+            state: shipping.state,
+            country: shipping.country,
+            postalCode: shipping.postalCode || undefined,
+          } : undefined,
+        });
+        result = confirmRes.data;
+      } catch (error) {
+        const status = (error as { status?: number })?.status;
+        if (status === 409) {
+          // Cart changed — reload preview
+          addToast({ message: 'Your cart has changed. Please review again.', type: 'warning' });
+          await loadPreview();
+          await fetchCart();
+          return;
+        }
+        throw error;
       }
 
-      // Create order via API
-      const response = await orderService.createOrder(orderRequest);
+      // 2. Initialize payment
+      const payRes = await checkoutService.initializePayment(result.checkoutSessionId);
+      const { redirectUrl } = payRes.data;
 
-      const order = response.data;
-
-      // Initialize Paystack payment
-      const paymentRes = await paymentService.initializePayment(order.id);
-      const paymentData = paymentRes.data;
-
-      // Redirect to Paystack hosted payment page
-      window.location.href = paymentData.authorizationUrl;
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        // Fallback — should not happen with mock provider
+        navigate('/checkout/success?reference=' + payRes.data.transactionRef);
+      }
     } catch (error) {
-      // Navigate to failure page with error info
-      const errorMessage = (error as { message?: string })?.message || 'Failed to create order';
+      const errorMessage = (error as { message?: string })?.message || 'Failed to place order';
       navigate('/checkout/failed', {
-        state: {
-          errorCode: 'ORDER_FAILED',
-          errorMessage
-        }
+        state: { errorCode: 'ORDER_FAILED', errorMessage },
       });
     } finally {
       setIsProcessing(false);
     }
   };
+
+  const isDigitalOnly = preview ? !preview.requiresShipping : false;
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -268,15 +273,23 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* Validation Issues */}
-        {validationIssues.length > 0 && (
+        {/* Preview Issues */}
+        {preview && preview.issues.length > 0 && (
           <div className="validation-issues">
             <h4>Please resolve these issues:</h4>
             <ul>
-              {validationIssues.map((issue, index) => (
-                <li key={index}>{issue}</li>
+              {preview.issues.map((issue, index) => (
+                <li key={index}>
+                  <strong>{issue.productName}:</strong> {issue.detail}
+                </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {isPreviewing && !preview && (
+          <div className="checkout-loading">
+            <span className="spinner" /> Loading checkout…
           </div>
         )}
 
@@ -456,8 +469,8 @@ export default function CheckoutPage() {
                     <Link to="/cart" className="btn btn-outline">
                       Back to Cart
                     </Link>
-                    <button type="submit" className="btn btn-primary" disabled={isValidating}>
-                      {isValidating ? 'Validating...' : 'Continue to Review'}
+                    <button type="submit" className="btn btn-primary" disabled={isPreviewing}>
+                      {isPreviewing ? 'Validating...' : 'Continue to Review'}
                     </button>
                   </div>
                 </form>
@@ -465,7 +478,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Step 2: Review & Pay */}
-            {step === 2 && (
+            {step === 2 && preview && (
               <div className="checkout-step review-step">
                 <h2>Review Your Order</h2>
 
@@ -498,23 +511,47 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <div className="review-section">
-                  <h3>Order Items</h3>
-                  <div className="review-items">
-                    {cart.items.map((item) => (
-                      <div key={item.id} className="review-item">
-                        <img src={item.product.images[0]?.url || '/placeholder.jpg'} alt={item.product.name} />
-                        <div className="item-details">
-                          <h4>{item.product.name}</h4>
-                          <p className="item-qty">Qty: {item.quantity}</p>
+                {/* Vendor-Grouped Items */}
+                {preview.vendorGroups.map((group) => (
+                  <div key={group.vendorId ?? 'platform'} className="review-section vendor-order-group">
+                    <div className="review-header">
+                      <h3>
+                        {group.vendorId ? (
+                          <>From <Link to={`/store/${group.storeName.toLowerCase().replace(/\s+/g, '-')}`}>{group.storeName}</Link></>
+                        ) : (
+                          <>From WorldShop</>
+                        )}
+                      </h3>
+                    </div>
+                    <div className="review-items">
+                      {group.items.map((item, idx) => (
+                        <div key={idx} className="review-item">
+                          {item.image && (
+                            <img src={item.image} alt={item.productName} />
+                          )}
+                          <div className="item-details">
+                            <h4>{item.productName}</h4>
+                            {item.variantName && <p className="item-variant">{item.variantName}</p>}
+                            <p className="item-qty">Qty: {item.quantity}</p>
+                          </div>
+                          <div className="item-price">
+                            ₦{item.totalPrice.toLocaleString()}
+                          </div>
                         </div>
-                        <div className="item-price">
-                          ₦{item.totalPrice.toLocaleString()}
-                        </div>
+                      ))}
+                    </div>
+                    <div className="vendor-group-totals">
+                      <div className="summary-row">
+                        <span>Subtotal</span>
+                        <span>₦{group.subtotal.toLocaleString()}</span>
                       </div>
-                    ))}
+                      <div className="summary-row">
+                        <span>Shipping</span>
+                        <span>{group.shipping === 0 ? 'Free' : `₦${group.shipping.toLocaleString()}`}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
 
                 <div className="step-actions">
                   {isDigitalOnly ? (
@@ -528,7 +565,7 @@ export default function CheckoutPage() {
                     type="button"
                     className="btn btn-primary btn-lg"
                     onClick={handlePlaceOrder}
-                    disabled={isProcessing}
+                    disabled={isProcessing || preview.issues.length > 0}
                   >
                     {isProcessing ? (
                       <>
@@ -536,7 +573,7 @@ export default function CheckoutPage() {
                         Processing...
                       </>
                     ) : (
-                      <>Place Order - ₦{cart.total.toLocaleString()}</>
+                      <>Place Order — ₦{preview.summary.total.toLocaleString()}</>
                     )}
                   </button>
                 </div>
@@ -548,40 +585,75 @@ export default function CheckoutPage() {
           <div className="checkout-summary-section">
             <div className="checkout-summary">
               <h3>Order Summary</h3>
-              <div className="summary-items">
-                {cart.items.map((item) => (
-                  <div key={item.id} className="summary-item">
-                    <div className="item-image">
-                      <img src={item.product.images[0]?.url || '/placeholder.jpg'} alt={item.product.name} />
-                      <span className="item-qty-badge">{item.quantity}</span>
-                    </div>
-                    <div className="item-info">
-                      <span className="item-name">{item.product.name}</span>
-                    </div>
-                    <span className="item-price">₦{item.totalPrice.toLocaleString()}</span>
+              {preview ? (
+                <>
+                  <div className="summary-items">
+                    {preview.vendorGroups.flatMap(g => g.items).map((item, idx) => (
+                      <div key={idx} className="summary-item">
+                        <div className="item-image">
+                          {item.image && <img src={item.image} alt={item.productName} />}
+                          <span className="item-qty-badge">{item.quantity}</span>
+                        </div>
+                        <div className="item-info">
+                          <span className="item-name">{item.productName}</span>
+                        </div>
+                        <span className="item-price">₦{item.totalPrice.toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <hr />
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>₦{cart.subtotal.toLocaleString()}</span>
-              </div>
-              {cart.discount > 0 && (
-                <div className="summary-row discount">
-                  <span>Discount {cart.couponCode && `(${cart.couponCode})`}</span>
-                  <span>-₦{cart.discount.toLocaleString()}</span>
-                </div>
+                  <hr />
+                  <div className="summary-row">
+                    <span>Subtotal</span>
+                    <span>₦{preview.summary.subtotal.toLocaleString()}</span>
+                  </div>
+                  {preview.summary.discount > 0 && (
+                    <div className="summary-row discount">
+                      <span>Discount</span>
+                      <span>-₦{preview.summary.discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="summary-row">
+                    <span>Shipping</span>
+                    <span>{preview.summary.shipping === 0 ? 'Free' : `₦${preview.summary.shipping.toLocaleString()}`}</span>
+                  </div>
+                  <hr />
+                  <div className="summary-row total">
+                    <span>Total</span>
+                    <span>₦{preview.summary.total.toLocaleString()}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="summary-items">
+                    {cart.items.map((item) => (
+                      <div key={item.id} className="summary-item">
+                        <div className="item-image">
+                          <img src={item.product.images[0]?.url || '/placeholder.jpg'} alt={item.product.name} />
+                          <span className="item-qty-badge">{item.quantity}</span>
+                        </div>
+                        <div className="item-info">
+                          <span className="item-name">{item.product.name}</span>
+                        </div>
+                        <span className="item-price">₦{item.totalPrice.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <hr />
+                  <div className="summary-row">
+                    <span>Subtotal</span>
+                    <span>₦{cart.subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="summary-row">
+                    <span>Shipping</span>
+                    <span>{cart.shipping === 0 ? 'Free' : `₦${cart.shipping.toLocaleString()}`}</span>
+                  </div>
+                  <hr />
+                  <div className="summary-row total">
+                    <span>Total</span>
+                    <span>₦{cart.total.toLocaleString()}</span>
+                  </div>
+                </>
               )}
-              <div className="summary-row">
-                <span>Shipping</span>
-                <span>{cart.shipping === 0 ? 'Free' : `₦${cart.shipping.toLocaleString()}`}</span>
-              </div>
-              <hr />
-              <div className="summary-row total">
-                <span>Total</span>
-                <span>₦{cart.total.toLocaleString()}</span>
-              </div>
             </div>
           </div>
         </div>

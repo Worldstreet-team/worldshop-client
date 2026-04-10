@@ -51,6 +51,12 @@ export interface Product {
   lowStockThreshold: number;
   isActive: boolean;
   isFeatured: boolean;
+  vendorId?: string;
+  approvalStatus?: string;
+  vendor?: {
+    storeName: string;
+    storeSlug: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -98,4 +104,11 @@ export interface ProductFilters {
   sortBy?: 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' | 'newest' | 'rating' | 'popular';
   page?: number;
   limit?: number;
+}
+
+export interface StoreInfo {
+  storeName: string;
+  storeSlug: string;
+  storeDescription: string | null;
+  productCount: number;
 }

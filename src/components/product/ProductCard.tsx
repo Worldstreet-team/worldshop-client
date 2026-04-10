@@ -83,6 +83,17 @@ export default function ProductCard({
             <span className="product-card-category">{product.category.name}</span>
           )}
 
+          {/* Vendor */}
+          {product.vendor && (
+            <Link
+              to={`/store/${product.vendor.storeSlug}`}
+              className="product-card-vendor"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {product.vendor.storeName}
+            </Link>
+          )}
+
           {/* Name */}
           <h3 className="product-card-name">{product.name}</h3>
 

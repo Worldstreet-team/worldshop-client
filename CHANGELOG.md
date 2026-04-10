@@ -4,6 +4,112 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.25.0] - 2026-04-10
+
+### Added — Phase 5: Vendor Order Fulfillment
+
+#### Vendor Orders Page
+- `src/pages/vendor/Orders.tsx` — Paginated order list with status filtering, search by order number, sort options. Shows order number, date, item count, total, status badge. Links to order detail.
+
+#### Vendor Order Detail Page
+- `src/pages/vendor/OrderDetail.tsx` — Full order detail with line items, order summary, customer name (no email/phone per spec), shipping address, status timeline. Vendor-restricted status update controls: PAID → PROCESSING → DELIVERED only. Optional note on status change.
+
+#### Services
+- `src/services/vendorService.ts` — Added `VendorOrderFilters` type, `getOrders()`, `getOrder()`, `updateOrderStatus()` methods for vendor order API
+
+#### Router
+- `src/router/index.tsx` — Added lazy-loaded `VendorOrders` and `VendorOrderDetail` pages. Routes: `/vendor/orders`, `/vendor/orders/:id`
+
+## [0.24.0] - 2026-04-10
+
+### Changed — Phase 4: Multi-Vendor Cart & Order Splitting + Mock Payment
+
+#### Cart Page (vendor grouping)
+- `src/pages/Cart.tsx` — items now grouped by vendor with "From [Store Name]" section headers linking to vendor store pages; platform products shown as "From WorldShop"
+
+#### Checkout Page (complete rewrite)
+- `src/pages/Checkout.tsx` — new flow: preview checkout session → vendor-grouped order review → confirm + pay → redirect to mock payment. Uses `checkoutService.previewSession()` for vendor groups + snapshot token, `confirmSession()` for atomic order creation (handles 409 cart-changed), `initializePayment()` for mock redirect. Preview sidebar shows vendor-level subtotals and shipping.
+
+#### Mock Payment Page (new)
+- `src/pages/MockPayment.tsx` — simulated payment gateway page at `/checkout/mock-payment?session=xxx&ref=yyy`. Shows session/reference details with Confirm/Decline buttons. Calls `paymentService.sendWebhook()` then redirects to success/failure pages.
+
+#### Checkout Success Page (adapted)
+- `src/pages/CheckoutSuccess.tsx` — updated for mock payment verification (replaces Paystack). Shows multiple order numbers for split-vendor checkouts. Uses `VerifyPaymentResult` type with `orders[]` array.
+
+#### Types
+- `src/types/order.types.ts` — `Order` gained `vendorId?`, `checkoutSessionId?`. Added: `CheckoutIssue`, `VendorGroup`, `CheckoutSessionPreview`, `ConfirmCheckoutSessionInput`, `CheckoutSessionResult`, `InitPaymentResult`, `VerifyPaymentResult`
+
+#### Services
+- `src/services/orderService.ts` — `checkoutService` gained `previewSession()`, `confirmSession()`, `initializePayment()`. Legacy `validateCart()` kept.
+- `src/services/paymentService.ts` — rewritten: removed all Paystack types/methods. Added `verifyPayment(transactionRef)` and `sendWebhook(checkoutSessionId, action)`.
+
+#### Router & Styles
+- `src/router/index.tsx` — added `/checkout/mock-payment` route (lazy, protected)
+- `src/styles/_pages.scss` — added `.vendor-group`, `.vendor-group-header`, `.vendor-order-group`, `.vendor-group-totals`, `.mock-payment-page`, `.mock-payment-card`, `.mock-payment-header`, `.mock-payment-details`, `.mock-payment-actions` styles
+
+## [0.23.0] - 2026-04-09
+
+### Added — Phase 3: Public Store Pages
+
+#### Store Page
+- `src/pages/Store.tsx` — vendor storefront page with store header (name, description, product count), product grid, sorting, and pagination; fetches via `/api/v1/store/:slug`
+- `src/router/index.tsx` — added `/store/:slug` route with lazy-loaded StorePage
+
+#### Store Service
+- `src/services/productService.ts` — added `storeService.getStoreBySlug()` for fetching vendor store data with product pagination
+
+#### Vendor Attribution on Products
+- `src/types/product.types.ts` — added `vendor?: { storeName, storeSlug }` to Product type; added `StoreInfo` interface
+- `src/components/product/ProductCard.tsx` — displays vendor store name below category with link to `/store/:slug`
+- `src/components/product/ProductInfo.tsx` — "Sold by [Vendor Name]" link below product meta on detail page
+
+#### Styles
+- `src/styles/_product.scss` — `.product-card-vendor` and `.product-info-vendor` / `.product-info-vendor-link` styles
+- `src/styles/_pages.scss` — `.store-page`, `.store-header`, `.store-toolbar` styles
+
+## [0.22.0] - 2026-04-08
+
+### Added — Phase 2: Vendor Product Management (Client)
+
+#### Vendor Product Pages
+- `src/pages/vendor/Products.tsx` — vendor product list with search, filters, pagination, active/inactive toggle, edit/delete actions
+- `src/pages/vendor/ProductEdit.tsx` — create/edit product form (name, description, price, tags, variants, images) with react-hook-form + Zod validation
+
+#### Vendor Service Extensions
+- `src/services/vendorService.ts` — added product CRUD endpoints: `getProducts`, `getProduct`, `createProduct`, `updateProduct`, `deleteProduct`, `toggleProduct`
+
+#### Type Updates
+- `src/types/product.types.ts` — added `vendorId` and `approvalStatus` fields to Product type
+
+#### Styles
+- `src/styles/_vendor.scss` — expanded with product list, product form, variant editor styles
+
+## [0.21.0] - 2026-04-07
+
+### Added — Phase 1: Vendor Identity & Onboarding (Client)
+
+#### Auth & User Types
+- `src/types/user.types.ts` — added vendor fields: `isVendor`, `vendorStatus`, `storeName`, `storeSlug`, `storeDescription`, `vendorSince`
+- `src/store/authStore.ts` — maps vendor fields from API to Zustand store
+
+#### Vendor Service
+- `src/services/vendorService.ts` — `register`, `getProfile`, `updateProfile` API wrappers
+
+#### Route Guards & Layout
+- `src/components/auth/VendorRoute.tsx` — route guard checking isVendor + vendorStatus
+- `src/layouts/VendorLayout.tsx` — sidebar layout for vendor dashboard
+
+#### Vendor Pages
+- `src/pages/vendor/Dashboard.tsx` — vendor dashboard with welcome message and quick stats
+- `src/pages/vendor/Registration.tsx` — vendor registration form with store name/description
+
+#### Router & Navigation
+- `src/router/index.tsx` — added `/vendor/register` (ProtectedRoute) and `/vendor/*` (VendorRoute) routes
+- `src/pages/account/Account.tsx` — "Become a Vendor" CTA for non-vendor users
+
+#### Styles
+- `src/styles/_vendor.scss` — vendor dashboard, registration form, sidebar styles
+
 ## [0.20.0] - 2026-02-13
 
 ### Changed — Storefront UI Improvements
