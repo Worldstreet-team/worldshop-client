@@ -31,6 +31,9 @@ export interface UserProfile {
   avatar: string | null;
   dateOfBirth: string | null;
   gender: Gender | null;
+  storeName?: string | null;
+  storeSlug?: string | null;
+  storeDescription?: string | null;
   createdAt: string;
   updatedAt: string;
 }

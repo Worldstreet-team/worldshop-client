@@ -422,7 +422,7 @@
 
   .vendor-group-header {
     padding: $spacing-sm $spacing-md;
-    background: $background-alt;
+    background: $bg-secondary;
     border: 1px solid $border-light;
     border-bottom: none;
     border-radius: $radius-md $radius-md 0 0;
@@ -1571,7 +1571,7 @@
 
   .mock-badge {
     display: inline-block;
-    background: $warning-bg;
+    background: lighten($warning-color, 35%);
     color: $warning-color;
     font-size: $font-size-xs;
     font-weight: $font-weight-bold;

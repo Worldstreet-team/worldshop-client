@@ -48,8 +48,8 @@ export default function VendorOrders() {
     setLoading(true);
     try {
       const res = await vendorService.getOrders({ ...filters, search: search || undefined });
-      setOrders(res.data.data);
-      setPagination(res.data.pagination);
+      setOrders(res.data);
+      setPagination(res.pagination);
     } catch (err: any) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load orders' });
     } finally {

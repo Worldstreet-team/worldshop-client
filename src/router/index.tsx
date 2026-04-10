@@ -46,6 +46,9 @@ const AdminOrders = lazy(() => import('@/pages/admin/Orders'));
 const AdminOrderDetail = lazy(() => import('@/pages/admin/OrderDetail'));
 const AdminCategories = lazy(() => import('@/pages/admin/Categories'));
 const AdminInventory = lazy(() => import('@/pages/admin/Inventory'));
+const AdminVendors = lazy(() => import('@/pages/admin/Vendors'));
+const AdminVendorDetail = lazy(() => import('@/pages/admin/VendorDetail'));
+const AdminCommission = lazy(() => import('@/pages/admin/Commission'));
 
 // Vendor Pages
 const VendorDashboard = lazy(() => import('@/pages/vendor/Dashboard'));
@@ -54,6 +57,8 @@ const VendorProducts = lazy(() => import('@/pages/vendor/Products'));
 const VendorProductEdit = lazy(() => import('@/pages/vendor/ProductEdit'));
 const VendorOrders = lazy(() => import('@/pages/vendor/Orders'));
 const VendorOrderDetail = lazy(() => import('@/pages/vendor/OrderDetail'));
+const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
+const VendorReviews = lazy(() => import('@/pages/vendor/Reviews'));
 
 // Store Page
 const StorePage = lazy(() => import('@/pages/Store'));
@@ -257,6 +262,14 @@ const router = createBrowserRouter([
         path: 'orders/:id',
         element: <SuspenseWrapper><VendorOrderDetail /></SuspenseWrapper>,
       },
+      {
+        path: 'settings',
+        element: <SuspenseWrapper><VendorSettings /></SuspenseWrapper>,
+      },
+      {
+        path: 'reviews',
+        element: <SuspenseWrapper><VendorReviews /></SuspenseWrapper>,
+      },
     ],
   },
   // Admin routes (admin layout, protected)
@@ -299,6 +312,18 @@ const router = createBrowserRouter([
       {
         path: 'inventory',
         element: <SuspenseWrapper><AdminInventory /></SuspenseWrapper>,
+      },
+      {
+        path: 'vendors',
+        element: <SuspenseWrapper><AdminVendors /></SuspenseWrapper>,
+      },
+      {
+        path: 'vendors/:id',
+        element: <SuspenseWrapper><AdminVendorDetail /></SuspenseWrapper>,
+      },
+      {
+        path: 'settings/commission',
+        element: <SuspenseWrapper><AdminCommission /></SuspenseWrapper>,
       },
     ],
   },

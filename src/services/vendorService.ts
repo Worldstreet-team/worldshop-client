@@ -1,7 +1,7 @@
 import { api } from './api';
-import type { ApiResponse, PaginatedResponse } from '@/types/common.types';
+import type { ApiResponse, PaginatedResponse, Pagination } from '@/types/common.types';
 import type { UserProfile } from '@/types/user.types';
-import type { Product, ProductImage } from '@/types/product.types';
+import type { Product } from '@/types/product.types';
 import type { Order, OrderStatus } from '@/types/order.types';
 
 export interface RegisterVendorRequest {
@@ -34,7 +34,13 @@ export interface VendorCreateProductData {
   salePrice?: number | null;
   categoryId?: string | null;
   tags?: string[];
-  images?: ProductImage[];
+  images?: Array<{
+    url: string;
+    alt: string;
+    isPrimary: boolean;
+    sortOrder: number;
+    cloudflareId?: string;
+  }>;
   variants?: {
     name: string;
     attributes: Record<string, string>;
@@ -46,6 +52,79 @@ export interface VendorCreateProductData {
 }
 
 export type VendorUpdateProductData = Partial<VendorCreateProductData>;
+
+// ─── Analytics Types ────────────────────────────────────────────
+
+export interface VendorBalanceSummary {
+  vendorId: string;
+  availableBalance: number;
+  totalEarned: number;
+  totalCommission: number;
+  updatedAt: string;
+}
+
+export interface VendorAnalytics {
+  vendorId: string;
+  period: { from: string | null; to: string | null };
+  summary: {
+    totalOrders: number;
+    totalSales: number;
+    totalCommission: number;
+    netRevenue: number;
+  };
+  balance: VendorBalanceSummary;
+  earningsOverTime: Array<{
+    date: string;
+    sales: number;
+    commission: number;
+    net: number;
+  }>;
+}
+
+export interface LedgerEntry {
+  id: string;
+  orderId: string;
+  vendorId: string;
+  type: 'SALE' | 'COMMISSION';
+  amount: number;
+  currency: string;
+  balanceBefore: number;
+  balanceAfter: number;
+  createdAt: string;
+}
+
+export interface VendorEarningsFilters {
+  type?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+  sort?: 'asc' | 'desc';
+}
+
+// ─── Reviews Types ──────────────────────────────────────────────
+
+export interface VendorReview {
+  id: string;
+  productId: string;
+  productName: string | null;
+  productSlug: string | null;
+  userId: string;
+  userName: string;
+  rating: number;
+  title: string | null;
+  comment: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorReviewFilters {
+  page?: number;
+  limit?: number;
+  rating?: number;
+  sortBy?: 'newest' | 'oldest' | 'highest' | 'lowest';
+}
 
 export const vendorService = {
   /** POST /vendor/register — register as a vendor */
@@ -99,4 +178,24 @@ export const vendorService = {
   /** PATCH /vendor/orders/:id/status — update order status */
   updateOrderStatus: (id: string, data: { status: 'PROCESSING' | 'DELIVERED'; note?: string }) =>
     api.patch<ApiResponse<Order>>(`/vendor/orders/${id}/status`, data),
+
+  // ─── Analytics & Balance ─────────────────────────────────────
+
+  /** GET /vendor/analytics/summary — dashboard summary */
+  getAnalytics: (params?: { from?: string; to?: string }) =>
+    api.get<ApiResponse<VendorAnalytics>>('/vendor/analytics/summary', { params }),
+
+  /** GET /vendor/analytics/earnings — earnings over time (paginated) */
+  getEarnings: (filters?: VendorEarningsFilters) =>
+    api.get<{ success: boolean; data: LedgerEntry[]; total: number }>('/vendor/analytics/earnings', { params: filters }),
+
+  /** GET /vendor/balance — current wallet balance */
+  getBalance: () =>
+    api.get<ApiResponse<VendorBalanceSummary>>('/vendor/balance'),
+
+  // ─── Reviews (read-only) ─────────────────────────────────────
+
+  /** GET /vendor/reviews — reviews on vendor's products */
+  getReviews: (filters?: VendorReviewFilters) =>
+    api.get<{ success: boolean; data: VendorReview[]; pagination: Pagination }>('/vendor/reviews', { params: filters }),
 };

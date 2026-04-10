@@ -4,6 +4,41 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.26.0] - 2026-04-10
+
+### Added — Marketplace Phase 6 & 7: Vendor Dashboard, Settings, Reviews & Admin Vendor Management
+
+#### Vendor Dashboard (complete rewrite)
+- `src/pages/vendor/Dashboard.tsx` — replaced stub with full dashboard: 4 stat cards (total orders, total sales, net revenue, available balance), commission info bar, earnings-over-time table with date range filter, quick links grid to Products/Orders/Reviews/Settings
+
+#### Vendor Settings Page (new)
+- `src/pages/vendor/Settings.tsx` — store settings form with editable store name and description, read-only store URL slug, account status badge, save with profile sync
+
+#### Vendor Reviews Page (new)
+- `src/pages/vendor/Reviews.tsx` — paginated customer reviews list with rating filter (1–5 stars), sort options (newest/oldest/highest/lowest), star display, verified purchase badge, product link
+
+#### Admin Vendor Management (new)
+- `src/pages/admin/Vendors.tsx` — vendor list with search, status filter (ACTIVE/SUSPENDED/BANNED), sort options, paginated table showing store name, owner, status, product count, earnings
+- `src/pages/admin/VendorDetail.tsx` — vendor detail with info grid, store description, status management buttons (activate/suspend/ban with confirmation), recent orders table, products table with approval status, stats sidebar
+- `src/pages/admin/Commission.tsx` — commission rate setting form, platform summary cards (total orders, sales, commission earned, net to vendors), vendor breakdown table
+
+#### Services
+- `src/services/vendorService.ts` — added types: `VendorBalanceSummary`, `VendorAnalytics`, `LedgerEntry`, `VendorEarningsFilters`, `VendorReview`, `VendorReviewFilters`; added methods: `getAnalytics()`, `getEarnings()`, `getBalance()`, `getReviews()`
+- `src/services/adminService.ts` — added types: `AdminVendorFilters`, `AdminVendor`, `AdminVendorDetail`, `CommissionReport`, `CommissionSetting`; added methods: `getVendors()`, `getVendor()`, `updateVendorStatus()`, `getVendorProducts()`, `getCommissionReport()`, `getCommissionRate()`, `updateCommissionRate()`
+
+#### Router & Navigation
+- `src/router/index.tsx` — added lazy imports and routes: `/vendor/settings`, `/vendor/reviews`, `/admin/vendors`, `/admin/vendors/:id`, `/admin/settings/commission`
+- `src/layouts/VendorLayout.tsx` — added Reviews nav item
+- `src/layouts/AdminLayout.tsx` — added Vendors nav item
+
+#### Types
+- `src/types/user.types.ts` — added optional vendor fields to UserProfile: `storeName`, `storeSlug`, `storeDescription`
+
+### Fixed
+- Vendor pages (Products, Orders, ProductEdit, OrderDetail) — fixed `res.data.data` → `res.data` data access pattern (api helper already unwraps axios response)
+- `src/services/vendorService.ts` — changed `VendorCreateProductData.images` to inline type without `id` (not available at creation time)
+- `src/styles/_pages.scss` — fixed undefined Sass variables: `$background-alt` → `$bg-secondary`, `$warning-bg` → `lighten($warning-color, 35%)`
+
 ## [0.25.0] - 2026-04-10
 
 ### Added — Phase 5: Vendor Order Fulfillment

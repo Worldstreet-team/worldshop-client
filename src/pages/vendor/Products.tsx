@@ -24,8 +24,8 @@ export default function VendorProducts() {
     setLoading(true);
     try {
       const res = await vendorService.getProducts({ ...filters, search: search || undefined });
-      setProducts(res.data.data);
-      setPagination(res.data.pagination);
+      setProducts(res.data);
+      setPagination(res.pagination);
     } catch (err: any) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load products' });
     } finally {

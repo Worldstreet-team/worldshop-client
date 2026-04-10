@@ -205,6 +205,83 @@ export interface UploadResult {
     mimeType: string;
 }
 
+// ─── Admin Vendor Types ─────────────────────────────────────────
+export interface AdminVendorFilters {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+    search?: string;
+    sortBy?: 'newest' | 'oldest' | 'name_asc' | 'name_desc';
+}
+
+export interface AdminVendor {
+    id: string;
+    userId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    vendorStatus: string;
+    storeName: string | null;
+    storeSlug: string | null;
+    storeDescription: string | null;
+    vendorSince: string | null;
+    productCount: number;
+    totalEarnings: number;
+}
+
+export interface AdminVendorDetail {
+    id: string;
+    userId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string | null;
+    vendorStatus: string;
+    storeName: string | null;
+    storeSlug: string | null;
+    storeDescription: string | null;
+    vendorSince: string | null;
+    createdAt: string;
+    stats: {
+        productCount: number;
+        orderCount: number;
+        totalEarnings: number;
+        totalCommission: number;
+        availableBalance: number;
+    };
+    recentOrders: Array<{
+        id: string;
+        orderNumber: string;
+        status: string;
+        total: number;
+        createdAt: string;
+    }>;
+}
+
+export interface CommissionReport {
+    period: { from: string | null; to: string | null };
+    platform: {
+        totalOrders: number;
+        totalSales: number;
+        totalCommission: number;
+        netToVendors: number;
+        commissionRate: number;
+    };
+    vendors: Array<{
+        vendorId: string;
+        vendorName: string;
+        totalOrders: number;
+        totalSales: number;
+        totalCommission: number;
+        netRevenue: number;
+    }>;
+}
+
+export interface CommissionSetting {
+    key: string;
+    value: number;
+}
+
 // ─── Admin Service ──────────────────────────────────────────────
 export const adminService = {
     // Dashboard
@@ -358,6 +435,45 @@ export const adminService = {
     updateThreshold: async (productId: string, lowStockThreshold: number): Promise<{ productId: string; previousThreshold: number; newThreshold: number }> => {
         const res = await api.patch<ApiResponse<{ productId: string; previousThreshold: number; newThreshold: number }>>(
             `/admin/inventory/${productId}/threshold`, { lowStockThreshold });
+        return res.data;
+    },
+
+    // ─── Vendor Management ──────────────────────────────────────
+    getVendors: async (filters?: AdminVendorFilters): Promise<PaginatedResponse<AdminVendor>> => {
+        const res = await api.get<{ success: boolean; data: AdminVendor[]; pagination: PaginatedResponse<AdminVendor>['pagination'] }>(
+            '/admin/vendors', filters as Record<string, unknown>);
+        return { data: res.data, pagination: res.pagination };
+    },
+
+    getVendor: async (id: string): Promise<AdminVendorDetail> => {
+        const res = await api.get<ApiResponse<AdminVendorDetail>>(`/admin/vendors/${id}`);
+        return res.data;
+    },
+
+    updateVendorStatus: async (id: string, status: 'ACTIVE' | 'SUSPENDED' | 'BANNED'): Promise<AdminVendor> => {
+        const res = await api.patch<ApiResponse<AdminVendor>>(`/admin/vendors/${id}/status`, { status });
+        return res.data;
+    },
+
+    getVendorProducts: async (id: string, params?: { page?: number; limit?: number }): Promise<PaginatedResponse<Product>> => {
+        const res = await api.get<{ success: boolean; data: Product[]; pagination: PaginatedResponse<Product>['pagination'] }>(
+            `/admin/vendors/${id}/products`, params as Record<string, unknown>);
+        return { data: res.data, pagination: res.pagination };
+    },
+
+    // ─── Commission & Reports ───────────────────────────────────
+    getCommissionReport: async (params?: { from?: string; to?: string }): Promise<CommissionReport> => {
+        const res = await api.get<ApiResponse<CommissionReport>>('/admin/reports/commission', params as Record<string, unknown>);
+        return res.data;
+    },
+
+    getCommissionRate: async (): Promise<CommissionSetting> => {
+        const res = await api.get<ApiResponse<CommissionSetting>>('/admin/settings/commission');
+        return res.data;
+    },
+
+    updateCommissionRate: async (rate: number): Promise<CommissionSetting> => {
+        const res = await api.patch<ApiResponse<CommissionSetting>>('/admin/settings/commission', { rate });
         return res.data;
     },
 };

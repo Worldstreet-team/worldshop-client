@@ -51,7 +51,7 @@ export default function VendorOrderDetail() {
     if (!id) return;
     setLoading(true);
     vendorService.getOrder(id)
-      .then((res) => setOrder(res.data.data))
+      .then((res) => setOrder(res.data))
       .catch((err: any) => {
         addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load order' });
         navigate('/vendor/orders');
@@ -69,7 +69,7 @@ export default function VendorOrderDetail() {
         status: newStatus,
         note: statusNote || undefined,
       });
-      setOrder(res.data.data);
+      setOrder(res.data);
       setNewStatus('');
       setStatusNote('');
       addToast({ type: 'success', message: `Order status updated to ${newStatus}` });

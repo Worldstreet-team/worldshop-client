@@ -53,7 +53,7 @@ export default function VendorProductEdit() {
     setLoading(true);
     vendorService.getProduct(id)
       .then((res) => {
-        const product: Product = res.data.data;
+        const product: Product = res.data;
         setName(product.name);
         setDescription(product.description);
         setShortDesc(product.shortDesc || '');

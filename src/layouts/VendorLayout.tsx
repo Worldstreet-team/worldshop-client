@@ -8,6 +8,7 @@ const navItems = [
   { path: '/vendor', label: 'Dashboard', icon: 'dashboard' },
   { path: '/vendor/products', label: 'Products', icon: 'inventory' },
   { path: '/vendor/orders', label: 'Orders', icon: 'shopping_cart' },
+  { path: '/vendor/reviews', label: 'Reviews', icon: 'star_rate' },
   { path: '/vendor/settings', label: 'Store Settings', icon: 'settings' },
 ];
 

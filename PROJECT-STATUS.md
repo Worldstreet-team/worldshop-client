@@ -1,7 +1,7 @@
 # WorldShop Client - Project Status
 
-**Last Updated:** February 13, 2026  
-**Version:** 0.20.0  
+**Last Updated:** April 10, 2026  
+**Version:** 0.26.0  
 **Framework:** React 19.2.0 + TypeScript + Vite
 
 ---
@@ -59,17 +59,18 @@
 - **paymentService.ts** - Payment operations (Paystack integration) ✅
 - **productService.ts** - Product operations ✅
 - **reviewService.ts** - Review operations (real API) ✅
-- **adminService.ts** - Admin API client (dashboard with pagination, products, categories, uploads, digital assets) ✅
+- **adminService.ts** - Admin API client (dashboard with pagination, products, categories, uploads, digital assets, vendor management, commission) ✅
+- **vendorService.ts** - Vendor API client (register, profile, products CRUD, orders, analytics, earnings, balance, reviews) ✅
 - **downloadService.ts** - Download operations (list downloads, generate URLs) ✅
 - **mockApi.ts** - Mock API (banners only)
 - **userService.ts** - User operations (auth, address, wishlist) ✅
 
 ### Type System
 Comprehensive TypeScript interfaces in `/src/types/`:
-- **product.types.ts** - Product, Category, Review, ProductVariant, ProductImage, ProductFilters, DigitalAsset
+- **product.types.ts** - Product, Category, Review, ProductVariant, ProductImage, ProductFilters, DigitalAsset, StoreInfo
 - **cart.types.ts** - Cart, CartItem, CartSummary, AddToCartRequest, UpdateCartItemRequest
-- **order.types.ts** - Order, OrderItem, Payment, OrderStatusHistory, CreateOrderRequest, ShippingRate
-- **user.types.ts** - User, Address, Wishlist, AuthTokens, LoginRequest, RegisterRequest
+- **order.types.ts** - Order, OrderItem, Payment, OrderStatusHistory, CreateOrderRequest, ShippingRate, VendorGroup, CheckoutSessionPreview
+- **user.types.ts** - User, Address, Wishlist, AuthTokens, LoginRequest, RegisterRequest (+ vendor fields: isVendor, vendorStatus, storeName, storeSlug, storeDescription)
 - **download.types.ts** - DownloadRecord, DownloadUrl
 - **common.types.ts** - ApiResponse, PaginatedResponse, Pagination, Toast, BreadcrumbItem, SelectOption
 
@@ -221,6 +222,43 @@ Comprehensive TypeScript interfaces in `/src/types/`:
   - [x] "Digital Downloads" section for paid orders
   - [x] Download buttons with progress tracking
   - [x] Shipping address null guard for digital orders
+
+### Marketplace: Phase 1 — Vendor Identity & Onboarding ✅
+- [x] Vendor fields in auth store (isVendor, vendorStatus, storeName, storeSlug)
+- [x] VendorRoute guard (not-signed-in, not-vendor, banned states)
+- [x] VendorLayout with sidebar navigation
+- [x] Vendor Registration page (react-hook-form + Zod)
+- [x] vendorService — register, getProfile, updateProfile
+
+### Marketplace: Phase 2 — Vendor Product Management ✅
+- [x] Vendor Products page (search, filters, pagination, toggle active, delete)
+- [x] Vendor ProductEdit page (create/edit with images, variants, categories, approval status)
+- [x] vendorService — getProducts, getProduct, createProduct, updateProduct, deleteProduct, toggleProduct
+
+### Marketplace: Phase 3 — Public Store Pages ✅
+- [x] Store page (`/store/:slug`) — vendor storefront with product grid, sorting, pagination
+- [x] Vendor attribution on ProductCard and ProductInfo
+
+### Marketplace: Phase 4 — Multi-Vendor Cart & Mock Payment ✅
+- [x] Cart vendor grouping ("From [Store Name]" headers)
+- [x] Checkout rewrite — preview session → vendor groups → confirm + pay
+- [x] Mock Payment page (confirm/decline simulation)
+- [x] CheckoutSuccess adapted for multi-vendor split orders
+
+### Marketplace: Phase 5 — Vendor Order Fulfillment ✅
+- [x] Vendor Orders page (status filter, search, sort, pagination)
+- [x] Vendor OrderDetail page (line items, status timeline, vendor status updates)
+
+### Marketplace: Phase 6 — Vendor Dashboard, Settings & Reviews ✅
+- [x] **Vendor Dashboard** — 4 stat cards (orders, sales, revenue, balance), commission bar, earnings table, quick links
+- [x] **Vendor Settings** — Store name/description form, slug display, account status badge
+- [x] **Vendor Reviews** — Customer reviews list with rating filter, sort, pagination, star display
+
+### Marketplace: Phase 7 — Admin Vendor Management & Commission ✅
+- [x] **Admin Vendors List** (`/admin/vendors`) — search, status filter, sort, paginated vendor table
+- [x] **Admin Vendor Detail** (`/admin/vendors/:id`) — vendor info, status management (activate/suspend/ban), products, orders, stats sidebar
+- [x] **Admin Commission** (`/admin/settings/commission`) — rate setting, platform summary cards, vendor breakdown table
+- [x] adminService — getVendors, getVendor, updateVendorStatus, getVendorProducts, getCommissionReport, getCommissionRate, updateCommissionRate
 
 ### Phase 6: Styling & Responsiveness
 - [x] Mobile-first responsive design
@@ -478,7 +516,8 @@ worldshop-client/
 │   ├── layouts/                # Page layouts
 │   │   ├── AdminLayout.tsx
 │   │   ├── AuthLayout.tsx
-│   │   └── MainLayout.tsx
+│   │   ├── MainLayout.tsx
+│   │   └── VendorLayout.tsx
 │   ├── pages/                  # Page components
 │   │   ├── account/           # Account pages
 │   │   │   ├── Account.tsx
@@ -490,12 +529,15 @@ worldshop-client/
 │   │   │   └── Wishlist.tsx
 │   │   ├── admin/             # Admin pages
 │   │   │   ├── Categories.tsx
+│   │   │   ├── Commission.tsx
 │   │   │   ├── Dashboard.tsx
 │   │   │   ├── Inventory.tsx
 │   │   │   ├── OrderDetail.tsx
 │   │   │   ├── Orders.tsx
 │   │   │   ├── ProductEdit.tsx
-│   │   │   └── Products.tsx
+│   │   │   ├── Products.tsx
+│   │   │   ├── VendorDetail.tsx
+│   │   │   └── Vendors.tsx
 │   │   ├── auth/              # Auth pages
 │   │   │   ├── ForgotPassword.tsx
 │   │   │   ├── Login.tsx
@@ -508,10 +550,21 @@ worldshop-client/
 │   │   ├── CheckoutFailure.tsx
 │   │   ├── CheckoutSuccess.tsx
 │   │   ├── Home.tsx
+│   │   ├── MockPayment.tsx
 │   │   ├── NotFound.tsx
 │   │   ├── ProductDetail.tsx
 │   │   ├── ProductListing.tsx
-│   │   └── SearchResults.tsx
+│   │   ├── SearchResults.tsx
+│   │   ├── Store.tsx
+│   │   └── vendor/           # Vendor pages
+│   │       ├── Dashboard.tsx
+│   │       ├── OrderDetail.tsx
+│   │       ├── Orders.tsx
+│   │       ├── ProductEdit.tsx
+│   │       ├── Products.tsx
+│   │       ├── Registration.tsx
+│   │       ├── Reviews.tsx
+│   │       └── Settings.tsx
 │   ├── router/                # Routing configuration
 │   │   └── index.tsx
 │   ├── services/              # API services
@@ -527,7 +580,8 @@ worldshop-client/
 │   │   ├── productService.ts
 │   │   ├── profileService.ts
 │   │   ├── reviewService.ts
-│   │   └── userService.ts
+│   │   ├── userService.ts
+│   │   └── vendorService.ts
 │   ├── store/                 # Zustand stores
 │   │   ├── authStore.ts
 │   │   ├── cartStore.ts
@@ -607,6 +661,27 @@ worldshop-client/
 | `/admin/orders/:id` | OrderDetail | Order processing | ✅ |
 | `/admin/categories` | Categories | Category management | ✅ |
 | `/admin/inventory` | Inventory | Stock management | ✅ |
+| `/admin/vendors` | Vendors | Vendor management | ✅ |
+| `/admin/vendors/:id` | VendorDetail | Vendor detail & status | ✅ |
+| `/admin/settings/commission` | Commission | Commission rate & report | ✅ |
+
+### Vendor Routes (Require Vendor Role)
+| Path | Component | Description | Status |
+|------|-----------|-------------|--------|
+| `/vendor/register` | Registration | Vendor registration form | ✅ |
+| `/vendor` | Dashboard | Vendor dashboard | ✅ |
+| `/vendor/products` | Products | Vendor product management | ✅ |
+| `/vendor/products/new` | ProductEdit | Create product | ✅ |
+| `/vendor/products/:id/edit` | ProductEdit | Edit product | ✅ |
+| `/vendor/orders` | Orders | Vendor order list | ✅ |
+| `/vendor/orders/:id` | OrderDetail | Vendor order detail | ✅ |
+| `/vendor/reviews` | Reviews | Customer reviews | ✅ |
+| `/vendor/settings` | Settings | Store settings | ✅ |
+
+### Store Routes (Public)
+| Path | Component | Description | Status |
+|------|-----------|-------------|--------|
+| `/store/:slug` | Store | Vendor storefront | ✅ |
 
 ### Error Routes
 | Path | Component | Description | Status |
@@ -618,27 +693,27 @@ worldshop-client/
 ## 🎯 Next Steps
 
 ### Immediate Priorities
-1. **Admin Order Management** — Order status updates, order processing workflow
-2. **Admin Inventory Management** — Stock adjustments, low-stock alerts UI
-3. **Admin Dashboard Enhancement** — Revenue charts, order trends, top products
+1. **Vendor Payout System** — Payout requests, admin approval, payment processing
+2. **Admin Order Management** — Order status updates, order processing workflow
+3. **Admin Inventory Management** — Stock adjustments, low-stock alerts UI
 
 ### Short Term (1-2 weeks)
+- Vendor product approval workflow (admin approve/reject with feedback)
 - Profile picture upload (Cloudflare R2)
 - Advanced search with backend (autocomplete, full-text)
 - Order tracking and shipping status
-- Review moderation (admin)
 
 ### Medium Term (2-4 weeks)
 - Discount codes / coupon system
+- Vendor analytics charts (revenue trends, top products)
 - Email notification preferences
 - Performance optimization (lazy loading, WebP images)
-- Product variants management (admin)
 
 ### Long Term (1-2 months)
 - Testing suite (Vitest + Playwright)
 - SEO and analytics
 - Production deployment + CI/CD
-- Multi-vendor support
+- Multi-currency support
 
 ---
 
@@ -660,6 +735,7 @@ worldshop-client/
 - **Digital Products** — Full digital product support: type selector, file upload, digital checkout, downloads page, delivery email (v0.19.0)
 - **R2 Signed URLs** — All images use presigned R2 URLs (auto-expiring)
 - **Hero slider** uses static data — `bannerApi` removed, no mock API dependency
+- **Marketplace** — Full multi-vendor marketplace system: vendor onboarding, product management, order fulfillment, store pages, multi-vendor checkout with mock payment, vendor dashboard/settings/reviews, admin vendor management & commission (v0.21.0–v0.26.0)
 - Remaining mock APIs: banners only (`mockApi`)
 - Media storage uses **Cloudflare R2** with presigned URLs
 - Next up: **Admin Order Management** → Admin Inventory → Dashboard Enhancement
@@ -684,4 +760,4 @@ When adding new features:
 
 **Status:** 🟢 Active Development  
 **Build Status:** ✅ Passing  
-**Last Build:** February 12, 2026
+**Last Build:** April 10, 2026

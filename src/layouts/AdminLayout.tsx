@@ -10,6 +10,7 @@ const navItems = [
   { path: '/admin/orders', label: 'Orders', icon: 'shopping_cart' },
   { path: '/admin/categories', label: 'Categories', icon: 'category' },
   { path: '/admin/inventory', label: 'Inventory', icon: 'warehouse' },
+  { path: '/admin/vendors', label: 'Vendors', icon: 'storefront' },
 ];
 
 export default function AdminLayout() {
