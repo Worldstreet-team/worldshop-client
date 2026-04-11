@@ -157,6 +157,91 @@
       margin: 0;
     }
   }
+
+  // Stat card content — spans need block display
+  .stat-card .stat-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .stat-label {
+      display: block;
+      color: $text-secondary;
+      font-size: $font-size-sm;
+      margin-bottom: $spacing-xs;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: $font-size-2xl;
+      font-weight: $font-weight-bold;
+      color: $text-primary;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  // Dashboard info bar (commission summary)
+  .dashboard-info-bar {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md $spacing-lg;
+    background-color: rgba($primary-color, 0.08);
+    border: 1px solid rgba($primary-color, 0.2);
+    border-radius: $radius-sm;
+    margin-bottom: $spacing-lg;
+    font-size: $font-size-sm;
+    color: $text-primary;
+
+    > .material-icons {
+      color: $primary-color;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+  }
+
+  // Quick links grid
+  .quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-md;
+
+    @include lg-down {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include sm-down {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .quick-link-card {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-lg;
+    background-color: $white;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+    text-decoration: none;
+    color: $text-primary;
+    font-weight: $font-weight-medium;
+    transition: border-color $transition-fast, box-shadow $transition-fast;
+
+    &:hover {
+      border-color: $primary-color;
+      box-shadow: 0 2px 8px rgba($primary-color, 0.1);
+      color: $primary-color;
+    }
+
+    .material-icons {
+      font-size: 24px;
+      color: $primary-dark;
+      flex-shrink: 0;
+    }
+  }
 }
 
 // ============================================
@@ -579,9 +664,21 @@
     }
   }
 
-  .image-url-input {
+  .image-upload-input {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    flex-wrap: wrap;
+
     .btn {
-      margin-top: $spacing-sm;
+      display: inline-flex;
+      align-items: center;
+      gap: $spacing-xs;
+    }
+
+    .upload-hint {
+      font-size: $font-size-sm;
+      color: $text-secondary;
     }
   }
 

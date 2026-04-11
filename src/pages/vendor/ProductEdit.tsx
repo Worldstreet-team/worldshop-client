@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { vendorService, type VendorCreateProductData } from '@/services/vendorService';
 import { categoryService } from '@/services/productService';
@@ -25,9 +25,9 @@ export default function VendorProductEdit() {
   const [tags, setTags] = useState('');
   const [images, setImages] = useState<ProductImage[]>([]);
 
-  // Image URL input
-  const [imageUrl, setImageUrl] = useState('');
-  const [imageAlt, setImageAlt] = useState('');
+  // File upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   // Variants
   const [variants, setVariants] = useState<{
@@ -81,21 +81,37 @@ export default function VendorProductEdit() {
       .finally(() => setLoading(false));
   }, [id, addToast, navigate]);
 
-  const addImage = () => {
-    if (!imageUrl.trim()) return;
-    const newImage: ProductImage = {
-      id: `temp-${Date.now()}`,
-      url: imageUrl.trim(),
-      alt: imageAlt.trim() || name,
-      isPrimary: images.length === 0,
-      sortOrder: images.length,
-    };
-    setImages((prev) => [...prev, newImage]);
-    setImageUrl('');
-    setImageAlt('');
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const results = await vendorService.uploadImages(Array.from(files));
+      const newImages: ProductImage[] = results.map((r, i) => ({
+        id: `upload-${Date.now()}-${i}`,
+        url: r.signedUrl,
+        alt: r.originalName,
+        isPrimary: images.length === 0 && i === 0,
+        sortOrder: images.length + i,
+        cloudflareId: r.key,
+      }));
+      setImages((prev) => [...prev, ...newImages]);
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to upload images' });
+    } finally {
+      setUploading(false);
+      // Reset file input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const removeImage = (index: number) => {
+    const removed = images[index];
+    // Clean up from R2 if it was uploaded
+    if (removed?.cloudflareId) {
+      vendorService.deleteImages([removed.cloudflareId]).catch(() => {});
+    }
     setImages((prev) => {
       const updated = prev.filter((_, i) => i !== index);
       // If we removed the primary, make first one primary
@@ -294,24 +310,29 @@ export default function VendorProductEdit() {
                 </div>
               )}
 
-              <div className="image-url-input">
-                <div className="form-row">
-                  <div className="form-group" style={{ flex: 2 }}>
-                    <label htmlFor="imageUrl">Image URL</label>
-                    <input id="imageUrl" type="url" placeholder="https://example.com/image.jpg"
-                      value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
-                  </div>
-                  <div className="form-group" style={{ flex: 1 }}>
-                    <label htmlFor="imageAlt">Alt Text</label>
-                    <input id="imageAlt" type="text" placeholder="Image description"
-                      value={imageAlt} onChange={(e) => setImageAlt(e.target.value)} />
-                  </div>
-                </div>
-                <button type="button" className="btn btn-secondary" onClick={addImage}
-                  disabled={!imageUrl.trim()}>
-                  <span className="material-icons">add_photo_alternate</span>
-                  Add Image
+              <div className="image-upload-input">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  multiple
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                  id="imageFileInput"
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <span className="material-icons">
+                    {uploading ? 'hourglass_empty' : 'cloud_upload'}
+                  </span>
+                  {uploading ? 'Uploading...' : 'Upload Images'}
                 </button>
+                <span className="upload-hint">JPEG, PNG, WebP or GIF — max 5 MB each, up to 10 files</span>
               </div>
             </section>
 
