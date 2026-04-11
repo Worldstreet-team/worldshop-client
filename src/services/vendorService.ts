@@ -1,4 +1,4 @@
-import { api } from './api';
+import apiClient, { api } from './api';
 import type { ApiResponse, PaginatedResponse, Pagination } from '@/types/common.types';
 import type { UserProfile } from '@/types/user.types';
 import type { Product } from '@/types/product.types';
@@ -213,7 +213,7 @@ export const vendorService = {
   uploadImages: async (files: File[], folder = 'products'): Promise<UploadResult[]> => {
     const formData = new FormData();
     files.forEach((file) => formData.append('images', file));
-    const res = await api.post<{ success: boolean; data: UploadResult[] }>(
+    const res = await apiClient.post<{ success: boolean; data: UploadResult[] }>(
       `/vendor/upload/images?folder=${folder}`,
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
@@ -223,14 +223,14 @@ export const vendorService = {
 
   /** DELETE /vendor/upload/images — delete images from R2 */
   deleteImages: async (keys: string[]): Promise<void> => {
-    await api.delete('/vendor/upload/images', { data: { keys } });
+    await apiClient.delete('/vendor/upload/images', { data: { keys } });
   },
 
   /** POST /vendor/upload/digital-files — upload digital product files */
   uploadDigitalFiles: async (files: File[]): Promise<UploadResult[]> => {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
-    const res = await api.post<{ success: boolean; data: UploadResult[] }>(
+    const res = await apiClient.post<{ success: boolean; data: UploadResult[] }>(
       '/vendor/upload/digital-files',
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },

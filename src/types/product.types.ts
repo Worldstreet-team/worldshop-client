@@ -4,6 +4,7 @@ export interface ProductImage {
   alt: string;
   isPrimary: boolean;
   sortOrder: number;
+  cloudflareId?: string;
 }
 
 export interface ProductVariant {
