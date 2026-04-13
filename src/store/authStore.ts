@@ -88,7 +88,14 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           try {
             await useCartStore.getState().mergeGuestCart();
             await useCartStore.getState().fetchCart();
-          } catch { /* silent */ }
+          } catch (mergeErr) {
+            console.error('Failed to merge guest cart:', mergeErr);
+            // Still fetch user's existing cart even if merge failed
+            try {
+              await useCartStore.getState().fetchCart();
+            } catch { /* cart will be empty */ }
+            set({ error: 'Some items from your guest cart could not be transferred. Please re-add them.' });
+          }
         } catch (error) {
           console.error('Failed to sync user profile:', error);
           set({

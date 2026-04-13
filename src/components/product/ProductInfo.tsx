@@ -103,7 +103,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
     } else {
       // Fallback: copy to clipboard
       await navigator.clipboard.writeText(window.location.href);
-      // TODO: Show toast notification
+      toast.success('Link copied to clipboard');
     }
   };
 

@@ -56,11 +56,20 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    // Handle 401 — Clerk session expired, redirect to login
-    if (error.response?.status === 401) {
-      // Clerk handles token refresh automatically.
-      // If we still get 401, the session is truly expired.
-      // Don't auto-redirect — let the UI handle it gracefully.
+    // W5 FIX: On 401, attempt one token refresh before giving up
+    if (error.response?.status === 401 && error.config && !(error.config as any)._retried) {
+      (error.config as any)._retried = true;
+      if (clerkGetToken) {
+        try {
+          const freshToken = await clerkGetToken();
+          if (freshToken) {
+            error.config.headers.Authorization = `Bearer ${freshToken}`;
+            return apiClient.request(error.config);
+          }
+        } catch {
+          // Token refresh failed — fall through to rejection
+        }
+      }
       return Promise.reject(new Error('Session expired. Please log in again.'));
     }
 

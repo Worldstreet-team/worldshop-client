@@ -10,11 +10,13 @@ export default function VendorDashboard() {
   const [analytics, setAnalytics] = useState<VendorAnalytics | null>(null);
   const [balance, setBalance] = useState<VendorBalanceSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const addToast = useUIStore((s) => s.addToast);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      setError(null);
       try {
         const [analyticsRes, balanceRes] = await Promise.all([
           vendorService.getAnalytics(),
@@ -23,7 +25,9 @@ export default function VendorDashboard() {
         setAnalytics(analyticsRes.data);
         setBalance(balanceRes.data);
       } catch (err: any) {
-        addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load dashboard' });
+        const msg = err.response?.data?.message || 'Failed to load dashboard';
+        setError(msg);
+        addToast({ type: 'error', message: msg });
       } finally {
         setLoading(false);
       }
@@ -44,6 +48,37 @@ export default function VendorDashboard() {
               <div className="skeleton-row" style={{ height: 32, width: '40%', marginTop: 8 }} />
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="vendor-dashboard">
+        <div className="dashboard-header">
+          <h1>Dashboard</h1>
+        </div>
+        <div style={{
+          textAlign: 'center',
+          padding: '3rem 1rem',
+          color: '#666',
+        }}>
+          <span className="material-icons" style={{ fontSize: '3rem', color: '#dc3545', display: 'block', marginBottom: '1rem' }}>error_outline</span>
+          <p style={{ marginBottom: '1rem' }}>{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: '0.5rem 1.5rem',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+            }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

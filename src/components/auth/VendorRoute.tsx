@@ -95,5 +95,25 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     );
   }
 
+  // Vendor is suspended — show read-only banner
+  if (user.vendorStatus === 'SUSPENDED') {
+    return (
+      <div>
+        <div style={{
+          backgroundColor: '#fff3cd',
+          borderBottom: '1px solid #ffc107',
+          padding: '0.75rem 1.5rem',
+          textAlign: 'center',
+          color: '#856404',
+          fontSize: '0.95rem',
+          fontWeight: 500,
+        }}>
+          Your vendor account is suspended. You have read-only access. Please contact support for more information.
+        </div>
+        {children}
+      </div>
+    );
+  }
+
   return <>{children}</>;
 }

@@ -60,6 +60,35 @@ export default function OrderHistoryPage() {
     return orders.filter((o) => o.status === activeFilter);
   }, [orders, activeFilter]);
 
+  // W10 FIX: Group orders by checkoutSessionId for display
+  const groupedOrders = useMemo(() => {
+    const groups: { sessionId: string | null; orders: Order[] }[] = [];
+    const sessionMap = new Map<string, Order[]>();
+    const ungrouped: Order[] = [];
+
+    for (const order of filteredOrders) {
+      if (order.checkoutSessionId) {
+        const existing = sessionMap.get(order.checkoutSessionId);
+        if (existing) {
+          existing.push(order);
+        } else {
+          sessionMap.set(order.checkoutSessionId, [order]);
+        }
+      } else {
+        ungrouped.push(order);
+      }
+    }
+
+    for (const [sessionId, sessionOrders] of sessionMap) {
+      groups.push({ sessionId, orders: sessionOrders });
+    }
+    for (const order of ungrouped) {
+      groups.push({ sessionId: null, orders: [order] });
+    }
+
+    return groups;
+  }, [filteredOrders]);
+
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-NG', {
       year: 'numeric',
@@ -207,9 +236,26 @@ export default function OrderHistoryPage() {
           <>
             <div className="results-summary">
               Showing {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
+              {groupedOrders.length !== filteredOrders.length && (
+                <> across {groupedOrders.length} checkout{groupedOrders.length !== 1 ? 's' : ''}</>
+              )}
             </div>
             <div className="orders-list">
-              {filteredOrders.map((order) => (
+              {groupedOrders.map((group) => (
+                <div key={group.sessionId || group.orders[0].id} className={group.orders.length > 1 ? 'order-group' : ''}>
+                  {group.orders.length > 1 && (
+                    <div className="order-group-header" style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px 8px 0 0',
+                      borderBottom: '1px solid #e9ecef',
+                      fontSize: '0.85rem',
+                      color: '#666',
+                    }}>
+                      Checkout with {group.orders.length} vendor orders
+                    </div>
+                  )}
+                  {group.orders.map((order) => (
                 <div key={order.id} className="order-card">
                   {/* Header: order number, date, status */}
                   <div className="order-card-header">
@@ -260,6 +306,8 @@ export default function OrderHistoryPage() {
                     </Link>
                   </div>
                 </div>
+              ))}
+              </div>
               ))}
             </div>
           </>

@@ -55,6 +55,7 @@ export default function CheckoutPage() {
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
+  const [saveNewAddress, setSaveNewAddress] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -92,7 +93,9 @@ export default function CheckoutPage() {
           setSelectedAddressId(defaultAddr.id);
         }
       })
-      .catch(() => { /* silently ignore */ })
+      .catch(() => {
+        addToast({ message: 'Failed to load saved addresses', type: 'error' });
+      })
       .finally(() => setIsLoadingAddresses(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
@@ -135,6 +138,7 @@ export default function CheckoutPage() {
 
   const handleUseNewAddress = () => {
     setSelectedAddressId(null);
+    setSaveNewAddress(false);
     setShipping({ ...initialShipping, email: shipping.email });
   };
 
@@ -185,6 +189,25 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
+      // W7 FIX: Save new address to address book if requested
+      if (saveNewAddress && !selectedAddressId && preview?.requiresShipping) {
+        try {
+          await addressService.createAddress({
+            firstName: shipping.firstName,
+            lastName: shipping.lastName,
+            phone: shipping.phone,
+            street: shipping.street,
+            apartment: shipping.apartment || undefined,
+            city: shipping.city,
+            state: shipping.state,
+            country: shipping.country,
+            postalCode: shipping.postalCode || undefined,
+          });
+        } catch {
+          // Non-blocking — address save failure shouldn't block checkout
+        }
+      }
+
       // 1. Confirm checkout session
       let result: CheckoutSessionResult;
       try {
@@ -204,12 +227,13 @@ export default function CheckoutPage() {
         });
         result = confirmRes.data;
       } catch (error) {
-        const status = (error as { status?: number })?.status;
+        const status = (error as { statusCode?: number })?.statusCode ?? (error as { status?: number })?.status;
         if (status === 409) {
-          // Cart changed — reload preview
-          addToast({ message: 'Your cart has changed. Please review again.', type: 'warning' });
-          await loadPreview();
+          // W8 FIX: Auto-reload preview and cart on 409 conflict
+          addToast({ message: 'Your cart has changed. Refreshing...', type: 'warning' });
           await fetchCart();
+          await loadPreview();
+          setStep(preview?.requiresShipping ? 1 : 2);
           return;
         }
         throw error;
@@ -284,6 +308,18 @@ export default function CheckoutPage() {
                 </li>
               ))}
             </ul>
+            <Link to="/cart" className="btn-return-cart" style={{
+              display: 'inline-block',
+              marginTop: '1rem',
+              padding: '0.5rem 1.5rem',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              textDecoration: 'none',
+              borderRadius: '4px',
+              fontSize: '0.9rem',
+            }}>
+              Return to Cart to Fix Issues
+            </Link>
           </div>
         )}
 
