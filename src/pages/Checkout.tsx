@@ -201,7 +201,7 @@ export default function CheckoutPage() {
             city: shipping.city,
             state: shipping.state,
             country: shipping.country,
-            postalCode: shipping.postalCode || undefined,
+            postalCode: shipping.postalCode,
           });
         } catch {
           // Non-blocking — address save failure shouldn't block checkout
