@@ -276,7 +276,7 @@ export class VoiceAgentCore {
     const blob = new Blob([workletCode], { type: 'application/javascript' });
     const url = URL.createObjectURL(blob);
 
-    await this.audioContext.addModule(url);
+    await (this.audioContext.audioWorklet as AudioWorklet).addModule(url);
     URL.revokeObjectURL(url);
 
     this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
