@@ -24,3 +24,5 @@ export { default as RatingStars } from './RatingStars';
 
 export { default as Badge, StatusBadge, SaleBadge, NewBadge } from './Badge';
 export { default as EmptyState } from './EmptyState';
+
+export { default as VoiceButton } from './VoiceButton';

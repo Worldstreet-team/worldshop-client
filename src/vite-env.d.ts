@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_ENABLE_WISHLIST: string;
   readonly VITE_DEFAULT_PAGE_SIZE: string;
   readonly VITE_PLACEHOLDER_IMAGE: string;
+  readonly VITE_OPENAI_API_KEY: string;
 }
 
 interface ImportMeta {
