@@ -23,11 +23,18 @@ export default function VendorProductEdit() {
   const [basePrice, setBasePrice] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [tags, setTags] = useState('');
+  const [productType, setProductType] = useState<'PHYSICAL' | 'DIGITAL'>('DIGITAL');
+  const [stock, setStock] = useState('0');
   const [images, setImages] = useState<ProductImage[]>([]);
 
   // File upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+
+  // Digital file state
+  const digitalFileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingDigital, setUploadingDigital] = useState(false);
+  const [digitalAssets, setDigitalAssets] = useState<{ id: string; fileName: string; mimeType: string; fileSize: number }[]>([]);
 
   // Variants
   const [variants, setVariants] = useState<{
@@ -61,6 +68,8 @@ export default function VendorProductEdit() {
         setBasePrice(String(product.basePrice));
         setSalePrice(product.salePrice ? String(product.salePrice) : '');
         setTags(product.tags?.join(', ') || '');
+        setProductType(product.type === 'PHYSICAL' ? 'PHYSICAL' : 'DIGITAL');
+        setStock(product.type === 'PHYSICAL' ? String(product.stock ?? 0) : '0');
         setImages(Array.isArray(product.images) ? product.images : []);
         setApprovalStatus(product.approvalStatus || '');
         if (product.variants?.length) {
@@ -72,6 +81,10 @@ export default function VendorProductEdit() {
             stock: v.stock,
             isActive: true,
           })));
+        }
+        // Load digital assets for digital products
+        if (product.type === 'DIGITAL') {
+          loadDigitalAssets(id);
         }
       })
       .catch((err: any) => {
@@ -148,6 +161,48 @@ export default function VendorProductEdit() {
     setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Digital file helpers
+  const loadDigitalAssets = async (productId: string) => {
+    try {
+      const res = await vendorService.getDigitalAssets(productId);
+      setDigitalAssets(res.data || []);
+    } catch { /* ignore */ }
+  };
+
+  const handleDigitalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !id) return;
+
+    setUploadingDigital(true);
+    try {
+      const uploaded = await vendorService.uploadDigitalFiles(Array.from(files));
+      const attachData = uploaded.map((u) => ({
+        key: u.key,
+        fileName: u.originalName,
+        mimeType: u.mimeType,
+        fileSize: u.size,
+      }));
+      await vendorService.attachDigitalAssets(id, attachData);
+      await loadDigitalAssets(id);
+      addToast({ type: 'success', message: `${uploaded.length} digital file(s) attached.` });
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to upload digital files' });
+    } finally {
+      setUploadingDigital(false);
+      if (digitalFileInputRef.current) digitalFileInputRef.current.value = '';
+    }
+  };
+
+  const removeDigitalAsset = async (assetId: string) => {
+    try {
+      await vendorService.deleteDigitalAsset(assetId);
+      setDigitalAssets((prev) => prev.filter((a) => a.id !== assetId));
+      addToast({ type: 'success', message: 'Digital file removed.' });
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to delete digital file' });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !description.trim() || !basePrice) {
@@ -161,6 +216,8 @@ export default function VendorProductEdit() {
       description: description.trim(),
       shortDesc: shortDesc.trim() || undefined,
       categoryId: categoryId || null,
+      type: productType,
+      stock: productType === 'PHYSICAL' ? parseInt(stock) || 0 : undefined,
       basePrice: parseFloat(basePrice),
       salePrice: salePrice ? parseFloat(salePrice) : null,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -183,7 +240,7 @@ export default function VendorProductEdit() {
         addToast({ type: 'success', message: 'Product updated successfully.' });
       } else {
         await vendorService.createProduct(data);
-        addToast({ type: 'success', message: 'Product created! It will be reviewed before appearing in the store.' });
+        addToast({ type: 'success', message: 'Product created successfully!' });
       }
       navigate('/vendor/products');
     } catch (err: any) {
@@ -268,6 +325,27 @@ export default function VendorProductEdit() {
               </div>
             </section>
 
+            {/* Product Type */}
+            <section className="form-section">
+              <h2>Product Type</h2>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="productType">Type *</label>
+                  <select id="productType" value={productType} onChange={(e) => setProductType(e.target.value as 'PHYSICAL' | 'DIGITAL')}>
+                    <option value="DIGITAL">Digital Product</option>
+                    <option value="PHYSICAL">Physical Product</option>
+                  </select>
+                </div>
+                {productType === 'PHYSICAL' && (
+                  <div className="form-group">
+                    <label htmlFor="stock">Stock Quantity *</label>
+                    <input id="stock" type="number" min="0" step="1" placeholder="0"
+                      value={stock} onChange={(e) => setStock(e.target.value)} required />
+                  </div>
+                )}
+              </div>
+            </section>
+
             {/* Pricing */}
             <section className="form-section">
               <h2>Pricing</h2>
@@ -335,6 +413,56 @@ export default function VendorProductEdit() {
                 <span className="upload-hint">JPEG, PNG, WebP or GIF — max 5 MB each, up to 10 files</span>
               </div>
             </section>
+
+            {/* Digital Files (only for DIGITAL products, only when editing) */}
+            {productType === 'DIGITAL' && isEditing && id && (
+              <section className="form-section">
+                <h2>Digital Files</h2>
+                <p className="text-muted">Upload the downloadable files customers will receive after purchase.</p>
+
+                {digitalAssets.length > 0 && (
+                  <div className="digital-assets-list">
+                    {digitalAssets.map((asset) => (
+                      <div key={asset.id} className="digital-asset-item">
+                        <div className="digital-asset-info">
+                          <span className="material-icons">description</span>
+                          <span className="file-name">{asset.fileName}</span>
+                          <span className="file-size">({(asset.fileSize / 1024).toFixed(1)} KB)</span>
+                        </div>
+                        <button type="button" className="btn-icon-sm btn-icon-danger"
+                          onClick={() => removeDigitalAsset(asset.id)} title="Remove file">
+                          <span className="material-icons">close</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="image-upload-input">
+                  <input
+                    ref={digitalFileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleDigitalFileUpload}
+                    disabled={uploadingDigital}
+                    style={{ display: 'none' }}
+                    id="digitalFileInput"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => digitalFileInputRef.current?.click()}
+                    disabled={uploadingDigital}
+                  >
+                    <span className="material-icons">
+                      {uploadingDigital ? 'hourglass_empty' : 'attach_file'}
+                    </span>
+                    {uploadingDigital ? 'Uploading...' : 'Upload Digital Files'}
+                  </button>
+                  <span className="upload-hint">PDF, ZIP, or any downloadable file — max 50 MB each</span>
+                </div>
+              </section>
+            )}
 
             {/* Variants */}
             <section className="form-section">
