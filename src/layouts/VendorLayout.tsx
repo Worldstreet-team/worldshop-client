@@ -12,6 +12,14 @@ const navItems = [
   { path: '/vendor/settings', label: 'Store Settings', icon: 'settings' },
 ];
 
+const ecosystemLinks = [
+  { href: 'https://dashboard.worldstreetgold.com', label: 'Dashboard', icon: 'dashboard' },
+  { href: 'https://academy.worldstreetgold.com', label: 'Academy', icon: 'school' },
+  { href: 'https://social.worldstreetgold.com', label: 'Social', icon: 'groups' },
+  { href: 'https://xtreme.worldstreetgold.com', label: 'Xtreme', icon: 'bolt' },
+  { href: 'https://trader.worldstreetgold.com', label: 'Trader', icon: 'trending_up' },
+];
+
 export default function VendorLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, logout } = useAuthStore();
@@ -54,6 +62,24 @@ export default function VendorLayout() {
               <span className="material-icons">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
             </NavLink>
+          ))}
+        </nav>
+
+        <div className="sidebar-section-label">
+          <span className="nav-label">WorldStreet Ecosystem</span>
+        </div>
+        <nav className="sidebar-nav">
+          {ecosystemLinks.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sidebar-nav-item"
+            >
+              <span className="material-icons">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </a>
           ))}
         </nav>
 
