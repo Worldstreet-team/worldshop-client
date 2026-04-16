@@ -196,6 +196,33 @@ export default function VendorDashboard() {
           </Link>
         </div>
       </section>
+
+      {/* WorldStreet Ecosystem */}
+      <section className="dashboard-section">
+        <h2>WorldStreet Ecosystem</h2>
+        <div className="quick-links-grid">
+          <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer" className="quick-link-card">
+            <span className="material-icons">dashboard</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="https://academy.worldstreetgold.com" target="_blank" rel="noopener noreferrer" className="quick-link-card">
+            <span className="material-icons">school</span>
+            <span>Academy</span>
+          </a>
+          <a href="https://social.worldstreetgold.com" target="_blank" rel="noopener noreferrer" className="quick-link-card">
+            <span className="material-icons">groups</span>
+            <span>Social</span>
+          </a>
+          <a href="https://xtreme.worldstreetgold.com" target="_blank" rel="noopener noreferrer" className="quick-link-card">
+            <span className="material-icons">bolt</span>
+            <span>Xtreme</span>
+          </a>
+          <a href="https://trader.worldstreetgold.com" target="_blank" rel="noopener noreferrer" className="quick-link-card">
+            <span className="material-icons">trending_up</span>
+            <span>Trader</span>
+          </a>
+        </div>
+      </section>
     </div>
   );
 }

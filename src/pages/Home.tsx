@@ -232,11 +232,16 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
-              {isLoadingProducts || !dealProduct ? (
+              {isLoadingProducts ? (
                 <div style={{ padding: '1rem' }}>
                   <Skeleton width="100%" height={240} />
                   <div style={{ marginTop: '1rem' }}><Skeleton width="80%" height={16} /></div>
                   <div style={{ marginTop: '0.5rem' }}><Skeleton width={120} height={24} /></div>
+                </div>
+              ) : !dealProduct ? (
+                <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#999' }}>
+                  <p>No special offers right now.</p>
+                  <Link to="/products" style={{ color: '#007bff', marginTop: '0.5rem', display: 'inline-block' }}>Browse all products</Link>
                 </div>
               ) : (
                 <>
