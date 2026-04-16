@@ -1,0 +1,4 @@
+[phases.setup]
+# Skip apt-get (avoids transient mirror hash mismatches)
+# curl/wget already available via Nix packages
+aptPkgs = []
