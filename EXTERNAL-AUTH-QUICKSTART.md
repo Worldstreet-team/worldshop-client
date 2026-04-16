@@ -8,7 +8,7 @@ The WorldShop client has been updated to integrate with an external authenticati
 
 ### Files Added
 
-1. **`src/utils/cookies.ts`** - Cookie management utilities
+1. **`src/utils/cookies.ts`** - Cookie management utilitiess
 2. **`src/services/externalAuthService.ts`** - External auth API client
 3. **`src/hooks/useAuth.ts`** - Convenient auth hooks
 4. **`EXTERNAL-AUTH-INTEGRATION.md`** - Comprehensive documentation
