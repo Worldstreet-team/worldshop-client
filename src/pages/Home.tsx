@@ -78,9 +78,11 @@ const heroSlides = [
 export default function HomePage() {
   // State
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [currentBanner, setCurrentBanner] = useState(0);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingAllProducts, setIsLoadingAllProducts] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [activeTab, setActiveTab] = useState<'featured' | 'on-sale' | 'top-rated'>('featured');
   const sliderInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -99,17 +101,26 @@ export default function HomePage() {
     const fetchData = async () => {
       try {
         setIsLoadingProducts(true);
-        const productsData = await productService.getFeaturedProducts();
+        setIsLoadingAllProducts(true);
+
+        const [productsData, allProductsData, categoriesData] = await Promise.all([
+          productService.getFeaturedProducts(),
+          productService.getProducts({ limit: 50 }),
+          categoryService.getFeaturedCategories(),
+        ]);
+
         setFeaturedProducts(productsData);
         setIsLoadingProducts(false);
 
-        setIsLoadingCategories(true);
-        const categoriesData = await categoryService.getFeaturedCategories();
+        setAllProducts(allProductsData.data);
+        setIsLoadingAllProducts(false);
+
         setCategories(categoriesData);
         setIsLoadingCategories(false);
       } catch (error) {
         console.error('Error fetching home data:', error);
         setIsLoadingProducts(false);
+        setIsLoadingAllProducts(false);
         setIsLoadingCategories(false);
       }
     };
@@ -359,20 +370,23 @@ export default function HomePage() {
         </Link>
       </section>
 
-      {/* ====== FEATURED PRODUCTS GRID ====== */}
+      {/* ====== ALL PRODUCTS GRID ====== */}
       <section className="featured-section">
         <div className="container">
           <div className="section-header">
-            <h2>Featured Products</h2>
-            <Link to="/shop?featured=true" className="view-all-link">
+            <h2>All Products</h2>
+            <Link to="/shop" className="view-all-link">
               View All
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
           </div>
           <div className="products-grid">
-            {isLoadingProducts
+            {isLoadingAllProducts
               ? Array.from({ length: 8 }).map((_, i) => <SkeletonProductCard key={i} />)
-              : featuredProducts.slice(0, 8).map(product => <ProductCard key={product.id} product={product} />)}
+              : allProducts.map(product => <ProductCard key={product.id} product={product} />)}
+            {!isLoadingAllProducts && allProducts.length === 0 && (
+              <p className="no-products-msg">No products available yet.</p>
+            )}
           </div>
         </div>
       </section>

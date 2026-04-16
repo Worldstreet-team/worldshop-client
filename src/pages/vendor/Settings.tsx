@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { vendorService, type RegisterVendorRequest } from '@/services/vendorService';
 import { useUIStore } from '@/store/uiStore';
@@ -11,6 +11,19 @@ export default function VendorSettings() {
   const [storeDescription, setStoreDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const fullStoreUrl = user?.storeSlug
+    ? `https://shop.worldstreetgold.com/store/${user.storeSlug}`
+    : '';
+
+  const handleCopyUrl = useCallback(() => {
+    if (!fullStoreUrl) return;
+    navigator.clipboard.writeText(fullStoreUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [fullStoreUrl]);
 
   useEffect(() => {
     vendorService.getProfile()
@@ -93,9 +106,27 @@ export default function VendorSettings() {
           {user?.storeSlug && (
             <div className="form-group">
               <label>Store URL</label>
-              <div className="store-url-preview">
-                <span className="url-prefix">/store/</span>
-                <span className="url-slug">{user.storeSlug}</span>
+              <div className="store-url-preview" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="url-full" style={{ wordBreak: 'break-all' }}>{fullStoreUrl}</span>
+                <button
+                  type="button"
+                  onClick={handleCopyUrl}
+                  style={{
+                    flexShrink: 0,
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.8rem',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    background: copied ? '#d4edda' : '#f8f9fa',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                  }}
+                >
+                  <span className="material-icons" style={{ fontSize: '1rem' }}>{copied ? 'check' : 'content_copy'}</span>
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
               </div>
               <small className="text-muted">Your store slug is generated from your store name and cannot be changed directly.</small>
             </div>
