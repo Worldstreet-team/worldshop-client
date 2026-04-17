@@ -43,7 +43,8 @@ export default function MobileMenu() {
       <div className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="mobile-menu-header">
           <Link to="/" onClick={closeMobileMenu} className="mobile-menu-brand">
-            <img src="/images/logo-wordmark-dark.svg" alt="WorldStreet" className="mobile-menu-logo" height="32" />
+            <img src="/images/worldstreet-mark.png" alt="WorldStreet" className="mobile-menu-logo" width="32" height="32" />
+            <span className="mobile-menu-brand-text">WorldStreet<span className="logo-dot">.</span></span>
           </Link>
           <button
             className="close-btn"

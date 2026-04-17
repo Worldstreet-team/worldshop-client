@@ -30,7 +30,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className="admin-sidebar">
         <div className="sidebar-header">
-          <img src="/images/logo-wordmark-light.svg" alt="WorldStreet Admin" className="sidebar-logo" />
+          <img src="/images/worldstreet-mark.png" alt="WorldStreet Admin" className="sidebar-logo" />
           <button
             className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

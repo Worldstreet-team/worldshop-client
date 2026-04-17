@@ -92,6 +92,10 @@
     color: $secondary-color;
     letter-spacing: -0.02em;
 
+    .logo-dot {
+      color: $primary-color;
+    }
+
     @include sm-down {
       display: none;
     }
