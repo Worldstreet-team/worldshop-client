@@ -76,13 +76,11 @@ export default function Footer() {
             <div className="footer-column footer-column-brand">
               <Link to="/" className="footer-logo">
                 <img
-                  src="/images/logo-light.svg"
+                  src="/images/logo-wordmark-light.svg"
                   alt="WorldStreet"
-                  className="footer-logo-icon"
-                  width="32"
-                  height="32"
+                  className="footer-logo-wordmark"
+                  height="36"
                 />
-                <span className="logo-text">WorldStreet</span>
               </Link>
               <p className="footer-about">
                 Your one-stop destination for quality products at competitive prices.

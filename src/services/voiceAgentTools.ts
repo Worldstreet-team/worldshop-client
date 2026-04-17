@@ -1,3 +1,4 @@
+import { productService } from './productService';
 import type { VoiceToolDefinition, VoiceToolHandler } from './voiceAgent';
 
 // ── Navigation Map ──────────────────────────────────────────────
@@ -31,6 +32,26 @@ const NAVIGATION_MAP: Record<string, string> = {
 export const voiceToolDefinitions: VoiceToolDefinition[] = [
   {
     type: 'function',
+    name: 'search_products',
+    description:
+      'Search the product catalog when the user asks to find, search for, or show a product. Use this immediately for product search requests.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'The product name or keywords to search for.',
+        },
+        limit: {
+          type: 'number',
+          description: 'Optional maximum number of products to fetch. Default is 5.',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    type: 'function',
     name: 'navigate_to',
     description:
       'Navigate the user to a specific page on the website. Use this when the user asks to go to a page like "go to my cart", "take me home", "show me categories", etc.',
@@ -58,6 +79,29 @@ type NavigateFn = (path: string) => void;
  */
 export function createVoiceToolHandlers(navigate: NavigateFn): Record<string, VoiceToolHandler> {
   return {
+    search_products: async (args) => {
+      const query = (args.query as string | undefined)?.trim();
+      const parsedLimit = Number(args.limit);
+      const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 10) : 5;
+
+      if (!query) {
+        return 'Please provide a product name or keyword to search for.';
+      }
+
+      const products = await productService.searchProducts(query, limit);
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+
+      if (products.length === 0) {
+        return `I searched for "${query}" and found no matching products. I opened the search results page for you.`;
+      }
+
+      const preview = products
+        .slice(0, 3)
+        .map((product) => `${product.name} (${product.basePrice.toLocaleString('en-NG')} naira)`)
+        .join(', ');
+
+      return `I found ${products.length} product${products.length === 1 ? '' : 's'} for "${query}" and opened the search results page. Top matches: ${preview}.`;
+    },
     navigate_to: async (args) => {
       const page = (args.page as string)?.toLowerCase().trim();
       const route = NAVIGATION_MAP[page];

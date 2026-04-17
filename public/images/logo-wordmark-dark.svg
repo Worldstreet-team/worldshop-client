@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" role="img" aria-label="WorldStreet">
+  <!-- Icon -->
+  <rect x="6" y="10" width="100" height="100" rx="18" fill="#FED700"/>
+  <polygon points="22,30 46,90 60,34" fill="#111111"/>
+  <polygon points="52,34 66,90 90,30" fill="#111111"/>
+  <!-- Wordmark -->
+  <g font-family="Inter, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="64" letter-spacing="-1">
+    <text x="126" y="82" fill="#111111">WorldStreet</text>
+    <text x="408" y="82" fill="#FED700">.</text>
+  </g>
+</svg>

@@ -7,7 +7,7 @@ export default function AuthLayout() {
       <div className="auth-container">
         <div className="auth-header">
           <Link to="/" className="auth-logo">
-            <img src="/logo.svg" alt="WorldStreet" />
+            <img src="/images/logo-wordmark-dark.svg" alt="WorldStreet" height="40" />
           </Link>
         </div>
         

@@ -94,13 +94,11 @@ export default function Header() {
           <div className="header-logo-group">
             <Link to="/" className="header-logo">
               <img
-                src="/images/logo-dark.svg"
+                src="/images/logo-wordmark-dark.svg"
                 alt="WorldStreet"
-                className="logo-icon"
-                width="36"
+                className="logo-wordmark"
                 height="36"
               />
-              <span className="logo-text">WorldStreet</span>
             </Link>
             <button
               className="mobile-menu-toggle"
