@@ -188,6 +188,7 @@ export default function ProductGallery({
               <img
                 src={image.url}
                 alt={image.alt || `${productName} thumbnail ${index + 1}`}
+                loading="lazy"
               />
             </button>
           ))}
@@ -265,6 +266,7 @@ export default function ProductGallery({
                   <img
                     src={image.url}
                     alt={image.alt || `Thumbnail ${index + 1}`}
+                    loading="lazy"
                   />
                 </button>
               ))}

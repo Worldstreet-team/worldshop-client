@@ -35,25 +35,23 @@ export default function ProductDetailPage() {
         const data = await productService.getProductBySlug(slug);
         setProduct(data);
 
-        // Fetch related products
         if (data) {
           setRelatedLoading(true);
-          const related = await productService.getRelatedProducts(data.id, 8);
-          setRelatedProducts(related);
-          setRelatedLoading(false);
-
-          // Fetch review summary and reviews
           try {
-            const [summary, reviewsResult] = await Promise.all([
+            const [related, summary, reviewsResult] = await Promise.all([
+              productService.getRelatedProducts(data.id, 8),
               reviewService.getSummary(data.id),
               reviewService.getProductReviews(data.id, { sortBy: 'newest' }, 1, 10),
             ]);
+            setRelatedProducts(related);
             setReviewSummary(summary);
             setReviews(reviewsResult.data);
           } catch {
-            // Reviews may fail if none exist yet — use defaults
+            setRelatedProducts([]);
             setReviewSummary({ averageRating: 0, totalCount: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
             setReviews([]);
+          } finally {
+            setRelatedLoading(false);
           }
         }
       } catch (error) {
