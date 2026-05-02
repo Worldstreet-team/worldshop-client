@@ -18,16 +18,17 @@ export default function ProductListingPage() {
   const productCache = useProductCacheStore();
   const categoryStore = useCategoryStore();
 
-  // State
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState(categoryStore.categories);
-  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 1000 });
-  const [isLoading, setIsLoading] = useState(true);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const sortMap: Record<SortOption, string> = {
+    newest: 'newest',
+    popularity: 'rating',
+    rating: 'rating',
+    'price-asc': 'price_asc',
+    'price-desc': 'price_desc',
+    'name-asc': 'name_asc',
+    'name-desc': 'name_desc',
+  };
 
-  // Parse URL params
+  // Parse URL params first
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   const currentSort = (searchParams.get('sort') || 'newest') as SortOption;
   const selectedCategory = searchParams.get('category') || '';
@@ -35,6 +36,28 @@ export default function ProductListingPage() {
   const maxPrice = searchParams.has('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
   const searchQuery = searchParams.get('q') || '';
   const inStock = searchParams.get('inStock') === 'true';
+
+  // Stale-while-revalidate: seed from cache if available
+  const listFilters: ProductFiltersType = {
+    categoryId: selectedCategory || undefined,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
+    search: searchQuery || undefined,
+    inStock: inStock || undefined,
+    sortBy: sortMap[currentSort] as ProductFiltersType['sortBy'],
+    page: currentPage,
+    limit: 12,
+  };
+  const listKey = JSON.stringify(listFilters, Object.keys(listFilters).sort());
+  const cachedList = useProductCacheStore.getState().productLists[listKey];
+
+  const [products, setProducts] = useState<Product[]>(cachedList?.data.data ?? []);
+  const [totalProducts, setTotalProducts] = useState(cachedList?.data.pagination.total ?? 0);
+  const [totalPages, setTotalPages] = useState(cachedList?.data.pagination.totalPages ?? 1);
+  const [isLoading, setIsLoading] = useState(!cachedList);
+  const [categories, setCategories] = useState(categoryStore.categories);
+  const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 1000 });
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Create filters object for ProductFilters component
   const filters: ProductFiltersType = {
@@ -73,17 +96,6 @@ export default function ProductListingPage() {
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Map sort option to API format
-      const sortMap: Record<SortOption, string> = {
-        'newest': 'newest',
-        'popularity': 'rating',
-        'rating': 'rating',
-        'price-asc': 'price_asc',
-        'price-desc': 'price_desc',
-        'name-asc': 'name_asc',
-        'name-desc': 'name_desc',
-      };
-
       const result = await productCache.getProducts({
         categoryId: selectedCategory || undefined,
         minPrice: minPrice,

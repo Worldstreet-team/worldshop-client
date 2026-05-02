@@ -17,21 +17,25 @@ export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const productCache = useProductCacheStore();
 
-  // State
-  const [product, setProduct] = useState<Product | null>(null);
+  // Stale-while-revalidate: seed state from cache immediately
+  const cached = slug ? productCache.productsBySlug[slug] : undefined;
+  const [product, setProduct] = useState<Product | null>(cached?.data ?? null);
+  const [isLoading, setIsLoading] = useState(!product);
+
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [relatedLoading, setRelatedLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
 
   // Fetch product
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!slug) return;
+    if (!slug) return;
 
-      setIsLoading(true);
+    const fetchProduct = async () => {
+      // Show skeleton only if not already in state from cache
+      if (!product) setIsLoading(true);
+
       try {
         const data = await productCache.getProductBySlug(slug);
         setProduct(data);
@@ -76,14 +80,11 @@ export default function ProductDetailPage() {
         comment: data.comment,
       });
 
-      // Add to reviews list
       setReviews(prev => [newReview, ...prev]);
 
-      // Refresh summary
       const summary = await reviewService.getSummary(product.id);
       setReviewSummary(summary);
 
-      // Switch to reviews tab
       setActiveTab('reviews');
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -99,8 +100,8 @@ export default function ProductDetailPage() {
     { label: product?.name || 'Loading...' },
   ];
 
-  // Loading skeleton
-  if (isLoading) {
+  // Loading skeleton — only when no product in cache
+  if (isLoading && !product) {
     return (
       <div className="product-detail-page">
         <div className="container">

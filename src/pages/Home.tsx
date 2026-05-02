@@ -81,11 +81,14 @@ export default function HomePage() {
   const productCache = useProductCacheStore();
   const categoryStore = useCategoryStore();
 
-  // Local state
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  // Stale-while-revalidate: seed from cache immediately
+  const cachedFeatured = useProductCacheStore((s) => s.featuredProducts);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(cachedFeatured?.data ?? []);
+  const cachedAll = useProductCacheStore((s) => s.productLists['{"limit":50}']);
+  const [allProducts, setAllProducts] = useState<Product[]>(cachedAll?.data.data ?? []);
+  const [isLoading, setIsLoading] = useState(!cachedFeatured);
+
   const [currentBanner, setCurrentBanner] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'featured' | 'on-sale' | 'top-rated'>('featured');
   const sliderInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalSlides = heroSlides.length;

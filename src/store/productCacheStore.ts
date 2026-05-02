@@ -43,6 +43,8 @@ function cacheKey(filters?: ProductFilters): string {
   return JSON.stringify(filters, Object.keys(filters || {}).sort());
 }
 
+export { cacheKey };
+
 function pruneRecord<K extends string, T>(record: Record<K, CacheEntry<T>>, maxEntries: number): Record<K, CacheEntry<T>> {
   const entries = Object.entries(record) as [K, CacheEntry<T>][];
   if (entries.length <= maxEntries) return record;
