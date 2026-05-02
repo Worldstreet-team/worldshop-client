@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { productService, categoryService } from '@/services/productService';
-import type { Product, Category, ProductFilters as ProductFiltersType } from '@/types/product.types';
+import { useProductCacheStore } from '@/store/productCacheStore';
+import { useCategoryStore } from '@/store/categoryStore';
+import type { Product, ProductFilters as ProductFiltersType } from '@/types/product.types';
 import { Breadcrumb, Pagination, Skeleton } from '@/components/common';
 import {
   ProductGrid,
@@ -14,9 +15,12 @@ import {
 export default function ProductListingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const productCache = useProductCacheStore();
+  const categoryStore = useCategoryStore();
+
   // State
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState(categoryStore.categories);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 1000 });
   const [isLoading, setIsLoading] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
@@ -44,11 +48,19 @@ export default function ProductListingPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [categoriesData, priceRangeData] = await Promise.all([
-          categoryService.getCategories(),
-          productService.getPriceRange(),
-        ]);
-        setCategories(categoriesData);
+        const promises: Promise<unknown>[] = [
+          productCache.getPriceRange(),
+        ];
+
+        if (categoryStore.categories.length === 0) {
+          promises.push(categoryStore.fetchCategories());
+        }
+
+        const results = await Promise.all(promises);
+        const priceRangeData = results[0] as { min: number; max: number };
+
+        const cats = useCategoryStore.getState().categories;
+        setCategories(cats);
         setPriceRange(priceRangeData);
       } catch (error) {
         console.error('Error fetching initial data:', error);
@@ -72,7 +84,7 @@ export default function ProductListingPage() {
         'name-desc': 'name_desc',
       };
 
-      const result = await productService.getProducts({
+      const result = await productCache.getProducts({
         categoryId: selectedCategory || undefined,
         minPrice: minPrice,
         maxPrice: maxPrice,
@@ -91,7 +103,7 @@ export default function ProductListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, currentSort, selectedCategory, minPrice, maxPrice, searchQuery, inStock]);
+  }, [currentPage, currentSort, selectedCategory, minPrice, maxPrice, searchQuery, inStock, productCache]);
 
   useEffect(() => {
     fetchProducts();

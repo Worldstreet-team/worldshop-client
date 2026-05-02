@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { productService } from '@/services/productService';
+import { useProductCacheStore } from '@/store/productCacheStore';
 import { reviewService, type ReviewSummary } from '@/services/reviewService';
 import type { Product, Review } from '@/types/product.types';
 import { Breadcrumb, Skeleton, SkeletonText, EmptyState } from '@/components/common';
@@ -15,6 +15,7 @@ import {
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const productCache = useProductCacheStore();
 
   // State
   const [product, setProduct] = useState<Product | null>(null);
@@ -32,14 +33,14 @@ export default function ProductDetailPage() {
 
       setIsLoading(true);
       try {
-        const data = await productService.getProductBySlug(slug);
+        const data = await productCache.getProductBySlug(slug);
         setProduct(data);
 
         if (data) {
           setRelatedLoading(true);
           try {
             const [related, summary, reviewsResult] = await Promise.all([
-              productService.getRelatedProducts(data.id, 8),
+              productCache.getRelatedProducts(data.id, 8),
               reviewService.getSummary(data.id),
               reviewService.getProductReviews(data.id, { sortBy: 'newest' }, 1, 10),
             ]);

@@ -1,32 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import type { Category } from '@/types/product.types';
-import { categoryService } from '@/services/productService';
+import { useCategoryStore } from '@/store/categoryStore';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/common';
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const categories = useCategoryStore((s) => s.categories);
+  const isLoading = useCategoryStore((s) => s.isLoading);
+  const fetchCategories = useCategoryStore((s) => s.fetchCategories);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setIsLoading(true);
-        const data = await categoryService.getCategories();
-        setCategories(data);
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setError('Failed to load categories');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   const breadcrumbItems = [
     { label: 'Home', href: '/' },
@@ -43,14 +29,14 @@ export default function CategoriesPage() {
     );
   }
 
-  if (error) {
+  if (!isLoading && categories.length === 0) {
     return (
       <div className="categories-page">
         <div className="container">
           <EmptyState
             icon="error"
             title="Unable to Load Categories"
-            description={error}
+            description="Failed to load categories"
             actionLabel="Try Again"
             onAction={() => window.location.reload()}
           />

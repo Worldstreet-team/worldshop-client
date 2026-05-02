@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { vendorService, type VendorProductFilters } from '@/services/vendorService';
-import { categoryService } from '@/services/productService';
-import type { Product, Category } from '@/types/product.types';
+import type { Product } from '@/types/product.types';
 import type { Pagination } from '@/types/common.types';
 import { useUIStore } from '@/store/uiStore';
+import { useProductCacheStore } from '@/store/productCacheStore';
+import { useCategoryStore } from '@/store/categoryStore';
 
 export default function VendorProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<VendorProductFilters>({
@@ -19,6 +19,8 @@ export default function VendorProducts() {
   });
   const [search, setSearch] = useState('');
   const addToast = useUIStore((s) => s.addToast);
+  const categories = useCategoryStore((s) => s.categories);
+  const fetchCategories = useCategoryStore((s) => s.fetchCategories);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -26,6 +28,8 @@ export default function VendorProducts() {
       const res = await vendorService.getProducts({ ...filters, search: search || undefined });
       setProducts(res.data);
       setPagination(res.pagination);
+
+      useProductCacheStore.getState().seedProducts(res.data);
     } catch (err: any) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load products' });
     } finally {
@@ -38,8 +42,8 @@ export default function VendorProducts() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    categoryService.getCategories().then(setCategories).catch(() => {});
-  }, []);
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleToggle = async (product: Product) => {
     try {

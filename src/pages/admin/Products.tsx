@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService, type AdminProductFilters } from '@/services/adminService';
-import { categoryService } from '@/services/productService';
-import type { Product, Category } from '@/types/product.types';
+import type { Product } from '@/types/product.types';
 import type { Pagination } from '@/types/common.types';
 import { useUIStore } from '@/store/uiStore';
+import { useProductCacheStore } from '@/store/productCacheStore';
+import { useCategoryStore } from '@/store/categoryStore';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<AdminProductFilters>({
@@ -20,6 +20,8 @@ export default function AdminProducts() {
   });
   const [search, setSearch] = useState('');
   const addToast = useUIStore((s) => s.addToast);
+  const categories = useCategoryStore((s) => s.categories);
+  const fetchCategories = useCategoryStore((s) => s.fetchCategories);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -27,6 +29,8 @@ export default function AdminProducts() {
       const result = await adminService.getProducts({ ...filters, search: search || undefined });
       setProducts(result.data);
       setPagination(result.pagination);
+
+      useProductCacheStore.getState().seedProducts(result.data);
     } catch (err: any) {
       addToast({ type: 'error', message: err.message || 'Failed to load products' });
     } finally {
@@ -39,8 +43,8 @@ export default function AdminProducts() {
   }, [fetchProducts]);
 
   useEffect(() => {
-    categoryService.getCategories().then(setCategories).catch(() => { });
-  }, []);
+    fetchCategories();
+  }, [fetchCategories]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Deactivate "${name}"? It will no longer appear in the store.`)) return;

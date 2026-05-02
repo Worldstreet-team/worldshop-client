@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { productService } from '@/services/productService';
 import type { Product } from '@/types/product.types';
 import { Breadcrumb, EmptyState } from '@/components/common';
 import { ProductGrid } from '@/components/product';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useProductCacheStore } from '@/store/productCacheStore';
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
@@ -24,7 +24,8 @@ export default function SearchResultsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const results = await productService.searchProducts(query, 20);
+        const productCache = useProductCacheStore.getState();
+        const results = await productCache.searchProducts(query, 20);
         setProducts(results);
       } catch (err) {
         console.error('Search error:', err);

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useAddressStore } from '@/store/addressStore';
 import { checkoutService } from '@/services/orderService';
 import { addressService } from '@/services/addressService';
 import Breadcrumb from '@/components/common/Breadcrumb';
@@ -45,19 +46,16 @@ export default function CheckoutPage() {
   const { cart, fetchCart } = useCartStore();
   const { addToast } = useUIStore();
   const { isAuthenticated } = useAuthStore();
+  const { addresses: savedAddresses, isLoading: isLoadingAddresses, fetchAddresses } = useAddressStore();
 
-  // Steps: 1 = Shipping, 2 = Review & Pay
   const [step, setStep] = useState(1);
   const [shipping, setShipping] = useState<ShippingFormData>(initialShipping);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [preview, setPreview] = useState<CheckoutSessionPreview | null>(null);
-  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [saveNewAddress, setSaveNewAddress] = useState(false);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       addToast({ message: 'Please log in to checkout', type: 'info' });
@@ -65,38 +63,29 @@ export default function CheckoutPage() {
     }
   }, [isAuthenticated, navigate, addToast]);
 
-  // Redirect to cart if empty
   useEffect(() => {
     if (!cart || cart.items.length === 0) {
       navigate('/cart');
     }
   }, [cart, navigate]);
 
-  // Load preview on mount
   useEffect(() => {
     if (!isAuthenticated || !cart || cart.items.length === 0) return;
     loadPreview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  // Fetch saved addresses
   useEffect(() => {
     if (!isAuthenticated) return;
-    setIsLoadingAddresses(true);
-    addressService.getAddresses()
-      .then(res => {
-        const addrs = res.data;
-        setSavedAddresses(addrs);
-        const defaultAddr = addrs.find((a: Address) => a.isDefault);
-        if (defaultAddr) {
-          populateFromAddress(defaultAddr);
-          setSelectedAddressId(defaultAddr.id);
-        }
-      })
-      .catch(() => {
-        addToast({ message: 'Failed to load saved addresses', type: 'error' });
-      })
-      .finally(() => setIsLoadingAddresses(false));
+    fetchAddresses().then(addrs => {
+      const defaultAddr = addrs.find((a: Address) => a.isDefault);
+      if (defaultAddr) {
+        populateFromAddress(defaultAddr);
+        setSelectedAddressId(defaultAddr.id);
+      }
+    }).catch(() => {
+      addToast({ message: 'Failed to load saved addresses', type: 'error' });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
@@ -105,7 +94,6 @@ export default function CheckoutPage() {
     try {
       const res = await checkoutService.previewSession();
       setPreview(res.data);
-      // Auto-advance to review if no shipping needed
       if (!res.data.requiresShipping) {
         setStep(2);
       }
@@ -178,7 +166,6 @@ export default function CheckoutPage() {
 
   const handleContinueToReview = async () => {
     if (!validateShipping()) return;
-    // Refresh preview before advancing
     await loadPreview();
     setStep(2);
     window.scrollTo(0, 0);
@@ -189,7 +176,6 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // W7 FIX: Save new address to address book if requested
       if (saveNewAddress && !selectedAddressId && preview?.requiresShipping) {
         try {
           await addressService.createAddress({
@@ -208,7 +194,6 @@ export default function CheckoutPage() {
         }
       }
 
-      // 1. Confirm checkout session
       let result: CheckoutSessionResult;
       try {
         const confirmRes = await checkoutService.confirmSession({
@@ -229,7 +214,6 @@ export default function CheckoutPage() {
       } catch (error) {
         const status = (error as { statusCode?: number })?.statusCode ?? (error as { status?: number })?.status;
         if (status === 409) {
-          // W8 FIX: Auto-reload preview and cart on 409 conflict
           addToast({ message: 'Your cart has changed. Refreshing...', type: 'warning' });
           await fetchCart();
           await loadPreview();
@@ -239,14 +223,12 @@ export default function CheckoutPage() {
         throw error;
       }
 
-      // 2. Initialize payment
       const payRes = await checkoutService.initializePayment(result.checkoutSessionId);
       const { redirectUrl } = payRes.data;
 
       if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        // Fallback — should not happen with mock provider
         navigate('/checkout/success?reference=' + payRes.data.transactionRef);
       }
     } catch (error) {

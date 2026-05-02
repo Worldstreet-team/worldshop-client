@@ -6,6 +6,7 @@ import type { Pagination } from '@/types/common.types';
 import { Breadcrumb, EmptyState } from '@/components/common';
 import { ProductGrid, ProductSort, type SortOption } from '@/components/product';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useProductCacheStore } from '@/store/productCacheStore';
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -47,6 +48,9 @@ export default function CategoryPage() {
       setCategory(result.category);
       setProducts(result.products.data);
       setPagination(result.products.pagination);
+
+      const cache = useProductCacheStore.getState();
+      cache.seedProducts(result.products.data);
     } catch (err) {
       console.error('Error fetching category:', err);
       setError('Failed to load category');

@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService, type AdminOrderFilters, type AdminOrder, type OrderStats } from '@/services/adminService';
 import type { OrderStatus } from '@/types/order.types';
+import type { Product } from '@/types/product.types';
 import type { Pagination } from '@/types/common.types';
 import { useUIStore } from '@/store/uiStore';
+import { useProductCacheStore } from '@/store/productCacheStore';
 
 const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
   { value: '', label: 'All Status' },
@@ -56,6 +58,19 @@ export default function AdminOrders() {
       });
       setOrders(result.data);
       setPagination(result.pagination);
+
+      const productsMap = new Map<string, { id: string; name: string; slug: string }>();
+      for (const order of result.data) {
+        for (const item of order.items) {
+          if (item.product && !productsMap.has(item.product.id)) {
+            productsMap.set(item.product.id, item.product);
+          }
+        }
+      }
+
+      if (productsMap.size > 0) {
+        useProductCacheStore.getState().seedProducts(Array.from(productsMap.values()) as Product[]);
+      }
     } catch (err: any) {
       addToast({ type: 'error', message: err.message || 'Failed to load orders' });
     } finally {

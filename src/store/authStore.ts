@@ -5,12 +5,14 @@ import { useCartStore } from './cartStore';
 
 const LOGIN_URL = 'https://www.worldstreetgold.com/login';
 const REGISTER_URL = 'https://www.worldstreetgold.com/register';
+const PROFILE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  lastFetched: number | null;
 }
 
 interface AuthActions {
@@ -34,6 +36,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
+  lastFetched: null,
 };
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -49,6 +52,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
        */
       syncClerkUser: async () => {
         if (get().isLoading) return;
+
+        const state = get();
+        if (state.user && state.lastFetched && Date.now() - state.lastFetched < PROFILE_TTL_MS) {
+          if (!state.isAuthenticated) set({ isAuthenticated: true });
+          return;
+        }
+
         set({ isLoading: true, error: null });
 
         try {
@@ -82,6 +92,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             user,
             isAuthenticated: true,
             isLoading: false,
+            lastFetched: Date.now(),
           });
 
           // Merge guest cart into user cart

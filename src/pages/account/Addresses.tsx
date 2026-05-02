@@ -1,50 +1,46 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { addressService } from '@/services/addressService';
 import { useUIStore } from '@/store/uiStore';
+import { useAddressStore } from '@/store/addressStore';
 import AddressFormModal from '@/components/common/AddressFormModal';
 import type { Address, CreateAddressRequest } from '@/types/user.types';
 
 const MAX_ADDRESSES = 5;
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { addresses, isLoading, fetchAddresses } = useAddressStore();
   const [isSaving, setIsSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const { addToast } = useUIStore();
 
-  const fetchAddresses = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await addressService.getAddresses();
-      setAddresses(response.data);
-    } catch {
-      addToast({ message: 'Failed to load addresses', type: 'error' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [addToast]);
-
   useEffect(() => {
-    fetchAddresses();
-  }, [fetchAddresses]);
+    fetchAddresses().catch(() => {
+      addToast({ message: 'Failed to load addresses', type: 'error' });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Open modal for creating
+  const refreshAddresses = async () => {
+    try {
+      await fetchAddresses(true);
+    } catch {
+      addToast({ message: 'Failed to refresh addresses', type: 'error' });
+    }
+  };
+
   const handleAdd = () => {
     setEditingAddress(null);
     setIsModalOpen(true);
   };
 
-  // Open modal for editing
   const handleEdit = (address: Address) => {
     setEditingAddress(address);
     setIsModalOpen(true);
   };
 
-  // Create or update address
   const handleSubmit = async (data: CreateAddressRequest) => {
     try {
       setIsSaving(true);
@@ -57,7 +53,7 @@ export default function AddressesPage() {
       }
       setIsModalOpen(false);
       setEditingAddress(null);
-      await fetchAddresses();
+      await refreshAddresses();
     } catch (err) {
       const message = (err as { message?: string })?.message || 'Failed to save address';
       addToast({ message, type: 'error' });
@@ -66,14 +62,13 @@ export default function AddressesPage() {
     }
   };
 
-  // Delete address
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this address?')) return;
     try {
       setDeletingId(id);
       await addressService.deleteAddress(id);
       addToast({ message: 'Address deleted', type: 'success' });
-      await fetchAddresses();
+      await refreshAddresses();
     } catch (err) {
       const message = (err as { message?: string })?.message || 'Failed to delete address';
       addToast({ message, type: 'error' });
@@ -82,12 +77,11 @@ export default function AddressesPage() {
     }
   };
 
-  // Set default
   const handleSetDefault = async (id: string) => {
     try {
       await addressService.setDefault(id);
       addToast({ message: 'Default address updated', type: 'success' });
-      await fetchAddresses();
+      await refreshAddresses();
     } catch (err) {
       const message = (err as { message?: string })?.message || 'Failed to set default';
       addToast({ message, type: 'error' });
