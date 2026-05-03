@@ -128,6 +128,16 @@ export interface VendorReviewFilters {
   sortBy?: 'newest' | 'oldest' | 'highest' | 'lowest';
 }
 
+export interface DigitalAsset {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  sortOrder: number;
+  signedUrl?: string;
+  createdAt?: string;
+}
+
 export interface UploadResult {
   signedUrl: string;
   key: string;
@@ -244,7 +254,7 @@ export const vendorService = {
 
   /** GET /vendor/products/:id/digital-assets — get product's digital assets */
   getDigitalAssets: (productId: string) =>
-    api.get<ApiResponse<any[]>>(`/vendor/products/${productId}/digital-assets`),
+    api.get<ApiResponse<DigitalAsset[]>>(`/vendor/products/${productId}/digital-assets`),
 
   /** POST /vendor/products/:id/digital-assets — attach uploaded files to product */
   attachDigitalAssets: (productId: string, files: { key: string; fileName: string; mimeType: string; fileSize: number }[]) =>

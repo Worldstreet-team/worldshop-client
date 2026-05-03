@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,11 +39,12 @@ export default function VendorRegistration() {
     },
   });
 
-  // Already a vendor — redirect
-  if (user?.isVendor) {
-    navigate('/vendor', { replace: true });
-    return null;
-  }
+  // Already a vendor — redirect via effect, not during render
+  useEffect(() => {
+    if (user?.isVendor) {
+      navigate('/vendor', { replace: true });
+    }
+  }, [user, navigate]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setServerError('');

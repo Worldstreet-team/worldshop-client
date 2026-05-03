@@ -36,7 +36,8 @@ export default function VendorProductEdit() {
   const [uploadingDigital, setUploadingDigital] = useState(false);
   const [digitalAssets, setDigitalAssets] = useState<{ id: string; fileName: string; mimeType: string; fileSize: number }[]>([]);
 
-  // Variants
+  // Track image keys to delete from R2 after successful product update
+  const [deletedImageKeys, setDeletedImageKeys] = useState<string[]>([]);
   const [variants, setVariants] = useState<{
     name: string;
     attributes: Record<string, string>;
@@ -121,9 +122,9 @@ export default function VendorProductEdit() {
 
   const removeImage = (index: number) => {
     const removed = images[index];
-    // Clean up from R2 if it was uploaded
+    // Queue R2 deletion for after successful product update
     if (removed?.cloudflareId) {
-      vendorService.deleteImages([removed.cloudflareId]).catch(() => {});
+      setDeletedImageKeys((prev) => [...prev, removed.cloudflareId!]);
     }
     setImages((prev) => {
       const updated = prev.filter((_, i) => i !== index);
@@ -242,6 +243,12 @@ export default function VendorProductEdit() {
         await vendorService.createProduct(data);
         addToast({ type: 'success', message: 'Product created successfully!' });
       }
+
+      // Clean up queued R2 images after successful save
+      if (deletedImageKeys.length > 0) {
+        vendorService.deleteImages(deletedImageKeys).catch(() => {});
+      }
+
       navigate('/vendor/products');
     } catch (err: any) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Failed to save product' });
