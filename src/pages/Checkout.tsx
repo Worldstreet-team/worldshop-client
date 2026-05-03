@@ -55,6 +55,7 @@ export default function CheckoutPage() {
   const [preview, setPreview] = useState<CheckoutSessionPreview | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [saveNewAddress, setSaveNewAddress] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState(import.meta.env.DEV ? 'MOCK' : 'FLUTTERWAVE');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -223,13 +224,13 @@ export default function CheckoutPage() {
         throw error;
       }
 
-      const payRes = await checkoutService.initializePayment(result.checkoutSessionId);
-      const { redirectUrl } = payRes.data;
+      const payRes = await checkoutService.initializePayment(result.checkoutSessionId, selectedProvider);
+      const { transactionRef, action } = payRes.data;
 
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
+      if (action.type === 'redirect' && action.url) {
+        window.location.href = action.url;
       } else {
-        navigate('/checkout/success?reference=' + payRes.data.transactionRef);
+        navigate(`/checkout/success?reference=${encodeURIComponent(transactionRef)}`);
       }
     } catch (error) {
       const errorMessage = (error as { message?: string })?.message || 'Failed to place order';
@@ -579,6 +580,52 @@ export default function CheckoutPage() {
                       Back
                     </button>
                   )}
+
+                  <div className="payment-method-selector">
+                    <p className="selector-label">Payment Method:</p>
+                    <div className="payment-options">
+                      {import.meta.env.DEV && (
+                        <label className={`payment-option ${selectedProvider === 'MOCK' ? 'selected' : ''}`}>
+                          <input
+                            type="radio"
+                            name="provider"
+                            value="MOCK"
+                            checked={selectedProvider === 'MOCK'}
+                            onChange={(e) => setSelectedProvider(e.target.value)}
+                          />
+                          <span className="option-content">
+                            <strong>Mock Payment (Test)</strong>
+                          </span>
+                        </label>
+                      )}
+                      <label className={`payment-option ${selectedProvider === 'FLUTTERWAVE' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="provider"
+                          value="FLUTTERWAVE"
+                          checked={selectedProvider === 'FLUTTERWAVE'}
+                          onChange={(e) => setSelectedProvider(e.target.value)}
+                        />
+                        <span className="option-content">
+                          <strong>Pay with Card/Transfer</strong>
+                          <small>Secured by Flutterwave</small>
+                        </span>
+                      </label>
+                      <label className="payment-option disabled">
+                        <input
+                          type="radio"
+                          name="provider"
+                          value="CRYPTO"
+                          disabled
+                        />
+                        <span className="option-content">
+                          <strong>Crypto</strong>
+                          <small>Coming Soon</small>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
                     className="btn btn-primary btn-lg"

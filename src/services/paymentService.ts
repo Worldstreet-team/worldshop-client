@@ -18,7 +18,7 @@ export const paymentService = {
    * Used by the MockPayment page.
    */
   sendWebhook: (checkoutSessionId: string, action: 'confirm' | 'decline') =>
-    api.post<ApiResponse<{ status: string }>>('/payments/webhook', {
+      api.post<ApiResponse<{ status: string }>>('/payments/webhook/mock', {
       checkoutSessionId,
       action,
     }),

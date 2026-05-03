@@ -158,9 +158,8 @@ export interface CheckoutSessionResult {
 
 export interface InitPaymentResult {
   transactionRef: string;
-  action: 'redirect' | 'display';
+  action: { type: 'redirect'; url: string } | { type: 'display'; instructions: string };
   redirectUrl?: string;
-  displayData?: Record<string, unknown>;
 }
 
 export interface VerifyPaymentResult {

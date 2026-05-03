@@ -60,6 +60,6 @@ export const checkoutService = {
     api.post<ApiResponse<CheckoutSessionResult>>('/checkout/session', input),
 
   // Initialize payment for a confirmed checkout session
-  initializePayment: (checkoutSessionId: string) =>
-    api.post<ApiResponse<InitPaymentResult>>('/checkout/pay', { checkoutSessionId }),
+  initializePayment: (checkoutSessionId: string, provider?: string) =>
+    api.post<ApiResponse<InitPaymentResult>>('/checkout/pay', { checkoutSessionId, provider }),
 };

@@ -21,6 +21,7 @@ const CartPage = lazy(() => import('@/pages/Cart'));
 const CheckoutPage = lazy(() => import('@/pages/Checkout'));
 const CheckoutSuccessPage = lazy(() => import('@/pages/CheckoutSuccess'));
 const CheckoutFailurePage = lazy(() => import('@/pages/CheckoutFailure'));
+const CheckoutCallbackPage = lazy(() => import('@/pages/CheckoutCallback'));
 const MockPaymentPage = lazy(() => import('@/pages/MockPayment'));
 
 // Account Pages
@@ -132,6 +133,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <SuspenseWrapper><CheckoutFailurePage /></SuspenseWrapper>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'checkout/callback',
+        element: (
+          <ProtectedRoute>
+            <SuspenseWrapper><CheckoutCallbackPage /></SuspenseWrapper>
           </ProtectedRoute>
         ),
       },
