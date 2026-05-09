@@ -79,6 +79,34 @@ export default function AdminVendorDetail() {
     }
   };
 
+  const refreshVendorProducts = async () => {
+    if (!id) return;
+    const productsData = await adminService.getVendorProducts(id, { page: 1, limit: 10 });
+    setProducts(productsData.data);
+    setProductPagination(productsData.pagination);
+  };
+
+  const handleProductVisibility = async (product: Product, isActive: boolean) => {
+    try {
+      await adminService.updateProductVisibility(product.id, isActive);
+      await refreshVendorProducts();
+      addToast({ type: 'success', message: `Product ${isActive ? 'enabled' : 'disabled'}.` });
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to update product' });
+    }
+  };
+
+  const handleVoidProduct = async (product: Product) => {
+    if (!confirm(`Void "${product.name}"? It will be rejected and hidden from purchase.`)) return;
+    try {
+      await adminService.updateProductApproval(product.id, 'REJECTED', 'Voided by admin');
+      await refreshVendorProducts();
+      addToast({ type: 'success', message: 'Vendor product voided.' });
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to void product' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-vendor-detail">
@@ -229,6 +257,7 @@ export default function AdminVendorDetail() {
                     <th>Price</th>
                     <th>Status</th>
                     <th>Approval</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -247,6 +276,26 @@ export default function AdminVendorDetail() {
                         <span className={`badge badge-${product.approvalStatus === 'APPROVED' ? 'success' : product.approvalStatus === 'PENDING' ? 'warning' : 'danger'}`}>
                           {product.approvalStatus || 'N/A'}
                         </span>
+                      </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="btn-icon"
+                            title={product.isActive ? 'Disable product' : 'Enable product'}
+                            onClick={() => handleProductVisibility(product, !product.isActive)}
+                          >
+                            <span className="material-icons">{product.isActive ? 'visibility_off' : 'visibility'}</span>
+                          </button>
+                          {product.vendorId && product.approvalStatus !== 'REJECTED' && (
+                            <button
+                              className="btn-icon btn-icon-danger"
+                              title="Void vendor product"
+                              onClick={() => handleVoidProduct(product)}
+                            >
+                              <span className="material-icons">block</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

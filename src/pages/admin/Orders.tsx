@@ -109,11 +109,11 @@ export default function AdminOrders() {
             <div className="stat-label">Revenue (30d)</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{stats.statusCounts?.PROCESSING || 0}</div>
+            <div className="stat-value">{stats.statusBreakdown?.processing || 0}</div>
             <div className="stat-label">Processing</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{stats.statusCounts?.SHIPPED || 0}</div>
+            <div className="stat-value">{stats.statusBreakdown?.shipped || 0}</div>
             <div className="stat-label">Shipped</div>
           </div>
         </div>
@@ -223,7 +223,7 @@ export default function AdminOrders() {
                     <td><strong>{formatPrice(order.total)}</strong></td>
                     <td>
                       {order.payment ? (
-                        <span className={`badge ${order.payment.status === 'SUCCESS' ? 'badge-success' : 'badge-warning'}`}>
+                        <span className={`badge ${order.payment.status === 'COMPLETED' ? 'badge-success' : 'badge-warning'}`}>
                           {order.payment.status}
                         </span>
                       ) : (

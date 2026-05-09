@@ -124,7 +124,7 @@ export interface AdminOrder extends Order {
 }
 
 export interface OrderStats {
-    statusCounts: Record<string, number>;
+    statusBreakdown: Record<string, number>;
     totalOrders: number;
     totalRevenue: number;
     period: string;
@@ -258,6 +258,47 @@ export interface AdminVendorDetail {
     }>;
 }
 
+export type WithdrawalRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+
+export interface AdminWithdrawalRequest {
+    id: string;
+    vendorId: string;
+    accountId: string;
+    amount: number;
+    currency: string;
+    status: WithdrawalRequestStatus;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    vendorNote?: string | null;
+    adminNote?: string | null;
+    reviewedBy?: string | null;
+    reviewedAt?: string | null;
+    paidAt?: string | null;
+    ledgerEntryId?: string | null;
+    createdAt: string;
+    updatedAt: string;
+    vendor?: {
+        userId: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+        storeName: string | null;
+    } | null;
+    balance?: {
+        availableBalance: number;
+        totalEarned: number;
+        totalCommission: number;
+    } | null;
+}
+
+export interface AdminWithdrawalFilters {
+    page?: number;
+    limit?: number;
+    status?: WithdrawalRequestStatus;
+    vendorId?: string;
+}
+
 export interface CommissionReport {
     period: { from: string | null; to: string | null };
     platform: {
@@ -280,6 +321,26 @@ export interface CommissionReport {
 export interface CommissionSetting {
     key: string;
     value: number;
+}
+
+export interface AdminUser {
+    id: string;
+    userId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: 'CUSTOMER' | 'ADMIN';
+    isVendor: boolean;
+    vendorStatus: string | null;
+    storeName: string | null;
+    createdAt: string;
+}
+
+export interface AdminUserFilters {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: 'CUSTOMER' | 'ADMIN';
 }
 
 // ─── Admin Service ──────────────────────────────────────────────
@@ -316,6 +377,16 @@ export const adminService = {
 
     deleteProduct: async (id: string): Promise<void> => {
         await api.delete(`/admin/products/${id}`);
+    },
+
+    updateProductVisibility: async (id: string, isActive: boolean): Promise<Product> => {
+        const res = await api.patch<ApiResponse<Product>>(`/admin/products/${id}/visibility`, { isActive });
+        return res.data;
+    },
+
+    updateProductApproval: async (id: string, approvalStatus: 'APPROVED' | 'REJECTED', reason?: string): Promise<Product> => {
+        const res = await api.patch<ApiResponse<Product>>(`/admin/products/${id}/approval`, { approvalStatus, reason });
+        return res.data;
     },
 
     // Categories
@@ -461,6 +532,26 @@ export const adminService = {
         return { data: res.data, pagination: res.pagination };
     },
 
+    getWithdrawalRequests: async (filters?: AdminWithdrawalFilters): Promise<PaginatedResponse<AdminWithdrawalRequest>> => {
+        const res = await api.get<{ success: boolean; data: AdminWithdrawalRequest[]; pagination: PaginatedResponse<AdminWithdrawalRequest>['pagination'] }>(
+            '/admin/withdrawals', filters as Record<string, unknown>);
+        return { data: res.data, pagination: res.pagination };
+    },
+
+    getWithdrawalRequest: async (id: string): Promise<AdminWithdrawalRequest> => {
+        const res = await api.get<ApiResponse<AdminWithdrawalRequest>>(`/admin/withdrawals/${id}`);
+        return res.data;
+    },
+
+    updateWithdrawalStatus: async (
+        id: string,
+        status: Exclude<WithdrawalRequestStatus, 'PENDING'>,
+        adminNote?: string,
+    ): Promise<AdminWithdrawalRequest> => {
+        const res = await api.patch<ApiResponse<AdminWithdrawalRequest>>(`/admin/withdrawals/${id}/status`, { status, adminNote });
+        return res.data;
+    },
+
     // ─── Commission & Reports ───────────────────────────────────
     getCommissionReport: async (params?: { from?: string; to?: string }): Promise<CommissionReport> => {
         const res = await api.get<ApiResponse<CommissionReport>>('/admin/reports/commission', params as Record<string, unknown>);
@@ -474,6 +565,17 @@ export const adminService = {
 
     updateCommissionRate: async (rate: number): Promise<CommissionSetting> => {
         const res = await api.patch<ApiResponse<CommissionSetting>>('/admin/settings/commission', { rate });
+        return res.data;
+    },
+
+    getUsers: async (filters?: AdminUserFilters): Promise<PaginatedResponse<AdminUser>> => {
+        const res = await api.get<{ success: boolean; data: AdminUser[]; pagination: PaginatedResponse<AdminUser>['pagination'] }>(
+            '/admin/users', filters as Record<string, unknown>);
+        return { data: res.data, pagination: res.pagination };
+    },
+
+    updateUserRole: async (id: string, role: 'CUSTOMER' | 'ADMIN'): Promise<AdminUser> => {
+        const res = await api.patch<ApiResponse<AdminUser>>(`/admin/users/${id}/role`, { role });
         return res.data;
     },
 };

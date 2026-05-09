@@ -1237,6 +1237,26 @@
     color: $info-color;
   }
 
+  &-pending {
+    background-color: rgba($warning-color, 0.15);
+    color: color.adjust($warning-color, $lightness: -20%);
+  }
+
+  &-approved {
+    background-color: rgba($info-color, 0.15);
+    color: $info-color;
+  }
+
+  &-paid {
+    background-color: rgba($success-color, 0.15);
+    color: $success-color;
+  }
+
+  &-rejected {
+    background-color: rgba($danger-color, 0.15);
+    color: $danger-color;
+  }
+
   &-outline {
     background-color: transparent;
     border: 1px solid currentColor;
@@ -1252,6 +1272,12 @@
   height: 6px;
   border-radius: 50%;
   background-color: currentColor;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
 }
 
 // ============================================

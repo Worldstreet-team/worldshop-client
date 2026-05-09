@@ -87,7 +87,7 @@ export interface LedgerEntry {
   id: string;
   orderId: string;
   vendorId: string;
-  type: 'SALE' | 'COMMISSION';
+  type: 'SALE' | 'COMMISSION' | 'REFUND' | 'COMMISSION_REVERSAL' | 'WITHDRAWAL' | 'WITHDRAWAL_REVERSAL';
   amount: number;
   currency: string;
   balanceBefore: number;
@@ -138,6 +138,52 @@ export interface DigitalAsset {
   createdAt?: string;
 }
 
+export interface WithdrawalAccount {
+  id: string;
+  vendorId: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  isVerified: boolean;
+  verifiedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WithdrawalAccountRequest {
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+}
+
+export type WithdrawalRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
+
+export interface WithdrawalRequest {
+  id: string;
+  vendorId: string;
+  accountId: string;
+  amount: number;
+  currency: string;
+  status: WithdrawalRequestStatus;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  vendorNote?: string | null;
+  adminNote?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  paidAt?: string | null;
+  ledgerEntryId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWithdrawalRequest {
+  amount: number;
+  accountId?: string;
+  vendorNote?: string;
+}
+
 export interface UploadResult {
   signedUrl: string;
   key: string;
@@ -158,6 +204,18 @@ export const vendorService = {
   /** PATCH /vendor/profile — update vendor store info */
   updateProfile: (data: Partial<RegisterVendorRequest>) =>
     api.patch<ApiResponse<UserProfile>>('/vendor/profile', data),
+
+  getWithdrawalAccount: () =>
+    api.get<ApiResponse<WithdrawalAccount | null>>('/vendor/withdrawal-account'),
+
+  updateWithdrawalAccount: (data: WithdrawalAccountRequest) =>
+    api.put<ApiResponse<WithdrawalAccount>>('/vendor/withdrawal-account', data),
+
+  getWithdrawalRequests: (filters?: { page?: number; limit?: number; status?: WithdrawalRequestStatus }) =>
+    api.get<PaginatedResponse<WithdrawalRequest> & { success: boolean }>('/vendor/withdrawals', filters as Record<string, unknown>),
+
+  createWithdrawalRequest: (data: CreateWithdrawalRequest) =>
+    api.post<ApiResponse<WithdrawalRequest>>('/vendor/withdrawals', data),
 
   // ─── Vendor Product endpoints ────────────────────────────────
 

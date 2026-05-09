@@ -222,8 +222,8 @@ export default function VendorProductEdit() {
       basePrice: parseFloat(basePrice),
       salePrice: salePrice ? parseFloat(salePrice) : null,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-      images: images.map(({ url, alt, isPrimary }, i) => ({
-        url, alt, isPrimary, sortOrder: i, cloudflareId: undefined,
+      images: images.map(({ url, alt, isPrimary, cloudflareId }, i) => ({
+        url, alt, isPrimary, sortOrder: i, cloudflareId,
       })),
       variants: variants.length > 0 ? variants.map((v) => ({
         name: v.name,

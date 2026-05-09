@@ -11,7 +11,12 @@ export default function VendorSettings() {
   const [storeDescription, setStoreDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingAccount, setSavingAccount] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [accountVerified, setAccountVerified] = useState(false);
 
   const fullStoreUrl = user?.storeSlug
     ? `https://shop.worldstreetgold.com/store/${user.storeSlug}`
@@ -26,11 +31,21 @@ export default function VendorSettings() {
   }, [fullStoreUrl]);
 
   useEffect(() => {
-    vendorService.getProfile()
-      .then((res) => {
+    Promise.all([
+      vendorService.getProfile(),
+      vendorService.getWithdrawalAccount(),
+    ])
+      .then(([res, accountRes]) => {
         const profile = res.data;
         setStoreName(profile.storeName || '');
         setStoreDescription(profile.storeDescription || '');
+        const account = accountRes.data;
+        if (account) {
+          setBankName(account.bankName);
+          setAccountNumber(account.accountNumber);
+          setAccountName(account.accountName);
+          setAccountVerified(account.isVerified);
+        }
       })
       .catch((err: any) => {
         addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load profile' });
@@ -52,12 +67,30 @@ export default function VendorSettings() {
         storeDescription: storeDescription.trim() || undefined,
       };
       await vendorService.updateProfile(data);
-      await syncClerkUser();
+      await syncClerkUser(true);
       addToast({ type: 'success', message: 'Store settings updated.' });
     } catch (err: any) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Failed to update settings' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleWithdrawalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingAccount(true);
+    try {
+      const res = await vendorService.updateWithdrawalAccount({
+        bankName: bankName.trim(),
+        accountNumber: accountNumber.trim(),
+        accountName: accountName.trim(),
+      });
+      setAccountVerified(res.data.isVerified);
+      addToast({ type: 'success', message: 'Withdrawal account verified and saved.' });
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to save withdrawal account' });
+    } finally {
+      setSavingAccount(false);
     }
   };
 
@@ -145,6 +178,65 @@ export default function VendorSettings() {
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={saving}>
             {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
+
+      <form className="settings-form" onSubmit={handleWithdrawalSubmit}>
+        <section className="form-section">
+          <h2>Withdrawal Account</h2>
+          <p className="text-muted">The account name must match your profile name: {user?.firstName} {user?.lastName}.</p>
+
+          <div className="form-group">
+            <label htmlFor="bankName">Bank Name *</label>
+            <input
+              id="bankName"
+              type="text"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              placeholder="Bank name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="accountNumber">Account Number *</label>
+            <input
+              id="accountNumber"
+              type="text"
+              inputMode="numeric"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
+              placeholder="Account number"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="accountName">Account Name *</label>
+            <input
+              id="accountName"
+              type="text"
+              value={accountName}
+              onChange={(e) => {
+                setAccountName(e.target.value);
+                setAccountVerified(false);
+              }}
+              placeholder={`${user?.firstName || ''} ${user?.lastName || ''}`.trim()}
+              required
+            />
+          </div>
+
+          {accountVerified && (
+            <div className="form-group">
+              <span className="badge badge-success">Verified</span>
+            </div>
+          )}
+        </section>
+
+        <div className="form-actions">
+          <button type="submit" className="btn btn-primary" disabled={savingAccount}>
+            {savingAccount ? 'Saving...' : 'Save Withdrawal Account'}
           </button>
         </div>
       </form>

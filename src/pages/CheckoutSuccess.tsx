@@ -2,6 +2,7 @@ import { Link, useLocation, useSearchParams, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { paymentService } from '@/services/paymentService';
+import { useCartStore } from '@/store/cartStore';
 import type { VerifyPaymentResult } from '@/types/order.types';
 
 interface OrderState {
@@ -18,6 +19,7 @@ export default function CheckoutSuccessPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [paymentResult, setPaymentResult] = useState<VerifyPaymentResult | null>(null);
+  const { fetchCart } = useCartStore();
 
   const reference = searchParams.get('reference') || searchParams.get('trxref');
 
@@ -28,6 +30,9 @@ export default function CheckoutSuccessPage() {
         .then(res => {
           const data = res.data;
           setPaymentResult(data);
+          if (data.status === 'success') {
+            void fetchCart();
+          }
           // Use first order for display; total from payment
           const firstOrder = data.orders[0];
           if (firstOrder) {
@@ -50,7 +55,7 @@ export default function CheckoutSuccessPage() {
     if (location.state) {
       setOrderData(location.state as OrderState);
     }
-  }, [reference, location.state]);
+  }, [reference, location.state, fetchCart]);
 
   // If no reference and no navigation state, redirect home
   if (!reference && !location.state && !orderData) {

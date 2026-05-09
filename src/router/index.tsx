@@ -50,6 +50,8 @@ const AdminInventory = lazy(() => import('@/pages/admin/Inventory'));
 const AdminVendors = lazy(() => import('@/pages/admin/Vendors'));
 const AdminVendorDetail = lazy(() => import('@/pages/admin/VendorDetail'));
 const AdminCommission = lazy(() => import('@/pages/admin/Commission'));
+const AdminUsers = lazy(() => import('@/pages/admin/Users'));
+const AdminWithdrawals = lazy(() => import('@/pages/admin/Withdrawals'));
 
 // Vendor Pages
 const VendorDashboard = lazy(() => import('@/pages/vendor/Dashboard'));
@@ -58,6 +60,7 @@ const VendorProducts = lazy(() => import('@/pages/vendor/Products'));
 const VendorProductEdit = lazy(() => import('@/pages/vendor/ProductEdit'));
 const VendorOrders = lazy(() => import('@/pages/vendor/Orders'));
 const VendorOrderDetail = lazy(() => import('@/pages/vendor/OrderDetail'));
+const VendorWithdrawals = lazy(() => import('@/pages/vendor/Withdrawals'));
 const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 const VendorReviews = lazy(() => import('@/pages/vendor/Reviews'));
 
@@ -272,6 +275,10 @@ const router = createBrowserRouter([
         element: <SuspenseWrapper><VendorOrderDetail /></SuspenseWrapper>,
       },
       {
+        path: 'withdrawals',
+        element: <SuspenseWrapper><VendorWithdrawals /></SuspenseWrapper>,
+      },
+      {
         path: 'settings',
         element: <SuspenseWrapper><VendorSettings /></SuspenseWrapper>,
       },
@@ -329,6 +336,14 @@ const router = createBrowserRouter([
       {
         path: 'vendors/:id',
         element: <SuspenseWrapper><AdminVendorDetail /></SuspenseWrapper>,
+      },
+      {
+        path: 'withdrawals',
+        element: <SuspenseWrapper><AdminWithdrawals /></SuspenseWrapper>,
+      },
+      {
+        path: 'users',
+        element: <SuspenseWrapper><AdminUsers /></SuspenseWrapper>,
       },
       {
         path: 'settings/commission',

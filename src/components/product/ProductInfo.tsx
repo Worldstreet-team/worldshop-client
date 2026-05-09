@@ -31,7 +31,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
   const currentPrice = selectedVariant?.price ?? product.salePrice ?? product.basePrice;
   const originalPrice = product.salePrice ? product.basePrice : (selectedVariant?.compareAtPrice ?? undefined);
   const currentStock = selectedVariant?.stock ?? product.stock;
-  const inStock = currentStock > 0;
+  const inStock = product.type === 'DIGITAL' || currentStock > 0;
 
   // Calculate discount percentage
   const discountPercentage =
@@ -201,7 +201,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
             value={quantity}
             onChange={setQuantity}
             min={1}
-            max={currentStock}
+            max={product.type === 'DIGITAL' ? 99 : currentStock}
             disabled={!inStock}
           />
         </div>

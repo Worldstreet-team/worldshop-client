@@ -17,7 +17,7 @@ interface AuthState {
 
 interface AuthActions {
   /** Called when Clerk session becomes active — fetches profile from our API */
-  syncClerkUser: () => Promise<void>;
+  syncClerkUser: (force?: boolean) => Promise<void>;
   /** Called when Clerk session ends */
   clearUser: () => void;
   /** Update local user state (e.g. after profile edit) */
@@ -50,11 +50,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
        * which attaches the Clerk session token.
        * The server's /profile endpoint auto-creates a UserProfile if needed.
        */
-      syncClerkUser: async () => {
+      syncClerkUser: async (force = false) => {
         if (get().isLoading) return;
 
         const state = get();
-        if (state.user && state.lastFetched && Date.now() - state.lastFetched < PROFILE_TTL_MS) {
+        if (!force && state.user && state.lastFetched && Date.now() - state.lastFetched < PROFILE_TTL_MS) {
           if (!state.isAuthenticated) set({ isAuthenticated: true });
           return;
         }

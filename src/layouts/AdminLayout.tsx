@@ -11,6 +11,8 @@ const navItems = [
   { path: '/admin/categories', label: 'Categories', icon: 'category' },
   { path: '/admin/inventory', label: 'Inventory', icon: 'warehouse' },
   { path: '/admin/vendors', label: 'Vendors', icon: 'storefront' },
+  { path: '/admin/withdrawals', label: 'Withdrawals', icon: 'payments' },
+  { path: '/admin/users', label: 'Users', icon: 'group' },
 ];
 
 export default function AdminLayout() {

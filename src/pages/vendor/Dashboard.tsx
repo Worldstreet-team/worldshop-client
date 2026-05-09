@@ -186,6 +186,10 @@ export default function VendorDashboard() {
             <span className="material-icons">local_shipping</span>
             <span>View Orders</span>
           </Link>
+          <Link to="/vendor/withdrawals" className="quick-link-card">
+            <span className="material-icons">payments</span>
+            <span>Withdraw Funds</span>
+          </Link>
           <Link to="/vendor/reviews" className="quick-link-card">
             <span className="material-icons">star_rate</span>
             <span>Customer Reviews</span>

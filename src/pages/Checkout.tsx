@@ -43,7 +43,7 @@ const initialShipping: ShippingFormData = {
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, fetchCart } = useCartStore();
+  const { cart, fetchCart, clearLocalCart } = useCartStore();
   const { addToast } = useUIStore();
   const { isAuthenticated } = useAuthStore();
   const { addresses: savedAddresses, isLoading: isLoadingAddresses, fetchAddresses } = useAddressStore();
@@ -60,7 +60,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!isAuthenticated) {
       addToast({ message: 'Please log in to checkout', type: 'info' });
-      navigate('/login?returnUrl=/checkout');
+      navigate('/auth/login?returnUrl=/checkout');
     }
   }, [isAuthenticated, navigate, addToast]);
 
@@ -90,7 +90,7 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  const loadPreview = async () => {
+  const loadPreview = async (): Promise<CheckoutSessionPreview | null> => {
     setIsPreviewing(true);
     try {
       const res = await checkoutService.previewSession();
@@ -98,8 +98,10 @@ export default function CheckoutPage() {
       if (!res.data.requiresShipping) {
         setStep(2);
       }
+      return res.data;
     } catch {
       addToast({ message: 'Failed to load checkout preview', type: 'error' });
+      return null;
     } finally {
       setIsPreviewing(false);
     }
@@ -217,13 +219,14 @@ export default function CheckoutPage() {
         if (status === 409) {
           addToast({ message: 'Your cart has changed. Refreshing...', type: 'warning' });
           await fetchCart();
-          await loadPreview();
-          setStep(preview?.requiresShipping ? 1 : 2);
+          const freshPreview = await loadPreview();
+          setStep(freshPreview?.requiresShipping ? 1 : 2);
           return;
         }
         throw error;
       }
 
+      clearLocalCart();
       const payRes = await checkoutService.initializePayment(result.checkoutSessionId, selectedProvider);
       const { transactionRef, action } = payRes.data;
 

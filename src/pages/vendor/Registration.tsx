@@ -57,7 +57,7 @@ export default function VendorRegistration() {
       });
 
       // Re-sync user profile to pick up vendor fields
-      await syncClerkUser();
+      await syncClerkUser(true);
 
       toast.success('Your vendor account has been created!');
       navigate('/vendor');

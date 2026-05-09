@@ -62,7 +62,8 @@ export default function ProductCard({
     }).format(price);
   };
 
-  const inStock = product.stock > 0;
+  const requiresVariantSelection = product.variants.length > 0;
+  const inStock = product.type === 'DIGITAL' || product.stock > 0;
 
   const cardClass = [
     'product-card',
@@ -183,7 +184,7 @@ export default function ProductCard({
             <p className="product-card-description">{product.description}</p>
           )}
 
-          {showAddToCart && inStock && (
+          {showAddToCart && inStock && !requiresVariantSelection && (
             <button
               type="button"
               className={`product-card-cart-btn ${inCart ? 'in-cart' : ''}`}
