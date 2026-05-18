@@ -16,8 +16,13 @@ export default function LoadingSpinner({
   };
 
   const spinner = (
-    <div className={`loading-spinner ${sizeClasses[size]}`}>
-      <div className="spinner"></div>
+    <div
+      className={`loading-spinner ${sizeClasses[size]}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="loading-spinner-brand" aria-hidden="true">WS</div>
+      <div className="spinner" aria-hidden="true"></div>
       {message && <p className="spinner-message">{message}</p>}
     </div>
   );

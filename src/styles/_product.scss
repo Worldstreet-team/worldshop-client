@@ -357,59 +357,60 @@
 .product-grid {
   display: grid;
   gap: $spacing-lg;
+  min-width: 0;
 
   &-cols-2 {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   &-cols-3 {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 
     @include tablet {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     @include mobile {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: $spacing-sm;
     }
   }
 
   &-cols-4 {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 
     @include tablet {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     @include mobile {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: $spacing-sm;
     }
   }
 
   &-cols-5 {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
 
     @include tablet {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     @include mobile {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: $spacing-sm;
     }
   }
 
   &-cols-6 {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
 
     @include tablet {
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     @include mobile {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: $spacing-sm;
     }
   }
@@ -586,6 +587,16 @@
 .product-filters-price-separator {
   color: $text-muted;
   margin-top: 18px;
+}
+
+.product-filters-price-apply {
+  min-height: 38px;
+  border: 1px solid $primary-dark;
+  box-shadow: 0 2px 6px rgba($black, 0.08);
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 10px rgba($black, 0.12);
+  }
 }
 
 // ============================================

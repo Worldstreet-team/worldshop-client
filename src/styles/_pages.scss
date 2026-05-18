@@ -108,6 +108,7 @@
 
 .categories-page {
   padding: $spacing-xl 0;
+  overflow-x: clip;
 
   .page-header {
     text-align: center;
@@ -128,11 +129,12 @@
 
 .categories-grid-page {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: $spacing-xl;
+  min-width: 0;
 
   @include lg {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   @include sm-down {
@@ -146,6 +148,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
   text-decoration: none;
@@ -290,10 +293,16 @@
 .search-results-page,
 .store-page {
   padding: $spacing-xl 0;
+  overflow-x: clip;
 
   .page-header {
     margin-bottom: $spacing-xl;
   }
+}
+
+.page-loading-state {
+  min-height: 50vh;
+  @include flex-center;
 }
 
 .store-header {
@@ -320,12 +329,48 @@
   margin-bottom: $spacing-lg;
 }
 
+.category-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-lg;
+  min-width: 0;
+
+  @include sm-down {
+    justify-content: stretch;
+
+    .product-sort,
+    .select-wrapper {
+      width: 100%;
+    }
+  }
+}
+
+.category-page {
+  .category-header,
+  .product-grid,
+  .pagination-wrapper {
+    min-width: 0;
+  }
+
+  .product-grid-cols-4 {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+
+    @include sm-down {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+
 .product-listing-layout,
 .category-layout,
 .search-layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   gap: $spacing-xl;
+
+  > * {
+    min-width: 0;
+  }
 
   @include md-down {
     grid-template-columns: 1fr;
@@ -3751,8 +3796,12 @@
 
   .product-listing-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
     gap: $spacing-xl;
+
+    > * {
+      min-width: 0;
+    }
 
     @include md-down {
       grid-template-columns: 1fr;
@@ -3840,14 +3889,37 @@
 
   // Products Area
   .products-area {
+    min-width: 0;
+
     .products-toolbar {
       @include flex-between;
       margin-bottom: $spacing-xl;
+      gap: $spacing-md;
+      min-width: 0;
 
       @include mobile {
         flex-direction: column;
+        align-items: stretch;
         gap: $spacing-md;
       }
+    }
+
+    .product-sort {
+      min-width: 0;
+      justify-content: flex-end;
+
+      @include mobile {
+        width: 100%;
+        justify-content: stretch;
+
+        .select-wrapper {
+          width: 100%;
+        }
+      }
+    }
+
+    .product-grid-cols-4 {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
     }
 
     .pagination-wrapper {

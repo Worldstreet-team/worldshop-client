@@ -86,8 +86,8 @@ export default function CategoryPage() {
   if (isLoading) {
     return (
       <div className="category-page">
-        <div className="container">
-          <LoadingSpinner />
+        <div className="container page-loading-state">
+          <LoadingSpinner size="lg" message="Loading category..." />
         </div>
       </div>
     );

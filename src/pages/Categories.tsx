@@ -22,8 +22,8 @@ export default function CategoriesPage() {
   if (isLoading) {
     return (
       <div className="categories-page">
-        <div className="container">
-          <LoadingSpinner />
+        <div className="container page-loading-state">
+          <LoadingSpinner size="lg" message="Loading categories..." />
         </div>
       </div>
     );

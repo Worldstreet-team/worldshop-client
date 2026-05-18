@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import { useAuthStore } from '@/store/authStore';
@@ -17,9 +17,17 @@ const navItems = [
 
 export default function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { user, logout } = useAuthStore();
   const { signOut } = useClerk();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.body.style.overflow = mobileSidebarOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileSidebarOpen]);
 
   const handleLogout = async () => {
     await signOut();
@@ -28,9 +36,16 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className={`admin-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`admin-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}>
+      <button
+        type="button"
+        className="admin-sidebar-backdrop"
+        aria-label="Close admin navigation"
+        onClick={() => setMobileSidebarOpen(false)}
+      />
+
       {/* Sidebar */}
-      <aside className="admin-sidebar">
+      <aside className="admin-sidebar" aria-label="Admin navigation">
         <div className="sidebar-header">
           <img src="/images/worldstreet-mark.png" alt="WorldStreet Admin" className="sidebar-logo" />
           <button
@@ -50,6 +65,7 @@ export default function AdminLayout() {
               key={item.path}
               to={item.path}
               end={item.path === '/admin'}
+              onClick={() => setMobileSidebarOpen(false)}
               className={({ isActive }) =>
                 `sidebar-nav-item ${isActive ? 'active' : ''}`
               }
@@ -61,7 +77,7 @@ export default function AdminLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <NavLink to="/" className="sidebar-nav-item">
+          <NavLink to="/" className="sidebar-nav-item" onClick={() => setMobileSidebarOpen(false)}>
             <span className="material-icons">storefront</span>
             <span className="nav-label">View Store</span>
           </NavLink>
@@ -73,6 +89,15 @@ export default function AdminLayout() {
         {/* Top Bar */}
         <header className="admin-header">
           <div className="admin-header-left">
+            <button
+              type="button"
+              className="admin-mobile-menu-btn"
+              aria-label="Open admin navigation"
+              aria-expanded={mobileSidebarOpen}
+              onClick={() => setMobileSidebarOpen(true)}
+            >
+              <span className="material-icons">menu</span>
+            </button>
             <h1 className="admin-title">Admin Panel</h1>
           </div>
 

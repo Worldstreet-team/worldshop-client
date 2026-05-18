@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService, type AdminOrderFilters, type AdminOrder, type OrderStats } from '@/services/adminService';
 import type { OrderStatus } from '@/types/order.types';
@@ -48,16 +48,23 @@ export default function AdminOrders() {
   });
   const [search, setSearch] = useState('');
   const addToast = useUIStore((s) => s.addToast);
+  const requestIdRef = useRef(0);
+  const hasLoadedOrdersRef = useRef(false);
 
   const fetchOrders = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
     try {
       const result = await adminService.getOrders({
         ...filters,
         search: search || undefined,
       });
+      if (requestId !== requestIdRef.current) return;
+
       setOrders(result.data);
       setPagination(result.pagination);
+      hasLoadedOrdersRef.current = true;
 
       const productsMap = new Map<string, { id: string; name: string; slug: string }>();
       for (const order of result.data) {
@@ -71,10 +78,25 @@ export default function AdminOrders() {
       if (productsMap.size > 0) {
         useProductCacheStore.getState().seedProducts(Array.from(productsMap.values()) as Product[]);
       }
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.message || 'Failed to load orders' });
+    } catch (err: unknown) {
+      if (requestId !== requestIdRef.current) return;
+
+      const message = err instanceof Error
+        ? err.message
+        : (err as { message?: string })?.message;
+
+      if (hasLoadedOrdersRef.current) {
+        addToast({
+          type: 'warning',
+          message: 'Could not refresh orders. Showing the latest loaded results.',
+        });
+      } else {
+        addToast({ type: 'error', message: message || 'Failed to load orders' });
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [filters, search, addToast]);
 
@@ -99,7 +121,7 @@ export default function AdminOrders() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '1.5rem' }}>
+        <div className="stats-grid admin-orders-stats">
           <div className="stat-card">
             <div className="stat-value">{stats.totalOrders}</div>
             <div className="stat-label">Total Orders</div>

@@ -170,13 +170,15 @@ export default function ProductFilters({
                 </div>
               </div>
               <Button
-                variant="outline"
+                type="button"
+                variant="primary"
                 size="sm"
                 onClick={handlePriceApply}
                 disabled={loading}
                 fullWidth
+                className="product-filters-price-apply"
               >
-                Apply
+                Apply price
               </Button>
             </div>
           </div>
