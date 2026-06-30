@@ -339,7 +339,7 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
               </svg>
               <div>
                 <strong>Free Shipping</strong>
-                <span>On orders over $50</span>
+                <span>On orders over ₦50,000</span>
               </div>
             </div>
             <div className="product-info-feature">
