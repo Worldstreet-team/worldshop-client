@@ -203,7 +203,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ─── Row 2: Departments + Nav + Free Shipping ─── */}
+      {/* ─── Row 2: Departments + Nav ─── */}
       <div className="header-bottom">
         <div className="container">
           {/* All Departments Dropdown */}
@@ -260,11 +260,6 @@ export default function Header() {
               )}
             </ul>
           </nav>
-
-          {/* Free Shipping Notice */}
-          <span className="header-promo-text">
-            Free Shipping on Orders ₦50,000+
-          </span>
 
           {/* Main Dashboard Link */}
           <a

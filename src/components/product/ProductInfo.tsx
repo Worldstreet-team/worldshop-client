@@ -334,16 +334,6 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
           <>
             <div className="product-info-feature">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-                <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
-                <path d="M16 8h4a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" />
-              </svg>
-              <div>
-                <strong>Free Shipping</strong>
-                <span>On orders over ₦50,000</span>
-              </div>
-            </div>
-            <div className="product-info-feature">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
                 <polyline points="23 4 23 10 17 10" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
