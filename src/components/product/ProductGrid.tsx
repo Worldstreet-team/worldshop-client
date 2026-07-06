@@ -17,7 +17,7 @@ interface ProductGridProps {
 }
 
 export default function ProductGrid({
-  products,
+  products = [],
   variant = 'grid',
   columns = 4,
   loading = false,
@@ -28,6 +28,7 @@ export default function ProductGrid({
   className = '',
   onClearFilters,
 }: ProductGridProps) {
+  const safeProducts = Array.isArray(products) ? products : [];
   const gridClass = [
     'product-grid',
     `product-grid-${variant}`,
@@ -47,7 +48,7 @@ export default function ProductGrid({
     );
   }
 
-  if (products.length === 0) {
+  if (safeProducts.length === 0) {
     return (
       <EmptyState
         title="No products found"
@@ -66,7 +67,7 @@ export default function ProductGrid({
 
   return (
     <div className={gridClass} style={{ marginTop: 30 }}>
-      {products.map((product) => (
+      {safeProducts.map((product) => (
         <ProductCard
           key={product.id}
           product={product}

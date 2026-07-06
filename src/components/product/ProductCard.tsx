@@ -25,6 +25,9 @@ export default function ProductCard({
   const { addToCart, isInCart } = useCartStore();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
 
+  const productImages = Array.isArray(product.images) ? product.images : [];
+  const productVariants = Array.isArray(product.variants) ? product.variants : [];
+
   const inWishlist = isInWishlist(product.id);
   const inCart = isInCart(product.id);
 
@@ -62,7 +65,7 @@ export default function ProductCard({
     }).format(price);
   };
 
-  const requiresVariantSelection = product.variants.length > 0;
+  const requiresVariantSelection = productVariants.length > 0;
   const inStock = product.type === 'DIGITAL' || product.stock > 0;
 
   const cardClass = [
@@ -112,8 +115,8 @@ export default function ProductCard({
           {/* Image Container */}
           <div className="product-card-image-wrapper">
             <img
-              src={product.images[0]?.url || '/images/placeholder-product.png'}
-              alt={product.images[0]?.alt || product.name}
+              src={productImages[0]?.url || '/images/placeholder-product.png'}
+              alt={productImages[0]?.alt || product.name}
               className="product-card-image"
               loading="lazy"
             />

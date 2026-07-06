@@ -8,6 +8,17 @@ import type {
 } from '@/types/product.types';
 import type { ApiResponse, PaginatedResponse } from '@/types/common.types';
 
+const normalizeProduct = (product: Product): Product => ({
+  ...product,
+  tags: Array.isArray(product.tags) ? product.tags : [],
+  images: Array.isArray(product.images) ? product.images : [],
+  variants: Array.isArray(product.variants) ? product.variants : [],
+  digitalAssets: Array.isArray(product.digitalAssets) ? product.digitalAssets : [],
+});
+
+const normalizeProducts = (products: Product[] | undefined): Product[] =>
+  Array.isArray(products) ? products.map(normalizeProduct) : [];
+
 // No field mapping needed — frontend types match backend Prisma fields directly.
 
 // ─── Product Service ────────────────────────────────────────────
@@ -19,37 +30,37 @@ export const productService = {
       '/products',
       filters as Record<string, unknown>,
     );
-    return { data: res.data, pagination: res.pagination };
+    return { data: normalizeProducts(res.data), pagination: res.pagination };
   },
 
   // Get single product by slug
   getProductBySlug: async (slug: string): Promise<Product | null> => {
     const res = await api.get<ApiResponse<Product>>(`/products/${slug}`);
-    return res.data ?? null;
+    return res.data ? normalizeProduct(res.data) : null;
   },
 
   // Get single product by ID
   getProductById: async (id: string): Promise<Product | null> => {
     const res = await api.get<ApiResponse<Product>>(`/products/id/${id}`);
-    return res.data ?? null;
+    return res.data ? normalizeProduct(res.data) : null;
   },
 
   // Get featured products
   getFeaturedProducts: async (limit = 8): Promise<Product[]> => {
     const res = await api.get<ApiResponse<Product[]>>('/products/featured', { limit });
-    return res.data;
+    return normalizeProducts(res.data);
   },
 
   // Get related products
   getRelatedProducts: async (productId: string, limit = 8): Promise<Product[]> => {
     const res = await api.get<ApiResponse<Product[]>>(`/products/${productId}/related`, { limit });
-    return res.data;
+    return normalizeProducts(res.data);
   },
 
   // Search products
   searchProducts: async (query: string, limit = 10): Promise<Product[]> => {
     const res = await api.get<ApiResponse<Product[]>>('/products/search', { q: query, limit });
-    return res.data;
+    return normalizeProducts(res.data);
   },
 
   // Get price range for filter UI
