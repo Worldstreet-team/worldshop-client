@@ -4,6 +4,62 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.31.0] - 2026-07-17
+
+### Added — Delivery Tracking & Fulfilment UI (Test 7)
+
+- `src/pages/vendor/OrderDetail.tsx` — full fulfilment workflow: action-labelled transitions (Start Processing → Mark as Packaged → Mark as Shipped → Out for Delivery → Mark as Delivered / Delivery Failed), required tracking-number input when shipping, Shipment card (method, tracking with carrier link, expected-by date), and a "Delivery Delayed?" form that pushes back the expected date with a customer-visible reason (emails the buyer)
+- `src/pages/account/OrderDetail.tsx` — click-to-copy tracking number, "Track with <partner>" button using the carrier's tracking URL, new stage labels in the timeline, and failed-delivery guidance (re-attempt or contact support for a refund)
+- `src/pages/account/OrderHistory.tsx`, `vendor/Orders.tsx`, `admin/Orders.tsx` — filter options and badges for the new stages
+- `src/pages/admin/OrderDetail.tsx` — transition map mirrors the server (incl. DELIVERY_FAILED → re-attempt/refund/cancel)
+- `src/services/vendorService.ts` — `updateOrderStatus` widened to all fulfilment stages + trackingNumber; new `extendDeliveryDate`
+- `src/types/order.types.ts` — `OrderStatus` gains PACKAGED/OUT_FOR_DELIVERY/DELIVERY_FAILED; Order gains `trackingNumber`/`trackingUrl`
+
+## [0.30.0] - 2026-07-17
+
+### Added — Delivery Details at Checkout (Test 6)
+
+- `src/pages/Checkout.tsx` — Delivery Method section in the review step: radio list of active methods showing partner, price (and free-over threshold), and arrival window; changing the method re-prices the preview server-side; the chosen method is sent with checkout confirmation
+- `src/components/product/ProductInfo.tsx` — product page shows "Estimated delivery: Jul 20 – Jul 22 via GIG Logistics · from ₦2,500" for physical products (cheapest active method)
+- `src/pages/CheckoutSuccess.tsx` — replaced the hardcoded "3–5 business days" with the real expected delivery date + partner from the created order (hidden when unknown)
+- `src/pages/account/OrderDetail.tsx` — Delivery card: method, partner, expected-by date
+- `src/services/orderService.ts` — `getShippingMethods()`; `previewSession(shippingMethodId?)`
+- `src/types/order.types.ts` — dead `ShippingRate` replaced with `ShippingMethodSummary`; preview gains `shippingMethod`; Order gains delivery snapshot fields
+
+## [0.29.0] - 2026-07-17
+
+### Added — Listing Standards & Structured Attributes (Tests 2 & 8)
+
+- `src/pages/vendor/ProductEdit.tsx` — category is now required and loads the category's listing-standard attributes; variants get structured attribute inputs (Size/Color dropdowns from category options, text/number fields otherwise) with the variant name auto-derived from attribute values ("L / Navy"); new Product Details section (Brand, Material, Weight in grams, Dimensions L×W×H cm/in — physical only); physical products require ≥1 image before submit; non-compliant saved listings show a "no longer meets the listing requirements" banner listing exactly what to fix
+- `src/pages/vendor/Products.tsx` — "Update required" badge on non-compliant listings (hover shows the problems)
+- `src/components/product/ProductInfo.tsx` — Specifications table (Brand, Material, Weight, Dimensions) on the product detail page
+- `src/services/productService.ts` — `categoryService.getCategoryAttributes(categoryId)`
+- `src/services/vendorService.ts` — `VendorCreateProductData` now requires `categoryId`, adds brand/material/weightGrams/dimensions
+- `src/types/product.types.ts` — `CategoryAttribute`, `ProductDimensions`, `ListingCompliance` types; Product gains material/weightGrams/dimensions/compliance
+
+## [0.28.0] - 2026-07-17
+
+### Added — Brand Filtering (Test 3)
+
+- `src/components/product/ProductFilters.tsx` — new collapsible Brands section (single-select checkboxes, hidden while no brands exist), fed by the previously-unused `productService.getBrands()`
+- `src/pages/ProductListing.tsx` — parses/serializes `brand`, `featured`, and `sale` URL params, passes them to `getProducts` (server already filtered on `brand`/`isFeatured`/`onSale`), includes brand in active-filter detection, and titles the page "Featured Products" / "Deals & Sale" for those views
+- `src/types/product.types.ts` — `ProductFilters.brands?: string[]` corrected to `brand?: string` (matches the server's singular param); added `onSale?: boolean`
+
+### Fixed — Dead Nav Tabs (Test 4)
+
+- `src/components/layout/Header.tsx` — removed the dead "Featured Brands" and "Gift Cards" tabs; "Super Deals" now points at the working `?sale=true` filter, "Featured" at `?featured=true`, and "Trending Styles" replaced with "All Products"
+- `src/components/layout/Footer.tsx` — shop links pointed at the nonexistent `/shop` route; now `/products` (Featured/New Arrivals links work)
+- Mobile menu Featured/Sale links now actually filter (same params, now parsed)
+
+## [0.27.0] - 2026-07-17
+
+### Changed — Wallet-First Checkout (Test 1)
+
+- `src/pages/Checkout.tsx` — payment method is now the WorldStreet Wallet by default (Flutterwave and Crypto options removed; Mock stays dev-only). Shows the buyer's live USD balance and the converted order total (₦ at the quoted rate), disables Place Order with a top-up prompt when the balance is insufficient (optional `VITE_WALLET_TOPUP_URL` renders a Top Up link)
+- `src/services/paymentService.ts` — added `getWalletBalance(amountNgn?)` (`GET /payments/wallet/balance`) with `WalletBalanceQuote` types
+- `src/styles/_pages.scss` — wallet balance/insufficient-funds styles in the payment selector
+- Removed stale Paystack references in CheckoutSuccess/CheckoutFailure comments
+
 ## [0.26.0] - 2026-04-10
 
 ### Added — Marketplace Phase 6 & 7: Vendor Dashboard, Settings, Reviews & Admin Vendor Management

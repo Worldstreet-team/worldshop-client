@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product, ProductVariant } from '@/types/product.types';
+import type { ShippingMethodSummary } from '@/types/order.types';
+import { checkoutService } from '@/services/orderService';
 import { useCartStore } from '@/store/cartStore';
 import { toast } from '@/store/uiStore';
 import { useWishlistStore } from '@/store/wishlistStore';
@@ -24,6 +26,33 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
 
   const { addToCart } = useCartStore();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
+
+  // Delivery estimate for physical products (cheapest active method)
+  const [deliveryMethod, setDeliveryMethod] = useState<ShippingMethodSummary | null>(null);
+  useEffect(() => {
+    if (product.type !== 'PHYSICAL') return;
+    checkoutService
+      .getShippingMethods()
+      .then((res) => {
+        const methods = res.data;
+        if (methods.length === 0) return;
+        setDeliveryMethod(
+          methods.reduce((cheapest, m) => (m.price < cheapest.price ? m : cheapest)),
+        );
+      })
+      .catch(() => {});
+  }, [product.type]);
+
+  const deliveryEstimate = deliveryMethod
+    ? (() => {
+        const fmt = (days: number) => {
+          const d = new Date();
+          d.setDate(d.getDate() + days);
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        };
+        return `${fmt(deliveryMethod.minDays)} – ${fmt(deliveryMethod.maxDays)} via ${deliveryMethod.partnerName}`;
+      })()
+    : null;
 
   const inWishlist = isInWishlist(product.id);
 
@@ -251,6 +280,55 @@ export default function ProductInfo({ product, className = '' }: ProductInfoProp
           </button>
         </div>
       </div>
+
+      {/* Delivery estimate */}
+      {product.type === 'PHYSICAL' && deliveryEstimate && (
+        <div className="product-info-delivery">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <rect x="1" y="3" width="15" height="13" />
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+            <circle cx="5.5" cy="18.5" r="2.5" />
+            <circle cx="18.5" cy="18.5" r="2.5" />
+          </svg>
+          <span>
+            Estimated delivery: <strong>{deliveryEstimate}</strong>
+            {deliveryMethod && deliveryMethod.price > 0 && (
+              <> · from ₦{deliveryMethod.price.toLocaleString()}</>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* Specifications */}
+      {(product.brand || product.material || product.weightGrams || product.dimensions) && (
+        <div className="product-info-specs">
+          <h3 className="product-info-specs-title">Specifications</h3>
+          <table className="product-info-specs-table">
+            <tbody>
+              {product.brand && (
+                <tr><th>Brand</th><td>{product.brand}</td></tr>
+              )}
+              {product.material && (
+                <tr><th>Material</th><td>{product.material}</td></tr>
+              )}
+              {product.weightGrams != null && product.weightGrams > 0 && (
+                <tr>
+                  <th>Weight</th>
+                  <td>{product.weightGrams >= 1000 ? `${(product.weightGrams / 1000).toFixed(1)} kg` : `${product.weightGrams} g`}</td>
+                </tr>
+              )}
+              {product.dimensions && (
+                <tr>
+                  <th>Dimensions</th>
+                  <td>
+                    {product.dimensions.length} × {product.dimensions.width} × {product.dimensions.height} {product.dimensions.unit}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Secondary Actions */}
       <div className="product-info-secondary-actions">

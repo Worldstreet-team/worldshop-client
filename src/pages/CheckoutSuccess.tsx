@@ -2,8 +2,9 @@ import { Link, useLocation, useSearchParams, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { paymentService } from '@/services/paymentService';
+import { orderService } from '@/services/orderService';
 import { useCartStore } from '@/store/cartStore';
-import type { VerifyPaymentResult } from '@/types/order.types';
+import type { Order, VerifyPaymentResult } from '@/types/order.types';
 
 interface OrderState {
   orderNumber: string;
@@ -19,6 +20,7 @@ export default function CheckoutSuccessPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [paymentResult, setPaymentResult] = useState<VerifyPaymentResult | null>(null);
+  const [firstOrder, setFirstOrder] = useState<Order | null>(null);
   const { fetchCart } = useCartStore();
 
   const reference = searchParams.get('reference') || searchParams.get('trxref');
@@ -34,13 +36,18 @@ export default function CheckoutSuccessPage() {
             void fetchCart();
           }
           // Use first order for display; total from payment
-          const firstOrder = data.orders[0];
-          if (firstOrder) {
+          const first = data.orders[0];
+          if (first) {
             setOrderData({
-              orderNumber: firstOrder.orderNumber,
-              orderId: firstOrder.id,
+              orderNumber: first.orderNumber,
+              orderId: first.id,
               total: data.amount,
             });
+            // Fetch the full order for the real delivery estimate
+            orderService
+              .getOrderById(first.id)
+              .then((orderRes) => setFirstOrder(orderRes.data))
+              .catch(() => {});
           }
         })
         .catch((err) => {
@@ -67,37 +74,15 @@ export default function CheckoutSuccessPage() {
     { label: 'Order Confirmation' },
   ];
 
-  // Calculate estimated delivery date (3-5 business days from now)
-  const getDeliveryDate = () => {
-    const today = new Date();
-    const minDays = 3;
-    const maxDays = 5;
-
-    const addBusinessDays = (date: Date, days: number) => {
-      const result = new Date(date);
-      let added = 0;
-      while (added < days) {
-        result.setDate(result.getDate() + 1);
-        if (result.getDay() !== 0 && result.getDay() !== 6) {
-          added++;
-        }
-      }
-      return result;
-    };
-
-    const minDate = addBusinessDays(today, minDays);
-    const maxDate = addBusinessDays(today, maxDays);
-
-    const formatDate = (date: Date) => {
-      return date.toLocaleDateString('en-US', {
+  // Real delivery estimate from the order (set at checkout from the chosen
+  // shipping method) — no estimate is shown when the order carries none.
+  const deliveryEstimate = firstOrder?.expectedDeliveryDate
+    ? new Date(firstOrder.expectedDeliveryDate).toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
-        day: 'numeric'
-      });
-    };
-
-    return `${formatDate(minDate)} - ${formatDate(maxDate)}`;
-  };
+        day: 'numeric',
+      }) + (firstOrder.deliveryPartnerName ? ` via ${firstOrder.deliveryPartnerName}` : '')
+    : null;
 
   return (
     <div className="checkout-success-page">
@@ -136,7 +121,7 @@ export default function CheckoutSuccessPage() {
           </div>
         )}
 
-        {/* Payment failed at Paystack */}
+        {/* Payment failed or still pending at the provider */}
         {paymentResult && paymentResult.status !== 'success' && !isVerifying && (
           <div className="success-content">
             <div className="failure-icon">
@@ -208,10 +193,10 @@ export default function CheckoutSuccessPage() {
                     day: 'numeric'
                   })}</span>
                 </div>
-                {!orderData?.hasDigitalProducts && (
+                {!orderData?.hasDigitalProducts && deliveryEstimate && (
                   <div className="order-detail">
                     <span className="label">Estimated Delivery</span>
-                    <span className="value">{getDeliveryDate()}</span>
+                    <span className="value">{deliveryEstimate}</span>
                   </div>
                 )}
                 <div className="order-detail total">

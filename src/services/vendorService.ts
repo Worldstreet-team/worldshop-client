@@ -32,7 +32,16 @@ export interface VendorCreateProductData {
   shortDesc?: string;
   basePrice: number;
   salePrice?: number | null;
-  categoryId?: string | null;
+  categoryId: string;
+  brand?: string | null;
+  material?: string | null;
+  weightGrams?: number | null;
+  dimensions?: {
+    length: number;
+    width: number;
+    height: number;
+    unit: 'cm' | 'in';
+  } | null;
   type?: 'PHYSICAL' | 'DIGITAL';
   stock?: number;
   tags?: string[];
@@ -253,9 +262,25 @@ export const vendorService = {
   getOrder: (id: string) =>
     api.get<ApiResponse<Order>>(`/vendor/orders/${id}`),
 
-  /** PATCH /vendor/orders/:id/status — update order status */
-  updateOrderStatus: (id: string, data: { status: 'PROCESSING' | 'DELIVERED'; note?: string }) =>
-    api.patch<ApiResponse<Order>>(`/vendor/orders/${id}/status`, data),
+  /** PATCH /vendor/orders/:id/status — update order status (tracking number required for SHIPPED) */
+  updateOrderStatus: (
+    id: string,
+    data: {
+      status:
+        | 'PROCESSING'
+        | 'PACKAGED'
+        | 'SHIPPED'
+        | 'OUT_FOR_DELIVERY'
+        | 'DELIVERED'
+        | 'DELIVERY_FAILED';
+      trackingNumber?: string;
+      note?: string;
+    },
+  ) => api.patch<ApiResponse<Order>>(`/vendor/orders/${id}/status`, data),
+
+  /** PATCH /vendor/orders/:id/delivery-date — extend the expected delivery date (delayed delivery) */
+  extendDeliveryDate: (id: string, data: { expectedDeliveryDate: string; note?: string }) =>
+    api.patch<ApiResponse<Order>>(`/vendor/orders/${id}/delivery-date`, data),
 
   // ─── Analytics & Balance ─────────────────────────────────────
 

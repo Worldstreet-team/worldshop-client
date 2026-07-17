@@ -4,12 +4,16 @@ import { adminService, type AdminOrder, type UpdateOrderStatusData } from '@/ser
 import type { OrderStatus } from '@/types/order.types';
 import { useUIStore } from '@/store/uiStore';
 
+// Mirrors the server's admin VALID_TRANSITIONS
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   CREATED: ['CANCELLED'],
   PAID: ['PROCESSING', 'CANCELLED', 'REFUNDED'],
-  PROCESSING: ['SHIPPED', 'CANCELLED', 'REFUNDED'],
-  SHIPPED: ['DELIVERED'],
-  DELIVERED: [],
+  PROCESSING: ['PACKAGED', 'SHIPPED', 'CANCELLED', 'REFUNDED'],
+  PACKAGED: ['SHIPPED', 'CANCELLED', 'REFUNDED'],
+  SHIPPED: ['OUT_FOR_DELIVERY', 'DELIVERED', 'DELIVERY_FAILED', 'REFUNDED'],
+  OUT_FOR_DELIVERY: ['DELIVERED', 'DELIVERY_FAILED', 'REFUNDED'],
+  DELIVERY_FAILED: ['OUT_FOR_DELIVERY', 'REFUNDED', 'CANCELLED'],
+  DELIVERED: ['REFUNDED'],
   CANCELLED: [],
   REFUNDED: [],
 };
@@ -18,8 +22,11 @@ const getStatusBadgeClass = (status: OrderStatus): string => {
   switch (status) {
     case 'PAID': return 'badge badge-info';
     case 'PROCESSING': return 'badge badge-warning';
+    case 'PACKAGED': return 'badge badge-warning';
     case 'SHIPPED': return 'badge badge-primary';
+    case 'OUT_FOR_DELIVERY': return 'badge badge-primary';
     case 'DELIVERED': return 'badge badge-success';
+    case 'DELIVERY_FAILED': return 'badge badge-danger';
     case 'CANCELLED': return 'badge badge-danger';
     case 'REFUNDED': return 'badge badge-secondary';
     default: return 'badge badge-default';

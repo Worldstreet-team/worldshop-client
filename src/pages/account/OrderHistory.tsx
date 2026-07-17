@@ -8,8 +8,11 @@ const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Pending',
   PAID: 'Paid',
   PROCESSING: 'Processing',
+  PACKAGED: 'Packaged',
   SHIPPED: 'Shipped',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
   DELIVERED: 'Delivered',
+  DELIVERY_FAILED: 'Delivery Failed',
   CANCELLED: 'Cancelled',
   REFUNDED: 'Refunded',
 };
@@ -18,8 +21,11 @@ const STATUS_CLASS: Record<string, string> = {
   CREATED: 'status-created',
   PAID: 'status-paid',
   PROCESSING: 'status-processing',
+  PACKAGED: 'status-processing',
   SHIPPED: 'status-shipped',
+  OUT_FOR_DELIVERY: 'status-shipped',
   DELIVERED: 'status-delivered',
+  DELIVERY_FAILED: 'status-cancelled',
   CANCELLED: 'status-cancelled',
   REFUNDED: 'status-refunded',
 };

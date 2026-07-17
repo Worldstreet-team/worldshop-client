@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 
 const footerLinks = {
   shop: [
-    { label: 'All Products', href: '/shop' },
+    { label: 'All Products', href: '/products' },
     { label: 'Categories', href: '/categories' },
-    { label: 'Featured', href: '/shop?featured=true' },
-    { label: 'New Arrivals', href: '/shop?sort=newest' },
+    { label: 'Featured', href: '/products?featured=true' },
+    { label: 'New Arrivals', href: '/products?sort=newest' },
   ],
   support: [
     { label: 'My Account', href: '/account' },

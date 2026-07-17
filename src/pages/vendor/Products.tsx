@@ -174,6 +174,16 @@ export default function VendorProducts() {
                           {product.variants?.length > 0 && (
                             <small className="text-muted"> · {product.variants.length} variant(s)</small>
                           )}
+                          {product.compliance && !product.compliance.compliant && (
+                            <div>
+                              <small
+                                className="badge badge-warning"
+                                title={product.compliance.problems.join('; ')}
+                              >
+                                Update required
+                              </small>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>

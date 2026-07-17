@@ -7,11 +7,12 @@ import { useWishlistStore } from '@/store/wishlistStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import CategoryDropdown from './MegaMenu';
 
+// Every link here must point at a param ProductListing actually reads
+// (`sale`, `featured`) — dead marketing tabs were removed.
 const navLinks = [
-  { to: '/products?deals=true', label: 'Super Deals', isSale: true },
-  { to: '/products?featured=true', label: 'Featured Brands' },
-  { to: '/products', label: 'Trending Styles' },
-  { to: '/products?sale=true', label: 'Gift Cards' },
+  { to: '/products?sale=true', label: 'Super Deals', isSale: true },
+  { to: '/products?featured=true', label: 'Featured' },
+  { to: '/products', label: 'All Products' },
 ];
 
 export default function Header() {

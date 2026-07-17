@@ -4,23 +4,46 @@ import { vendorService } from '@/services/vendorService';
 import type { Order, OrderStatus } from '@/types/order.types';
 import { useUIStore } from '@/store/uiStore';
 
-// Vendor-restricted transitions
-const VENDOR_TRANSITIONS: Record<OrderStatus, ('PROCESSING' | 'DELIVERED')[]> = {
+type VendorStatus =
+  | 'PROCESSING'
+  | 'PACKAGED'
+  | 'SHIPPED'
+  | 'OUT_FOR_DELIVERY'
+  | 'DELIVERED'
+  | 'DELIVERY_FAILED';
+
+// Vendor-restricted transitions — mirrors the server's VENDOR_TRANSITIONS
+const VENDOR_TRANSITIONS: Record<OrderStatus, VendorStatus[]> = {
   CREATED: [],
   PAID: ['PROCESSING'],
-  PROCESSING: ['DELIVERED'],
-  SHIPPED: ['DELIVERED'],
+  PROCESSING: ['PACKAGED', 'SHIPPED'],
+  PACKAGED: ['SHIPPED'],
+  SHIPPED: ['OUT_FOR_DELIVERY', 'DELIVERED', 'DELIVERY_FAILED'],
+  OUT_FOR_DELIVERY: ['DELIVERED', 'DELIVERY_FAILED'],
+  DELIVERY_FAILED: ['OUT_FOR_DELIVERY'],
   DELIVERED: [],
   CANCELLED: [],
   REFUNDED: [],
+};
+
+const STATUS_ACTION_LABELS: Record<VendorStatus, string> = {
+  PROCESSING: 'Start Processing',
+  PACKAGED: 'Mark as Packaged',
+  SHIPPED: 'Mark as Shipped',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
+  DELIVERED: 'Mark as Delivered',
+  DELIVERY_FAILED: 'Delivery Failed',
 };
 
 const getStatusBadgeClass = (status: OrderStatus): string => {
   switch (status) {
     case 'PAID': return 'badge badge-info';
     case 'PROCESSING': return 'badge badge-warning';
+    case 'PACKAGED': return 'badge badge-warning';
     case 'SHIPPED': return 'badge badge-primary';
+    case 'OUT_FOR_DELIVERY': return 'badge badge-primary';
     case 'DELIVERED': return 'badge badge-success';
+    case 'DELIVERY_FAILED': return 'badge badge-danger';
     case 'CANCELLED': return 'badge badge-danger';
     case 'REFUNDED': return 'badge badge-secondary';
     default: return 'badge badge-default';
@@ -44,8 +67,14 @@ export default function VendorOrderDetail() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [newStatus, setNewStatus] = useState<'PROCESSING' | 'DELIVERED' | ''>('');
+  const [newStatus, setNewStatus] = useState<VendorStatus | ''>('');
   const [statusNote, setStatusNote] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+
+  // Delayed delivery — extend the expected date
+  const [extending, setExtending] = useState(false);
+  const [newDeliveryDate, setNewDeliveryDate] = useState('');
+  const [delayNote, setDelayNote] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -63,15 +92,21 @@ export default function VendorOrderDetail() {
 
   const handleUpdateStatus = async () => {
     if (!id || !newStatus || !order) return;
+    if (newStatus === 'SHIPPED' && !trackingNumber.trim()) {
+      addToast({ type: 'error', message: 'Enter the delivery partner tracking number to mark this order as shipped.' });
+      return;
+    }
     setUpdating(true);
     try {
       const res = await vendorService.updateOrderStatus(id, {
         status: newStatus,
+        trackingNumber: newStatus === 'SHIPPED' ? trackingNumber.trim() : undefined,
         note: statusNote || undefined,
       });
       setOrder(res.data);
       setNewStatus('');
       setStatusNote('');
+      setTrackingNumber('');
       addToast({ type: 'success', message: `Order status updated to ${newStatus}` });
     } catch (err: any) {
       addToast({ type: 'error', message: err.response?.data?.message || 'Failed to update status' });
@@ -79,6 +114,29 @@ export default function VendorOrderDetail() {
       setUpdating(false);
     }
   };
+
+  const handleExtendDelivery = async () => {
+    if (!id || !newDeliveryDate) return;
+    setExtending(true);
+    try {
+      const res = await vendorService.extendDeliveryDate(id, {
+        expectedDeliveryDate: newDeliveryDate,
+        note: delayNote || undefined,
+      });
+      setOrder(res.data);
+      setNewDeliveryDate('');
+      setDelayNote('');
+      addToast({ type: 'success', message: 'Expected delivery date updated — the customer has been notified.' });
+    } catch (err: any) {
+      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to update delivery date' });
+    } finally {
+      setExtending(false);
+    }
+  };
+
+  const canExtendDelivery = order
+    ? ['PROCESSING', 'PACKAGED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERY_FAILED'].includes(order.status)
+    : false;
 
   if (loading) {
     return (
@@ -114,6 +172,42 @@ export default function VendorOrderDetail() {
 
       <div className="order-detail-layout">
         <div className="order-main">
+          {/* Shipment info */}
+          {(order.trackingNumber || order.expectedDeliveryDate || order.shippingMethodName) && (
+            <section className="detail-section">
+              <h2>Shipment</h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                {order.shippingMethodName && (
+                  <p style={{ margin: 0 }}>
+                    <strong>Method:</strong> {order.shippingMethodName}
+                    {order.deliveryPartnerName && <> via {order.deliveryPartnerName}</>}
+                  </p>
+                )}
+                {order.trackingNumber && (
+                  <p style={{ margin: 0 }}>
+                    <strong>Tracking:</strong> <code>{order.trackingNumber}</code>
+                    {order.trackingUrl && (
+                      <>
+                        {' '}
+                        <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer">
+                          Track shipment ↗
+                        </a>
+                      </>
+                    )}
+                  </p>
+                )}
+                {order.expectedDeliveryDate && (
+                  <p style={{ margin: 0 }}>
+                    <strong>Expected by:</strong>{' '}
+                    {new Date(order.expectedDeliveryDate).toLocaleDateString('en-NG', {
+                      weekday: 'short', month: 'short', day: 'numeric',
+                    })}
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+
           {/* Status Update */}
           {availableTransitions.length > 0 && (
             <section className="detail-section">
@@ -127,10 +221,20 @@ export default function VendorOrderDetail() {
                   >
                     <option value="">Select new status...</option>
                     {availableTransitions.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{STATUS_ACTION_LABELS[s]}</option>
                     ))}
                   </select>
                 </div>
+                {newStatus === 'SHIPPED' && (
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder={`Delivery partner tracking number${order.deliveryPartnerName ? ` (${order.deliveryPartnerName})` : ''} *`}
+                    value={trackingNumber}
+                    onChange={(e) => setTrackingNumber(e.target.value)}
+                    required
+                  />
+                )}
                 <input
                   type="text"
                   className="search-input"
@@ -144,9 +248,44 @@ export default function VendorOrderDetail() {
                     onClick={handleUpdateStatus}
                     disabled={!newStatus || updating}
                   >
-                    {updating ? 'Updating...' : `Update to ${newStatus || '...'}`}
+                    {updating ? 'Updating...' : newStatus ? STATUS_ACTION_LABELS[newStatus] : 'Update'}
                   </button>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* Delayed delivery — extend the expected date */}
+          {canExtendDelivery && (
+            <section className="detail-section">
+              <h2>Delivery Delayed?</h2>
+              <p className="text-muted" style={{ marginTop: 0 }}>
+                Push back the expected delivery date — the customer is notified by email.
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <input
+                  type="date"
+                  className="search-input"
+                  style={{ maxWidth: 200 }}
+                  min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                  value={newDeliveryDate}
+                  onChange={(e) => setNewDeliveryDate(e.target.value)}
+                />
+                <input
+                  type="text"
+                  className="search-input"
+                  style={{ flex: 1, minWidth: 200 }}
+                  placeholder="Reason (optional, shown to the customer)"
+                  value={delayNote}
+                  onChange={(e) => setDelayNote(e.target.value)}
+                />
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleExtendDelivery}
+                  disabled={!newDeliveryDate || extending}
+                >
+                  {extending ? 'Saving...' : 'Update Date'}
+                </button>
               </div>
             </section>
           )}

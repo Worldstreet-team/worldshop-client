@@ -2,8 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { vendorService, type VendorCreateProductData } from '@/services/vendorService';
 import { categoryService } from '@/services/productService';
-import type { Product, Category, ProductImage } from '@/types/product.types';
+import type {
+  Product,
+  Category,
+  CategoryAttribute,
+  ListingCompliance,
+  ProductImage,
+} from '@/types/product.types';
 import { useUIStore } from '@/store/uiStore';
+
+/** Derive a display name from a variant's attribute values, e.g. "L / Navy". */
+function deriveVariantName(attributes: Record<string, string>, fallback: string): string {
+  const values = Object.values(attributes).filter(Boolean);
+  return values.length > 0 ? values.join(' / ') : fallback;
+}
 
 export default function VendorProductEdit() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +38,19 @@ export default function VendorProductEdit() {
   const [productType, setProductType] = useState<'PHYSICAL' | 'DIGITAL'>('DIGITAL');
   const [stock, setStock] = useState('0');
   const [images, setImages] = useState<ProductImage[]>([]);
+
+  // Listing-standard fields
+  const [brand, setBrand] = useState('');
+  const [material, setMaterial] = useState('');
+  const [weightGrams, setWeightGrams] = useState('');
+  const [dimLength, setDimLength] = useState('');
+  const [dimWidth, setDimWidth] = useState('');
+  const [dimHeight, setDimHeight] = useState('');
+  const [dimUnit, setDimUnit] = useState<'cm' | 'in'>('cm');
+
+  // Category-driven attribute requirements + compliance of the saved listing
+  const [categoryAttributes, setCategoryAttributes] = useState<CategoryAttribute[]>([]);
+  const [compliance, setCompliance] = useState<ListingCompliance | null>(null);
 
   // File upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +80,21 @@ export default function VendorProductEdit() {
     categoryService.getCategories().then(setCategories).catch(() => {});
   }, []);
 
+  // Load the selected category's listing-standard attributes
+  useEffect(() => {
+    if (!categoryId) {
+      setCategoryAttributes([]);
+      return;
+    }
+    categoryService
+      .getCategoryAttributes(categoryId)
+      .then(setCategoryAttributes)
+      .catch(() => setCategoryAttributes([]));
+  }, [categoryId]);
+
+  const variantAttributeDefs = categoryAttributes.filter((a) => a.appliesTo === 'VARIANT');
+  const requiredVariantAttrs = variantAttributeDefs.filter((a) => a.isRequired);
+
   // Load product data for editing
   useEffect(() => {
     if (!id) return;
@@ -72,6 +112,16 @@ export default function VendorProductEdit() {
         setProductType(product.type === 'PHYSICAL' ? 'PHYSICAL' : 'DIGITAL');
         setStock(product.type === 'PHYSICAL' ? String(product.stock ?? 0) : '0');
         setImages(Array.isArray(product.images) ? product.images : []);
+        setBrand(product.brand || '');
+        setMaterial(product.material || '');
+        setWeightGrams(product.weightGrams ? String(product.weightGrams) : '');
+        if (product.dimensions) {
+          setDimLength(String(product.dimensions.length));
+          setDimWidth(String(product.dimensions.width));
+          setDimHeight(String(product.dimensions.height));
+          setDimUnit(product.dimensions.unit || 'cm');
+        }
+        setCompliance(product.compliance ?? null);
         setApprovalStatus(product.approvalStatus || '');
         if (product.variants?.length) {
           setVariants(product.variants.map((v) => ({
@@ -158,6 +208,20 @@ export default function VendorProductEdit() {
     setVariants((prev) => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
   };
 
+  const updateVariantAttribute = (index: number, attrName: string, value: string) => {
+    setVariants((prev) => prev.map((v, i) => {
+      if (i !== index) return v;
+      const attributes = { ...v.attributes };
+      if (value) {
+        attributes[attrName] = value;
+      } else {
+        delete attributes[attrName];
+      }
+      // Keep the display name in sync with the selected attributes
+      return { ...v, attributes, name: deriveVariantName(attributes, v.name) };
+    }));
+  };
+
   const removeVariant = (index: number) => {
     setVariants((prev) => prev.filter((_, i) => i !== index));
   };
@@ -204,19 +268,57 @@ export default function VendorProductEdit() {
     }
   };
 
+  const validateListing = (): string | null => {
+    if (!name.trim() || !description.trim() || !basePrice) {
+      return 'Please fill in name, description and price.';
+    }
+    if (!categoryId) {
+      return 'Please select a category.';
+    }
+    if (productType === 'PHYSICAL' && images.length === 0) {
+      return 'Physical products need at least one image.';
+    }
+    if (requiredVariantAttrs.length > 0 && variants.length === 0) {
+      const names = requiredVariantAttrs.map((a) => a.name).join(', ');
+      return `This category requires variants with ${names} — add at least one variant.`;
+    }
+    for (const [i, variant] of variants.entries()) {
+      for (const attr of requiredVariantAttrs) {
+        if (!variant.attributes[attr.name]) {
+          return `Variant ${i + 1} is missing ${attr.name}.`;
+        }
+      }
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !description.trim() || !basePrice) {
-      addToast({ type: 'error', message: 'Please fill in all required fields.' });
+    const problem = validateListing();
+    if (problem) {
+      addToast({ type: 'error', message: problem });
       return;
     }
+
+    const hasDimensions = dimLength && dimWidth && dimHeight;
 
     setSaving(true);
     const data: VendorCreateProductData = {
       name: name.trim(),
       description: description.trim(),
       shortDesc: shortDesc.trim() || undefined,
-      categoryId: categoryId || null,
+      categoryId,
+      brand: brand.trim() || null,
+      material: material.trim() || null,
+      weightGrams: weightGrams ? parseInt(weightGrams) || null : null,
+      dimensions: hasDimensions
+        ? {
+            length: parseFloat(dimLength),
+            width: parseFloat(dimWidth),
+            height: parseFloat(dimHeight),
+            unit: dimUnit,
+          }
+        : null,
       type: productType,
       stock: productType === 'PHYSICAL' ? parseInt(stock) || 0 : undefined,
       basePrice: parseFloat(basePrice),
@@ -226,7 +328,7 @@ export default function VendorProductEdit() {
         url, alt, isPrimary, sortOrder: i, cloudflareId,
       })),
       variants: variants.length > 0 ? variants.map((v) => ({
-        name: v.name,
+        name: v.name || deriveVariantName(v.attributes, `Variant`),
         attributes: v.attributes,
         price: v.price,
         compareAtPrice: v.compareAtPrice,
@@ -289,6 +391,22 @@ export default function VendorProductEdit() {
         </div>
       )}
 
+      {/* Listing-standards banner: pre-standards products stay live, but the
+          vendor sees exactly what to fix; saving enforces it */}
+      {isEditing && compliance && !compliance.compliant && (
+        <div className="approval-banner approval-rejected">
+          <span className="material-icons">warning</span>
+          <div>
+            <strong>This listing no longer meets the listing requirements — update it to keep it compliant:</strong>
+            <ul style={{ margin: '0.25rem 0 0 1rem' }}>
+              {compliance.problems.map((p, i) => (
+                <li key={i}>{p}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       <form className="product-form" onSubmit={handleSubmit}>
         <div className="form-layout">
           <div className="form-main">
@@ -316,8 +434,8 @@ export default function VendorProductEdit() {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor="category">Category</label>
-                  <select id="category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                  <label htmlFor="category">Category *</label>
+                  <select id="category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
                     <option value="">Select category</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -351,6 +469,58 @@ export default function VendorProductEdit() {
                   </div>
                 )}
               </div>
+            </section>
+
+            {/* Product Details (listing standards) */}
+            <section className="form-section">
+              <h2>Product Details</h2>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="brand">Brand</label>
+                  <input id="brand" type="text" placeholder="e.g. Nike"
+                    value={brand} onChange={(e) => setBrand(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="material">Material</label>
+                  <input id="material" type="text" placeholder="e.g. 100% Cotton"
+                    value={material} onChange={(e) => setMaterial(e.target.value)} />
+                </div>
+              </div>
+              {productType === 'PHYSICAL' && (
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="weightGrams">Weight (grams)</label>
+                      <input id="weightGrams" type="number" min="1" step="1" placeholder="e.g. 500"
+                        value={weightGrams} onChange={(e) => setWeightGrams(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="dimUnit">Dimensions Unit</label>
+                      <select id="dimUnit" value={dimUnit} onChange={(e) => setDimUnit(e.target.value as 'cm' | 'in')}>
+                        <option value="cm">Centimeters</option>
+                        <option value="in">Inches</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="dimLength">Length</label>
+                      <input id="dimLength" type="number" min="0" step="0.1" placeholder="0"
+                        value={dimLength} onChange={(e) => setDimLength(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="dimWidth">Width</label>
+                      <input id="dimWidth" type="number" min="0" step="0.1" placeholder="0"
+                        value={dimWidth} onChange={(e) => setDimWidth(e.target.value)} />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="dimHeight">Height</label>
+                      <input id="dimHeight" type="number" min="0" step="0.1" placeholder="0"
+                        value={dimHeight} onChange={(e) => setDimHeight(e.target.value)} />
+                    </div>
+                  </div>
+                </>
+              )}
             </section>
 
             {/* Pricing */}
@@ -481,6 +651,14 @@ export default function VendorProductEdit() {
                 </button>
               </div>
 
+              {requiredVariantAttrs.length > 0 && (
+                <p className="text-muted">
+                  This category requires each variant to specify:{' '}
+                  <strong>{requiredVariantAttrs.map((a) => a.name).join(', ')}</strong>
+                  {' '}(e.g. one variant per size, with its own stock).
+                </p>
+              )}
+
               {variants.length === 0 ? (
                 <p className="text-muted">No variants. Add variants if your product comes in different sizes, colors, etc.</p>
               ) : (
@@ -488,19 +666,53 @@ export default function VendorProductEdit() {
                   {variants.map((variant, i) => (
                     <div key={i} className="variant-card">
                       <div className="variant-header">
-                        <strong>Variant {i + 1}</strong>
+                        <strong>{variant.name || `Variant ${i + 1}`}</strong>
                         <button type="button" className="btn-icon-sm btn-icon-danger"
                           onClick={() => removeVariant(i)} title="Remove variant">
                           <span className="material-icons">close</span>
                         </button>
                       </div>
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>Name *</label>
-                          <input type="text" placeholder="e.g. Large / Red"
-                            value={variant.name}
-                            onChange={(e) => updateVariant(i, 'name', e.target.value)} />
+
+                      {/* Structured attributes from the category's listing standards */}
+                      {variantAttributeDefs.length > 0 && (
+                        <div className="form-row">
+                          {variantAttributeDefs.map((attr) => (
+                            <div className="form-group" key={attr.id}>
+                              <label>{attr.name}{attr.isRequired ? ' *' : ''}</label>
+                              {attr.type === 'SELECT' ? (
+                                <select
+                                  value={variant.attributes[attr.name] || ''}
+                                  onChange={(e) => updateVariantAttribute(i, attr.name, e.target.value)}
+                                  required={attr.isRequired}
+                                >
+                                  <option value="">Select {attr.name}</option>
+                                  {attr.options.map((opt) => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  type={attr.type === 'NUMBER' ? 'number' : 'text'}
+                                  placeholder={attr.name}
+                                  value={variant.attributes[attr.name] || ''}
+                                  onChange={(e) => updateVariantAttribute(i, attr.name, e.target.value)}
+                                  required={attr.isRequired}
+                                />
+                              )}
+                            </div>
+                          ))}
                         </div>
+                      )}
+
+                      <div className="form-row">
+                        {variantAttributeDefs.length === 0 && (
+                          <div className="form-group">
+                            <label>Name *</label>
+                            <input type="text" placeholder="e.g. Large / Red"
+                              value={variant.name}
+                              onChange={(e) => updateVariant(i, 'name', e.target.value)} />
+                          </div>
+                        )}
                         <div className="form-group">
                           <label>Price (₦)</label>
                           <input type="number" step="0.01" min="0" placeholder="Override price"
@@ -508,7 +720,7 @@ export default function VendorProductEdit() {
                             onChange={(e) => updateVariant(i, 'price', e.target.value ? parseFloat(e.target.value) : undefined)} />
                         </div>
                         <div className="form-group">
-                          <label>Stock</label>
+                          <label>Stock{requiredVariantAttrs.some((a) => a.name === 'Size') ? ' (for this size)' : ''}</label>
                           <input type="number" min="0" placeholder="0"
                             value={variant.stock ?? 0}
                             onChange={(e) => updateVariant(i, 'stock', parseInt(e.target.value) || 0)} />

@@ -6,6 +6,7 @@ import Button from '@/components/common/Button';
 interface ProductFiltersProps {
   filters: ProductFiltersType;
   categories: Category[];
+  brands?: string[];
   onFilterChange: (filters: Partial<ProductFiltersType>) => void;
   onClearFilters: () => void;
   priceRange?: { min: number; max: number };
@@ -16,6 +17,7 @@ interface ProductFiltersProps {
 export default function ProductFilters({
   filters,
   categories,
+  brands = [],
   onFilterChange,
   onClearFilters,
   priceRange = { min: 0, max: 10000 },
@@ -26,6 +28,7 @@ export default function ProductFilters({
   const [localPriceMax, setLocalPriceMax] = useState(filters.maxPrice?.toString() || '');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     categories: true,
+    brands: true,
     price: true,
     availability: true,
   });
@@ -57,11 +60,17 @@ export default function ProductFilters({
     onFilterChange({ inStock: checked || undefined });
   };
 
+  const handleBrandChange = (brand: string, checked: boolean) => {
+    // Single-select: the server filters on one brand at a time
+    onFilterChange({ brand: checked ? brand : undefined });
+  };
+
   const hasActiveFilters =
     filters.categoryId ||
     filters.minPrice !== undefined ||
     filters.maxPrice !== undefined ||
-    filters.inStock;
+    filters.inStock ||
+    filters.brand;
 
   return (
     <aside className={`product-filters ${className}`}>
@@ -115,6 +124,44 @@ export default function ProductFilters({
           </div>
         )}
       </div>
+
+      {/* Brands */}
+      {brands.length > 0 && (
+        <div className="product-filters-section">
+          <button
+            type="button"
+            className="product-filters-section-header"
+            onClick={() => toggleSection('brands')}
+            aria-expanded={expandedSections.brands}
+          >
+            <span>Brands</span>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              width="16"
+              height="16"
+              className={expandedSections.brands ? 'rotated' : ''}
+            >
+              <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          {expandedSections.brands && (
+            <div className="product-filters-section-content">
+              {brands.map((brand) => (
+                <Checkbox
+                  key={brand}
+                  label={brand}
+                  checked={filters.brand === brand}
+                  onChange={(e) => handleBrandChange(brand, e.target.checked)}
+                  disabled={loading}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Price Range */}
       <div className="product-filters-section">

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useProductCacheStore } from '@/store/productCacheStore';
 import { useCategoryStore } from '@/store/categoryStore';
+import { productService } from '@/services/productService';
 import type { Product, ProductFilters as ProductFiltersType } from '@/types/product.types';
 import { Breadcrumb, Pagination, Skeleton } from '@/components/common';
 import {
@@ -36,6 +37,9 @@ export default function ProductListingPage() {
   const maxPrice = searchParams.has('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
   const searchQuery = searchParams.get('q') || '';
   const inStock = searchParams.get('inStock') === 'true';
+  const selectedBrand = searchParams.get('brand') || '';
+  const featuredOnly = searchParams.get('featured') === 'true';
+  const saleOnly = searchParams.get('sale') === 'true';
 
   // Stale-while-revalidate: seed from cache if available
   const listFilters: ProductFiltersType = {
@@ -44,6 +48,9 @@ export default function ProductListingPage() {
     maxPrice: maxPrice,
     search: searchQuery || undefined,
     inStock: inStock || undefined,
+    brand: selectedBrand || undefined,
+    isFeatured: featuredOnly || undefined,
+    onSale: saleOnly || undefined,
     sortBy: sortMap[currentSort] as ProductFiltersType['sortBy'],
     page: currentPage,
     limit: 12,
@@ -56,6 +63,7 @@ export default function ProductListingPage() {
   const [totalPages, setTotalPages] = useState(cachedList?.data.pagination.totalPages ?? 1);
   const [isLoading, setIsLoading] = useState(!cachedList);
   const [categories, setCategories] = useState(categoryStore.categories);
+  const [brands, setBrands] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 1000 });
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -65,6 +73,7 @@ export default function ProductListingPage() {
     minPrice: minPrice,
     maxPrice: maxPrice,
     inStock: inStock || undefined,
+    brand: selectedBrand || undefined,
   };
 
   // Fetch initial data
@@ -85,6 +94,13 @@ export default function ProductListingPage() {
         const cats = useCategoryStore.getState().categories;
         setCategories(cats);
         setPriceRange(priceRangeData);
+
+        productService
+          .getBrands()
+          .then(setBrands)
+          .catch(() => {
+            // Brand filter just stays hidden if the list can't load
+          });
       } catch (error) {
         console.error('Error fetching initial data:', error);
       }
@@ -102,6 +118,9 @@ export default function ProductListingPage() {
         maxPrice: maxPrice,
         search: searchQuery || undefined,
         inStock: inStock || undefined,
+        brand: selectedBrand || undefined,
+        isFeatured: featuredOnly || undefined,
+        onSale: saleOnly || undefined,
         sortBy: sortMap[currentSort] as ProductFiltersType['sortBy'],
         page: currentPage,
         limit: 12,
@@ -115,7 +134,7 @@ export default function ProductListingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, currentSort, selectedCategory, minPrice, maxPrice, searchQuery, inStock, productCache]);
+  }, [currentPage, currentSort, selectedCategory, minPrice, maxPrice, searchQuery, inStock, selectedBrand, featuredOnly, saleOnly, productCache]);
 
   useEffect(() => {
     fetchProducts();
@@ -173,6 +192,14 @@ export default function ProductListingPage() {
       }
     }
 
+    if (newFilters.brand !== undefined) {
+      if (newFilters.brand) {
+        newParams.set('brand', newFilters.brand);
+      } else {
+        newParams.delete('brand');
+      }
+    }
+
     newParams.set('page', '1');
     setSearchParams(newParams);
   };
@@ -182,7 +209,15 @@ export default function ProductListingPage() {
   };
 
   // Check if any filters are active
-  const hasActiveFilters = selectedCategory || (minPrice !== undefined && minPrice > 0) || (maxPrice !== undefined && maxPrice < priceRange.max) || inStock;
+  const hasActiveFilters = selectedCategory || (minPrice !== undefined && minPrice > 0) || (maxPrice !== undefined && maxPrice < priceRange.max) || inStock || !!selectedBrand;
+
+  const pageTitle = searchQuery
+    ? `Search: "${searchQuery}"`
+    : featuredOnly
+      ? 'Featured Products'
+      : saleOnly
+        ? 'Deals & Sale'
+        : 'Shop All Products';
 
   // Breadcrumb items
   const breadcrumbItems = [
@@ -196,7 +231,7 @@ export default function ProductListingPage() {
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="page-header">
-          <h1>{searchQuery ? `Search: "${searchQuery}"` : 'Shop All Products'}</h1>
+          <h1>{pageTitle}</h1>
           <span className="results-count">
             {isLoading ? (
               <Skeleton width={150} height={20} />
@@ -238,6 +273,7 @@ export default function ProductListingPage() {
             <ProductFilters
               filters={filters}
               categories={categories}
+              brands={brands}
               onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}
               priceRange={priceRange}

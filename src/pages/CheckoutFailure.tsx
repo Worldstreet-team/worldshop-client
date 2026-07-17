@@ -22,7 +22,7 @@ export default function CheckoutFailurePage() {
       return failureData.errorMessage;
     }
 
-    // Paystack redirect with reference — payment was abandoned or failed
+    // Provider redirect with reference — payment was abandoned or failed
     if (reference) {
       return 'Your payment could not be completed. Your order has been saved — you can retry payment from your orders page.';
     }

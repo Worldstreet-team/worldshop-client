@@ -12,8 +12,11 @@ const STATUS_OPTIONS: { value: OrderStatus | ''; label: string }[] = [
   { value: 'CREATED', label: 'Created' },
   { value: 'PAID', label: 'Paid' },
   { value: 'PROCESSING', label: 'Processing' },
+  { value: 'PACKAGED', label: 'Packaged' },
   { value: 'SHIPPED', label: 'Shipped' },
+  { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
   { value: 'DELIVERED', label: 'Delivered' },
+  { value: 'DELIVERY_FAILED', label: 'Delivery Failed' },
   { value: 'CANCELLED', label: 'Cancelled' },
   { value: 'REFUNDED', label: 'Refunded' },
 ];
@@ -22,7 +25,10 @@ const getStatusBadgeClass = (status: OrderStatus): string => {
   switch (status) {
     case 'PAID': return 'badge badge-info';
     case 'PROCESSING': return 'badge badge-warning';
+    case 'PACKAGED': return 'badge badge-warning';
     case 'SHIPPED': return 'badge badge-primary';
+    case 'OUT_FOR_DELIVERY': return 'badge badge-primary';
+    case 'DELIVERY_FAILED': return 'badge badge-danger';
     case 'DELIVERED': return 'badge badge-success';
     case 'CANCELLED': return 'badge badge-danger';
     case 'REFUNDED': return 'badge badge-secondary';

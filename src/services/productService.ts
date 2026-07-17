@@ -2,6 +2,7 @@ import { api } from './api';
 import type {
   Product,
   Category,
+  CategoryAttribute,
   Review,
   ProductFilters,
   StoreInfo
@@ -106,6 +107,14 @@ export const categoryService = {
   // Get all categories (flat list with product count)
   getCategories: async (): Promise<Category[]> => {
     const res = await api.get<ApiResponse<Category[]>>('/categories');
+    return res.data;
+  },
+
+  // Listing-standard attributes for a category (drives the vendor form)
+  getCategoryAttributes: async (categoryId: string): Promise<CategoryAttribute[]> => {
+    const res = await api.get<ApiResponse<CategoryAttribute[]>>(
+      `/categories/id/${categoryId}/attributes`,
+    );
     return res.data;
   },
 

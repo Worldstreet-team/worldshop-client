@@ -6,13 +6,26 @@ import { useAuthStore } from '@/store/authStore';
 import { useAddressStore } from '@/store/addressStore';
 import { checkoutService } from '@/services/orderService';
 import { addressService } from '@/services/addressService';
+import { paymentService, type WalletBalanceQuote } from '@/services/paymentService';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import EmptyState from '@/components/common/EmptyState';
 import { NIGERIAN_STATES, getStateDisplayName } from '@/utils/nigerianStates';
 import type {
   CheckoutSessionPreview,
   CheckoutSessionResult,
+  ShippingMethodSummary,
 } from '@/types/order.types';
+
+/** "Mon, Jul 20 – Wed, Jul 22" delivery window for a method, from today. */
+function deliveryWindow(method: ShippingMethodSummary): string {
+  const fmt = (d: Date) =>
+    d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const min = new Date();
+  min.setDate(min.getDate() + method.minDays);
+  const max = new Date();
+  max.setDate(max.getDate() + method.maxDays);
+  return `${fmt(min)} – ${fmt(max)}`;
+}
 import type { Address } from '@/types/user.types';
 
 interface ShippingFormData {
@@ -55,7 +68,16 @@ export default function CheckoutPage() {
   const [preview, setPreview] = useState<CheckoutSessionPreview | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [saveNewAddress, setSaveNewAddress] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState(import.meta.env.DEV ? 'MOCK' : 'FLUTTERWAVE');
+  // Checkout is wallet-only: buyers pay from their central WorldStreet
+  // dollar wallet. MOCK remains selectable in dev builds for local testing.
+  const [selectedProvider, setSelectedProvider] = useState('WALLET');
+  const [walletInfo, setWalletInfo] = useState<WalletBalanceQuote | null>(null);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
+
+  // Delivery method selection
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethodSummary[]>([]);
+  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -90,11 +112,43 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  const loadPreview = async (): Promise<CheckoutSessionPreview | null> => {
+  // Refresh the wallet balance + USD conversion whenever the payable total
+  // changes (the quote uses the same cached FX rate the charge will).
+  const previewTotal = preview?.summary.total ?? null;
+  useEffect(() => {
+    if (!isAuthenticated || previewTotal === null || previewTotal <= 0) return;
+    let cancelled = false;
+    setIsLoadingWallet(true);
+    setWalletError(null);
+    paymentService
+      .getWalletBalance(previewTotal)
+      .then((res) => {
+        if (!cancelled) setWalletInfo(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setWalletError('Could not load your wallet balance');
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingWallet(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, previewTotal]);
+
+  const loadPreview = async (
+    shippingMethodId?: string | null,
+  ): Promise<CheckoutSessionPreview | null> => {
     setIsPreviewing(true);
     try {
-      const res = await checkoutService.previewSession();
+      const res = await checkoutService.previewSession(
+        shippingMethodId ?? selectedShippingMethodId ?? undefined,
+      );
       setPreview(res.data);
+      // Reflect the method the server actually priced with (default = first active)
+      if (res.data.shippingMethod && !selectedShippingMethodId) {
+        setSelectedShippingMethodId(res.data.shippingMethod.id);
+      }
       if (!res.data.requiresShipping) {
         setStep(2);
       }
@@ -106,6 +160,24 @@ export default function CheckoutPage() {
       setIsPreviewing(false);
     }
   };
+
+  const handleShippingMethodChange = (methodId: string) => {
+    setSelectedShippingMethodId(methodId);
+    void loadPreview(methodId);
+  };
+
+  // Load the available delivery methods once the cart needs shipping
+  const requiresShipping = preview?.requiresShipping ?? false;
+  useEffect(() => {
+    if (!requiresShipping || shippingMethods.length > 0) return;
+    checkoutService
+      .getShippingMethods()
+      .then((res) => setShippingMethods(res.data))
+      .catch(() => {
+        // Selector stays hidden; server prices with its default method
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requiresShipping]);
 
   const populateFromAddress = useCallback((addr: Address) => {
     setShipping({
@@ -212,6 +284,9 @@ export default function CheckoutPage() {
             country: shipping.country,
             postalCode: shipping.postalCode || undefined,
           } : undefined,
+          shippingMethodId: preview.requiresShipping
+            ? (selectedShippingMethodId ?? undefined)
+            : undefined,
         });
         result = confirmRes.data;
       } catch (error) {
@@ -533,6 +608,48 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {/* Delivery Method */}
+                {!isDigitalOnly && shippingMethods.length > 0 && (
+                  <div className="review-section delivery-method-section">
+                    <div className="review-header">
+                      <h3>Delivery Method</h3>
+                    </div>
+                    <div className="payment-options">
+                      {shippingMethods.map((method) => (
+                        <label
+                          key={method.id}
+                          className={`payment-option ${selectedShippingMethodId === method.id ? 'selected' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="shippingMethod"
+                            value={method.id}
+                            checked={selectedShippingMethodId === method.id}
+                            onChange={() => handleShippingMethodChange(method.id)}
+                            disabled={isPreviewing || isProcessing}
+                          />
+                          <span className="option-content">
+                            <strong>{method.name}</strong>
+                            <small>
+                              via {method.partnerName} · ₦{method.price.toLocaleString()}
+                              {method.freeAbove != null &&
+                                ` (free over ₦${method.freeAbove.toLocaleString()})`}
+                              {' · '}Arrives {deliveryWindow(method)}
+                            </small>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {preview.shippingMethod && (
+                      <p className="delivery-estimate-note">
+                        Estimated delivery:{' '}
+                        <strong>{deliveryWindow(preview.shippingMethod)}</strong> via{' '}
+                        {preview.shippingMethod.partnerName}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Vendor-Grouped Items */}
                 {preview.vendorGroups.map((group) => (
                   <div key={group.vendorId ?? 'platform'} className="review-section vendor-order-group">
@@ -587,6 +704,36 @@ export default function CheckoutPage() {
                   <div className="payment-method-selector">
                     <p className="selector-label">Payment Method:</p>
                     <div className="payment-options">
+                      <label className={`payment-option ${selectedProvider === 'WALLET' ? 'selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="provider"
+                          value="WALLET"
+                          checked={selectedProvider === 'WALLET'}
+                          onChange={(e) => setSelectedProvider(e.target.value)}
+                        />
+                        <span className="option-content">
+                          <strong>WorldStreet Wallet</strong>
+                          {isLoadingWallet ? (
+                            <small>Checking your balance…</small>
+                          ) : walletError ? (
+                            <small className="wallet-error">{walletError}</small>
+                          ) : walletInfo ? (
+                            <small>
+                              Balance: ${walletInfo.balance.available.toFixed(2)}
+                              {walletInfo.quote && (
+                                <>
+                                  {' · '}This order: ${walletInfo.quote.usd.toFixed(2)}{' '}
+                                  (₦{walletInfo.quote.amountNgn.toLocaleString()} at ₦
+                                  {walletInfo.quote.fxRate.toLocaleString()}/$)
+                                </>
+                              )}
+                            </small>
+                          ) : (
+                            <small>Pay from your dollar balance</small>
+                          )}
+                        </span>
+                      </label>
                       {import.meta.env.DEV && (
                         <label className={`payment-option ${selectedProvider === 'MOCK' ? 'selected' : ''}`}>
                           <input
@@ -601,39 +748,41 @@ export default function CheckoutPage() {
                           </span>
                         </label>
                       )}
-                      <label className={`payment-option ${selectedProvider === 'FLUTTERWAVE' ? 'selected' : ''}`}>
-                        <input
-                          type="radio"
-                          name="provider"
-                          value="FLUTTERWAVE"
-                          checked={selectedProvider === 'FLUTTERWAVE'}
-                          onChange={(e) => setSelectedProvider(e.target.value)}
-                        />
-                        <span className="option-content">
-                          <strong>Pay with Card/Transfer</strong>
-                          <small>Secured by Flutterwave</small>
-                        </span>
-                      </label>
-                      <label className="payment-option disabled">
-                        <input
-                          type="radio"
-                          name="provider"
-                          value="CRYPTO"
-                          disabled
-                        />
-                        <span className="option-content">
-                          <strong>Crypto</strong>
-                          <small>Coming Soon</small>
-                        </span>
-                      </label>
                     </div>
+                    {selectedProvider === 'WALLET' &&
+                      walletInfo?.quote &&
+                      !walletInfo.quote.sufficient && (
+                        <div className="wallet-insufficient">
+                          <p>
+                            Your wallet balance (${walletInfo.balance.available.toFixed(2)})
+                            doesn't cover this order (${walletInfo.quote.usd.toFixed(2)}).
+                            Top up your dollar wallet, then return to checkout.
+                          </p>
+                          {import.meta.env.VITE_WALLET_TOPUP_URL && (
+                            <a
+                              href={import.meta.env.VITE_WALLET_TOPUP_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-outline"
+                            >
+                              Top Up Wallet
+                            </a>
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   <button
                     type="button"
                     className="btn btn-primary btn-lg"
                     onClick={handlePlaceOrder}
-                    disabled={isProcessing || preview.issues.length > 0}
+                    disabled={
+                      isProcessing ||
+                      preview.issues.length > 0 ||
+                      (selectedProvider === 'WALLET' &&
+                        walletInfo?.quote != null &&
+                        !walletInfo.quote.sufficient)
+                    }
                   >
                     {isProcessing ? (
                       <>

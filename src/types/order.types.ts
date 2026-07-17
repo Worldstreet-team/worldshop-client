@@ -2,8 +2,11 @@ export type OrderStatus =
   | 'CREATED'
   | 'PAID'
   | 'PROCESSING'
+  | 'PACKAGED'
   | 'SHIPPED'
+  | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
+  | 'DELIVERY_FAILED'
   | 'CANCELLED'
   | 'REFUNDED';
 
@@ -56,6 +59,11 @@ export interface Order {
   total: number;
   couponCode?: string | null;
   notes?: string | null;
+  shippingMethodName?: string | null;
+  deliveryPartnerName?: string | null;
+  expectedDeliveryDate?: string | null;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
   statusHistory: OrderStatusHistory[];
   createdAt: string;
   updatedAt: string;
@@ -82,12 +90,15 @@ export interface ShippingAddress {
   postalCode?: string;
 }
 
-export interface ShippingRate {
+export interface ShippingMethodSummary {
   id: string;
   name: string;
-  description?: string;
+  partnerName: string;
   price: number;
-  estimatedDays: number;
+  freeAbove: number | null;
+  minDays: number;
+  maxDays: number;
+  expectedDeliveryDate: string;
 }
 
 // ─── Checkout Session Types ─────────────────────────────────────
@@ -122,6 +133,7 @@ export interface CheckoutSessionPreview {
   vendorGroups: VendorGroup[];
   issues: CheckoutIssue[];
   requiresShipping: boolean;
+  shippingMethod: ShippingMethodSummary | null;
   summary: {
     subtotal: number;
     shipping: number;
@@ -135,6 +147,7 @@ export interface ConfirmCheckoutSessionInput {
   snapshotToken: string;
   shippingAddress?: ShippingAddress;
   billingAddress?: ShippingAddress;
+  shippingMethodId?: string;
   notes?: string;
 }
 

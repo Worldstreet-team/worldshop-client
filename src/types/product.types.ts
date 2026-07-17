@@ -42,6 +42,9 @@ export interface Product {
   categoryId: string;
   category?: Category;
   brand?: string;
+  material?: string;
+  weightGrams?: number;
+  dimensions?: ProductDimensions;
   tags: string[];
   images: ProductImage[];
   variants: ProductVariant[];
@@ -58,8 +61,34 @@ export interface Product {
     storeName: string;
     storeSlug: string;
   };
+  /** Present on vendor-scoped responses: listing-standards check result. */
+  compliance?: ListingCompliance;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProductDimensions {
+  length: number;
+  width: number;
+  height: number;
+  unit: 'cm' | 'in';
+}
+
+export interface ListingCompliance {
+  compliant: boolean;
+  problems: string[];
+}
+
+/** Listing-standard attribute a category requires/allows on its products. */
+export interface CategoryAttribute {
+  id: string;
+  categoryId: string;
+  name: string;
+  type: 'SELECT' | 'TEXT' | 'NUMBER';
+  options: string[];
+  isRequired: boolean;
+  appliesTo: 'PRODUCT' | 'VARIANT';
+  sortOrder: number;
 }
 
 export interface Category {
@@ -97,10 +126,11 @@ export interface ProductFilters {
   categorySlug?: string;
   minPrice?: number;
   maxPrice?: number;
-  brands?: string[];
+  brand?: string;
   rating?: number;
   inStock?: boolean;
   isFeatured?: boolean;
+  onSale?: boolean;
   search?: string;
   sortBy?: 'price_asc' | 'price_desc' | 'name_asc' | 'name_desc' | 'newest' | 'rating' | 'popular';
   page?: number;

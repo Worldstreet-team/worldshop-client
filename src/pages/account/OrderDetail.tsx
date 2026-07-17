@@ -10,8 +10,11 @@ const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Pending',
   PAID: 'Paid',
   PROCESSING: 'Processing',
+  PACKAGED: 'Packaged',
   SHIPPED: 'Shipped',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
   DELIVERED: 'Delivered',
+  DELIVERY_FAILED: 'Delivery Failed',
   CANCELLED: 'Cancelled',
   REFUNDED: 'Refunded',
 };
@@ -20,8 +23,11 @@ const STATUS_CLASS: Record<string, string> = {
   CREATED: 'status-created',
   PAID: 'status-paid',
   PROCESSING: 'status-processing',
+  PACKAGED: 'status-processing',
   SHIPPED: 'status-shipped',
+  OUT_FOR_DELIVERY: 'status-shipped',
   DELIVERED: 'status-delivered',
+  DELIVERY_FAILED: 'status-cancelled',
   CANCELLED: 'status-cancelled',
   REFUNDED: 'status-refunded',
 };
@@ -402,6 +408,79 @@ export default function OrderDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Delivery Details */}
+            {(order.shippingMethodName || order.expectedDeliveryDate || order.trackingNumber) && (
+              <div className="section-card">
+                <h3 className="section-title">
+                  <span className="material-icons">schedule</span>
+                  Delivery
+                </h3>
+                <div className="section-body">
+                  <div className="summary-rows">
+                    {order.shippingMethodName && (
+                      <div className="summary-row">
+                        <span className="label">Method</span>
+                        <span className="value">{order.shippingMethodName}</span>
+                      </div>
+                    )}
+                    {order.deliveryPartnerName && (
+                      <div className="summary-row">
+                        <span className="label">Delivery Partner</span>
+                        <span className="value">{order.deliveryPartnerName}</span>
+                      </div>
+                    )}
+                    {order.expectedDeliveryDate && (
+                      <div className="summary-row">
+                        <span className="label">Expected By</span>
+                        <span className="value">
+                          {new Date(order.expectedDeliveryDate).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    {order.trackingNumber && (
+                      <div className="summary-row">
+                        <span className="label">Tracking No.</span>
+                        <span className="value">
+                          <code
+                            style={{ cursor: 'copy' }}
+                            title="Click to copy"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(order.trackingNumber!);
+                              addToast({ type: 'success', message: 'Tracking number copied' });
+                            }}
+                          >
+                            {order.trackingNumber}
+                          </code>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {order.trackingUrl && (
+                    <a
+                      href={order.trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-outline btn-sm"
+                      style={{ marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                    >
+                      <span className="material-icons" style={{ fontSize: 18 }}>open_in_new</span>
+                      Track with {order.deliveryPartnerName || 'carrier'}
+                    </a>
+                  )}
+                  {order.status === 'DELIVERY_FAILED' && (
+                    <p className="text-muted" style={{ marginTop: '0.75rem' }}>
+                      A delivery attempt failed. The seller will re-attempt delivery, or you can
+                      <Link to="/contact"> contact support</Link> for a refund.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Shipping Address */}
             {order.shippingAddress ? (

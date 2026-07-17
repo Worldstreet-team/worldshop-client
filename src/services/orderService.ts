@@ -6,6 +6,7 @@ import type {
   ConfirmCheckoutSessionInput,
   CheckoutSessionResult,
   InitPaymentResult,
+  ShippingMethodSummary,
 } from '@/types/order.types';
 import type { ApiResponse, PaginationParams } from '@/types/common.types';
 
@@ -51,9 +52,16 @@ export const checkoutService = {
   validateCart: () =>
     api.post<ApiResponse<{ valid: boolean; issues?: string[] }>>('/checkout/validate'),
 
-  // Preview checkout session — returns vendor groups, snapshot token, issues
-  previewSession: () =>
-    api.post<ApiResponse<CheckoutSessionPreview>>('/checkout/session/preview'),
+  // Active delivery methods (public) — prices, partners, delivery windows
+  getShippingMethods: () =>
+    api.get<ApiResponse<ShippingMethodSummary[]>>('/shipping/methods'),
+
+  // Preview checkout session — returns vendor groups, snapshot token, issues.
+  // Pass shippingMethodId to price the preview with that delivery method.
+  previewSession: (shippingMethodId?: string) =>
+    api.post<ApiResponse<CheckoutSessionPreview>>('/checkout/session/preview', {
+      shippingMethodId,
+    }),
 
   // Confirm checkout session — creates orders atomically
   confirmSession: (input: ConfirmCheckoutSessionInput) =>
