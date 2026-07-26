@@ -6,9 +6,10 @@ import ToastContainer from '@/components/ui/ToastContainer';
 
 const navItems = [
   { path: '/vendor', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/vendor/products', label: 'Products', icon: 'inventory' },
-  { path: '/vendor/orders', label: 'Orders', icon: 'shopping_cart' },
-  { path: '/vendor/withdrawals', label: 'Withdrawals', icon: 'payments' },
+  { path: '/vendor/products', label: 'Listings', icon: 'inventory' },
+  // Buyers reach vendors here — nothing is ordered or paid for on the
+  // platform, so Orders and Withdrawals no longer exist.
+  { path: '/vendor/messages', label: 'Messages', icon: 'forum' },
   { path: '/vendor/reviews', label: 'Reviews', icon: 'star_rate' },
   { path: '/vendor/settings', label: 'Store Settings', icon: 'settings' },
 ];

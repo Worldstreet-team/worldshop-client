@@ -5,6 +5,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import AuthLayout from '@/layouts/AuthLayout';
 import VendorLayout from '@/layouts/VendorLayout';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { RouteError } from '@/components/common';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoute from '@/components/auth/AdminRoute';
 import VendorRoute from '@/components/auth/VendorRoute';
@@ -38,6 +39,10 @@ const AddressesPage = lazy(() => import('@/pages/account/Addresses'));
 const WishlistPage = lazy(() => import('@/pages/account/Wishlist'));
 const ProfilePage = lazy(() => import('@/pages/account/Profile'));
 const DownloadsPage = lazy(() => import('@/pages/account/Downloads'));
+const AccountMessagesPage = lazy(() => import('@/pages/account/Messages'));
+const BrowsePage = lazy(() => import('@/pages/marketplace/Browse'));
+const ListingDetailPage = lazy(() => import('@/pages/marketplace/ListingDetail'));
+const MarketplaceStorePage = lazy(() => import('@/pages/marketplace/StorePage'));
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
@@ -63,6 +68,7 @@ const VendorOrderDetail = lazy(() => import('@/pages/vendor/OrderDetail'));
 const VendorWithdrawals = lazy(() => import('@/pages/vendor/Withdrawals'));
 const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 const VendorReviews = lazy(() => import('@/pages/vendor/Reviews'));
+const VendorMessages = lazy(() => import('@/pages/vendor/Messages'));
 
 // Store Page
 const StorePage = lazy(() => import('@/pages/Store'));
@@ -82,6 +88,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
+    errorElement: <RouteError />,
     children: [
       {
         index: true,
@@ -155,6 +162,19 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      // Marketplace (public)
+      {
+        path: 'listings',
+        element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>,
+      },
+      {
+        path: 'listings/:idOrSlug',
+        element: <SuspenseWrapper><ListingDetailPage /></SuspenseWrapper>,
+      },
+      {
+        path: 'stores/:slug',
+        element: <SuspenseWrapper><MarketplaceStorePage /></SuspenseWrapper>,
+      },
       // Account routes (protected)
       {
         path: 'account',
@@ -167,6 +187,10 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <SuspenseWrapper><AccountPage /></SuspenseWrapper>,
+          },
+          {
+            path: 'messages',
+            element: <SuspenseWrapper><AccountMessagesPage /></SuspenseWrapper>,
           },
           {
             path: 'orders',
@@ -205,6 +229,7 @@ const router = createBrowserRouter([
   {
     path: '/auth',
     element: <AuthLayout />,
+    errorElement: <RouteError />,
     children: [
       {
         path: 'login',
@@ -230,6 +255,7 @@ const router = createBrowserRouter([
     element: (
       <MainLayout />
     ),
+    errorElement: <RouteError />,
     children: [
       {
         index: true,
@@ -249,6 +275,7 @@ const router = createBrowserRouter([
         <VendorLayout />
       </VendorRoute>
     ),
+    errorElement: <RouteError />,
     children: [
       {
         index: true,
@@ -286,6 +313,10 @@ const router = createBrowserRouter([
         path: 'reviews',
         element: <SuspenseWrapper><VendorReviews /></SuspenseWrapper>,
       },
+      {
+        path: 'messages',
+        element: <SuspenseWrapper><VendorMessages /></SuspenseWrapper>,
+      },
     ],
   },
   // Admin routes (admin layout, protected)
@@ -296,6 +327,7 @@ const router = createBrowserRouter([
         <AdminLayout />
       </AdminRoute>
     ),
+    errorElement: <RouteError />,
     children: [
       {
         index: true,

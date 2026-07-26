@@ -4,6 +4,172 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.32.0] - 2026-07-26
+
+### Changed — Vendor dashboard rebound to the marketplace model
+
+First client-side change of the pivot. The dashboard answered "how much did I
+sell", which is no longer a question — nothing is sold on the platform.
+
+- `services/storeService.ts` (new) — typed client for `/stores/me/dashboard`, `/stores/me`, and subscription charge/cancel
+- `pages/vendor/Dashboard.tsx` — one call to `GET /stores/me/dashboard` replaces `getAnalytics()` + `getBalance()`
+  - Tiles: **Days Remaining**, **Live Listings**, **Inquiries This Period**, **Unread Messages** (was Total Orders / Total Sales / Net Revenue / Available Balance)
+  - Visibility state in the header, worded plainly — "DRAFT" means nothing to a vendor, "Not visible yet" does
+  - Prioritised alert bar with an inline **Pay $5.00** action on the ones that mean the store is dark
+  - "How buyers see you": response rate, average reply time, rating, views — the signals shown on the public store page
+  - Subscription panel: plan, period, auto-renew, last payment, and store credit (only when non-zero)
+  - Quick links drop **View Orders** and **Withdraw Funds**; "Manage Products" becomes "Manage Listings"; adds "View Public Store" when live
+- Subscription amounts render in USD; the old `formatPrice` hardcoded `₦`, which is right for listings and wrong for the plan
+- Activation asks for confirmation with the amount stated, since it charges a real wallet. A 402 is surfaced as "top up and try again" rather than an error
+
+### Fixed
+- `VendorRoute` gated on the identity profile's `isVendor` flag, which the pivot no longer sets for anyone — the entire `/vendor` section was unreachable. It now resolves the caller's store via `GET /stores/me`, redirects to store creation when there is none, and reads BANNED/SUSPENDED from the store rather than the legacy `vendorStatus`
+
+### Changed — Store creation
+
+- `pages/vendor/Registration.tsx` — now creates a marketplace store via `POST /stores` instead of registering a vendor via `POST /vendor/register`. Adds **state** (required — buyers browse by it), city, shop address, phone, WhatsApp and website; drops nothing the API still accepts
+- Pricing is shown *before* the form (`GET /stores/plans`), not sprung after: "$5.00 per month to stay visible… creating your store is free, it stays private until you activate"
+- Redirects to the dashboard if the user already has a store, rather than letting them fill in a form that would 409 on submit
+- Empty optional fields are omitted rather than sent as `""` — the API validates email/URL/phone formats, and an empty string is a value, not an absence
+- `pages/account/Account.tsx` — the seller CTA resolves the store instead of reading `user.isVendor` / `user.storeName`, which are no longer set. "Become a Vendor" → "Open a Store", and store owners see "Store Dashboard" with a visibility hint
+
+### Changed — Manage Listings
+
+- `services/storeService.ts` — `listingService` covering the full owner surface: list/get/create/update/delete, publish/unpublish, `form-spec`, and multipart image upload
+- `pages/vendor/Products.tsx` — listings table with status tabs (All/Published/Draft/Hidden/Removed), search, publish/hide/delete row actions, and **Views + Inquiries columns** (the numbers that justify the subscription). Shows a banner when the store itself is unpaid, since a vendor who published everything and sees nothing live otherwise has no way to know which of the two gates is closed
+- `pages/vendor/ProductEdit.tsx` — rewritten as the listing editor:
+  - **Two-level category picker** rebuilt from the flat `/categories` response; parents with no children are hidden, because selecting one strands the vendor on an empty subcategory list and listings cannot be filed against a top-level category anyway
+  - **Category attributes** rendered dynamically from `form-spec` — SELECT/TEXT/NUMBER, required markers, and the explanation that buyers filter on them
+  - **Custom fields** — unlimited label/value rows up to 30, stated as display-only
+  - **Variants** — only shown when the category defines variant-level attributes, with per-variant price and availability
+  - Price type (fixed / range / contact for price), negotiable flag, condition, per-listing location defaulting to the store's
+  - Image upload via the new store-scoped endpoint
+  - **Save as draft** and **Save & publish** are separate. Publish rejections list every unmet requirement and are shown in place rather than as a toast that vanishes before the vendor can act on it
+- Empty numeric and attribute values are omitted rather than sent as `0` / `""` — zero is a real price, and an empty string looks like an answer to a required field
+
+### Added — Messages inbox
+
+- `services/chatService.ts` — conversations, thread, send, mark-read, archive, unread summary
+- `components/chat/Inbox.tsx` — shared two-pane inbox (conversation list + thread). The thread is symmetrical between buyer and vendor, so one component serves both; the **side is an explicit prop, never inferred**, because a user can be both and an inbox mixing "things I asked about" with "customers asking about my stock" is unreadable
+- `pages/vendor/Messages.tsx` at `/vendor/messages` (selling) and `pages/account/Messages.tsx` at `/account/messages` (buying)
+- Opening a thread marks it read, which is what clears the dashboard badge. Only the counterpart's messages are stamped — a "Read" receipt on your own message would be meaningless
+- Sent messages append locally rather than triggering a refetch, so a reply appears the instant it is accepted
+- Handles a listing deleted out from under a conversation ("This listing has been deleted") — the thread outlives the listing by design, since it carries the vendor's response record
+- `BLOCKED` threads show a closed notice instead of a composer
+
+### Changed — Vendor navigation
+- Sidebar: **Orders** and **Withdrawals** removed (nothing is ordered or paid for on the platform), **Products** renamed to **Listings**, **Messages** added
+- Dashboard: the Unread Messages tile is now a link, and Messages joins the quick links
+- Account menu: **My Messages** added as the first item
+
+### Added — Public marketplace pages
+
+The buyer side of the loop. Nothing is bought here — the pages exist to give a
+buyer enough to decide whether to make contact, then make contact easy.
+
+- `pages/marketplace/ListingDetail.tsx` at `/listings/:idOrSlug` — gallery,
+  price (fixed / range / "Contact for price" + negotiable), location, view
+  count, description, **one Details table** merging category attributes with
+  the seller's custom fields (the split matters to search, not to the person
+  reading), an options table for variants, and tags
+- `pages/marketplace/StorePage.tsx` at `/stores/:slug` — storefront with the
+  seller's catalogue, description, banner, and contact block
+- `components/marketplace/ContactSeller.tsx` — the primary action. Pre-filled
+  in-platform message as the default, because that is what feeds the seller's
+  response rate, verifies reviews and gives the buyer a record. Phone is
+  reveal-on-click and WhatsApp deep-links with a pre-written message; both are
+  offered *underneath* rather than instead, since hiding them just pushes
+  people to ask for a number in the first message. Signed-out users are routed
+  to login with a return URL
+- `components/marketplace/SellerCard.tsx` — the four signals that replace a
+  transaction record: verification tier, rating, **% of messages replied to**,
+  and typical reply time
+- Both pages carry a safety note: WorldStreet does not handle payment or
+  delivery
+
+### Added — Marketplace browse
+
+- `pages/marketplace/Browse.tsx` at `/listings` — search, two-level category
+  navigation, state and condition filters, and **attribute facets**
+- **All filter state lives in the URL.** Not a nicety: a buyer narrows to
+  "Phones in Lagos, 128GB, Used" and that result set has to survive being
+  shared, bookmarked, or reached with the back button after opening a listing
+- Facets appear only once a **subcategory** is chosen, because attributes are
+  defined per category — there is no meaningful "Storage" filter across the
+  whole marketplace. Only `SELECT` attributes marked filterable are offered.
+  Choosing a top-level category shows "Pick a subcategory to filter by size,
+  brand and other details"
+- Facets are keyed by the category they were fetched for, so a stale set is
+  never rendered while a new fetch is in flight
+- Any filter change resets to page 1; leaving someone on page 7 of a narrower
+  result set shows an empty page and looks broken
+- Empty state distinguishes "nothing matches these filters" (offers a clear
+  button) from "no listings yet" (offers **Open a store**, since an empty
+  marketplace is a supply problem)
+- `components/marketplace/ListingCard.tsx` + `utils/listingFormat.ts` — shared
+  card and price/image helpers, now used by both browse and the storefront so
+  the two cannot drift on price formatting
+
+### Fixed
+- `CategoryAttribute` in `product.types.ts` was missing `isFilterable`, which
+  the public attributes endpoint does return — the browse facets could not have
+  read it
+
+### Added — Reviews on the listing page
+
+- `services/marketplaceReviewService.ts` — listing/store review lists,
+  eligibility, own review, create/update/delete, vendor reply
+- `components/marketplace/ListingReviews.tsx` — rating summary with star
+  distribution bars, review list, and the write/edit form
+
+Two things this had to say that an ecommerce review list does not:
+
+- **The badge reads "Contacted this seller"**, not "Verified purchase" — nothing
+  was purchased here, and the badge means the seller actually replied to that
+  buyer. A hover title spells it out. There is also a filter: *"Only show
+  reviews from buyers the seller replied to"*, shown only when it would
+  actually narrow the list
+- **The gate is stated before any writing happens.** `eligibility` is fetched up
+  front, so a buyer who has not messaged the seller sees *"Message the seller
+  about this item before reviewing it"* rather than losing 300 words to a 403.
+  If they can review but the seller has not replied yet, the form warns that it
+  will post unverified
+- The **seller's reply** renders nested under the review — their only answer to
+  an unfair one, since they have no refund or resolution lever
+- `FLAGGED` reviews show "Reported — under review" and stay visible, matching
+  the server's decision to keep a disputed review public while it is open
+- Empty state explains the anchor: *"Reviews here come from buyers who have
+  actually contacted this seller"*
+- A failed review fetch does not take the listing page down with it
+
+### Added — Report buttons
+
+The moderation queue had no way to receive anything from the buyer side.
+
+- `services/reportService.ts` — create + own history, with **reasons scoped per
+  target type**. The server accepts the full enum, but offering "Fake review" on
+  a listing or "Miscategorised" on a store just invites mis-filed reports, and
+  the queue is ranked and filtered by reason
+- `components/marketplace/ReportButton.tsx` — a plain text link that opens a
+  dialog with radio reasons, optional detail, and a confirmation state
+- Mounted in three places: **Report this listing** (end of the listing page),
+  **Report this store** (under the seller card), and **Report review** on each
+  review — hidden on your own review, since reporting yourself is meaningless
+- Deliberately understated. A prominent report control invites idle clicking,
+  and the queue is ranked by *distinct* reporters, so noise degrades the exact
+  signal an admin works from
+- Two responses that are not errors and are not worded as such: **409** ("You
+  have already reported this — our team is looking at it") is the dedupe guard
+  working, and **401** routes to login with a return URL instead of failing
+- The dialog is honest about what happens next: *"we will not always be able to
+  tell you the outcome"*, and *"the seller is not told who reported them"*
+
+### Still pre-pivot
+`Orders.tsx`, `OrderDetail.tsx` and `Withdrawals.tsx` target removed features
+and are now unlinked but still routed. `Products.tsx` / `ProductEdit.tsx` still
+call the old vendor product endpoints and have no support for category
+attributes or custom fields. There are no Messages or Subscription pages yet.
+
 ## [0.31.0] - 2026-07-17
 
 ### Added — Delivery Tracking & Fulfilment UI (Test 7)

@@ -3150,6 +3150,125 @@
   // ============================
   // PROMO BANNER CARDS
   // ============================
+  // ─── Wallet balance banner (signed-in buyers) ───
+  .wallet-banner-section {
+    margin-bottom: $spacing-2xl;
+  }
+
+  .wallet-banner {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+    padding: $spacing-lg $spacing-xl;
+    border-radius: $radius-lg;
+    background: linear-gradient(135deg, $gray-900 0%, lighten($gray-900, 12%) 100%);
+    color: $white;
+    box-shadow: $shadow-md;
+
+    @include md-down {
+      flex-wrap: wrap;
+      gap: $spacing-md;
+      padding: $spacing-md $spacing-lg;
+    }
+  }
+
+  .wallet-banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: $radius-md;
+    background: rgba($primary-color, 0.15);
+    color: $primary-color;
+  }
+
+  .wallet-banner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .wallet-banner-label {
+    font-size: $font-size-sm;
+    color: rgba($white, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .wallet-banner-amount {
+    font-size: $font-size-3xl;
+    font-weight: 700;
+    line-height: 1.1;
+    color: $primary-color;
+
+    .wallet-banner-currency {
+      font-size: $font-size-md;
+      font-weight: 500;
+      color: rgba($white, 0.7);
+    }
+
+    &.is-loading,
+    &.is-error {
+      font-size: $font-size-lg;
+      font-weight: 500;
+      color: rgba($white, 0.7);
+    }
+
+    &.is-error {
+      color: lighten($danger-color, 20%);
+    }
+  }
+
+  .wallet-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    flex-shrink: 0;
+
+    @include md-down {
+      width: 100%;
+    }
+  }
+
+  .wallet-banner-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-sm $spacing-lg;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    white-space: nowrap;
+    background: $primary-color;
+    color: $gray-900;
+    border: 1px solid $primary-color;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background: $primary-dark;
+      border-color: $primary-dark;
+    }
+
+    &.secondary {
+      background: transparent;
+      color: $white;
+      border-color: rgba($white, 0.35);
+
+      &:hover {
+        background: rgba($white, 0.08);
+        border-color: rgba($white, 0.6);
+      }
+    }
+
+    @include md-down {
+      flex: 1;
+    }
+  }
+
   .promo-banners-section {
     margin-bottom: $spacing-2xl;
   }
@@ -4670,5 +4789,37 @@
     .material-icons {
       color: $gray-600;
     }
+  }
+}
+
+// ─── Route error fallback (lazy-chunk load failure, etc.) ───
+.route-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: $spacing-2xl $spacing-md;
+  text-align: center;
+
+  .route-error-inner {
+    max-width: 460px;
+  }
+
+  h1 {
+    font-size: $font-size-2xl;
+    margin-bottom: $spacing-sm;
+    color: $text-primary;
+  }
+
+  p {
+    color: $text-secondary;
+    margin-bottom: $spacing-lg;
+  }
+
+  .route-error-detail {
+    margin-top: $spacing-lg;
+    font-size: $font-size-sm;
+    color: $text-muted;
+    word-break: break-word;
   }
 }

@@ -1,248 +1,308 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { vendorService, type VendorProductFilters } from '@/services/vendorService';
-import type { Product } from '@/types/product.types';
-import type { Pagination } from '@/types/common.types';
+import {
+  listingService,
+  storeService,
+  type Listing,
+  type ListingStatus,
+  type ListingFilters,
+} from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
-import { useProductCacheStore } from '@/store/productCacheStore';
-import { useCategoryStore } from '@/store/categoryStore';
 
-export default function VendorProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
+/**
+ * Manage Listings.
+ *
+ * Two independent gates decide whether a listing is actually on the
+ * marketplace: the listing must be published, and the store must be paid up.
+ * A vendor who has published everything and still sees nothing live needs to
+ * be told which gate is closed — so the store's own state is shown here too,
+ * not just per-listing status.
+ */
+
+type ApiError = { response?: { status?: number; data?: { message?: string } } };
+const errMessage = (err: unknown, fallback: string) =>
+  (err as ApiError).response?.data?.message || fallback;
+
+const STATUS_TABS: Array<{ key: ListingStatus | 'ALL'; label: string }> = [
+  { key: 'ALL', label: 'All' },
+  { key: 'PUBLISHED', label: 'Published' },
+  { key: 'DRAFT', label: 'Draft' },
+  { key: 'HIDDEN', label: 'Hidden' },
+  { key: 'REMOVED', label: 'Removed' },
+];
+
+const STATUS_STYLE: Record<ListingStatus, { bg: string; fg: string; label: string }> = {
+  PUBLISHED: { bg: '#ecfdf3', fg: '#027a48', label: 'Published' },
+  DRAFT: { bg: '#f2f4f7', fg: '#475467', label: 'Draft' },
+  HIDDEN: { bg: '#fffaeb', fg: '#b54708', label: 'Hidden' },
+  REMOVED: { bg: '#fef3f2', fg: '#b42318', label: 'Removed by admin' },
+};
+
+function priceLabel(l: Listing): string {
+  if (l.priceType === 'ON_REQUEST') return 'Contact for price';
+  const fmt = (n: number) => '₦' + n.toLocaleString('en-NG');
+  if (l.priceType === 'RANGE' && l.basePrice != null && l.maxPrice != null) {
+    return `${fmt(l.basePrice)} – ${fmt(l.maxPrice)}`;
+  }
+  return l.basePrice != null ? fmt(l.basePrice) : '—';
+}
+
+export default function VendorListings() {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<VendorProductFilters>({
-    page: 1,
-    limit: 15,
-    status: 'all',
-    sortBy: 'newest',
-  });
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [storeLive, setStoreLive] = useState<boolean | null>(null);
+  const [tab, setTab] = useState<ListingStatus | 'ALL'>('ALL');
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const addToast = useUIStore((s) => s.addToast);
-  const categories = useCategoryStore((s) => s.categories);
-  const fetchCategories = useCategoryStore((s) => s.fetchCategories);
 
-  const fetchProducts = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await vendorService.getProducts({ ...filters, search: search || undefined });
-      setProducts(res.data);
-      setPagination(res.pagination);
-
-      useProductCacheStore.getState().seedProducts(res.data);
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load products' });
+      const filters: ListingFilters = {
+        page,
+        limit: 15,
+        ...(tab !== 'ALL' ? { status: tab } : {}),
+        ...(appliedSearch ? { search: appliedSearch } : {}),
+      };
+      const res = await listingService.list(filters);
+      setListings(res.data);
+      setTotal(res.pagination.total);
+      setTotalPages(res.pagination.totalPages);
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to load listings') });
     } finally {
       setLoading(false);
     }
-  }, [filters, search, addToast]);
+  }, [page, tab, appliedSearch, addToast]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    load();
+  }, [load]);
 
+  // Whether publishing will actually make anything visible depends on the
+  // subscription, so the answer is fetched once and shown up front.
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  const handleToggle = async (product: Product) => {
-    try {
-      await vendorService.toggleProduct(product.id, !product.isActive);
-      addToast({
-        type: 'success',
-        message: `"${product.name}" ${product.isActive ? 'deactivated' : 'activated'}.`,
+    let cancelled = false;
+    storeService
+      .getMyStore()
+      .then((res) => {
+        if (!cancelled) setStoreLive(res.data.isPubliclyVisible);
+      })
+      .catch(() => {
+        if (!cancelled) setStoreLive(null);
       });
-      fetchProducts();
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to toggle product' });
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Deactivate "${name}"? It will no longer appear in the store.`)) return;
+  /**
+   * Publishing runs the category's listing standards server-side. A rejection
+   * is a checklist of what is missing, so it is surfaced verbatim rather than
+   * flattened into "could not publish".
+   */
+  const handlePublish = async (listing: Listing) => {
+    setBusyId(listing.id);
     try {
-      await vendorService.deleteProduct(id);
-      addToast({ type: 'success', message: `"${name}" deactivated.` });
-      fetchProducts();
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to delete product' });
+      const res = await listingService.publish(listing.id);
+      addToast({ type: 'success', message: res.data.message });
+      await load();
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Could not publish this listing') });
+    } finally {
+      setBusyId(null);
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters((f) => ({ ...f, page: 1 }));
+  const handleUnpublish = async (listing: Listing) => {
+    setBusyId(listing.id);
+    try {
+      await listingService.unpublish(listing.id);
+      addToast({ type: 'success', message: 'Listing hidden from buyers' });
+      await load();
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Could not hide this listing') });
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const formatPrice = (price: number) =>
-    '₦' + price.toLocaleString('en-NG', { minimumFractionDigits: 0 });
+  const handleDelete = async (listing: Listing) => {
+    if (!window.confirm(`Delete "${listing.name}"? This cannot be undone.`)) return;
+    setBusyId(listing.id);
+    try {
+      await listingService.remove(listing.id);
+      addToast({ type: 'success', message: 'Listing deleted' });
+      await load();
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Could not delete this listing') });
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div className="vendor-products">
-      <div className="page-header">
-        <h1>My Products {pagination && <small>({pagination.total})</small>}</h1>
-        <Link to="/vendor/products/new" className="btn btn-primary">
-          <span className="material-icons">add</span>
-          Add Product
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <h1>Manage Listings</h1>
+        <Link to="/vendor/products/new" className="btn-primary" style={{ whiteSpace: 'nowrap' }}>
+          + Add Listing
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="filters-bar">
-        <form onSubmit={handleSearchSubmit} style={{ display: 'contents' }}>
+      {/* The second gate. Without this, a vendor who published everything and
+          sees nothing on the marketplace has no way to know why. */}
+      {storeLive === false && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.6rem',
+            padding: '0.75rem 1rem', borderRadius: 8, marginBottom: '1rem',
+            background: '#fffaeb', border: '1px solid #fec84b', color: '#b54708',
+          }}
+        >
+          <span className="material-icons" style={{ fontSize: '1.2rem' }}>visibility_off</span>
+          <span style={{ flex: 1 }}>
+            Your store is not visible to buyers yet, so published listings stay private.
+          </span>
+          <Link to="/vendor" style={{ color: '#b54708', fontWeight: 600 }}>Activate</Link>
+        </div>
+      )}
+
+      <div className="filters-bar" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        {STATUS_TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => { setTab(t.key); setPage(1); }}
+            style={{
+              padding: '0.4rem 0.9rem', borderRadius: 999, cursor: 'pointer',
+              border: `1px solid ${tab === t.key ? '#101828' : '#e4e7ec'}`,
+              background: tab === t.key ? '#101828' : 'white',
+              color: tab === t.key ? 'white' : '#475467',
+              fontWeight: 500,
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+
+        <form
+          onSubmit={(e) => { e.preventDefault(); setAppliedSearch(search); setPage(1); }}
+          style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}
+        >
           <input
             type="search"
-            placeholder="Search your products..."
-            className="search-input"
+            placeholder="Search listings"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            style={{ padding: '0.4rem 0.75rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
           />
+          <button type="submit" className="btn-secondary">Search</button>
         </form>
-        <select
-          className="filter-select"
-          value={filters.categoryId || ''}
-          onChange={(e) => setFilters((f) => ({ ...f, categoryId: e.target.value || undefined, page: 1 }))}
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <select
-          className="filter-select"
-          value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value as any, page: 1 }))}
-        >
-          <option value="all">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-        <select
-          className="filter-select"
-          value={filters.sortBy}
-          onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as any, page: 1 }))}
-        >
-          <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-          <option value="name_asc">Name A–Z</option>
-          <option value="name_desc">Name Z–A</option>
-          <option value="price_asc">Price Low–High</option>
-          <option value="price_desc">Price High–Low</option>
-        </select>
       </div>
 
-      {/* Products Table */}
-      <div className="data-table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
-                  <td colSpan={5}><div className="skeleton-row" /></td>
-                </tr>
-              ))
-            ) : products.length === 0 ? (
+      {loading ? (
+        <p style={{ color: '#667085', padding: '2rem 0' }}>Loading listings…</p>
+      ) : listings.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#667085' }}>
+          <span className="material-icons" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>
+            inventory_2
+          </span>
+          <p style={{ marginBottom: '1rem' }}>
+            {appliedSearch || tab !== 'ALL'
+              ? 'No listings match this filter.'
+              : 'You have no listings yet. Add your first product so buyers can find you.'}
+          </p>
+          {!appliedSearch && tab === 'ALL' && (
+            <Link to="/vendor/products/new" className="btn-primary">+ Add Listing</Link>
+          )}
+        </div>
+      ) : (
+        <div className="data-table-container">
+          <table className="data-table">
+            <thead>
               <tr>
-                <td colSpan={5} className="empty-row">
-                  <p>No products found. {!search && <Link to="/vendor/products/new">Add your first product!</Link>}</p>
-                </td>
+                <th>Listing</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Status</th>
+                {/* The numbers that justify the subscription. */}
+                <th>Views</th>
+                <th>Inquiries</th>
+                <th />
               </tr>
-            ) : (
-              products.map((product) => {
-                const primaryImage = Array.isArray(product.images)
-                  ? (product.images as any[]).find((img: any) => img.isPrimary) || (product.images as any[])[0]
-                  : null;
+            </thead>
+            <tbody>
+              {listings.map((l) => {
+                const style = STATUS_STYLE[l.status];
+                const busy = busyId === l.id;
 
                 return (
-                  <tr key={product.id}>
+                  <tr key={l.id}>
                     <td>
-                      <div className="product-cell">
-                        {primaryImage && (
-                          <img src={primaryImage.url} alt={product.name} className="product-thumb" />
-                        )}
-                        <div>
-                          <strong>{product.name}</strong>
-                          {product.variants?.length > 0 && (
-                            <small className="text-muted"> · {product.variants.length} variant(s)</small>
-                          )}
-                          {product.compliance && !product.compliance.compliant && (
-                            <div>
-                              <small
-                                className="badge badge-warning"
-                                title={product.compliance.problems.join('; ')}
-                              >
-                                Update required
-                              </small>
-                            </div>
-                          )}
+                      <Link to={`/vendor/products/${l.id}`} style={{ fontWeight: 600 }}>{l.name}</Link>
+                      {l.city || l.state ? (
+                        <div style={{ fontSize: '0.8rem', color: '#667085' }}>
+                          {[l.city, l.state].filter(Boolean).join(', ')}
                         </div>
-                      </div>
+                      ) : null}
                     </td>
-                    <td>{product.category?.name || '—'}</td>
+                    <td>{l.category?.name ?? <span style={{ color: '#b42318' }}>Not set</span>}</td>
+                    <td>{priceLabel(l)}</td>
                     <td>
-                      {product.salePrice ? (
-                        <>
-                          <span className="price-sale">{formatPrice(product.salePrice)}</span>
-                          <span className="price-original">{formatPrice(product.basePrice)}</span>
-                        </>
+                      <span style={{ background: style.bg, color: style.fg, padding: '0.2rem 0.6rem', borderRadius: 999, fontSize: '0.8rem', fontWeight: 600 }}>
+                        {style.label}
+                      </span>
+                    </td>
+                    <td>{l.viewCount}</td>
+                    <td>{l.inquiryCount}</td>
+                    <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                      {l.status === 'REMOVED' ? (
+                        <span style={{ color: '#667085', fontSize: '0.85rem' }}>Contact support</span>
                       ) : (
-                        formatPrice(product.basePrice)
+                        <>
+                          {l.status === 'PUBLISHED' ? (
+                            <button className="btn-secondary" disabled={busy} onClick={() => handleUnpublish(l)}>
+                              {busy ? '…' : 'Hide'}
+                            </button>
+                          ) : (
+                            <button className="btn-primary" disabled={busy} onClick={() => handlePublish(l)}>
+                              {busy ? '…' : 'Publish'}
+                            </button>
+                          )}
+                          <Link to={`/vendor/products/${l.id}`} className="btn-secondary" style={{ marginLeft: '0.4rem' }}>
+                            Edit
+                          </Link>
+                          <button
+                            className="btn-danger"
+                            disabled={busy}
+                            onClick={() => handleDelete(l)}
+                            style={{ marginLeft: '0.4rem' }}
+                          >
+                            Delete
+                          </button>
+                        </>
                       )}
-                    </td>
-                    <td>
-                      <button
-                        className={`badge badge-toggle ${product.isActive ? 'badge-success' : 'badge-secondary'}`}
-                        onClick={() => handleToggle(product)}
-                        title={product.isActive ? 'Click to deactivate' : 'Click to activate'}
-                      >
-                        {product.isActive ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-                    <td>
-                      <div className="action-buttons">
-                        <Link to={`/vendor/products/${product.id}`} className="btn-icon" title="Edit">
-                          <span className="material-icons">edit</span>
-                        </Link>
-                        <button
-                          className="btn-icon btn-icon-danger"
-                          title="Deactivate"
-                          onClick={() => handleDelete(product.id, product.name)}
-                        >
-                          <span className="material-icons">delete</span>
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* Pagination */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            disabled={!pagination.hasPrevPage}
-            onClick={() => setFilters((f) => ({ ...f, page: (f.page || 1) - 1 }))}
-          >
+      {totalPages > 1 && (
+        <div className="pagination" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem' }}>
+          <button className="btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
             Previous
           </button>
-          <span>Page {pagination.page} of {pagination.totalPages}</span>
-          <button
-            disabled={!pagination.hasNextPage}
-            onClick={() => setFilters((f) => ({ ...f, page: (f.page || 1) + 1 }))}
-          >
+          <span style={{ color: '#667085' }}>Page {page} of {totalPages} · {total} listing{total === 1 ? '' : 's'}</span>
+          <button className="btn-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
             Next
           </button>
         </div>

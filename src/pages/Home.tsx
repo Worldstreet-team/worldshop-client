@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { useProductCacheStore } from '@/store/productCacheStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import type { Product } from '@/types/product.types';
-import { Skeleton, SkeletonProductCard } from '@/components/common';
+import { Skeleton, SkeletonProductCard, WalletBalanceBanner } from '@/components/common';
 import { ProductCard } from '@/components/product';
+import { CATEGORY_PLACEHOLDER, imageFallback } from '@/utils/imageFallback';
 
 // Countdown timer hook
 function useCountdown(targetDate: Date) {
@@ -249,6 +250,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ====== WALLET BALANCE (signed-in buyers) ====== */}
+      <WalletBalanceBanner />
 
       {/* ====== PROMO BANNER CARDS ====== */}
       <section className="promo-banners-section">
@@ -498,7 +502,12 @@ export default function HomePage() {
                     className="category-card"
                   >
                     <div className="category-image">
-                      <img src={category.image} alt={category.name} />
+                      <img
+                        src={category.image || CATEGORY_PLACEHOLDER}
+                        alt={category.name}
+                        loading="lazy"
+                        onError={imageFallback(CATEGORY_PLACEHOLDER)}
+                      />
                     </div>
                     <div className="category-info">
                       <h3>{category.name}</h3>

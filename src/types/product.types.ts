@@ -89,6 +89,8 @@ export interface CategoryAttribute {
   isRequired: boolean;
   appliesTo: 'PRODUCT' | 'VARIANT';
   sortOrder: number;
+  /** Only controlled-vocabulary attributes make usable browse facets. */
+  isFilterable?: boolean;
 }
 
 export interface Category {

@@ -4,6 +4,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import RatingStars from '@/components/common/RatingStars';
 import { SaleBadge, NewBadge } from '@/components/common/Badge';
+import { PRODUCT_PLACEHOLDER, imageFallback } from '@/utils/imageFallback';
 
 interface ProductCardProps {
   product: Product;
@@ -115,10 +116,11 @@ export default function ProductCard({
           {/* Image Container */}
           <div className="product-card-image-wrapper">
             <img
-              src={productImages[0]?.url || '/images/placeholder-product.png'}
+              src={productImages[0]?.url || PRODUCT_PLACEHOLDER}
               alt={productImages[0]?.alt || product.name}
               className="product-card-image"
               loading="lazy"
+              onError={imageFallback(PRODUCT_PLACEHOLDER)}
             />
 
             {/* Badges */}

@@ -1,10 +1,39 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { storeService, type MyStore } from '@/services/storeService';
 
 export default function AccountPage() {
   const { user } = useAuthStore();
 
+  // Owning a store is what makes someone a seller now — the profile's
+  // `isVendor` flag is no longer set for anyone, so it cannot drive this CTA.
+  const [store, setStore] = useState<MyStore | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    storeService
+      .getMyStore()
+      .then((res) => {
+        if (!cancelled) setStore(res.data);
+      })
+      .catch(() => {
+        // 404 = no store yet, which is the common case.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const menuItems = [
+    {
+      path: '/account/messages',
+      icon: 'forum',
+      title: 'My Messages',
+      description: 'Conversations with sellers'
+    },
     {
       path: '/account/orders',
       icon: 'shopping_bag',
@@ -37,19 +66,21 @@ export default function AccountPage() {
     },
   ];
 
-  // Vendor CTA - show "Become a Vendor" or "Vendor Dashboard" based on status
-  const vendorItem = user?.isVendor
+  // Seller CTA — driven by whether they have a store, not a legacy flag.
+  const vendorItem = store
     ? {
         path: '/vendor',
         icon: 'storefront',
-        title: 'Vendor Dashboard',
-        description: `Manage ${user.storeName || 'your store'}`,
+        title: 'Store Dashboard',
+        description: store.isPubliclyVisible
+          ? `Manage ${store.name}`
+          : `${store.name} — not visible to buyers yet`,
       }
     : {
         path: '/vendor/register',
         icon: 'add_business',
-        title: 'Become a Vendor',
-        description: 'Start selling on WorldStreet',
+        title: 'Open a Store',
+        description: 'List your products and reach buyers on WorldStreet',
       };
 
   return (

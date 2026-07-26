@@ -1,759 +1,583 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { vendorService, type VendorCreateProductData } from '@/services/vendorService';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  listingService,
+  type Listing,
+  type ListingPayload,
+  type CategoryFormSpec,
+  type CustomField,
+  type ListingVariant,
+  type PriceType,
+} from '@/services/storeService';
 import { categoryService } from '@/services/productService';
-import type {
-  Product,
-  Category,
-  CategoryAttribute,
-  ListingCompliance,
-  ProductImage,
-} from '@/types/product.types';
+import type { Category } from '@/types/product.types';
+import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 import { useUIStore } from '@/store/uiStore';
 
-/** Derive a display name from a variant's attribute values, e.g. "L / Navy". */
-function deriveVariantName(attributes: Record<string, string>, fallback: string): string {
-  const values = Object.values(attributes).filter(Boolean);
-  return values.length > 0 ? values.join(' / ') : fallback;
-}
+/**
+ * Listing editor.
+ *
+ * Detail is captured in two layers, and keeping them apart is the whole point:
+ *
+ *   - **Attributes** come from the category (admin-defined, fixed options).
+ *     Buyers filter on these, which only works because the vocabulary is
+ *     controlled — so the vendor picks from a list rather than typing.
+ *   - **Custom fields** are whatever else this particular product needs.
+ *     Free text, shown as a spec table, never used as a filter.
+ *
+ * Saving and publishing are separate. Save keeps a draft in any state; publish
+ * runs the category's requirements server-side and rejects with a list of what
+ * is missing, which is shown in place rather than as a toast.
+ */
 
-export default function VendorProductEdit() {
+type ApiError = { response?: { data?: { message?: string } } };
+const errMessage = (err: unknown, fallback: string) =>
+  (err as ApiError).response?.data?.message || fallback;
+
+const CONDITIONS = ['NEW', 'USED', 'REFURBISHED'] as const;
+const MAX_CUSTOM_FIELDS = 30;
+
+type ImageRef = Record<string, unknown> & { key?: string; url?: string };
+
+const imageSrc = (img: ImageRef): string => String(img.url || img.key || '');
+
+export default function ListingEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isEditing = Boolean(id);
   const addToast = useUIStore((s) => s.addToast);
+  const isNew = !id || id === 'new';
 
-  const [loading, setLoading] = useState(isEditing);
+  const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [spec, setSpec] = useState<CategoryFormSpec | null>(null);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [problems, setProblems] = useState<string | null>(null);
 
-  // Form state
+  // ── Form state ──
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [shortDesc, setShortDesc] = useState('');
+  const [parentId, setParentId] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [priceType, setPriceType] = useState<PriceType>('FIXED');
   const [basePrice, setBasePrice] = useState('');
-  const [salePrice, setSalePrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [isNegotiable, setIsNegotiable] = useState(true);
+  const [condition, setCondition] = useState('');
+  const [state, setState] = useState('');
+  const [city, setCity] = useState('');
   const [tags, setTags] = useState('');
-  const [productType, setProductType] = useState<'PHYSICAL' | 'DIGITAL'>('DIGITAL');
-  const [stock, setStock] = useState('0');
-  const [images, setImages] = useState<ProductImage[]>([]);
+  const [images, setImages] = useState<ImageRef[]>([]);
+  const [attributes, setAttributes] = useState<Record<string, string>>({});
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [variants, setVariants] = useState<ListingVariant[]>([]);
 
-  // Listing-standard fields
-  const [brand, setBrand] = useState('');
-  const [material, setMaterial] = useState('');
-  const [weightGrams, setWeightGrams] = useState('');
-  const [dimLength, setDimLength] = useState('');
-  const [dimWidth, setDimWidth] = useState('');
-  const [dimHeight, setDimHeight] = useState('');
-  const [dimUnit, setDimUnit] = useState<'cm' | 'in'>('cm');
+  // Two-level picker, rebuilt from the flat list the public endpoint returns.
+  // Parents with no children are hidden: selecting one would leave the vendor
+  // staring at an empty subcategory list, and listings cannot be filed against
+  // a top-level category anyway. Legacy pre-taxonomy categories look like this.
+  const parents = useMemo(() => {
+    const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));
+    return categories.filter((c) => !c.parentId && withChildren.has(c.id));
+  }, [categories]);
+  const children = useMemo(
+    () => categories.filter((c) => c.parentId === parentId),
+    [categories, parentId],
+  );
 
-  // Category-driven attribute requirements + compliance of the saved listing
-  const [categoryAttributes, setCategoryAttributes] = useState<CategoryAttribute[]>([]);
-  const [compliance, setCompliance] = useState<ListingCompliance | null>(null);
+  const productAttrs = spec?.attributes.filter((a) => a.appliesTo === 'PRODUCT') ?? [];
+  const variantAttrs = spec?.attributes.filter((a) => a.appliesTo === 'VARIANT') ?? [];
 
-  // File upload state
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  // Digital file state
-  const digitalFileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingDigital, setUploadingDigital] = useState(false);
-  const [digitalAssets, setDigitalAssets] = useState<{ id: string; fileName: string; mimeType: string; fileSize: number }[]>([]);
-
-  // Track image keys to delete from R2 after successful product update
-  const [deletedImageKeys, setDeletedImageKeys] = useState<string[]>([]);
-  const [variants, setVariants] = useState<{
-    name: string;
-    attributes: Record<string, string>;
-    price?: number;
-    compareAtPrice?: number;
-    stock?: number;
-    isActive: boolean;
-  }[]>([]);
-
-  // Approval status (read-only, for display)
-  const [approvalStatus, setApprovalStatus] = useState('');
-
-  // Load categories
   useEffect(() => {
-    categoryService.getCategories().then(setCategories).catch(() => {});
-  }, []);
+    categoryService
+      .getCategories()
+      .then(setCategories)
+      .catch(() => addToast({ type: 'error', message: 'Could not load categories' }));
+  }, [addToast]);
 
-  // Load the selected category's listing-standard attributes
+  // Load an existing listing.
+  useEffect(() => {
+    if (isNew) return;
+    let cancelled = false;
+
+    listingService
+      .get(id!)
+      .then((res) => {
+        if (cancelled) return;
+        const l = res.data;
+        setListing(l);
+        setName(l.name);
+        setDescription(l.description);
+        setCategoryId(l.categoryId ?? '');
+        setPriceType(l.priceType);
+        setBasePrice(l.basePrice != null ? String(l.basePrice) : '');
+        setMaxPrice(l.maxPrice != null ? String(l.maxPrice) : '');
+        setIsNegotiable(l.isNegotiable);
+        setCondition(l.condition ?? '');
+        setState(l.state ?? '');
+        setCity(l.city ?? '');
+        setTags(l.tags.join(', '));
+        setImages((l.images as ImageRef[]) ?? []);
+        setAttributes(l.attributes ?? {});
+        setCustomFields(l.customFields ?? []);
+        setVariants(l.variants ?? []);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) addToast({ type: 'error', message: errMessage(err, 'Listing not found') });
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isNew, addToast]);
+
+  // Derive the parent select from a loaded listing's category.
+  useEffect(() => {
+    if (!categoryId || !categories.length || parentId) return;
+    const own = categories.find((c) => c.id === categoryId);
+    if (own?.parentId) setParentId(own.parentId);
+  }, [categoryId, categories, parentId]);
+
+  // The category decides which fields exist, so the spec is refetched whenever
+  // it changes.
   useEffect(() => {
     if (!categoryId) {
-      setCategoryAttributes([]);
+      setSpec(null);
       return;
     }
-    categoryService
-      .getCategoryAttributes(categoryId)
-      .then(setCategoryAttributes)
-      .catch(() => setCategoryAttributes([]));
+    let cancelled = false;
+
+    listingService
+      .getFormSpec(categoryId)
+      .then((res) => {
+        if (!cancelled) setSpec(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setSpec(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [categoryId]);
 
-  const variantAttributeDefs = categoryAttributes.filter((a) => a.appliesTo === 'VARIANT');
-  const requiredVariantAttrs = variantAttributeDefs.filter((a) => a.isRequired);
-
-  // Load product data for editing
-  useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    vendorService.getProduct(id)
-      .then((res) => {
-        const product: Product = res.data;
-        setName(product.name);
-        setDescription(product.description);
-        setShortDesc(product.shortDesc || '');
-        setCategoryId(product.categoryId || '');
-        setBasePrice(String(product.basePrice));
-        setSalePrice(product.salePrice ? String(product.salePrice) : '');
-        setTags(product.tags?.join(', ') || '');
-        setProductType(product.type === 'PHYSICAL' ? 'PHYSICAL' : 'DIGITAL');
-        setStock(product.type === 'PHYSICAL' ? String(product.stock ?? 0) : '0');
-        setImages(Array.isArray(product.images) ? product.images : []);
-        setBrand(product.brand || '');
-        setMaterial(product.material || '');
-        setWeightGrams(product.weightGrams ? String(product.weightGrams) : '');
-        if (product.dimensions) {
-          setDimLength(String(product.dimensions.length));
-          setDimWidth(String(product.dimensions.width));
-          setDimHeight(String(product.dimensions.height));
-          setDimUnit(product.dimensions.unit || 'cm');
-        }
-        setCompliance(product.compliance ?? null);
-        setApprovalStatus(product.approvalStatus || '');
-        if (product.variants?.length) {
-          setVariants(product.variants.map((v) => ({
-            name: v.name,
-            attributes: v.attributes || {},
-            price: v.price,
-            compareAtPrice: v.compareAtPrice,
-            stock: v.stock,
-            isActive: true,
-          })));
-        }
-        // Load digital assets for digital products
-        if (product.type === 'DIGITAL') {
-          loadDigitalAssets(id);
-        }
-      })
-      .catch((err: any) => {
-        addToast({ type: 'error', message: err.response?.data?.message || 'Failed to load product' });
-        navigate('/vendor/products');
-      })
-      .finally(() => setLoading(false));
-  }, [id, addToast, navigate]);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-
     setUploading(true);
     try {
-      const results = await vendorService.uploadImages(Array.from(files));
-      const newImages: ProductImage[] = results.map((r, i) => ({
-        id: `upload-${Date.now()}-${i}`,
-        url: r.signedUrl,
-        alt: r.originalName,
-        isPrimary: images.length === 0 && i === 0,
-        sortOrder: images.length + i,
-        cloudflareId: r.key,
-      }));
-      setImages((prev) => [...prev, ...newImages]);
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to upload images' });
+      const res = await listingService.uploadImages(Array.from(files));
+      setImages((prev) => [...prev, ...(res.data as ImageRef[])]);
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Image upload failed') });
     } finally {
       setUploading(false);
-      // Reset file input so the same file can be re-selected
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const removeImage = (index: number) => {
-    const removed = images[index];
-    // Queue R2 deletion for after successful product update
-    if (removed?.cloudflareId) {
-      setDeletedImageKeys((prev) => [...prev, removed.cloudflareId!]);
-    }
-    setImages((prev) => {
-      const updated = prev.filter((_, i) => i !== index);
-      // If we removed the primary, make first one primary
-      if (updated.length > 0 && !updated.some((img) => img.isPrimary)) {
-        updated[0] = { ...updated[0], isPrimary: true };
+  const save = useCallback(
+    async (thenPublish: boolean) => {
+      setProblems(null);
+
+      if (!name.trim() || !description.trim() || !categoryId) {
+        setProblems('Name, description and category are required before saving.');
+        return;
       }
-      return updated;
-    });
-  };
 
-  const setPrimaryImage = (index: number) => {
-    setImages((prev) =>
-      prev.map((img, i) => ({ ...img, isPrimary: i === index }))
-    );
-  };
+      const payload: ListingPayload = {
+        name: name.trim(),
+        description: description.trim(),
+        categoryId,
+        priceType,
+        // "" must be omitted rather than sent as 0 — zero is a real price.
+        basePrice: basePrice === '' ? undefined : Number(basePrice),
+        maxPrice: maxPrice === '' ? undefined : Number(maxPrice),
+        isNegotiable,
+        condition: condition || undefined,
+        state: state || undefined,
+        city: city || undefined,
+        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+        images,
+        // Blank attribute values are dropped rather than stored as empty
+        // strings, which would look like an answer to a required field.
+        attributes: Object.fromEntries(Object.entries(attributes).filter(([, v]) => v !== '')),
+        customFields: customFields.filter((f) => f.label.trim() && f.value.trim()),
+        variants,
+      };
 
-  // Variant helpers
-  const addVariant = () => {
-    setVariants((prev) => [...prev, {
-      name: '',
-      attributes: {},
-      price: undefined,
-      compareAtPrice: undefined,
-      stock: 0,
-      isActive: true,
-    }]);
-  };
+      setSaving(true);
+      try {
+        const saved = isNew
+          ? await listingService.create(payload)
+          : await listingService.update(id!, payload);
 
-  const updateVariant = (index: number, field: string, value: any) => {
-    setVariants((prev) => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
-  };
-
-  const updateVariantAttribute = (index: number, attrName: string, value: string) => {
-    setVariants((prev) => prev.map((v, i) => {
-      if (i !== index) return v;
-      const attributes = { ...v.attributes };
-      if (value) {
-        attributes[attrName] = value;
-      } else {
-        delete attributes[attrName];
-      }
-      // Keep the display name in sync with the selected attributes
-      return { ...v, attributes, name: deriveVariantName(attributes, v.name) };
-    }));
-  };
-
-  const removeVariant = (index: number) => {
-    setVariants((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Digital file helpers
-  const loadDigitalAssets = async (productId: string) => {
-    try {
-      const res = await vendorService.getDigitalAssets(productId);
-      setDigitalAssets(res.data || []);
-    } catch { /* ignore */ }
-  };
-
-  const handleDigitalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !id) return;
-
-    setUploadingDigital(true);
-    try {
-      const uploaded = await vendorService.uploadDigitalFiles(Array.from(files));
-      const attachData = uploaded.map((u) => ({
-        key: u.key,
-        fileName: u.originalName,
-        mimeType: u.mimeType,
-        fileSize: u.size,
-      }));
-      await vendorService.attachDigitalAssets(id, attachData);
-      await loadDigitalAssets(id);
-      addToast({ type: 'success', message: `${uploaded.length} digital file(s) attached.` });
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to upload digital files' });
-    } finally {
-      setUploadingDigital(false);
-      if (digitalFileInputRef.current) digitalFileInputRef.current.value = '';
-    }
-  };
-
-  const removeDigitalAsset = async (assetId: string) => {
-    try {
-      await vendorService.deleteDigitalAsset(assetId);
-      setDigitalAssets((prev) => prev.filter((a) => a.id !== assetId));
-      addToast({ type: 'success', message: 'Digital file removed.' });
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to delete digital file' });
-    }
-  };
-
-  const validateListing = (): string | null => {
-    if (!name.trim() || !description.trim() || !basePrice) {
-      return 'Please fill in name, description and price.';
-    }
-    if (!categoryId) {
-      return 'Please select a category.';
-    }
-    if (productType === 'PHYSICAL' && images.length === 0) {
-      return 'Physical products need at least one image.';
-    }
-    if (requiredVariantAttrs.length > 0 && variants.length === 0) {
-      const names = requiredVariantAttrs.map((a) => a.name).join(', ');
-      return `This category requires variants with ${names} — add at least one variant.`;
-    }
-    for (const [i, variant] of variants.entries()) {
-      for (const attr of requiredVariantAttrs) {
-        if (!variant.attributes[attr.name]) {
-          return `Variant ${i + 1} is missing ${attr.name}.`;
+        if (thenPublish) {
+          const res = await listingService.publish(saved.data.id);
+          addToast({ type: 'success', message: res.data.message });
+        } else {
+          addToast({ type: 'success', message: isNew ? 'Listing saved as draft' : 'Listing updated' });
         }
+        navigate('/vendor/products');
+      } catch (err: unknown) {
+        // Publish rejections list every unmet requirement — shown in place,
+        // because a toast disappears before the vendor can act on it.
+        setProblems(errMessage(err, 'Could not save this listing'));
+      } finally {
+        setSaving(false);
       }
-    }
-    return null;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const problem = validateListing();
-    if (problem) {
-      addToast({ type: 'error', message: problem });
-      return;
-    }
-
-    const hasDimensions = dimLength && dimWidth && dimHeight;
-
-    setSaving(true);
-    const data: VendorCreateProductData = {
-      name: name.trim(),
-      description: description.trim(),
-      shortDesc: shortDesc.trim() || undefined,
-      categoryId,
-      brand: brand.trim() || null,
-      material: material.trim() || null,
-      weightGrams: weightGrams ? parseInt(weightGrams) || null : null,
-      dimensions: hasDimensions
-        ? {
-            length: parseFloat(dimLength),
-            width: parseFloat(dimWidth),
-            height: parseFloat(dimHeight),
-            unit: dimUnit,
-          }
-        : null,
-      type: productType,
-      stock: productType === 'PHYSICAL' ? parseInt(stock) || 0 : undefined,
-      basePrice: parseFloat(basePrice),
-      salePrice: salePrice ? parseFloat(salePrice) : null,
-      tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-      images: images.map(({ url, alt, isPrimary, cloudflareId }, i) => ({
-        url, alt, isPrimary, sortOrder: i, cloudflareId,
-      })),
-      variants: variants.length > 0 ? variants.map((v) => ({
-        name: v.name || deriveVariantName(v.attributes, `Variant`),
-        attributes: v.attributes,
-        price: v.price,
-        compareAtPrice: v.compareAtPrice,
-        stock: v.stock,
-        isActive: v.isActive,
-      })) : undefined,
-    };
-
-    try {
-      if (isEditing && id) {
-        await vendorService.updateProduct(id, data);
-        addToast({ type: 'success', message: 'Product updated successfully.' });
-      } else {
-        await vendorService.createProduct(data);
-        addToast({ type: 'success', message: 'Product created successfully!' });
-      }
-
-      // Clean up queued R2 images after successful save
-      if (deletedImageKeys.length > 0) {
-        vendorService.deleteImages(deletedImageKeys).catch(() => {});
-      }
-
-      navigate('/vendor/products');
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || 'Failed to save product' });
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+    [name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, condition,
+      state, city, tags, images, attributes, customFields, variants, isNew, id, addToast, navigate],
+  );
 
   if (loading) {
-    return (
-      <div className="vendor-product-edit">
-        <div className="page-header"><h1>Loading...</h1></div>
-      </div>
-    );
+    return <div className="vendor-product-edit"><p style={{ color: '#667085' }}>Loading listing…</p></div>;
   }
+
+  const readOnly = listing?.status === 'REMOVED';
 
   return (
     <div className="vendor-product-edit">
-      <div className="page-header">
-        <Link to="/vendor/products" className="back-link">
-          <span className="material-icons">arrow_back</span>
-          Back to Products
-        </Link>
-        <h1>{isEditing ? 'Edit Product' : 'Add New Product'}</h1>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>{isNew ? 'Add Listing' : 'Edit Listing'}</h1>
+        <Link to="/vendor/products" className="btn-secondary">Back to listings</Link>
       </div>
 
-      {/* Approval status banner */}
-      {isEditing && approvalStatus && approvalStatus !== 'APPROVED' && (
-        <div className={`approval-banner approval-${approvalStatus.toLowerCase()}`}>
-          <span className="material-icons">
-            {approvalStatus === 'PENDING' ? 'hourglass_empty' : 'block'}
-          </span>
-          <span>
-            {approvalStatus === 'PENDING'
-              ? 'This product is pending admin approval.'
-              : `This product has been ${approvalStatus.toLowerCase()} by an admin.`}
-          </span>
+      {readOnly && (
+        <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', marginBottom: '1rem' }}>
+          This listing was removed by an administrator and cannot be edited.
         </div>
       )}
 
-      {/* Listing-standards banner: pre-standards products stay live, but the
-          vendor sees exactly what to fix; saving enforces it */}
-      {isEditing && compliance && !compliance.compliant && (
-        <div className="approval-banner approval-rejected">
-          <span className="material-icons">warning</span>
-          <div>
-            <strong>This listing no longer meets the listing requirements — update it to keep it compliant:</strong>
-            <ul style={{ margin: '0.25rem 0 0 1rem' }}>
-              {compliance.problems.map((p, i) => (
-                <li key={i}>{p}</li>
-              ))}
-            </ul>
+      {problems && (
+        <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', marginBottom: '1rem' }}>
+          {problems}
+        </div>
+      )}
+
+      <form onSubmit={(e) => { e.preventDefault(); save(false); }}>
+        {/* ── Basics ── */}
+        <section className="dashboard-section">
+          <h2>Basics</h2>
+
+          <div className="form-group">
+            <label htmlFor="name">Product Name *</label>
+            <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ankara Maxi Dress" />
           </div>
-        </div>
-      )}
 
-      <form className="product-form" onSubmit={handleSubmit}>
-        <div className="form-layout">
-          <div className="form-main">
-            {/* Basic Info */}
-            <section className="form-section">
-              <h2>Basic Information</h2>
+          <div className="form-group">
+            <label htmlFor="description">Description *</label>
+            <textarea
+              id="description"
+              rows={5}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the product in detail — buyers decide whether to message you from this."
+            />
+          </div>
 
-              <div className="form-group">
-                <label htmlFor="name">Product Name *</label>
-                <input id="name" type="text" placeholder="Enter product name"
-                  value={name} onChange={(e) => setName(e.target.value)} required />
+          {/* Listings attach to a subcategory: that is where the attributes
+              live, and where buyers browse. */}
+          <div className="form-group">
+            <label htmlFor="parent">Category *</label>
+            <select
+              id="parent"
+              value={parentId}
+              onChange={(e) => { setParentId(e.target.value); setCategoryId(''); setAttributes({}); }}
+            >
+              <option value="">Select a category</option>
+              {parents.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          {parentId && (
+            <div className="form-group">
+              <label htmlFor="category">Subcategory *</label>
+              <select
+                id="category"
+                value={categoryId}
+                onChange={(e) => { setCategoryId(e.target.value); setAttributes({}); }}
+              >
+                <option value="">Select a subcategory</option>
+                {children.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+        </section>
+
+        {/* ── Price ── */}
+        <section className="dashboard-section">
+          <h2>Price</h2>
+
+          <div className="form-group">
+            <label htmlFor="priceType">Pricing</label>
+            <select id="priceType" value={priceType} onChange={(e) => setPriceType(e.target.value as PriceType)}>
+              <option value="FIXED">Fixed price</option>
+              <option value="RANGE">Price range</option>
+              <option value="ON_REQUEST">Contact for price</option>
+            </select>
+          </div>
+
+          {priceType !== 'ON_REQUEST' && (
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label htmlFor="basePrice">{priceType === 'RANGE' ? 'From (₦)' : 'Price (₦)'}</label>
+                <input id="basePrice" type="number" min="0" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} />
               </div>
-
-              <div className="form-group">
-                <label htmlFor="description">Description *</label>
-                <textarea id="description" rows={5} placeholder="Describe your product"
-                  value={description} onChange={(e) => setDescription(e.target.value)} required />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="shortDesc">Short Description</label>
-                <input id="shortDesc" type="text" placeholder="Brief summary for listings"
-                  value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="category">Category *</label>
-                  <select id="category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required>
-                    <option value="">Select category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="tags">Tags (comma-separated)</label>
-                  <input id="tags" type="text" placeholder="electronics, gadgets"
-                    value={tags} onChange={(e) => setTags(e.target.value)} />
-                </div>
-              </div>
-            </section>
-
-            {/* Product Type */}
-            <section className="form-section">
-              <h2>Product Type</h2>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="productType">Type *</label>
-                  <select id="productType" value={productType} onChange={(e) => setProductType(e.target.value as 'PHYSICAL' | 'DIGITAL')}>
-                    <option value="DIGITAL">Digital Product</option>
-                    <option value="PHYSICAL">Physical Product</option>
-                  </select>
-                </div>
-                {productType === 'PHYSICAL' && (
-                  <div className="form-group">
-                    <label htmlFor="stock">Stock Quantity *</label>
-                    <input id="stock" type="number" min="0" step="1" placeholder="0"
-                      value={stock} onChange={(e) => setStock(e.target.value)} required />
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Product Details (listing standards) */}
-            <section className="form-section">
-              <h2>Product Details</h2>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="brand">Brand</label>
-                  <input id="brand" type="text" placeholder="e.g. Nike"
-                    value={brand} onChange={(e) => setBrand(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="material">Material</label>
-                  <input id="material" type="text" placeholder="e.g. 100% Cotton"
-                    value={material} onChange={(e) => setMaterial(e.target.value)} />
-                </div>
-              </div>
-              {productType === 'PHYSICAL' && (
-                <>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="weightGrams">Weight (grams)</label>
-                      <input id="weightGrams" type="number" min="1" step="1" placeholder="e.g. 500"
-                        value={weightGrams} onChange={(e) => setWeightGrams(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="dimUnit">Dimensions Unit</label>
-                      <select id="dimUnit" value={dimUnit} onChange={(e) => setDimUnit(e.target.value as 'cm' | 'in')}>
-                        <option value="cm">Centimeters</option>
-                        <option value="in">Inches</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="dimLength">Length</label>
-                      <input id="dimLength" type="number" min="0" step="0.1" placeholder="0"
-                        value={dimLength} onChange={(e) => setDimLength(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="dimWidth">Width</label>
-                      <input id="dimWidth" type="number" min="0" step="0.1" placeholder="0"
-                        value={dimWidth} onChange={(e) => setDimWidth(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="dimHeight">Height</label>
-                      <input id="dimHeight" type="number" min="0" step="0.1" placeholder="0"
-                        value={dimHeight} onChange={(e) => setDimHeight(e.target.value)} />
-                    </div>
-                  </div>
-                </>
-              )}
-            </section>
-
-            {/* Pricing */}
-            <section className="form-section">
-              <h2>Pricing</h2>
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="price">Price (₦) *</label>
-                  <input id="price" type="number" step="0.01" min="0" placeholder="0.00"
-                    value={basePrice} onChange={(e) => setBasePrice(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="salePrice">Sale Price (₦)</label>
-                  <input id="salePrice" type="number" step="0.01" min="0" placeholder="0.00"
-                    value={salePrice} onChange={(e) => setSalePrice(e.target.value)} />
-                </div>
-              </div>
-            </section>
-
-            {/* Images */}
-            <section className="form-section">
-              <h2>Images</h2>
-
-              {images.length > 0 && (
-                <div className="uploaded-images-grid">
-                  {images.map((img, i) => (
-                    <div key={i} className={`uploaded-image ${img.isPrimary ? 'is-primary' : ''}`}>
-                      <img src={img.url} alt={img.alt} />
-                      <div className="image-actions">
-                        <button type="button" onClick={() => setPrimaryImage(i)}
-                          className={`btn-icon-sm ${img.isPrimary ? 'active' : ''}`} title="Set as primary">
-                          <span className="material-icons">star</span>
-                        </button>
-                        <button type="button" onClick={() => removeImage(i)}
-                          className="btn-icon-sm btn-icon-danger" title="Remove">
-                          <span className="material-icons">close</span>
-                        </button>
-                      </div>
-                      {img.isPrimary && <span className="primary-badge">Primary</span>}
-                    </div>
-                  ))}
+              {priceType === 'RANGE' && (
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label htmlFor="maxPrice">To (₦)</label>
+                  <input id="maxPrice" type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
                 </div>
               )}
+            </div>
+          )}
 
-              <div className="image-upload-input">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  multiple
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  style={{ display: 'none' }}
-                  id="imageFileInput"
-                />
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                >
-                  <span className="material-icons">
-                    {uploading ? 'hourglass_empty' : 'cloud_upload'}
-                  </span>
-                  {uploading ? 'Uploading...' : 'Upload Images'}
-                </button>
-                <span className="upload-hint">JPEG, PNG, WebP or GIF — max 5 MB each, up to 10 files</span>
-              </div>
-            </section>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" checked={isNegotiable} onChange={(e) => setIsNegotiable(e.target.checked)} />
+            Price is negotiable
+          </label>
+        </section>
 
-            {/* Digital Files (only for DIGITAL products, only when editing) */}
-            {productType === 'DIGITAL' && isEditing && id && (
-              <section className="form-section">
-                <h2>Digital Files</h2>
-                <p className="text-muted">Upload the downloadable files customers will receive after purchase.</p>
+        {/* ── Photos ── */}
+        <section className="dashboard-section">
+          <h2>Photos</h2>
+          <p style={{ color: '#667085', fontSize: '0.88rem' }}>At least one photo is required to publish.</p>
 
-                {digitalAssets.length > 0 && (
-                  <div className="digital-assets-list">
-                    {digitalAssets.map((asset) => (
-                      <div key={asset.id} className="digital-asset-item">
-                        <div className="digital-asset-info">
-                          <span className="material-icons">description</span>
-                          <span className="file-name">{asset.fileName}</span>
-                          <span className="file-size">({(asset.fileSize / 1024).toFixed(1)} KB)</span>
-                        </div>
-                        <button type="button" className="btn-icon-sm btn-icon-danger"
-                          onClick={() => removeDigitalAsset(asset.id)} title="Remove file">
-                          <span className="material-icons">close</span>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          <input type="file" accept="image/*" multiple disabled={uploading} onChange={(e) => handleUpload(e.target.files)} />
+          {uploading && <p style={{ color: '#667085' }}>Uploading…</p>}
 
-                <div className="image-upload-input">
-                  <input
-                    ref={digitalFileInputRef}
-                    type="file"
-                    multiple
-                    onChange={handleDigitalFileUpload}
-                    disabled={uploadingDigital}
-                    style={{ display: 'none' }}
-                    id="digitalFileInput"
+          {images.length > 0 && (
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+              {images.map((img, i) => (
+                <div key={i} style={{ position: 'relative' }}>
+                  <img
+                    src={imageSrc(img)}
+                    alt=""
+                    style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 6, border: '1px solid #e4e7ec' }}
                   />
                   <button
                     type="button"
-                    className="btn btn-secondary"
-                    onClick={() => digitalFileInputRef.current?.click()}
-                    disabled={uploadingDigital}
+                    onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
+                    style={{
+                      position: 'absolute', top: -6, right: -6, width: 22, height: 22,
+                      borderRadius: '50%', border: 'none', background: '#b42318', color: 'white', cursor: 'pointer',
+                    }}
+                    aria-label="Remove image"
                   >
-                    <span className="material-icons">
-                      {uploadingDigital ? 'hourglass_empty' : 'attach_file'}
-                    </span>
-                    {uploadingDigital ? 'Uploading...' : 'Upload Digital Files'}
+                    ×
                   </button>
-                  <span className="upload-hint">PDF, ZIP, or any downloadable file — max 50 MB each</span>
                 </div>
-              </section>
-            )}
+              ))}
+            </div>
+          )}
+        </section>
 
-            {/* Variants */}
-            <section className="form-section">
-              <div className="section-header">
-                <h2>Variants</h2>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={addVariant}>
-                  <span className="material-icons">add</span>
-                  Add Variant
-                </button>
+        {/* ── Category attributes: the filterable layer ── */}
+        {productAttrs.length > 0 && (
+          <section className="dashboard-section">
+            <h2>Product Details</h2>
+            <p style={{ color: '#667085', fontSize: '0.88rem' }}>
+              Buyers filter search results by these, so fill in as many as apply.
+            </p>
+
+            {productAttrs.map((attr) => (
+              <div className="form-group" key={attr.name}>
+                <label htmlFor={`attr-${attr.name}`}>
+                  {attr.name}{attr.isRequired ? ' *' : ''}
+                </label>
+
+                {attr.type === 'SELECT' ? (
+                  <select
+                    id={`attr-${attr.name}`}
+                    value={attributes[attr.name] ?? ''}
+                    onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
+                  >
+                    <option value="">Select {attr.name.toLowerCase()}</option>
+                    {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                ) : (
+                  <input
+                    id={`attr-${attr.name}`}
+                    type={attr.type === 'NUMBER' ? 'number' : 'text'}
+                    value={attributes[attr.name] ?? ''}
+                    onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
+                  />
+                )}
               </div>
+            ))}
+          </section>
+        )}
 
-              {requiredVariantAttrs.length > 0 && (
-                <p className="text-muted">
-                  This category requires each variant to specify:{' '}
-                  <strong>{requiredVariantAttrs.map((a) => a.name).join(', ')}</strong>
-                  {' '}(e.g. one variant per size, with its own stock).
-                </p>
-              )}
+        {/* ── Custom fields: anything the category does not cover ── */}
+        <section className="dashboard-section">
+          <h2>Additional Details</h2>
+          <p style={{ color: '#667085', fontSize: '0.88rem' }}>
+            Add anything specific to this product that the fields above do not cover.
+            These appear on your listing but are not used in search filters.
+          </p>
 
-              {variants.length === 0 ? (
-                <p className="text-muted">No variants. Add variants if your product comes in different sizes, colors, etc.</p>
-              ) : (
-                <div className="variants-list">
-                  {variants.map((variant, i) => (
-                    <div key={i} className="variant-card">
-                      <div className="variant-header">
-                        <strong>{variant.name || `Variant ${i + 1}`}</strong>
-                        <button type="button" className="btn-icon-sm btn-icon-danger"
-                          onClick={() => removeVariant(i)} title="Remove variant">
-                          <span className="material-icons">close</span>
-                        </button>
-                      </div>
+          {customFields.map((field, i) => (
+            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <input
+                placeholder="Label — e.g. Warranty"
+                value={field.label}
+                onChange={(e) => setCustomFields((f) => f.map((x, idx) => (idx === i ? { ...x, label: e.target.value } : x)))}
+                style={{ flex: 1 }}
+              />
+              <input
+                placeholder="Value — e.g. 6 months"
+                value={field.value}
+                onChange={(e) => setCustomFields((f) => f.map((x, idx) => (idx === i ? { ...x, value: e.target.value } : x)))}
+                style={{ flex: 2 }}
+              />
+              <button type="button" className="btn-secondary" onClick={() => setCustomFields((f) => f.filter((_, idx) => idx !== i))}>
+                Remove
+              </button>
+            </div>
+          ))}
 
-                      {/* Structured attributes from the category's listing standards */}
-                      {variantAttributeDefs.length > 0 && (
-                        <div className="form-row">
-                          {variantAttributeDefs.map((attr) => (
-                            <div className="form-group" key={attr.id}>
-                              <label>{attr.name}{attr.isRequired ? ' *' : ''}</label>
-                              {attr.type === 'SELECT' ? (
-                                <select
-                                  value={variant.attributes[attr.name] || ''}
-                                  onChange={(e) => updateVariantAttribute(i, attr.name, e.target.value)}
-                                  required={attr.isRequired}
-                                >
-                                  <option value="">Select {attr.name}</option>
-                                  {attr.options.map((opt) => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <input
-                                  type={attr.type === 'NUMBER' ? 'number' : 'text'}
-                                  placeholder={attr.name}
-                                  value={variant.attributes[attr.name] || ''}
-                                  onChange={(e) => updateVariantAttribute(i, attr.name, e.target.value)}
-                                  required={attr.isRequired}
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </div>
+          {customFields.length < MAX_CUSTOM_FIELDS && (
+            <button type="button" className="btn-secondary" onClick={() => setCustomFields((f) => [...f, { label: '', value: '' }])}>
+              + Add field
+            </button>
+          )}
+        </section>
+
+        {/* ── Variants ── */}
+        {variantAttrs.length > 0 && (
+          <section className="dashboard-section">
+            <h2>Variants</h2>
+            <p style={{ color: '#667085', fontSize: '0.88rem' }}>
+              Add a row per {variantAttrs.map((a) => a.name.toLowerCase()).join(' / ')} you offer.
+              Leave empty if this product has only one version.
+            </p>
+
+            {variants.map((variant, i) => (
+              <div key={i} style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <div className="form-group" style={{ flex: 1, minWidth: 160, marginBottom: 0 }}>
+                    <label>Name</label>
+                    <input
+                      placeholder="e.g. Red / XL"
+                      value={variant.name}
+                      onChange={(e) => setVariants((v) => v.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))}
+                    />
+                  </div>
+
+                  {variantAttrs.map((attr) => (
+                    <div className="form-group" key={attr.name} style={{ minWidth: 130, marginBottom: 0 }}>
+                      <label>{attr.name}{attr.isRequired ? ' *' : ''}</label>
+                      {attr.type === 'SELECT' ? (
+                        <select
+                          value={variant.attributes[attr.name] ?? ''}
+                          onChange={(e) =>
+                            setVariants((v) => v.map((x, idx) =>
+                              idx === i ? { ...x, attributes: { ...x.attributes, [attr.name]: e.target.value } } : x))}
+                        >
+                          <option value="">—</option>
+                          {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      ) : (
+                        <input
+                          value={variant.attributes[attr.name] ?? ''}
+                          onChange={(e) =>
+                            setVariants((v) => v.map((x, idx) =>
+                              idx === i ? { ...x, attributes: { ...x.attributes, [attr.name]: e.target.value } } : x))}
+                        />
                       )}
-
-                      <div className="form-row">
-                        {variantAttributeDefs.length === 0 && (
-                          <div className="form-group">
-                            <label>Name *</label>
-                            <input type="text" placeholder="e.g. Large / Red"
-                              value={variant.name}
-                              onChange={(e) => updateVariant(i, 'name', e.target.value)} />
-                          </div>
-                        )}
-                        <div className="form-group">
-                          <label>Price (₦)</label>
-                          <input type="number" step="0.01" min="0" placeholder="Override price"
-                            value={variant.price ?? ''}
-                            onChange={(e) => updateVariant(i, 'price', e.target.value ? parseFloat(e.target.value) : undefined)} />
-                        </div>
-                        <div className="form-group">
-                          <label>Stock{requiredVariantAttrs.some((a) => a.name === 'Size') ? ' (for this size)' : ''}</label>
-                          <input type="number" min="0" placeholder="0"
-                            value={variant.stock ?? 0}
-                            onChange={(e) => updateVariant(i, 'stock', parseInt(e.target.value) || 0)} />
-                        </div>
-                      </div>
                     </div>
                   ))}
+
+                  <div className="form-group" style={{ minWidth: 120, marginBottom: 0 }}>
+                    <label>Price (₦)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={variant.price ?? ''}
+                      onChange={(e) =>
+                        setVariants((v) => v.map((x, idx) =>
+                          idx === i ? { ...x, price: e.target.value === '' ? undefined : Number(e.target.value) } : x))}
+                    />
+                  </div>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={variant.isAvailable !== false}
+                      onChange={(e) =>
+                        setVariants((v) => v.map((x, idx) => (idx === i ? { ...x, isAvailable: e.target.checked } : x)))}
+                    />
+                    Available
+                  </label>
+
+                  <button type="button" className="btn-secondary" onClick={() => setVariants((v) => v.filter((_, idx) => idx !== i))}>
+                    Remove
+                  </button>
                 </div>
-              )}
-            </section>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setVariants((v) => [...v, { name: '', attributes: {}, isAvailable: true }])}
+            >
+              + Add variant
+            </button>
+          </section>
+        )}
+
+        {/* ── Location & condition ── */}
+        <section className="dashboard-section">
+          <h2>Item Details</h2>
+
+          <div className="form-group">
+            <label htmlFor="condition">Condition</label>
+            <select id="condition" value={condition} onChange={(e) => setCondition(e.target.value)}>
+              <option value="">Not specified</option>
+              {CONDITIONS.map((c) => (
+                <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>
+              ))}
+            </select>
           </div>
 
-          <div className="form-sidebar">
-            {/* Status info */}
-            {isEditing && approvalStatus && (
-              <section className="form-section">
-                <h2>Status</h2>
-                <div className={`status-badge status-${approvalStatus.toLowerCase()}`}>
-                  {approvalStatus}
-                </div>
-              </section>
-            )}
-
-            {/* Actions */}
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary btn-block" disabled={saving}>
-                {saving ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}
-              </button>
-              <Link to="/vendor/products" className="btn btn-secondary btn-block">
-                Cancel
-              </Link>
-            </div>
+          {/* Defaults to the store's location server-side when left blank. */}
+          <div className="form-group">
+            <label htmlFor="state">State</label>
+            <select id="state" value={state} onChange={(e) => setState(e.target.value)}>
+              <option value="">Same as my store</option>
+              {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
+
+          <div className="form-group">
+            <label htmlFor="city">City / Area</label>
+            <input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="tags">Tags</label>
+            <input
+              id="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="Comma separated — helps buyers find this in search"
+            />
+          </div>
+        </section>
+
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button type="submit" className="btn-secondary" disabled={saving || readOnly}>
+            {saving ? 'Saving…' : 'Save as draft'}
+          </button>
+          <button type="button" className="btn-primary" disabled={saving || readOnly} onClick={() => save(true)}>
+            {saving ? 'Saving…' : 'Save & publish'}
+          </button>
+          <span style={{ color: '#667085', fontSize: '0.85rem' }}>Drafts are only visible to you.</span>
         </div>
       </form>
     </div>

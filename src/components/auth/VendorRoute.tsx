@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { storeService, type StoreStatus } from '@/services/storeService';
 
 interface VendorRouteProps {
   children: React.ReactNode;
@@ -8,11 +10,45 @@ interface VendorRouteProps {
 
 export default function VendorRoute({ children }: VendorRouteProps) {
   const { isLoaded, isSignedIn } = useAuth();
-  const { user, isLoading } = useAuthStore();
+  const { isLoading } = useAuthStore();
   const location = useLocation();
 
+  /**
+   * Owning a store is what makes someone a seller now — not the legacy
+   * `isVendor` flag on the identity profile, which is no longer set for
+   * anyone. The store is fetched rather than read from the session because
+   * it can be created mid-session.
+   */
+  const [store, setStore] = useState<{ checked: boolean; status: StoreStatus | null }>({
+    checked: false,
+    status: null,
+  });
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    let cancelled = false;
+
+    storeService
+      .getMyStore()
+      .then((res) => {
+        if (!cancelled) setStore({ checked: true, status: res.data.status });
+      })
+      .catch(() => {
+        // 404 = no store yet; any other failure also means we cannot confirm one.
+        if (!cancelled) setStore({ checked: true, status: null });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn]);
+
+  // Signed-out users never need the lookup, so they are "checked" by definition.
+  const storeChecked = !isSignedIn || store.checked;
+  const storeStatus = store.status;
+
   // Show loading state while Clerk is initializing or profile is syncing
-  if (!isLoaded || (isSignedIn && isLoading)) {
+  if (!isLoaded || (isSignedIn && isLoading) || (isSignedIn && !storeChecked)) {
     return (
       <div style={{
         display: 'flex',
@@ -65,13 +101,13 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     );
   }
 
-  // Signed in but not a vendor — redirect to become a vendor
-  if (!user?.isVendor) {
-    return <Navigate to="/account" replace />;
+  // Signed in but has no store — send them to create one.
+  if (!storeStatus) {
+    return <Navigate to="/vendor/register" replace />;
   }
 
-  // Vendor is banned
-  if (user.vendorStatus === 'BANNED') {
+  // Store is banned
+  if (storeStatus === 'BANNED') {
     return (
       <div style={{
         display: 'flex',
@@ -86,7 +122,7 @@ export default function VendorRoute({ children }: VendorRouteProps) {
           Account Banned
         </h2>
         <p style={{ marginBottom: '2rem', color: '#666', maxWidth: '400px' }}>
-          Your vendor account has been banned. Please contact support.
+          Your store has been banned. Please contact support.
         </p>
         <Link to="/" style={{ color: '#007bff', textDecoration: 'none' }}>
           Return to Store
@@ -95,8 +131,8 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     );
   }
 
-  // Vendor is suspended — show read-only banner
-  if (user.vendorStatus === 'SUSPENDED') {
+  // Store is suspended — show read-only banner
+  if (storeStatus === 'SUSPENDED') {
     return (
       <div>
         <div style={{
@@ -108,7 +144,7 @@ export default function VendorRoute({ children }: VendorRouteProps) {
           fontSize: '0.95rem',
           fontWeight: 500,
         }}>
-          Your vendor account is suspended. You have read-only access. Please contact support for more information.
+          Your store is suspended and hidden from buyers. You have read-only access. Please contact support.
         </div>
         {children}
       </div>

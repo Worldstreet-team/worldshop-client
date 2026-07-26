@@ -4,6 +4,7 @@ import { useCategoryStore } from '@/store/categoryStore';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/common';
+import { CATEGORY_PLACEHOLDER, imageFallback } from '@/utils/imageFallback';
 
 export default function CategoriesPage() {
   const categories = useCategoryStore((s) => s.categories);
@@ -75,8 +76,10 @@ export default function CategoriesPage() {
               >
                 <div className="category-card-image">
                   <img
-                    src={category.image || '/images/placeholder-category.jpg'}
+                    src={category.image || CATEGORY_PLACEHOLDER}
                     alt={category.name}
+                    loading="lazy"
+                    onError={imageFallback(CATEGORY_PLACEHOLDER)}
                   />
                   <div className="category-card-overlay" />
                 </div>
