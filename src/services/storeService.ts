@@ -92,6 +92,33 @@ export interface MyStore {
   slug: string;
   status: StoreStatus;
   isPubliclyVisible: boolean;
+  // Present on GET /stores/me; optional so list-shaped consumers stay valid.
+  description?: string | null;
+  logo?: string | null;
+  banner?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  email?: string | null;
+  website?: string | null;
+  state?: string;
+  city?: string | null;
+  address?: string | null;
+}
+
+/** PATCH /stores/me. null clears a field; omitting it keeps the current value. */
+export interface UpdateStorePayload {
+  name?: string;
+  description?: string | null;
+  logo?: string | null;
+  banner?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  email?: string | null;
+  website?: string | null;
+  state?: string;
+  city?: string | null;
+  address?: string | null;
+  regenerateSlug?: boolean;
 }
 
 export interface ChargeResult {
@@ -282,6 +309,17 @@ export const storeService = {
 
   /** GET /stores/me — 404 when the signed-in user has no store yet. */
   getMyStore: () => api.get<ApiResponse<MyStore>>('/stores/me'),
+
+  updateStore: (data: UpdateStorePayload) => api.patch<ApiResponse<MyStore>>('/stores/me', data),
+
+  /** Logo/banner upload — same rail as listing images, separate folder. */
+  uploadBranding: (file: File) => {
+    const form = new FormData();
+    form.append('images', file);
+    return apiClient
+      .post<ApiResponse<UploadedImage[]>>('/stores/me/listings/upload/images?folder=stores', form)
+      .then((res) => res.data);
+  },
 
   /**
    * POST /stores/me/subscription/charge — activate or retry.

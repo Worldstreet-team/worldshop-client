@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-router-dom';
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import AuthLayout from '@/layouts/AuthLayout';
@@ -63,9 +63,6 @@ const VendorDashboard = lazy(() => import('@/pages/vendor/Dashboard'));
 const VendorRegistration = lazy(() => import('@/pages/vendor/Registration'));
 const VendorProducts = lazy(() => import('@/pages/vendor/Products'));
 const VendorProductEdit = lazy(() => import('@/pages/vendor/ProductEdit'));
-const VendorOrders = lazy(() => import('@/pages/vendor/Orders'));
-const VendorOrderDetail = lazy(() => import('@/pages/vendor/OrderDetail'));
-const VendorWithdrawals = lazy(() => import('@/pages/vendor/Withdrawals'));
 const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 const VendorReviews = lazy(() => import('@/pages/vendor/Reviews'));
 const VendorMessages = lazy(() => import('@/pages/vendor/Messages'));
@@ -294,18 +291,6 @@ const router = createBrowserRouter([
         element: <SuspenseWrapper><VendorProductEdit /></SuspenseWrapper>,
       },
       {
-        path: 'orders',
-        element: <SuspenseWrapper><VendorOrders /></SuspenseWrapper>,
-      },
-      {
-        path: 'orders/:id',
-        element: <SuspenseWrapper><VendorOrderDetail /></SuspenseWrapper>,
-      },
-      {
-        path: 'withdrawals',
-        element: <SuspenseWrapper><VendorWithdrawals /></SuspenseWrapper>,
-      },
-      {
         path: 'settings',
         element: <SuspenseWrapper><VendorSettings /></SuspenseWrapper>,
       },
@@ -316,6 +301,12 @@ const router = createBrowserRouter([
       {
         path: 'messages',
         element: <SuspenseWrapper><VendorMessages /></SuspenseWrapper>,
+      },
+      // Stale bookmarks to removed pages (orders, withdrawals) land on the
+      // dashboard rather than an unmatched-route error.
+      {
+        path: '*',
+        element: <Navigate to="/vendor" replace />,
       },
     ],
   },

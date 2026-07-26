@@ -164,6 +164,57 @@ The moderation queue had no way to receive anything from the buyer side.
 - The dialog is honest about what happens next: *"we will not always be able to
   tell you the outcome"*, and *"the seller is not told who reported them"*
 
+### Changed — Vendor reviews page
+
+- `pages/vendor/Reviews.tsx` — rewritten against `GET /stores/me/reviews`
+  instead of the dead `/vendor/reviews`. Its real job is the **right of reply**,
+  which had no UI at all: a vendor has no refund, no resolution and no way to
+  make anything right, so a public response is their only answer to an unfair
+  review. "Reply publicly" is therefore the primary action on every unanswered
+  review, not a buried one
+- Replies can be edited or removed; removing one leaves the review standing, and
+  the confirm says so
+- **"Only show reviews I have not replied to"** filter, and the dashboard's
+  unreplied-review alert now links here with `?unreplied=1` so arriving from it
+  lands on the filtered view rather than page one of everything
+- Reply placeholder is a nudge, not a hint: *"Buyers read this alongside the
+  review, so a calm, factual reply reads better than a defensive one"*
+- **Report this review** on each unanswered review — the seller is usually the
+  one who spots a fake, and the server now permits it
+- Badge reads "Contacted you" from the vendor's side; `FLAGGED` reviews show
+  "Reported — under review"
+- Empty state explains the causal chain rather than just being empty: reviews
+  come from buyers who messaged you, so answering messages is what produces them
+  — with a link to the inbox
+
+### Removed — Dead vendor pages
+
+- `pages/vendor/Orders.tsx`, `OrderDetail.tsx`, `Withdrawals.tsx` deleted, along
+  with their routes — they targeted removed features (`/vendor/orders`,
+  `/vendor/withdrawals`) and would only ever have rendered errors
+- A `*` catch-all under `/vendor` sends stale bookmarks to the dashboard
+  instead of the router's unmatched-route error
+- `vendorService` is now consumed only by `Settings.tsx` (four profile /
+  withdrawal-account methods); everything else in it is dead code that goes
+  when Settings is rewritten against `PATCH /stores/me`
+
+### Changed — Store settings rewritten; vendorService deleted
+
+- `pages/vendor/Settings.tsx` — now edits the store via `PATCH /stores/me`
+  instead of the vendor fields on UserProfile (behind a gate that 403s for
+  everyone) and a bank withdrawal account (a removed feature). Sections:
+  store link (copy + public-page link, or "not visible yet" pointing at the
+  dashboard), identity, branding (logo/banner upload), contact channels, and
+  location. Nothing financial lives here — the subscription is on the dashboard
+- **Emptied fields clear.** `""` in an input is sent as `null` (unset), never as
+  an empty-string value
+- **Renaming does not silently change the store URL.** A rename reveals an
+  opt-in checkbox that says plainly: "This changes your URL — anywhere you have
+  shared the old link will stop working." It disarms after every save
+- `services/vendorService.ts` **deleted** — Settings was its last consumer
+- `storeService` gains `updateStore` and `uploadBranding` (same upload rail as
+  listing images, separate folder)
+
 ### Still pre-pivot
 `Orders.tsx`, `OrderDetail.tsx` and `Withdrawals.tsx` target removed features
 and are now unlinked but still routed. `Products.tsx` / `ProductEdit.tsx` still
