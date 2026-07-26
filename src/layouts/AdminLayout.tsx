@@ -5,13 +5,11 @@ import { useAuthStore } from '@/store/authStore';
 import ToastContainer from '@/components/ui/ToastContainer';
 
 const navItems = [
+  // Products, orders, inventory, vendors and withdrawals were ecommerce
+  // surfaces — listings belong to stores now, and moderation happens through
+  // the report queue.
   { path: '/admin', label: 'Dashboard', icon: 'dashboard' },
-  { path: '/admin/products', label: 'Products', icon: 'inventory' },
-  { path: '/admin/orders', label: 'Orders', icon: 'shopping_cart' },
   { path: '/admin/categories', label: 'Categories', icon: 'category' },
-  { path: '/admin/inventory', label: 'Inventory', icon: 'warehouse' },
-  { path: '/admin/vendors', label: 'Vendors', icon: 'storefront' },
-  { path: '/admin/withdrawals', label: 'Withdrawals', icon: 'payments' },
   { path: '/admin/users', label: 'Users', icon: 'group' },
 ];
 

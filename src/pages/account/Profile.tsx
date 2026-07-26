@@ -116,7 +116,7 @@ export default function ProfilePage() {
         ? new Date(data.dateOfBirth).toISOString()
         : null;
 
-      const res = await profileService.updateProfile(payload as any);
+      const res = await profileService.updateProfile(payload as Parameters<typeof profileService.updateProfile>[0]);
       const updated = res.data;
       setProfile(updated);
       setIsNewProfile(false);

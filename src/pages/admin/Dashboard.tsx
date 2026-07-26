@@ -1,147 +1,142 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { adminService, type DashboardStats } from '@/services/adminService';
-import { useUIStore } from '@/store/uiStore';
+import { adminReportService, type AdminReportStats } from '@/services/reportService';
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(v);
+/**
+ * Admin dashboard.
+ *
+ * The old one led with Total Orders and Total Revenue — numbers from a model
+ * where the platform sat inside every sale. Nothing is transacted on the
+ * platform now, so the admin's actual job is moderation: what has been
+ * reported, and what needs a decision. The report queue is that work, and this
+ * page is its front door.
+ */
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<AdminReportStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const addToast = useUIStore((s) => s.addToast);
-
-  const fetchDashboard = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await adminService.getDashboardStats(page, 15);
-      setStats(data);
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.message || 'Failed to load dashboard' });
-    } finally {
-      setLoading(false);
-    }
-  }, [page, addToast]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    let cancelled = false;
 
-  const cards = stats
-    ? [
-      { label: 'Total Orders', value: String(stats.totalOrders), icon: 'shopping_cart' },
-      { label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), icon: 'payments' },
-      { label: 'Active Products', value: `${stats.activeProducts} / ${stats.totalProducts}`, icon: 'inventory' },
-      { label: 'Categories', value: String(stats.totalCategories), icon: 'category' },
-    ]
-    : [];
+    adminReportService
+      .stats()
+      .then((res) => {
+        if (!cancelled) setStats(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not load moderation stats');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const open = stats?.byStatus.OPEN ?? 0;
+  const reviewing = stats?.byStatus.REVIEWING ?? 0;
 
   return (
     <div className="admin-dashboard">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
-        <p>Welcome to your admin dashboard</p>
+      <div className="page-header">
+        <h1>Admin</h1>
+        <p style={{ color: '#667085' }}>
+          Moderation is the job now: nothing is transacted on the platform, so
+          de-listing is the only enforcement lever.
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="stats-grid">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="stat-card skeleton" />
-          ))
-          : cards.map((c) => (
-            <div key={c.label} className="stat-card">
-              <div className="stat-icon">
-                <span className="material-icons">{c.icon}</span>
-              </div>
+      {loading ? (
+        <p style={{ color: '#667085' }}>Loading…</p>
+      ) : error ? (
+        <p style={{ color: '#b42318' }}>{error}</p>
+      ) : stats && (
+        <>
+          <div className="stats-grid">
+            <div className="stat-card">
               <div className="stat-content">
-                <h3>{c.value}</h3>
-                <p>{c.label}</p>
+                <span className="stat-label">Open Reports</span>
+                <span className="stat-value" style={{ color: open > 0 ? '#b42318' : undefined }}>{open}</span>
               </div>
             </div>
-          ))}
-      </div>
+            <div className="stat-card">
+              <div className="stat-content">
+                <span className="stat-label">Reported Targets</span>
+                <span className="stat-value">{stats.openTargets}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-content">
+                <span className="stat-label">Being Reviewed</span>
+                <span className="stat-value">{reviewing}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-content">
+                <span className="stat-label">Resolved</span>
+                <span className="stat-value">
+                  {(stats.byStatus.ACTIONED ?? 0) + (stats.byStatus.DISMISSED ?? 0)}
+                </span>
+              </div>
+            </div>
+          </div>
 
-      {/* Alerts Row */}
-      {stats && (stats.outOfStockProducts > 0 || stats.lowStockProducts > 0) && (
-        <div className="stats-grid" style={{ marginTop: '1rem' }}>
-          {stats.outOfStockProducts > 0 && (
-            <div className="stat-card stat-card--danger">
-              <div className="stat-icon"><span className="material-icons">error</span></div>
-              <div className="stat-content">
-                <h3>{stats.outOfStockProducts}</h3>
-                <p>Out of Stock</p>
+          {stats.mostReported.length > 0 ? (
+            <section className="dashboard-section">
+              <h2>Most reported</h2>
+              <div className="data-table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Target</th>
+                      <th>Type</th>
+                      <th>Reports</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.mostReported.map((t) => (
+                      <tr key={`${t.targetType}:${t.targetId}`}>
+                        <td>{t.label}</td>
+                        <td style={{ color: '#667085' }}>{t.targetType.toLowerCase()}</td>
+                        <td><strong>{t.reportCount}</strong></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          )}
-          {stats.lowStockProducts > 0 && (
-            <div className="stat-card stat-card--warning">
-              <div className="stat-icon"><span className="material-icons">warning</span></div>
-              <div className="stat-content">
-                <h3>{stats.lowStockProducts}</h3>
-                <p>Low Stock</p>
-              </div>
-            </div>
-          )}
-        </div>
+              {/* The full queue (claim / dismiss / action) has API support but
+                  no page yet — these counts come from the same endpoints. */}
+              <p style={{ color: '#98a2b3', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                Acting on reports is currently done via the moderation API; a
+                full queue screen is the next admin build.
+              </p>
+            </section>
+          ) : open === 0 ? (
+            <p style={{ color: '#667085' }}>Nothing in the moderation queue. Quiet is good.</p>
+          ) : null}
+        </>
       )}
 
-      {/* Recent Orders */}
       <section className="dashboard-section">
-        <div className="section-header">
-          <h2>Recent Orders</h2>
-          <Link to="/admin/orders" className="btn btn-secondary btn-sm">View All</Link>
+        <h2>Manage</h2>
+        <div className="quick-links-grid">
+          <Link to="/admin/categories" className="quick-link-card">
+            <span className="material-icons">category</span>
+            <span>Categories & Attributes</span>
+          </Link>
+          <Link to="/admin/users" className="quick-link-card">
+            <span className="material-icons">group</span>
+            <span>Users & Roles</span>
+          </Link>
+          <Link to="/listings" className="quick-link-card">
+            <span className="material-icons">storefront</span>
+            <span>View Marketplace</span>
+          </Link>
         </div>
-        {!stats || stats.recentOrders.length === 0 ? (
-          <div className="empty-state">
-            <p>No recent orders to display.</p>
-          </div>
-        ) : (
-          <>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentOrders.map((o: any) => (
-                    <tr key={o.id}>
-                      <td><Link to={`/admin/orders/${o.id}`}>{o.orderNumber || o.id.slice(-8)}</Link></td>
-                      <td>{o.customerName || '—'}</td>
-                      <td>{formatCurrency(o.total)}</td>
-                      <td><span className={`badge badge-${o.status?.toLowerCase()}`}>{o.status}</span></td>
-                      <td>{new Date(o.createdAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {stats.recentOrdersPagination && stats.recentOrdersPagination.totalPages > 1 && (
-              <div className="pagination">
-                <button
-                  disabled={!stats.recentOrdersPagination.hasPrevPage}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  Previous
-                </button>
-                <span>Page {stats.recentOrdersPagination.page} of {stats.recentOrdersPagination.totalPages}</span>
-                <button
-                  disabled={!stats.recentOrdersPagination.hasNextPage}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
       </section>
     </div>
   );

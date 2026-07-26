@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@/types/user.types';
-import { useCartStore } from './cartStore';
 
 const LOGIN_URL = 'https://www.worldstreetgold.com/login';
 const REGISTER_URL = 'https://www.worldstreetgold.com/register';
@@ -95,18 +94,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             lastFetched: Date.now(),
           });
 
-          // Merge guest cart into user cart
-          try {
-            await useCartStore.getState().mergeGuestCart();
-            await useCartStore.getState().fetchCart();
-          } catch (mergeErr) {
-            console.error('Failed to merge guest cart:', mergeErr);
-            // Still fetch user's existing cart even if merge failed
-            try {
-              await useCartStore.getState().fetchCart();
-            } catch { /* cart will be empty */ }
-            set({ error: 'Some items from your guest cart could not be transferred. Please re-add them.' });
-          }
         } catch (error) {
           console.error('Failed to sync user profile:', error);
           set({
@@ -120,7 +107,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({
           ...initialState,
         });
-        useCartStore.getState().clearLocalCart();
         localStorage.setItem('sessionId', crypto.randomUUID());
       },
 
@@ -151,7 +137,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         // The actual Clerk signOut is called from the component.
         // This just cleans up local state.
         set({ ...initialState });
-        useCartStore.getState().clearLocalCart();
         localStorage.setItem('sessionId', crypto.randomUUID());
       },
     }),

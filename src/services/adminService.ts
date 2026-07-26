@@ -446,12 +446,12 @@ export const adminService = {
 
     // Digital Assets for a product
     getDigitalAssets: async (productId: string) => {
-        const res = await api.get<ApiResponse<any[]>>(`/admin/products/${productId}/digital-assets`);
+        const res = await api.get<ApiResponse<unknown[]>>(`/admin/products/${productId}/digital-assets`);
         return res.data;
     },
 
     attachDigitalAssets: async (productId: string, assets: Array<{ fileName: string; r2Key: string; mimeType: string; fileSize: number; sortOrder?: number }>) => {
-        const res = await api.post<ApiResponse<any[]>>(`/admin/products/${productId}/digital-assets`, { assets });
+        const res = await api.post<ApiResponse<unknown[]>>(`/admin/products/${productId}/digital-assets`, { assets });
         return res.data;
     },
 

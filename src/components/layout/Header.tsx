@@ -1,39 +1,37 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { useCartStore } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
-import { useWishlistStore } from '@/store/wishlistStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import CategoryDropdown from './MegaMenu';
 
-// Every link here must point at a param ProductListing actually reads
-// (`sale`, `featured`) — dead marketing tabs were removed.
+/**
+ * Marketplace header.
+ *
+ * The ecommerce version carried a cart button, a wishlist badge and sale
+ * tabs — furniture for a shop that transacted on-platform. Nothing is bought
+ * here any more, so the header's two jobs are search and "sell here": search
+ * feeds the browse page, and the Sell link is the supply side's front door.
+ */
+
 const navLinks = [
-  { to: '/products?sale=true', label: 'Super Deals', isSale: true },
-  { to: '/products?featured=true', label: 'Featured' },
-  { to: '/products', label: 'All Products' },
+  { to: '/listings', label: 'Marketplace' },
+  { to: '/vendor', label: 'Sell on WorldStreet', isSale: true },
 ];
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user } = useAuthStore();
-  const { getItemCount } = useCartStore();
-  const { getItemCount: getWishlistCount } = useWishlistStore();
-  const { toggleMobileMenu, openCartSidebar } = useUIStore();
+  const { toggleMobileMenu } = useUIStore();
   const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoryStore();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchCategory, setSearchCategory] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  const cartItemCount = getItemCount();
-  const wishlistCount = getWishlistCount();
 
   useEffect(() => {
     fetchCategories();
@@ -56,9 +54,7 @@ export default function Header() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      const params = new URLSearchParams({ q: searchQuery.trim() });
-      if (searchCategory) params.set('category', searchCategory);
-      navigate(`/search?${params.toString()}`);
+      navigate(`/listings?search=${encodeURIComponent(searchQuery.trim())}`);
       setIsSearchOpen(false);
       setSearchQuery('');
     }
@@ -114,29 +110,17 @@ export default function Header() {
             </button>
           </div>
 
-          {/* Search Bar — Desktop (with category select) */}
+          {/* Search Bar — Desktop */}
           <div className="header-search desktop-search">
             <form onSubmit={handleSearchSubmit} className="search-form">
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for Products"
+                placeholder="Search the marketplace"
                 className="search-input"
-                aria-label="Search products"
+                aria-label="Search listings"
               />
-              <div className="search-category-divider" />
-              <select
-                className="search-category-select"
-                value={searchCategory}
-                onChange={(e) => setSearchCategory(e.target.value)}
-                aria-label="Search category"
-              >
-                <option value="">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>{c.name}</option>
-                ))}
-              </select>
               <button type="submit" className="search-btn" aria-label="Submit search">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
                   <circle cx="11" cy="11" r="8" />
@@ -160,19 +144,20 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* Wishlist */}
-            <Link
-              to="/account/wishlist"
-              className="header-icon-btn wishlist-btn icon-muted"
-              aria-label="Wishlist"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {wishlistCount > 0 && <span className="icon-badge">{wishlistCount}</span>}
-            </Link>
+            {/* Messages — the marketplace's core interaction */}
+            {isAuthenticated && (
+              <Link
+                to="/account/messages"
+                className="header-icon-btn icon-muted"
+                aria-label="Messages"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            )}
 
-            {/* Account (mobile only) */}
+            {/* Account */}
             <Link
               to="/account"
               className="header-icon-btn account-btn"
@@ -186,20 +171,6 @@ export default function Header() {
                 <span className="user-name">{user?.firstName}</span>
               )}
             </Link>
-
-            {/* Cart with badge + total */}
-            <button
-              className="header-icon-btn cart-btn"
-              onClick={openCartSidebar}
-              aria-label={`Shopping cart with ${cartItemCount} items`}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="26" height="26">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" />
-                <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {cartItemCount > 0 && <span className="icon-badge">{cartItemCount}</span>}
-            </button>
           </div>
         </div>
       </div>
@@ -289,7 +260,7 @@ export default function Header() {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
+              placeholder="Search the marketplace"
               className="search-input"
             />
             <button type="submit" className="search-btn">

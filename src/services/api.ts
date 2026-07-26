@@ -57,8 +57,9 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     // W5 FIX: On 401, attempt one token refresh before giving up
-    if (error.response?.status === 401 && error.config && !(error.config as any)._retried) {
-      (error.config as any)._retried = true;
+    type RetriableConfig = typeof error.config & { _retried?: boolean };
+    if (error.response?.status === 401 && error.config && !(error.config as RetriableConfig)._retried) {
+      (error.config as RetriableConfig)._retried = true;
       if (clerkGetToken) {
         try {
           const freshToken = await clerkGetToken();

@@ -6,6 +6,11 @@ import { useUIStore } from '@/store/uiStore';
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
 
+type ApiError = { response?: { data?: { message?: string } }; message?: string };
+const errMessage = (err: unknown, fallback: string) =>
+  (err as ApiError).response?.data?.message || (err as ApiError).message || fallback;
+
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -21,8 +26,8 @@ export default function AdminUsers() {
       const result = await adminService.getUsers({ ...filters, search: search || undefined });
       setUsers(result.data);
       setPagination(result.pagination);
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to load users' });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to load users') });
     } finally {
       setLoading(false);
     }
@@ -42,8 +47,8 @@ export default function AdminUsers() {
       const updated = await adminService.updateUserRole(user.id, role);
       setUsers((current) => current.map((item) => item.id === updated.id ? updated : item));
       addToast({ type: 'success', message: `User role updated to ${role}.` });
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to update role' });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to update role') });
     } finally {
       setUpdatingId(null);
     }

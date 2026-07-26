@@ -61,6 +61,24 @@ export interface MyReport {
   createdAt: string;
 }
 
+/** Admin moderation views. All behind the ADMIN role server-side. */
+export interface AdminReportStats {
+  byStatus: Record<string, number>;
+  byTargetType: Record<string, number>;
+  openByReason: Record<string, number>;
+  openTargets: number;
+  mostReported: Array<{
+    targetType: ReportTargetType;
+    targetId: string;
+    label: string;
+    reportCount: number;
+  }>;
+}
+
+export const adminReportService = {
+  stats: () => api.get<ApiResponse<AdminReportStats>>('/admin/reports/stats'),
+};
+
 export const reportService = {
   create: (data: {
     targetType: ReportTargetType;

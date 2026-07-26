@@ -4,6 +4,36 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.33.0] - 2026-07-27
+
+### Removed — The ecommerce buyer surface
+
+The last pre-pivot territory in the client. **Eighteen pages deleted**: Home,
+ProductListing, ProductDetail, Category, Categories, SearchResults, Store
+(legacy), Cart, Checkout + its four outcome pages, MockPayment, and
+account/{OrderHistory, OrderDetail, Addresses, Wishlist, Downloads}.
+
+- **`/` is now the marketplace.** The browse page renders at the root — the
+  marketplace is the site, not a feature of it
+- Legacy URLs redirect rather than 404: `/products`, `/category/:slug`,
+  `/categories`, `/search`, `/cart`, `/checkout/*` → `/listings`;
+  `/store/:slug` → `/stores/:slug` keeping the slug, since the store backfill
+  preserved it
+- **Header rewritten**: cart button, wishlist badge and sale tabs removed;
+  search feeds `/listings?search=`; a Messages icon appears when signed in; nav
+  is Marketplace · **Sell on WorldStreet**. The category mega-menu and mobile
+  menu now link to `/listings?categoryId=` (browse filters by id, not slug)
+- Account menu and mobile menu pruned to Messages · Profile
+- **Orphan sweep, verified by consumer counts before each deletion**:
+  `components/cart`, all twelve `components/product` files, AddressFormModal,
+  WalletBalanceBanner; stores `cartStore`, `wishlistStore`, `addressStore`,
+  `productCacheStore`; services `cartService`, `orderService`,
+  `paymentService`, `downloadService`, `addressService`, `mockApi`,
+  `mockCartApi`. `authStore` no longer merges guest carts on login, and
+  `App.tsx` no longer seeds a guest-cart session id
+- Fixed the seven remaining lint items in kept files — **`src` now lints
+  completely clean** (was 66 errors before the pivot cleanup began)
+
 ## [0.32.0] - 2026-07-26
 
 ### Changed — Vendor dashboard rebound to the marketplace model
@@ -214,6 +244,25 @@ The moderation queue had no way to receive anything from the buyer side.
 - `services/vendorService.ts` **deleted** — Settings was its last consumer
 - `storeService` gains `updateStore` and `uploadBranding` (same upload rail as
   listing images, separate folder)
+
+### Removed / Changed — Admin pages
+
+Nine of twelve admin pages targeted the ecommerce model and are deleted:
+`Products`, `ProductEdit`, `Orders`, `OrderDetail`, `Inventory`, `Vendors`,
+`VendorDetail`, `Withdrawals`, `Commission`. Their routes are gone and a `*`
+catch-all under `/admin` sends stale bookmarks to the dashboard. The admin nav
+shrinks to Dashboard · Categories · Users.
+
+- `pages/admin/Dashboard.tsx` — rewritten. The old one led with Total Orders
+  and Total Revenue; nothing is transacted on the platform, so the admin's job
+  is **moderation**. It now shows the report queue's numbers (open reports,
+  reported targets, in review, resolved) and the most-reported table from
+  `GET /admin/reports/stats`, with quick links to Categories, Users and the
+  marketplace. It says plainly that the full queue screen (claim / dismiss /
+  action) is the next admin build — the API exists, the page does not
+- `services/reportService.ts` gains `adminReportService.stats`
+- `Categories.tsx` / `Users.tsx` kept (their endpoints are live) and their
+  `any`-typed catches fixed — the admin section now lints clean
 
 ### Still pre-pivot
 `Orders.tsx`, `OrderDetail.tsx` and `Withdrawals.tsx` target removed features

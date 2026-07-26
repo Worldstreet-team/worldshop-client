@@ -53,7 +53,7 @@ export default function CategoryDropdown({
           {categories.map((cat) => (
             <li key={cat.id}>
               <Link
-                to={`/category/${cat.slug}`}
+                to={`/listings?categoryId=${cat.id}`}
                 className="category-dropdown-item"
                 onClick={onLinkClick}
               >

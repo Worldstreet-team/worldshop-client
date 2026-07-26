@@ -27,6 +27,5 @@ export { default as EmptyState } from './EmptyState';
 
 export { default as VoiceButton } from './VoiceButton';
 
-export { default as WalletBalanceBanner } from './WalletBalanceBanner';
 
 export { default as RouteError } from './RouteError';

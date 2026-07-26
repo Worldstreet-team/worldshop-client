@@ -93,7 +93,7 @@ export default function MobileMenu() {
               <ul>
                 {categories.map((cat) => (
                   <li key={cat.id}>
-                    <Link to={`/category/${cat.slug}`} onClick={closeMobileMenu}>
+                    <Link to={`/listings?categoryId=${cat.id}`} onClick={closeMobileMenu}>
                       <span className="material-icons">
                         {categoryIcons[cat.slug] ?? 'category'}
                       </span>
@@ -137,15 +137,15 @@ export default function MobileMenu() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/account/orders" onClick={closeMobileMenu}>
-                    <span className="material-icons">shopping_bag</span>
-                    My Orders
+                  <Link to="/account/messages" onClick={closeMobileMenu}>
+                    <span className="material-icons">forum</span>
+                    My Messages
                   </Link>
                 </li>
                 <li>
-                  <Link to="/account/wishlist" onClick={closeMobileMenu}>
-                    <span className="material-icons">favorite</span>
-                    Wishlist
+                  <Link to="/vendor" onClick={closeMobileMenu}>
+                    <span className="material-icons">storefront</span>
+                    Sell on WorldStreet
                   </Link>
                 </li>
                 <li>

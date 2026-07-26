@@ -29,22 +29,18 @@ export const externalAuthService = {
      * Authorization header as a fallback.
      */
     verifyToken: async (explicitToken?: string): Promise<ApiResponse<{ user: User }>> => {
-        try {
-            // Build headers — if we have an explicit token, send it in Authorization.
-            // Otherwise rely on the HttpOnly cookie being sent by the browser.
-            const headers: Record<string, string> = {};
-            if (explicitToken) {
-                headers['Authorization'] = `Bearer ${explicitToken}`;
-            }
-
-            const response = await authClient.get<ApiResponse<{ user: User }>>('/api/auth/verify', {
-                headers,
-            });
-
-            return response.data;
-        } catch (error: unknown) {
-            throw error;
+        // Build headers — if we have an explicit token, send it in Authorization.
+        // Otherwise rely on the HttpOnly cookie being sent by the browser.
+        const headers: Record<string, string> = {};
+        if (explicitToken) {
+            headers['Authorization'] = `Bearer ${explicitToken}`;
         }
+
+        const response = await authClient.get<ApiResponse<{ user: User }>>('/api/auth/verify', {
+            headers,
+        });
+
+        return response.data;
     },
 
     /**

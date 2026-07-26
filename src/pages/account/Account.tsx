@@ -35,30 +35,6 @@ export default function AccountPage() {
       description: 'Conversations with sellers'
     },
     {
-      path: '/account/orders',
-      icon: 'shopping_bag',
-      title: 'My Orders',
-      description: 'View your order history'
-    },
-    {
-      path: '/account/addresses',
-      icon: 'location_on',
-      title: 'Addresses',
-      description: 'Manage delivery addresses'
-    },
-    {
-      path: '/account/wishlist',
-      icon: 'favorite',
-      title: 'Wishlist',
-      description: 'Products you saved'
-    },
-    {
-      path: '/account/downloads',
-      icon: 'cloud_download',
-      title: 'Downloads',
-      description: 'Your digital purchases'
-    },
-    {
       path: '/account/profile',
       icon: 'person',
       title: 'Profile',

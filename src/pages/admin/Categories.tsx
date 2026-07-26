@@ -2,6 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { adminService, type AdminCategory, type CreateCategoryData, type UpdateCategoryData } from '@/services/adminService';
 import { useUIStore } from '@/store/uiStore';
 
+type ApiError = { response?: { data?: { message?: string } }; message?: string };
+const errMessage = (err: unknown, fallback: string) =>
+  (err as ApiError).response?.data?.message || (err as ApiError).message || fallback;
+
+
 export default function AdminCategories() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,8 +30,8 @@ export default function AdminCategories() {
     try {
       const data = await adminService.getCategories(true);
       setCategories(data);
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.message || 'Failed to load categories' });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to load categories') });
     } finally {
       setLoading(false);
     }
@@ -75,8 +80,8 @@ export default function AdminCategories() {
         setFormImage(results[0].signedUrl);
         addToast({ type: 'success', message: 'Category image uploaded.' });
       }
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.message || 'Image upload failed' });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Image upload failed') });
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -113,8 +118,8 @@ export default function AdminCategories() {
       setSelectedCategory(null);
       setIsCreating(false);
       resetForm();
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.message || 'Failed to save category' });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to save category') });
     } finally {
       setSaving(false);
     }
@@ -130,8 +135,8 @@ export default function AdminCategories() {
         resetForm();
       }
       fetchCategories();
-    } catch (err: any) {
-      addToast({ type: 'error', message: err.message || 'Failed to delete category' });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to delete category') });
     }
   };
 

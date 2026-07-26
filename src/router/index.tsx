@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams } from 'react-router-dom';
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import AuthLayout from '@/layouts/AuthLayout';
@@ -12,18 +12,6 @@ import VendorRoute from '@/components/auth/VendorRoute';
 
 // Lazy load pages for code splitting
 // Customer Pages
-const HomePage = lazy(() => import('@/pages/Home'));
-const ProductListingPage = lazy(() => import('@/pages/ProductListing'));
-const ProductDetailPage = lazy(() => import('@/pages/ProductDetail'));
-const CategoryPage = lazy(() => import('@/pages/Category'));
-const CategoriesPage = lazy(() => import('@/pages/Categories'));
-const SearchResultsPage = lazy(() => import('@/pages/SearchResults'));
-const CartPage = lazy(() => import('@/pages/Cart'));
-const CheckoutPage = lazy(() => import('@/pages/Checkout'));
-const CheckoutSuccessPage = lazy(() => import('@/pages/CheckoutSuccess'));
-const CheckoutFailurePage = lazy(() => import('@/pages/CheckoutFailure'));
-const CheckoutCallbackPage = lazy(() => import('@/pages/CheckoutCallback'));
-const MockPaymentPage = lazy(() => import('@/pages/MockPayment'));
 
 // Account Pages
 const LoginPage = lazy(() => import('@/pages/auth/Login'));
@@ -33,12 +21,7 @@ const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPassword'));
 
 // Protected Account Pages
 const AccountPage = lazy(() => import('@/pages/account/Account'));
-const OrderHistoryPage = lazy(() => import('@/pages/account/OrderHistory'));
-const OrderDetailPage = lazy(() => import('@/pages/account/OrderDetail'));
-const AddressesPage = lazy(() => import('@/pages/account/Addresses'));
-const WishlistPage = lazy(() => import('@/pages/account/Wishlist'));
 const ProfilePage = lazy(() => import('@/pages/account/Profile'));
-const DownloadsPage = lazy(() => import('@/pages/account/Downloads'));
 const AccountMessagesPage = lazy(() => import('@/pages/account/Messages'));
 const BrowsePage = lazy(() => import('@/pages/marketplace/Browse'));
 const ListingDetailPage = lazy(() => import('@/pages/marketplace/ListingDetail'));
@@ -46,17 +29,8 @@ const MarketplaceStorePage = lazy(() => import('@/pages/marketplace/StorePage'))
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
-const AdminProducts = lazy(() => import('@/pages/admin/Products'));
-const AdminProductEdit = lazy(() => import('@/pages/admin/ProductEdit'));
-const AdminOrders = lazy(() => import('@/pages/admin/Orders'));
-const AdminOrderDetail = lazy(() => import('@/pages/admin/OrderDetail'));
 const AdminCategories = lazy(() => import('@/pages/admin/Categories'));
-const AdminInventory = lazy(() => import('@/pages/admin/Inventory'));
-const AdminVendors = lazy(() => import('@/pages/admin/Vendors'));
-const AdminVendorDetail = lazy(() => import('@/pages/admin/VendorDetail'));
-const AdminCommission = lazy(() => import('@/pages/admin/Commission'));
 const AdminUsers = lazy(() => import('@/pages/admin/Users'));
-const AdminWithdrawals = lazy(() => import('@/pages/admin/Withdrawals'));
 
 // Vendor Pages
 const VendorDashboard = lazy(() => import('@/pages/vendor/Dashboard'));
@@ -66,9 +40,6 @@ const VendorProductEdit = lazy(() => import('@/pages/vendor/ProductEdit'));
 const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 const VendorReviews = lazy(() => import('@/pages/vendor/Reviews'));
 const VendorMessages = lazy(() => import('@/pages/vendor/Messages'));
-
-// Store Page
-const StorePage = lazy(() => import('@/pages/Store'));
 
 // Error Pages
 const NotFoundPage = lazy(() => import('@/pages/NotFound'));
@@ -80,6 +51,12 @@ const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
   </Suspense>
 );
 
+/** /store/:slug → /stores/:slug — the slug survived the pivot backfill. */
+function LegacyStoreRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/stores/${slug}`} replace />;
+}
+
 const router = createBrowserRouter([
   // Public routes with main layout
   {
@@ -87,79 +64,11 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     errorElement: <RouteError />,
     children: [
+      // The marketplace IS the site now — the root is browse.
       {
         index: true,
-        element: <SuspenseWrapper><HomePage /></SuspenseWrapper>,
+        element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>,
       },
-      {
-        path: 'products',
-        element: <SuspenseWrapper><ProductListingPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'products/:slug',
-        element: <SuspenseWrapper><ProductDetailPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'category/:slug',
-        element: <SuspenseWrapper><CategoryPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'categories',
-        element: <SuspenseWrapper><CategoriesPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'search',
-        element: <SuspenseWrapper><SearchResultsPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'store/:slug',
-        element: <SuspenseWrapper><StorePage /></SuspenseWrapper>,
-      },
-      {
-        path: 'cart',
-        element: <SuspenseWrapper><CartPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'checkout',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><CheckoutPage /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'checkout/success',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><CheckoutSuccessPage /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'checkout/failed',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><CheckoutFailurePage /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'checkout/callback',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><CheckoutCallbackPage /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: 'checkout/mock-payment',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><MockPaymentPage /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-      // Marketplace (public)
       {
         path: 'listings',
         element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>,
@@ -172,6 +81,17 @@ const router = createBrowserRouter([
         path: 'stores/:slug',
         element: <SuspenseWrapper><MarketplaceStorePage /></SuspenseWrapper>,
       },
+      // Legacy ecommerce URLs. Shopping flows (cart, checkout, orders) are
+      // gone; browse-shaped ones land on the marketplace, and old store links
+      // keep their slug since the backfill preserved it.
+      { path: 'store/:slug', element: <LegacyStoreRedirect /> },
+      { path: 'products', element: <Navigate to="/listings" replace /> },
+      { path: 'products/:slug', element: <Navigate to="/listings" replace /> },
+      { path: 'category/:slug', element: <Navigate to="/listings" replace /> },
+      { path: 'categories', element: <Navigate to="/listings" replace /> },
+      { path: 'search', element: <Navigate to="/listings" replace /> },
+      { path: 'cart', element: <Navigate to="/listings" replace /> },
+      { path: 'checkout/*', element: <Navigate to="/listings" replace /> },
       // Account routes (protected)
       {
         path: 'account',
@@ -190,28 +110,8 @@ const router = createBrowserRouter([
             element: <SuspenseWrapper><AccountMessagesPage /></SuspenseWrapper>,
           },
           {
-            path: 'orders',
-            element: <SuspenseWrapper><OrderHistoryPage /></SuspenseWrapper>,
-          },
-          {
-            path: 'orders/:id',
-            element: <SuspenseWrapper><OrderDetailPage /></SuspenseWrapper>,
-          },
-          {
-            path: 'addresses',
-            element: <SuspenseWrapper><AddressesPage /></SuspenseWrapper>,
-          },
-          {
-            path: 'wishlist',
-            element: <SuspenseWrapper><WishlistPage /></SuspenseWrapper>,
-          },
-          {
             path: 'profile',
             element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper>,
-          },
-          {
-            path: 'downloads',
-            element: <SuspenseWrapper><DownloadsPage /></SuspenseWrapper>,
           },
         ],
       },
@@ -325,52 +225,18 @@ const router = createBrowserRouter([
         element: <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>,
       },
       {
-        path: 'products',
-        element: <SuspenseWrapper><AdminProducts /></SuspenseWrapper>,
-      },
-      {
-        path: 'products/new',
-        element: <SuspenseWrapper><AdminProductEdit /></SuspenseWrapper>,
-      },
-      {
-        path: 'products/:id',
-        element: <SuspenseWrapper><AdminProductEdit /></SuspenseWrapper>,
-      },
-      {
-        path: 'orders',
-        element: <SuspenseWrapper><AdminOrders /></SuspenseWrapper>,
-      },
-      {
-        path: 'orders/:id',
-        element: <SuspenseWrapper><AdminOrderDetail /></SuspenseWrapper>,
-      },
-      {
         path: 'categories',
         element: <SuspenseWrapper><AdminCategories /></SuspenseWrapper>,
-      },
-      {
-        path: 'inventory',
-        element: <SuspenseWrapper><AdminInventory /></SuspenseWrapper>,
-      },
-      {
-        path: 'vendors',
-        element: <SuspenseWrapper><AdminVendors /></SuspenseWrapper>,
-      },
-      {
-        path: 'vendors/:id',
-        element: <SuspenseWrapper><AdminVendorDetail /></SuspenseWrapper>,
-      },
-      {
-        path: 'withdrawals',
-        element: <SuspenseWrapper><AdminWithdrawals /></SuspenseWrapper>,
       },
       {
         path: 'users',
         element: <SuspenseWrapper><AdminUsers /></SuspenseWrapper>,
       },
+      // Stale bookmarks to removed ecommerce pages (orders, inventory,
+      // vendors, withdrawals, commission) land on the dashboard.
       {
-        path: 'settings/commission',
-        element: <SuspenseWrapper><AdminCommission /></SuspenseWrapper>,
+        path: '*',
+        element: <Navigate to="/admin" replace />,
       },
     ],
   },
