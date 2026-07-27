@@ -149,7 +149,9 @@ export default function Browse() {
   const clearAll = () => setParams(search ? new URLSearchParams({ search }) : new URLSearchParams());
 
   return (
-    <div className="container browse-page" style={{ padding: '1.5rem 0' }}>
+    // Vertical padding only — the shorthand would zero out the side gutters
+    // `.container` provides, putting content flush against the viewport edge.
+    <div className="container browse-page" style={{ paddingBlock: '1.5rem' }}>
       <h1 style={{ marginBottom: '0.75rem' }}>Marketplace</h1>
 
       <form
@@ -166,9 +168,11 @@ export default function Browse() {
         <button type="submit" className="btn-primary">Search</button>
       </form>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 250px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
+      {/* Sidebar + results collapse to a single column on mobile; see
+          `.browse-page__layout` in _pages.scss. */}
+      <div className="browse-page__layout">
         {/* ── Filters ── */}
-        <aside style={{ display: 'grid', gap: '1.25rem', position: 'sticky', top: '1rem' }}>
+        <aside className="browse-page__filters">
           {activeFilterCount > 0 && (
             <button className="btn-secondary" onClick={clearAll}>
               Clear {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}

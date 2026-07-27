@@ -4823,3 +4823,37 @@
     word-break: break-word;
   }
 }
+
+// ============================================
+// MARKETPLACE BROWSE
+// ============================================
+
+.browse-page {
+  &__layout {
+    display: grid;
+    grid-template-columns: minmax(200px, 250px) 1fr;
+    gap: $spacing-lg;
+    align-items: start;
+  }
+
+  &__filters {
+    display: grid;
+    gap: $spacing-md + $spacing-xs;
+    position: sticky;
+    top: $spacing-md;
+  }
+
+  // Below the tablet breakpoint the two columns leave the results grid too
+  // narrow to render a single card, so filters move above the results and the
+  // sticky offset is dropped — a sticky block in normal flow just eats the
+  // screen on the way down.
+  @include sm-down {
+    &__layout {
+      grid-template-columns: 1fr;
+    }
+
+    &__filters {
+      position: static;
+    }
+  }
+}

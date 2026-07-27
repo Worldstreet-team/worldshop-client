@@ -18,7 +18,21 @@
 
 .btn {
   @include button-base;
-  
+
+  // These two are used both as `btn btn-primary` and bare `btn-primary`. The
+  // bare form has to carry the base itself, or the element keeps the browser's
+  // default button chrome with only the colour applied — and an
+  // `<a class="btn-primary">` stays an inline text run with a coloured
+  // background instead of a button.
+  //
+  // Deliberately not extended to `&-text`: that class is also the inner label
+  // span of the Button component, so anything added here would style the label
+  // rather than a button.
+  &-primary,
+  &-secondary {
+    @include button-base;
+  }
+
   &-primary {
     @include button-variant($primary-color, $secondary-color, $primary-dark);
   }

@@ -462,7 +462,7 @@
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: $spacing-2xl;
 
   @include md-down {
@@ -527,32 +527,6 @@
     &:hover {
       color: $primary-color;
     }
-  }
-}
-
-.newsletter-form {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-
-  .newsletter-input {
-    @include input-base;
-    background-color: $secondary-dark;
-    border-color: $secondary-light;
-    color: $white;
-
-    &::placeholder {
-      color: $gray-500;
-    }
-
-    &:focus {
-      border-color: $primary-color;
-    }
-  }
-
-  .newsletter-btn {
-    @include button-base;
-    @include button-variant($primary-color, $secondary-color, $primary-dark);
   }
 }
 
@@ -1204,50 +1178,7 @@
 // ENHANCED FOOTER STYLES
 // ============================================
 
-// Newsletter Bar
-.footer-newsletter-bar {
-  background: linear-gradient(135deg, darken($footer-bg, 3%) 0%, $footer-bg 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: $spacing-xl 0;
-}
-
-.newsletter-bar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-xl;
-
-  @include sm-down {
-    flex-direction: column;
-    text-align: center;
-    gap: $spacing-md;
-  }
-}
-
-.newsletter-bar-text {
-  h3 {
-    margin: 0 0 4px;
-    font-size: $font-size-lg;
-    font-weight: $font-weight-bold;
-    color: $white;
-  }
-
-  p {
-    margin: 0;
-    font-size: $font-size-sm;
-    color: $gray-400;
-  }
-}
-
-.newsletter-bar-form {
-  flex-shrink: 0;
-
-  @include sm-down {
-    width: 100%;
-  }
-}
-
-// Features Grid (removed — replaced by newsletter bar)
+// Features Grid (removed)
 
 .feature-item {
   display: flex;
@@ -1298,72 +1229,6 @@
       letter-spacing: -0.02em;
     }
   }
-}
-
-.footer-newsletter {
-  margin-top: $spacing-lg;
-
-  h4 {
-    margin: 0 0 $spacing-xs;
-    font-size: $font-size-base;
-    color: $white;
-  }
-
-  p {
-    margin: 0 0 $spacing-sm;
-    font-size: $font-size-sm;
-    color: $gray-400;
-  }
-}
-
-.newsletter-input-wrapper {
-  display: flex;
-  gap: $spacing-xs;
-}
-
-.newsletter-input {
-  flex: 1;
-  min-width: 220px;
-  padding: $spacing-sm $spacing-md;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: $border-radius;
-  background: rgba(255, 255, 255, 0.06);
-  color: $white;
-  font-size: $font-size-sm;
-
-  &::placeholder {
-    color: $gray-500;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $primary-color;
-    background: rgba(255, 255, 255, 0.1);
-  }
-}
-
-.newsletter-btn {
-  padding: $spacing-sm $spacing-lg;
-  background: $primary-color;
-  color: $secondary-color;
-  border: none;
-  border-radius: $border-radius;
-  font-weight: 600;
-  font-size: $font-size-sm;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: $primary-dark;
-  }
-}
-
-.newsletter-success {
-  display: block;
-  margin-top: $spacing-xs;
-  font-size: $font-size-sm;
-  color: $success-color;
 }
 
 .footer-social {

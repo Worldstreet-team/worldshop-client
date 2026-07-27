@@ -1,73 +1,23 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const footerLinks = {
-  shop: [
-    { label: 'All Products', href: '/products' },
-    { label: 'Categories', href: '/categories' },
-    { label: 'Featured', href: '/products?featured=true' },
-    { label: 'New Arrivals', href: '/products?sort=newest' },
+  marketplace: [
+    { label: 'Browse Listings', href: '/listings' },
+    { label: 'Open a Store', href: '/vendor/register' },
+    { label: 'Seller Dashboard', href: '/vendor' },
   ],
-  support: [
+  account: [
     { label: 'My Account', href: '/account' },
-    { label: 'Track Order', href: '/account/orders' },
-    { label: 'Returns & Refunds', href: '/returns' },
-    { label: 'FAQs', href: '/faq' },
-  ],
-  company: [
-    { label: 'About Us', href: '/about' },
-    { label: 'Contact', href: '/contact' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Careers', href: '/careers' },
+    { label: 'Messages', href: '/account/messages' },
+    { label: 'Sign In', href: '/auth/login' },
   ],
 };
 
 export default function Footer() {
-  const [email, setEmail] = useState('');
-  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const currentYear = new Date().getFullYear();
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) {
-      setSubscribeStatus('success');
-      setEmail('');
-      setTimeout(() => setSubscribeStatus('idle'), 3000);
-    }
-  };
 
   return (
     <footer className="site-footer">
-      {/* Newsletter Banner */}
-      <div className="footer-newsletter-bar">
-        <div className="container">
-          <div className="newsletter-bar-inner">
-            <div className="newsletter-bar-text">
-              <h3>Stay in the loop</h3>
-              <p>Subscribe for exclusive deals and new arrivals</p>
-            </div>
-            <form onSubmit={handleNewsletterSubmit} className="newsletter-bar-form">
-              <div className="newsletter-input-wrapper">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email address"
-                  className="newsletter-input"
-                  required
-                />
-                <button type="submit" className="newsletter-btn">
-                  Subscribe
-                </button>
-              </div>
-              {subscribeStatus === 'success' && (
-                <span className="newsletter-success">Thanks for subscribing!</span>
-              )}
-            </form>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer */}
       <div className="footer-main">
         <div className="container">
@@ -85,7 +35,8 @@ export default function Footer() {
                 <span className="logo-text">WorldStreet<span className="logo-dot">.</span></span>
               </Link>
               <p className="footer-about">
-                Your one-stop destination for quality products at competitive prices.
+                The marketplace that connects buyers directly with sellers.
+                Browse listings, chat with the store, and deal directly.
               </p>
               <div className="footer-social">
                 <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
@@ -108,11 +59,11 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Shop Column */}
+            {/* Marketplace Column */}
             <div className="footer-column">
-              <h4 className="footer-title">Shop</h4>
+              <h4 className="footer-title">Marketplace</h4>
               <ul className="footer-links">
-                {footerLinks.shop.map((link) => (
+                {footerLinks.marketplace.map((link) => (
                   <li key={link.href}>
                     <Link to={link.href}>{link.label}</Link>
                   </li>
@@ -120,23 +71,11 @@ export default function Footer() {
               </ul>
             </div>
 
-            {/* Support Column */}
+            {/* Account Column */}
             <div className="footer-column">
-              <h4 className="footer-title">Support</h4>
+              <h4 className="footer-title">Account</h4>
               <ul className="footer-links">
-                {footerLinks.support.map((link) => (
-                  <li key={link.href}>
-                    <Link to={link.href}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company Column */}
-            <div className="footer-column">
-              <h4 className="footer-title">Company</h4>
-              <ul className="footer-links">
-                {footerLinks.company.map((link) => (
+                {footerLinks.account.map((link) => (
                   <li key={link.href}>
                     <Link to={link.href}>{link.label}</Link>
                   </li>
