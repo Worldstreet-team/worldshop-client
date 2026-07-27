@@ -43,6 +43,16 @@ apiClient.interceptors.request.use(
       config.headers['X-Session-ID'] = sessionId;
     }
 
+    // Multipart uploads must not inherit the instance's JSON content type.
+    // Axios v1 checks for a JSON content type in transformRequest — before the
+    // adapter's FormData handling — and when it finds one it serialises the
+    // FormData with formDataToJSON(), so the files are dropped and the server
+    // receives a JSON body its multipart parser cannot read. Clearing the
+    // header lets the browser set multipart/form-data with a real boundary.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      config.headers.delete('Content-Type');
+    }
+
     return config;
   },
   (error) => {
