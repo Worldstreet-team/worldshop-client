@@ -8,6 +8,8 @@ import {
   type ListingFilters,
 } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
+import { firstImage } from '@/utils/listingFormat';
+import { imageFallback, PRODUCT_PLACEHOLDER } from '@/utils/imageFallback';
 
 /**
  * Manage Listings.
@@ -280,31 +282,52 @@ export default function VendorListings() {
                 // and let the endpoint be the authority, rather than blocking
                 // a vendor on missing data.
                 const blockers = rejected ?? (l.compliance?.compliant === false ? l.compliance.problems : []);
+                const thumb = firstImage(l);
 
                 return (
                   <tr key={l.id}>
                     <td>
-                      <Link to={`/vendor/products/${l.id}`} style={{ fontWeight: 600 }}>{l.name}</Link>
-                      {l.city || l.state ? (
-                        <div style={{ fontSize: '0.8rem', color: '#667085' }}>
-                          {[l.city, l.state].filter(Boolean).join(', ')}
+                      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                        {/* Fixed square so rows keep a common height whether or
+                            not a listing has a photo yet. */}
+                        {thumb ? (
+                          <img
+                            src={thumb}
+                            alt=""
+                            onError={imageFallback(PRODUCT_PLACEHOLDER)}
+                            style={{ width: 40, height: 40, flex: '0 0 40px', objectFit: 'cover', borderRadius: 4, border: '1px solid #e4e7ec' }}
+                          />
+                        ) : (
+                          <div
+                            aria-hidden
+                            title="No photo"
+                            style={{ width: 40, height: 40, flex: '0 0 40px', borderRadius: 4, border: '1px dashed #d0d5dd', background: '#f8f9fc' }}
+                          />
+                        )}
+                        <div style={{ minWidth: 0 }}>
+                          <Link to={`/vendor/products/${l.id}`} style={{ fontWeight: 600 }}>{l.name}</Link>
+                          {l.city || l.state ? (
+                            <div style={{ fontSize: '0.8rem', color: '#667085' }}>
+                              {[l.city, l.state].filter(Boolean).join(', ')}
+                            </div>
+                          ) : null}
+                          {/* Why this listing cannot go live, stated before the
+                              vendor clicks Publish. Suppressed once published —
+                              at that point it is already on the marketplace and
+                              the checklist would only be noise. */}
+                          {blockers.length > 0 && l.status !== 'PUBLISHED' && (
+                            <div style={{ marginTop: '0.35rem', color: '#b42318', fontSize: '0.8rem', lineHeight: 1.45 }}>
+                              {/* Named only after a real attempt, so the vendor
+                                  can tell "your click just failed, here is why"
+                                  from a blocker we already knew about. */}
+                              {rejected && <strong>Publish failed:</strong>}
+                              <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                                {blockers.map((problem) => <li key={problem}>{problem}</li>)}
+                              </ul>
+                            </div>
+                          )}
                         </div>
-                      ) : null}
-                      {/* Why this listing cannot go live, stated before the
-                          vendor clicks Publish. Suppressed once published —
-                          at that point it is already on the marketplace and
-                          the checklist would only be noise. */}
-                      {blockers.length > 0 && l.status !== 'PUBLISHED' && (
-                        <div style={{ marginTop: '0.35rem', color: '#b42318', fontSize: '0.8rem', lineHeight: 1.45 }}>
-                          {/* Named only after a real attempt, so the vendor can
-                              tell "your click just failed, here is why" from a
-                              blocker we already knew about. */}
-                          {rejected && <strong>Publish failed:</strong>}
-                          <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
-                            {blockers.map((problem) => <li key={problem}>{problem}</li>)}
-                          </ul>
-                        </div>
-                      )}
+                      </div>
                     </td>
                     <td>{l.category?.name ?? <span style={{ color: '#b42318' }}>Not set</span>}</td>
                     <td>{priceLabel(l)}</td>
