@@ -8,6 +8,7 @@ import {
 } from '@/services/marketplaceReviewService';
 import { useUIStore } from '@/store/uiStore';
 import ReportButton from './ReportButton';
+import { toApiError } from '@/services/api';
 
 /**
  * Reviews on a listing.
@@ -21,9 +22,11 @@ import ReportButton from './ReportButton';
  *     the reason is shown up front rather than after they have written 300 words.
  */
 
-type ApiError = { response?: { data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 const Stars = ({ value, size = '1rem' }: { value: number; size?: string }) => (
   <span style={{ color: '#f79009', fontSize: size, letterSpacing: 1 }} aria-label={`${value} out of 5`}>

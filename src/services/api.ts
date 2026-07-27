@@ -100,6 +100,31 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
+/**
+ * The response interceptor above rejects with a flat object — NOT an axios
+ * error — so `err.response` never exists on what callers catch. This is the
+ * one shape every catch block should read.
+ */
+export type NormalizedApiError = {
+  message: string;
+  statusCode?: number;
+  /** Per-field messages from the server's zod validation, keyed by field path. */
+  errors?: Record<string, string>;
+};
+
+export function toApiError(err: unknown, fallback: string): NormalizedApiError {
+  const e = (err ?? {}) as { message?: unknown; statusCode?: number; errors?: unknown };
+  const errors =
+    e.errors && typeof e.errors === 'object' && !Array.isArray(e.errors)
+      ? (e.errors as Record<string, string>)
+      : undefined;
+  return {
+    message: typeof e.message === 'string' && e.message ? e.message : fallback,
+    statusCode: e.statusCode,
+    errors,
+  };
+}
+
 // Helper functions for common request methods
 export const api = {
   get: <T>(url: string, params?: Record<string, unknown>) =>

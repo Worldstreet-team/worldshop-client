@@ -40,6 +40,13 @@ export interface ConversationSummary {
   vendorFirstReplyAt: string | null;
   /** Resolved for the caller's side, so the UI does not re-derive it. */
   unread: number;
+  /**
+   * Who is asking — first name + last initial. Populated on the selling side
+   * (and on single-thread fetches); null on the buying list, where the store
+   * is the counterpart. Optional to tolerate a server deployed behind this
+   * client.
+   */
+  buyer?: { id: string; name: string } | null;
   lastMessage: ChatMessage | null;
   listing: {
     id: string;

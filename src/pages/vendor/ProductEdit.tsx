@@ -13,6 +13,7 @@ import { categoryService } from '@/services/productService';
 import type { Category } from '@/types/product.types';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Listing editor.
@@ -30,12 +31,49 @@ import { useUIStore } from '@/store/uiStore';
  * is missing, which is shown in place rather than as a toast.
  */
 
-type ApiError = { response?: { data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+const errMessage = (err: unknown, fallback: string) => toApiError(err, fallback).message;
 
 const CONDITIONS = ['NEW', 'USED', 'REFURBISHED'] as const;
 const MAX_CUSTOM_FIELDS = 30;
+
+/** Human names for the field paths the server's validator reports. */
+const FIELD_LABELS: Record<string, string> = {
+  name: 'Product name',
+  description: 'Description',
+  categoryId: 'Category',
+  category: 'Category',
+  priceType: 'Pricing',
+  basePrice: 'Price',
+  maxPrice: 'Maximum price',
+  images: 'Photos',
+  condition: 'Condition',
+  state: 'State',
+  city: 'City',
+  tags: 'Tags',
+  attributes: 'Product details',
+  customFields: 'Additional details',
+  variants: 'Variants',
+};
+
+/**
+ * Turn a server validation path like "attributes.Brand" or "variants.0.name"
+ * into { field, label }: `field` matches the client's fieldErrors keys where
+ * possible so the message lands next to the input, `label` prefixes the
+ * summary line so it makes sense on its own.
+ */
+function mapServerFieldPath(path: string): { field: string; label: string } {
+  const [head, ...rest] = path.split('.');
+  if (head === 'attributes' && rest[0]) return { field: `attr-${rest[0]}`, label: rest[0] };
+  if (head === 'variants' && rest[0] !== undefined) {
+    return { field: 'variants', label: `Variant ${Number(rest[0]) + 1}` };
+  }
+  if (head === 'categoryId') return { field: 'category', label: 'Category' };
+  return { field: head, label: FIELD_LABELS[head] ?? head };
+}
+
+const errorText: React.CSSProperties = { color: '#b42318', fontSize: '0.85rem', margin: '0.25rem 0 0' };
+const errorBorder = (bad: boolean): React.CSSProperties | undefined =>
+  bad ? { borderColor: '#fda29b' } : undefined;
 
 type ImageRef = Record<string, unknown> & { key?: string; url?: string };
 
@@ -53,7 +91,10 @@ export default function ListingEdit() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [spec, setSpec] = useState<CategoryFormSpec | null>(null);
   const [listing, setListing] = useState<Listing | null>(null);
-  const [problems, setProblems] = useState<string | null>(null);
+  // Summary list shown above the form, and the same messages keyed by field so
+  // they also appear inline next to the input that caused them.
+  const [problems, setProblems] = useState<string[] | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // ── Form state ──
   const [name, setName] = useState('');
@@ -86,8 +127,14 @@ export default function ListingEdit() {
     [categories, parentId],
   );
 
-  const productAttrs = spec?.attributes.filter((a) => a.appliesTo === 'PRODUCT') ?? [];
-  const variantAttrs = spec?.attributes.filter((a) => a.appliesTo === 'VARIANT') ?? [];
+  const productAttrs = useMemo(
+    () => spec?.attributes.filter((a) => a.appliesTo === 'PRODUCT') ?? [],
+    [spec],
+  );
+  const variantAttrs = useMemo(
+    () => spec?.attributes.filter((a) => a.appliesTo === 'VARIANT') ?? [],
+    [spec],
+  );
 
   useEffect(() => {
     categoryService
@@ -178,12 +225,65 @@ export default function ListingEdit() {
     }
   };
 
+  /**
+   * Client-side mirror of the server's rules — createListingSchema for every
+   * save, plus the publish standards (photo, required attributes) when the
+   * vendor is publishing. Same thresholds, same wording where the server has
+   * custom messages, so passing here means the server will not bounce it.
+   */
+  const validateForm = useCallback(
+    (thenPublish: boolean): Record<string, string> => {
+      const errors: Record<string, string> = {};
+
+      if (name.trim().length < 3) errors.name = 'Product name must be at least 3 characters.';
+      if (description.trim().length < 20) errors.description = 'Describe the product in at least 20 characters.';
+      if (!parentId) errors.category = 'Choose a category.';
+      else if (!categoryId) errors.category = 'Choose a subcategory.';
+
+      if (priceType === 'FIXED' && basePrice === '') {
+        errors.basePrice = 'A price is required.';
+      }
+      if (priceType === 'RANGE') {
+        if (basePrice === '' || maxPrice === '') {
+          errors.maxPrice = 'A price range needs both a minimum and a maximum.';
+        } else if (Number(maxPrice) < Number(basePrice)) {
+          errors.maxPrice = 'Maximum price cannot be below the minimum.';
+        }
+      }
+
+      // The server only enforces these at publish; drafts may stay incomplete.
+      if (thenPublish) {
+        if (images.length === 0) errors.images = 'At least one photo is required to publish.';
+        for (const attr of productAttrs) {
+          if (attr.isRequired && !(attributes[attr.name] ?? '').trim()) {
+            errors[`attr-${attr.name}`] = `${attr.name} is required.`;
+          }
+        }
+        variants.forEach((variant, i) => {
+          for (const attr of variantAttrs) {
+            if (attr.isRequired && !(variant.attributes[attr.name] ?? '').trim()) {
+              errors.variants = errors.variants ?? `Variant ${i + 1} is missing ${attr.name}.`;
+            }
+          }
+        });
+      }
+
+      return errors;
+    },
+    [name, description, parentId, categoryId, priceType, basePrice, maxPrice, images,
+      productAttrs, attributes, variants, variantAttrs],
+  );
+
   const save = useCallback(
     async (thenPublish: boolean) => {
       setProblems(null);
+      setFieldErrors({});
 
-      if (!name.trim() || !description.trim() || !categoryId) {
-        setProblems('Name, description and category are required before saving.');
+      const clientErrors = validateForm(thenPublish);
+      if (Object.keys(clientErrors).length > 0) {
+        setFieldErrors(clientErrors);
+        setProblems(Object.values(clientErrors));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
@@ -222,15 +322,32 @@ export default function ListingEdit() {
         }
         navigate('/vendor/products');
       } catch (err: unknown) {
-        // Publish rejections list every unmet requirement — shown in place,
-        // because a toast disappears before the vendor can act on it.
-        setProblems(errMessage(err, 'Could not save this listing'));
+        // Shown in place, because a toast disappears before the vendor can act
+        // on it. Validation rejections carry per-field messages — surface each
+        // next to its input and as a summary line; publish rejections arrive as
+        // a single message already listing every unmet requirement.
+        const apiErr = toApiError(err, 'Could not save this listing');
+        if (apiErr.errors && Object.keys(apiErr.errors).length > 0) {
+          const mapped: Record<string, string> = {};
+          const lines: string[] = [];
+          for (const [path, msg] of Object.entries(apiErr.errors)) {
+            const { field, label } = mapServerFieldPath(path);
+            mapped[field] = mapped[field] ?? msg;
+            lines.push(`${label}: ${msg}`);
+          }
+          setFieldErrors(mapped);
+          setProblems(lines);
+        } else {
+          setProblems([apiErr.message]);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } finally {
         setSaving(false);
       }
     },
     [name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, condition,
-      state, city, tags, images, attributes, customFields, variants, isNew, id, addToast, navigate],
+      state, city, tags, images, attributes, customFields, variants, isNew, id, addToast,
+      navigate, validateForm],
   );
 
   if (loading) {
@@ -252,9 +369,18 @@ export default function ListingEdit() {
         </div>
       )}
 
-      {problems && (
+      {problems && problems.length > 0 && (
         <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', marginBottom: '1rem' }}>
-          {problems}
+          {problems.length === 1 ? (
+            problems[0]
+          ) : (
+            <>
+              <strong>Fix the following before saving:</strong>
+              <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+                {problems.map((p, i) => <li key={i}>{p}</li>)}
+              </ul>
+            </>
+          )}
         </div>
       )}
 
@@ -265,7 +391,15 @@ export default function ListingEdit() {
 
           <div className="form-group">
             <label htmlFor="name">Product Name *</label>
-            <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Ankara Maxi Dress" />
+            <input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Ankara Maxi Dress"
+              aria-invalid={!!fieldErrors.name}
+              style={errorBorder(!!fieldErrors.name)}
+            />
+            {fieldErrors.name && <p style={errorText}>{fieldErrors.name}</p>}
           </div>
 
           <div className="form-group">
@@ -276,7 +410,10 @@ export default function ListingEdit() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe the product in detail — buyers decide whether to message you from this."
+              aria-invalid={!!fieldErrors.description}
+              style={errorBorder(!!fieldErrors.description)}
             />
+            {fieldErrors.description && <p style={errorText}>{fieldErrors.description}</p>}
           </div>
 
           {/* Listings attach to a subcategory: that is where the attributes
@@ -291,6 +428,7 @@ export default function ListingEdit() {
               <option value="">Select a category</option>
               {parents.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+            {!parentId && fieldErrors.category && <p style={errorText}>{fieldErrors.category}</p>}
           </div>
 
           {parentId && (
@@ -300,10 +438,13 @@ export default function ListingEdit() {
                 id="category"
                 value={categoryId}
                 onChange={(e) => { setCategoryId(e.target.value); setAttributes({}); }}
+                aria-invalid={!!fieldErrors.category}
+                style={errorBorder(!!fieldErrors.category)}
               >
                 <option value="">Select a subcategory</option>
                 {children.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+              {fieldErrors.category && <p style={errorText}>{fieldErrors.category}</p>}
             </div>
           )}
         </section>
@@ -325,12 +466,30 @@ export default function ListingEdit() {
             <div style={{ display: 'flex', gap: '1rem' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label htmlFor="basePrice">{priceType === 'RANGE' ? 'From (₦)' : 'Price (₦)'}</label>
-                <input id="basePrice" type="number" min="0" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} />
+                <input
+                  id="basePrice"
+                  type="number"
+                  min="0"
+                  value={basePrice}
+                  onChange={(e) => setBasePrice(e.target.value)}
+                  aria-invalid={!!fieldErrors.basePrice}
+                  style={errorBorder(!!fieldErrors.basePrice)}
+                />
+                {fieldErrors.basePrice && <p style={errorText}>{fieldErrors.basePrice}</p>}
               </div>
               {priceType === 'RANGE' && (
                 <div className="form-group" style={{ flex: 1 }}>
                   <label htmlFor="maxPrice">To (₦)</label>
-                  <input id="maxPrice" type="number" min="0" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+                  <input
+                    id="maxPrice"
+                    type="number"
+                    min="0"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    aria-invalid={!!fieldErrors.maxPrice}
+                    style={errorBorder(!!fieldErrors.maxPrice)}
+                  />
+                  {fieldErrors.maxPrice && <p style={errorText}>{fieldErrors.maxPrice}</p>}
                 </div>
               )}
             </div>
@@ -349,6 +508,7 @@ export default function ListingEdit() {
 
           <input type="file" accept="image/*" multiple disabled={uploading} onChange={(e) => handleUpload(e.target.files)} />
           {uploading && <p style={{ color: '#667085' }}>Uploading…</p>}
+          {fieldErrors.images && <p style={errorText}>{fieldErrors.images}</p>}
 
           {images.length > 0 && (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
@@ -395,6 +555,8 @@ export default function ListingEdit() {
                     id={`attr-${attr.name}`}
                     value={attributes[attr.name] ?? ''}
                     onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
+                    aria-invalid={!!fieldErrors[`attr-${attr.name}`]}
+                    style={errorBorder(!!fieldErrors[`attr-${attr.name}`])}
                   >
                     <option value="">Select {attr.name.toLowerCase()}</option>
                     {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -405,8 +567,11 @@ export default function ListingEdit() {
                     type={attr.type === 'NUMBER' ? 'number' : 'text'}
                     value={attributes[attr.name] ?? ''}
                     onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
+                    aria-invalid={!!fieldErrors[`attr-${attr.name}`]}
+                    style={errorBorder(!!fieldErrors[`attr-${attr.name}`])}
                   />
                 )}
+                {fieldErrors[`attr-${attr.name}`] && <p style={errorText}>{fieldErrors[`attr-${attr.name}`]}</p>}
               </div>
             ))}
           </section>
@@ -455,6 +620,7 @@ export default function ListingEdit() {
               Add a row per {variantAttrs.map((a) => a.name.toLowerCase()).join(' / ')} you offer.
               Leave empty if this product has only one version.
             </p>
+            {fieldErrors.variants && <p style={errorText}>{fieldErrors.variants}</p>}
 
             {variants.map((variant, i) => (
               <div key={i} style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '0.75rem', marginBottom: '0.75rem' }}>

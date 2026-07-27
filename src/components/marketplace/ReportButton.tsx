@@ -8,6 +8,7 @@ import {
   type ReportReason,
 } from '@/services/reportService';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Report a listing, store or review.
@@ -22,10 +23,12 @@ import { useUIStore } from '@/store/uiStore';
  *   - **401** means sign in first, so we send them to login rather than failing.
  */
 
-type ApiError = { response?: { status?: number; data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
-const errStatus = (err: unknown) => (err as ApiError).response?.status;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
+const errStatus = (err: unknown) => toApiError(err, '').statusCode;
 
 export default function ReportButton({
   targetType,

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { storeService, type SubscriptionPlan } from '@/services/storeService';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 import { toast } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Store creation.
@@ -130,10 +131,9 @@ export default function VendorRegistration() {
       toast.success('Store created. Add your products, then activate to go live.');
       navigate('/vendor');
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } }).response?.data?.message ||
-        'Could not create your store. Please try again.';
-      setServerError(message);
+      const e = toApiError(err, 'Could not create your store. Please try again.');
+      const fieldError = e.errors && Object.values(e.errors)[0];
+      setServerError(fieldError || e.message);
     } finally {
       setIsSubmitting(false);
     }

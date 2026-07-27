@@ -291,6 +291,13 @@
   }
 
   &.account-btn {
+    // The signed-in state renders icon + username inside this button, and the
+    // base 42px fixed width cannot hold both — the name overflowed the circle
+    // and collided with the messages icon beside it. Same treatment as
+    // .cart-btn, which has the identical icon+text shape.
+    width: auto;
+    padding: 0 $spacing-xs;
+
     @include sm-down {
       display: none;
     }

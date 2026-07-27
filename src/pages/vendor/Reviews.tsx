@@ -7,6 +7,7 @@ import {
 } from '@/services/marketplaceReviewService';
 import ReportButton from '@/components/marketplace/ReportButton';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * The vendor's view of reviews on their store.
@@ -19,9 +20,11 @@ import { useUIStore } from '@/store/uiStore';
  * Unanswered reviews come first by default, because that is the work.
  */
 
-type ApiError = { response?: { data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });

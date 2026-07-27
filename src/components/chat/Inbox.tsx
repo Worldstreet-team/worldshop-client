@@ -7,6 +7,7 @@ import {
   type InboxSide,
 } from '@/services/chatService';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Message inbox, shared by both sides.
@@ -21,9 +22,11 @@ import { useUIStore } from '@/store/uiStore';
  * thread counts against them.
  */
 
-type ApiError = { response?: { data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 function timeAgo(iso: string): string {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -122,11 +125,18 @@ export default function Inbox({ side }: { side: InboxSide }) {
     }
   };
 
+  // The vendor's counterpart is the buyer, not the listing — two buyers asking
+  // about the same product must be distinguishable rows. `buyer` is absent on
+  // servers deployed behind this client, so the listing name stays as a
+  // fallback rather than showing an empty title.
   const counterpartName = (c: ConversationSummary) =>
-    isVendor ? (c.listing?.name ?? 'a listing') : c.store.name;
+    isVendor ? (c.buyer?.name ?? c.listing?.name ?? 'a listing') : c.store.name;
 
   return (
-    <div className="inbox" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 320px) 1fr', gap: '1rem', minHeight: 480 }}>
+    // Layout lives in `.inbox` (_pages.scss) rather than inline so the two
+    // panes can collapse to a single column on mobile — a 240px-minimum list
+    // beside a thread leaves the thread ~100px wide on a phone.
+    <div className="inbox">
       {/* ── Conversation list ── */}
       <aside style={{ border: '1px solid #e4e7ec', borderRadius: 8, overflow: 'hidden' }}>
         <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e4e7ec', fontWeight: 600 }}>
@@ -168,6 +178,13 @@ export default function Inbox({ side }: { side: InboxSide }) {
                       )}
                     </div>
 
+                    {/* What the buyer is asking about — only meaningful on the
+                        vendor side, and only once the title is the buyer. */}
+                    {isVendor && c.buyer && (
+                      <div style={{ color: '#98a2b3', fontSize: '0.78rem', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.listing?.name ?? 'Listing removed'}
+                      </div>
+                    )}
                     <div style={{ color: '#667085', fontSize: '0.82rem', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {c.lastMessage
                         ? `${c.lastMessage.senderRole === (isVendor ? 'VENDOR' : 'BUYER') ? 'You: ' : ''}${c.lastMessage.body}`
@@ -194,14 +211,22 @@ export default function Inbox({ side }: { side: InboxSide }) {
           <>
             <header style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e4e7ec' }}>
               <div style={{ fontWeight: 600 }}>
-                {isVendor ? thread.listing?.name ?? 'Listing removed' : thread.store.name}
+                {isVendor
+                  ? thread.buyer?.name ?? thread.listing?.name ?? 'Listing removed'
+                  : thread.store.name}
               </div>
               <div style={{ fontSize: '0.82rem', color: '#667085' }}>
                 {isVendor ? (
                   // The listing may be gone; the conversation outlives it.
-                  thread.listing
-                    ? <Link to={`/vendor/products/${thread.listing.id}`}>View listing</Link>
-                    : 'This listing has been deleted'
+                  thread.listing ? (
+                    <>
+                      {/* Repeated here because the title is now the buyer. */}
+                      {thread.buyer ? `About: ${thread.listing.name} · ` : null}
+                      <Link to={`/vendor/products/${thread.listing.id}`}>View listing</Link>
+                    </>
+                  ) : (
+                    'This listing has been deleted'
+                  )
                 ) : (
                   <Link to={`/stores/${thread.store.slug}`}>Visit store</Link>
                 )}

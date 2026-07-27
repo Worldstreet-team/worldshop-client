@@ -4,6 +4,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { chatService } from '@/services/chatService';
 import type { PublicListing } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * The primary action on the marketplace.
@@ -15,9 +16,11 @@ import { useUIStore } from '@/store/uiStore';
  * would just push people to ask for a number in the first message.
  */
 
-type ApiError = { response?: { status?: number; data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 /** Nigerian numbers are entered locally; wa.me needs them international. */
 function waLink(number: string, listingName: string): string {

@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminService, type AdminCategory, type CreateCategoryData, type UpdateCategoryData } from '@/services/adminService';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
-type ApiError = { response?: { data?: { message?: string } }; message?: string };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || (err as ApiError).message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 
 export default function AdminCategories() {

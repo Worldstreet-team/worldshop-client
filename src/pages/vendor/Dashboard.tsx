@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { storeService, type VendorDashboard, type DashboardAlert } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Vendor dashboard for the marketplace model.
@@ -25,13 +26,13 @@ const formatResponseTime = (mins: number | null) => {
   return `${Math.round(mins / (60 * 24))}d`;
 };
 
-/** Narrow read of an axios-shaped error without pulling `any` through. */
-type ApiError = { response?: { status?: number; data?: { message?: string } } };
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
-
-const errStatus = (err: unknown) => (err as ApiError).response?.status;
+const errStatus = (err: unknown) => toApiError(err, '').statusCode;
 
 const ALERT_ICON: Record<DashboardAlert['severity'], string> = {
   critical: 'error',

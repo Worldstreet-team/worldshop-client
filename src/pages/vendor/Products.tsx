@@ -8,6 +8,7 @@ import {
   type ListingFilters,
 } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 import { firstImage } from '@/utils/listingFormat';
 import { imageFallback, PRODUCT_PLACEHOLDER } from '@/utils/imageFallback';
 
@@ -21,9 +22,11 @@ import { imageFallback, PRODUCT_PLACEHOLDER } from '@/utils/imageFallback';
  * not just per-listing status.
  */
 
-type ApiError = { response?: { status?: number; data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 /**
  * The publish endpoint reports every failed standard in one string, joined with

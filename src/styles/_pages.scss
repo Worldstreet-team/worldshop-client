@@ -4857,3 +4857,22 @@
     }
   }
 }
+
+// ============================================
+// CHAT INBOX (shared by buyer and vendor)
+// ============================================
+
+.inbox {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: $spacing-md;
+  min-height: 480px;
+
+  // Side by side the panes are unusable on a phone; stacked, the list reads
+  // first and the thread opens beneath it. The list loses its fixed height so
+  // a short list does not push the thread below the fold.
+  @include sm-down {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+}

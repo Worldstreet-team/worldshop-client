@@ -2,13 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { adminService, type AdminUser, type AdminUserFilters } from '@/services/adminService';
 import type { Pagination } from '@/types/common.types';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
 
-type ApiError = { response?: { data?: { message?: string } }; message?: string };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || (err as ApiError).message || fallback;
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 
 export default function AdminUsers() {

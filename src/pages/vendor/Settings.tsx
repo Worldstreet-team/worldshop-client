@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { storeService, type MyStore } from '@/services/storeService';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Store profile settings.
@@ -19,9 +20,15 @@ import { useUIStore } from '@/store/uiStore';
  * worded as the link-breaking action it is.
  */
 
-type ApiError = { response?: { data?: { message?: string } } };
-const errMessage = (err: unknown, fallback: string) =>
-  (err as ApiError).response?.data?.message || fallback;
+/**
+ * Field-level validation errors are more specific than the envelope message
+ * ("Validation failed"), so prefer the first one when present.
+ */
+const errMessage = (err: unknown, fallback: string) => {
+  const e = toApiError(err, fallback);
+  const fieldError = e.errors && Object.values(e.errors)[0];
+  return fieldError || e.message;
+};
 
 /** "" in a text input means the vendor cleared it — send null, not "". */
 const orNull = (v: string): string | null => (v.trim() === '' ? null : v.trim());
@@ -40,8 +47,14 @@ export default function VendorSettings() {
   const [name, setName] = useState('');
   const [regenerateSlug, setRegenerateSlug] = useState(false);
   const [description, setDescription] = useState('');
+  // Value/preview pairs: the value is what gets saved (a bare R2 key from a
+  // fresh upload, or whatever the server sent back), the preview is always a
+  // displayable URL. A presigned URL expires and is too long to persist, so
+  // it must never be the saved value when a key is available.
   const [logo, setLogo] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
@@ -61,8 +74,12 @@ export default function VendorSettings() {
         setStore(s);
         setName(s.name);
         setDescription(s.description ?? '');
+        // The server signs stored keys into display URLs on read; use them for
+        // both value and preview — the server collapses URLs back to keys on save.
         setLogo(s.logo ?? null);
+        setLogoPreview(s.logo ?? null);
         setBanner(s.banner ?? null);
+        setBannerPreview(s.banner ?? null);
         setPhone(s.phone ?? '');
         setWhatsapp(s.whatsapp ?? '');
         setEmail(s.email ?? '');
@@ -100,9 +117,17 @@ export default function VendorSettings() {
     try {
       const res = await storeService.uploadBranding(files[0]);
       const uploaded = res.data[0];
-      const src = String(uploaded.url || uploaded.key || '');
-      if (kind === 'logo') setLogo(src);
-      else setBanner(src);
+      // Persist the stable key; show the signed URL (falls back to the key
+      // for old servers that only returned one of the two).
+      const value = String(uploaded.key || uploaded.cloudflareId || uploaded.url || '');
+      const preview = String(uploaded.url || uploaded.key || '');
+      if (kind === 'logo') {
+        setLogo(value);
+        setLogoPreview(preview);
+      } else {
+        setBanner(value);
+        setBannerPreview(preview);
+      }
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Image upload failed') });
     } finally {
@@ -251,8 +276,8 @@ export default function VendorSettings() {
               <label style={{ display: 'block', marginBottom: '0.35rem' }}>Logo</label>
               {logo ? (
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <img src={logo} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e4e7ec' }} />
-                  <button type="button" className="btn-secondary" onClick={() => setLogo(null)}>Remove</button>
+                  <img src={logoPreview ?? logo} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e4e7ec' }} />
+                  <button type="button" className="btn-secondary" onClick={() => { setLogo(null); setLogoPreview(null); }}>Remove</button>
                 </div>
               ) : (
                 <input type="file" accept="image/*" disabled={uploading === 'logo'} onChange={(e) => uploadImage('logo', e.target.files)} />
@@ -264,9 +289,9 @@ export default function VendorSettings() {
               <label style={{ display: 'block', marginBottom: '0.35rem' }}>Banner</label>
               {banner ? (
                 <div>
-                  <img src={banner} alt="" style={{ width: '100%', maxWidth: 420, height: 90, objectFit: 'cover', borderRadius: 8, border: '1px solid #e4e7ec' }} />
+                  <img src={bannerPreview ?? banner} alt="" style={{ width: '100%', maxWidth: 420, height: 90, objectFit: 'cover', borderRadius: 8, border: '1px solid #e4e7ec' }} />
                   <div>
-                    <button type="button" className="btn-secondary" onClick={() => setBanner(null)} style={{ marginTop: '0.4rem' }}>
+                    <button type="button" className="btn-secondary" onClick={() => { setBanner(null); setBannerPreview(null); }} style={{ marginTop: '0.4rem' }}>
                       Remove
                     </button>
                   </div>
