@@ -23,6 +23,19 @@ type ApiError = { response?: { status?: number; data?: { message?: string } } };
 const errMessage = (err: unknown, fallback: string) =>
   (err as ApiError).response?.data?.message || fallback;
 
+/**
+ * The publish endpoint reports every failed standard in one string, joined with
+ * "; " behind a fixed prefix. Split back into individual problems so a rejection
+ * reads as the same checklist the row already shows for a known-blocked draft,
+ * rather than one long sentence. Single-gate errors (bad category, removed
+ * listing) carry no prefix and pass through as a one-item list.
+ */
+const REQUIREMENTS_PREFIX = 'Listing does not meet the requirements: ';
+const asProblems = (message: string): string[] =>
+  message.startsWith(REQUIREMENTS_PREFIX)
+    ? message.slice(REQUIREMENTS_PREFIX.length).split('; ').filter(Boolean)
+    : [message];
+
 const STATUS_TABS: Array<{ key: ListingStatus | 'ALL'; label: string }> = [
   { key: 'ALL', label: 'All' },
   { key: 'PUBLISHED', label: 'Published' },
@@ -53,6 +66,12 @@ export default function VendorListings() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  /**
+   * Why a publish attempt was rejected, per listing. Kept in state rather than
+   * left to the toast: the toast auto-dismisses, and the vendor needs the
+   * checklist to stay on screen while they go and fix it.
+   */
+  const [publishErrors, setPublishErrors] = useState<Record<string, string[]>>({});
   const [storeLive, setStoreLive] = useState<boolean | null>(null);
   const [tab, setTab] = useState<ListingStatus | 'ALL'>('ALL');
   const [page, setPage] = useState(1);
@@ -71,6 +90,10 @@ export default function VendorListings() {
       };
       const res = await listingService.list(filters);
       setListings(res.data);
+      // Pinned rejections describe the rows we are replacing, and the refetched
+      // compliance annotation supersedes them. Keeping them would show a vendor
+      // a stale reason for a problem they may have just fixed.
+      setPublishErrors({});
       setTotal(res.pagination.total);
       setTotalPages(res.pagination.totalPages);
     } catch (err: unknown) {
@@ -110,10 +133,19 @@ export default function VendorListings() {
     setBusyId(listing.id);
     try {
       const res = await listingService.publish(listing.id);
+      setPublishErrors((prev) => {
+        if (!prev[listing.id]) return prev;
+        const next = { ...prev };
+        delete next[listing.id];
+        return next;
+      });
       addToast({ type: 'success', message: res.data.message });
       await load();
     } catch (err: unknown) {
-      addToast({ type: 'error', message: errMessage(err, 'Could not publish this listing') });
+      const message = errMessage(err, 'Could not publish this listing');
+      // Pinned to the row as well as toasted, so it survives the toast timeout.
+      setPublishErrors((prev) => ({ ...prev, [listing.id]: asProblems(message) }));
+      addToast({ type: 'error', message });
     } finally {
       setBusyId(null);
     }
@@ -240,10 +272,14 @@ export default function VendorListings() {
               {listings.map((l) => {
                 const style = STATUS_STYLE[l.status];
                 const busy = busyId === l.id;
+                // A real rejection wins over the precomputed annotation: it is
+                // both fresher and authoritative, and it covers gates the
+                // annotation does not model.
+                const rejected = publishErrors[l.id];
                 // Absent on older server builds — treat unknown as publishable
                 // and let the endpoint be the authority, rather than blocking
                 // a vendor on missing data.
-                const blockers = l.compliance?.compliant === false ? l.compliance.problems : [];
+                const blockers = rejected ?? (l.compliance?.compliant === false ? l.compliance.problems : []);
 
                 return (
                   <tr key={l.id}>
@@ -259,9 +295,15 @@ export default function VendorListings() {
                           at that point it is already on the marketplace and
                           the checklist would only be noise. */}
                       {blockers.length > 0 && l.status !== 'PUBLISHED' && (
-                        <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.1rem', color: '#b42318', fontSize: '0.8rem', lineHeight: 1.45 }}>
-                          {blockers.map((problem) => <li key={problem}>{problem}</li>)}
-                        </ul>
+                        <div style={{ marginTop: '0.35rem', color: '#b42318', fontSize: '0.8rem', lineHeight: 1.45 }}>
+                          {/* Named only after a real attempt, so the vendor can
+                              tell "your click just failed, here is why" from a
+                              blocker we already knew about. */}
+                          {rejected && <strong>Publish failed:</strong>}
+                          <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
+                            {blockers.map((problem) => <li key={problem}>{problem}</li>)}
+                          </ul>
+                        </div>
                       )}
                     </td>
                     <td>{l.category?.name ?? <span style={{ color: '#b42318' }}>Not set</span>}</td>

@@ -273,7 +273,10 @@ export interface PublishResult {
 
 export interface UploadedImage {
   key: string;
+  /** Signed URL for immediate display. Optional to tolerate deploy skew. */
   url?: string;
+  /** R2 key under the name the read path re-signs from once persisted. */
+  cloudflareId?: string;
 }
 
 export const listingService = {
