@@ -15,9 +15,6 @@ import { useUIStore } from '@/store/uiStore';
 /** Subscription prices are USD; listing prices stay in naira. */
 const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
 
-/** Wallet top-ups happen in the main WorldStreet dashboard, not here. */
-const TOPUP_URL = 'https://dashboard.worldstreetgold.com';
-
 const formatDate = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
@@ -168,8 +165,6 @@ export default function VendorDashboard() {
     sub != null && ['PENDING_PAYMENT', 'GRACE', 'LAPSED'].includes(sub.status);
   /** What the wallet is charged — credit covers the rest. */
   const dueMinor = wallet?.dueMinor ?? sub?.plan.amountMinor ?? 0;
-  const shortMinor = wallet ? Math.max(dueMinor - wallet.availableMinor, 0) : 0;
-  const cannotAfford = wallet != null && !wallet.sufficient;
 
   return (
     <div className="vendor-dashboard">
@@ -204,32 +199,16 @@ export default function VendorDashboard() {
               <span className="material-icons" style={{ fontSize: '1.2rem' }}>{ALERT_ICON[alert.severity]}</span>
               <span style={{ flex: 1 }}>{alert.message}</span>
               {needsPayment && (alert.type === 'ACTIVATE' || alert.type === 'PAYMENT_FAILED' || alert.type === 'EXPIRED') && (
-                // With a known-short balance, paying can only fail — send the
-                // vendor to the top-up page instead of into a 402.
-                cannotAfford ? (
-                  <a
-                    href={TOPUP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      padding: '0.4rem 1rem', background: '#b42318', color: 'white',
-                      borderRadius: 6, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Top up {formatUsd(shortMinor)}
-                  </a>
-                ) : (
-                  <button
-                    onClick={handleActivate}
-                    disabled={charging}
-                    style={{
-                      padding: '0.4rem 1rem', background: '#b42318', color: 'white',
-                      border: 'none', borderRadius: 6, cursor: charging ? 'wait' : 'pointer', fontWeight: 600,
-                    }}
-                  >
-                    {charging ? 'Processing…' : `Pay ${formatUsd(dueMinor)}`}
-                  </button>
-                )
+                <button
+                  onClick={handleActivate}
+                  disabled={charging}
+                  style={{
+                    padding: '0.4rem 1rem', background: '#b42318', color: 'white',
+                    border: 'none', borderRadius: 6, cursor: charging ? 'wait' : 'pointer', fontWeight: 600,
+                  }}
+                >
+                  {charging ? 'Processing…' : `Pay ${formatUsd(dueMinor)}`}
+                </button>
               )}
             </div>
           ))}
@@ -238,11 +217,12 @@ export default function VendorDashboard() {
 
       {/* The wallet the subscription is charged against. Shown always, not just
           when payment is due: "can I afford the renewal" is a question vendors
-          ask before the alert appears. */}
+          ask before the alert appears. Just the number — what to do about it is
+          the alert's job. */}
       <div
         className="dashboard-wallet"
         style={{
-          display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap',
+          display: 'flex', alignItems: 'center', gap: '0.75rem',
           padding: '0.85rem 1rem', marginBottom: '1.25rem', borderRadius: 8,
           background: '#ffffff', border: '1px solid #e4e7ec',
         }}
@@ -254,31 +234,6 @@ export default function VendorDashboard() {
             {wallet ? formatUsd(wallet.availableMinor) : 'Unavailable'}
           </strong>
         </div>
-
-        <span style={{ flex: 1, fontSize: '0.85rem', color: cannotAfford ? '#b42318' : '#475467' }}>
-          {!wallet
-            ? 'Could not reach your wallet just now — your balance will show again shortly.'
-            : cannotAfford
-              ? `${formatUsd(shortMinor)} short of the ${formatUsd(dueMinor)} due for your subscription.`
-              : sub
-                ? `Enough for your ${formatUsd(dueMinor)} subscription${wallet.lockedMinor > 0 ? ` (${formatUsd(wallet.lockedMinor)} is on hold elsewhere)` : ''}.`
-                : 'Available to spend.'}
-        </span>
-
-        <a
-          href={TOPUP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            padding: '0.4rem 1rem', borderRadius: 6, fontWeight: 600, textDecoration: 'none',
-            whiteSpace: 'nowrap',
-            background: cannotAfford ? '#b42318' : 'transparent',
-            color: cannotAfford ? '#ffffff' : '#b42318',
-            border: cannotAfford ? 'none' : '1px solid #b42318',
-          }}
-        >
-          Top up
-        </a>
       </div>
 
       {/* The four numbers that matter now. */}
@@ -398,19 +353,7 @@ export default function VendorDashboard() {
                 )}
                 <tr>
                   <td>Wallet balance</td>
-                  <td>
-                    {wallet ? (
-                      <>
-                        <strong>{formatUsd(wallet.availableMinor)}</strong>
-                        {' — '}
-                        {cannotAfford
-                          ? `${formatUsd(shortMinor)} short of the ${formatUsd(dueMinor)} due`
-                          : `enough for the ${formatUsd(dueMinor)} due`}
-                      </>
-                    ) : (
-                      'Unavailable right now'
-                    )}
-                  </td>
+                  <td>{wallet ? formatUsd(wallet.availableMinor) : 'Unavailable right now'}</td>
                 </tr>
                 {sub.lastCharge && (
                   <tr>
