@@ -240,6 +240,10 @@ export default function VendorListings() {
               {listings.map((l) => {
                 const style = STATUS_STYLE[l.status];
                 const busy = busyId === l.id;
+                // Absent on older server builds — treat unknown as publishable
+                // and let the endpoint be the authority, rather than blocking
+                // a vendor on missing data.
+                const blockers = l.compliance?.compliant === false ? l.compliance.problems : [];
 
                 return (
                   <tr key={l.id}>
@@ -250,6 +254,15 @@ export default function VendorListings() {
                           {[l.city, l.state].filter(Boolean).join(', ')}
                         </div>
                       ) : null}
+                      {/* Why this listing cannot go live, stated before the
+                          vendor clicks Publish. Suppressed once published —
+                          at that point it is already on the marketplace and
+                          the checklist would only be noise. */}
+                      {blockers.length > 0 && l.status !== 'PUBLISHED' && (
+                        <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.1rem', color: '#b42318', fontSize: '0.8rem', lineHeight: 1.45 }}>
+                          {blockers.map((problem) => <li key={problem}>{problem}</li>)}
+                        </ul>
+                      )}
                     </td>
                     <td>{l.category?.name ?? <span style={{ color: '#b42318' }}>Not set</span>}</td>
                     <td>{priceLabel(l)}</td>
@@ -270,7 +283,12 @@ export default function VendorListings() {
                               {busy ? '…' : 'Hide'}
                             </button>
                           ) : (
-                            <button className="btn-primary" disabled={busy} onClick={() => handlePublish(l)}>
+                            <button
+                              className="btn-primary"
+                              disabled={busy || blockers.length > 0}
+                              title={blockers.length > 0 ? `Fix first: ${blockers.join('; ')}` : undefined}
+                              onClick={() => handlePublish(l)}
+                            >
                               {busy ? '…' : 'Publish'}
                             </button>
                           )}

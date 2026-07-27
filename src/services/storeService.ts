@@ -209,6 +209,16 @@ export interface Listing {
   viewCount: number;
   inquiryCount: number;
   updatedAt: string;
+  /**
+   * Present on vendor-scoped responses only. `problems` is every gate that
+   * would reject a publish, worded exactly as the publish endpoint words it.
+   */
+  compliance?: ListingCompliance;
+}
+
+export interface ListingCompliance {
+  compliant: boolean;
+  problems: string[];
 }
 
 export interface ListingFilters {

@@ -944,5 +944,9 @@
 }
 
 .btn-danger {
+  // Base first: this is used bare (`class="btn-danger"`) as well as paired
+  // with `.btn`, and the bare form has to bring its own padding, radius and
+  // font or it falls back to the browser's default button chrome.
+  @include button-base;
   @include button-variant($danger-color, $white, color.adjust($danger-color, $lightness: -10%));
 }
