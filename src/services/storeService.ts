@@ -64,6 +64,15 @@ export interface VendorDashboard {
       periodEnd: string;
     } | null;
   } | null;
+  /** WorldStreet dollar wallet. null = the wallet service could not be reached. */
+  wallet: {
+    currency: string;
+    availableMinor: number;
+    lockedMinor: number;
+    /** What the next subscription charge takes from the wallet, after credit. */
+    dueMinor: number;
+    sufficient: boolean;
+  } | null;
   listings: {
     published: number;
     draft: number;
