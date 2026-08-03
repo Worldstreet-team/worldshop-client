@@ -120,10 +120,7 @@ export default function Header() {
               placeholder="Search phones, cars, furniture…"
               aria-label="Search the marketplace"
             />
-          </form>
-
-          <div className="ws-topbar__actions">
-            <label className="ws-chip ws-topbar__location">
+            <label className="ws-topbar__location">
               <MapPin size={16} aria-hidden />
               <select
                 value={activeState}
@@ -134,7 +131,9 @@ export default function Header() {
                 {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </label>
+          </form>
 
+          <div className="ws-topbar__actions">
             {/* Admins reach the console from here; there is no other entry
                 point once the old nav row is gone. */}
             {isAuthenticated && user?.role === 'ADMIN' && (
@@ -154,7 +153,7 @@ export default function Header() {
               <Compass size={18} />
             </a>
 
-            <Link to="/vendor" className="ws-btn ws-btn--sm ws-btn--secondary ws-topbar__sell">
+            <Link to="/vendor" className="ws-btn ws-btn--sm ws-btn--primary ws-topbar__sell">
               <Store size={16} aria-hidden />
               Sell
             </Link>

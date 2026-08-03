@@ -159,13 +159,20 @@ $bp-lg: 1280px;
   @media (min-width: $bp-md) { display: grid; }
 }
 
-// A native select wearing the chip's clothes: keeps keyboard and mobile
-// behaviour, loses the platform border.
+// The location scope lives inside the search pill (marketplace convention:
+// one field answers "what, where"). A hairline separates it from the query.
 .ws-topbar__location {
   display: none;
-  padding-right: var(--ws-space-2);
+  align-items: center;
+  gap: var(--ws-space-1);
+  flex: none;
+  padding-left: var(--ws-space-3);
+  border-left: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-muted);
 
   @media (min-width: $bp-md) { display: inline-flex; }
+
+  svg { color: var(--ws-text-subtle); }
 
   select {
     appearance: none;
@@ -180,10 +187,7 @@ $bp-lg: 1280px;
     &:focus { outline: none; }
   }
 
-  &:focus-within {
-    outline: 2px solid var(--ws-brand-primary);
-    outline-offset: 2px;
-  }
+  &:focus-within { color: var(--ws-text-primary); }
 }
 
 // ─── Browse ─────────────────────────────────────────────────────
