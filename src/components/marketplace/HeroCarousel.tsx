@@ -39,9 +39,9 @@ function slides(motorsTo: string): Slide[] {
       secondary: { label: 'Open a store', to: '/vendor', icon: <Store size={16} aria-hidden /> },
       art: 'electronics',
       cuts: [
-        { src: '/img/hero/laptop.webp', mod: 'laptop' },
-        { src: '/img/hero/phone.webp', mod: 'phone' },
-        { src: '/img/hero/headphones.webp', mod: 'headphones' },
+        { src: '/img/hero/macbook.webp', mod: 'macbook' },
+        { src: '/img/hero/phones.webp', mod: 'phones' },
+        { src: '/img/hero/boombox.webp', mod: 'boombox' },
       ],
     },
     {
@@ -52,7 +52,8 @@ function slides(motorsTo: string): Slide[] {
       primary: { label: 'Browse vehicles', to: motorsTo },
       art: 'motors',
       cuts: [
-        { src: '/img/hero/car.webp', mod: 'car' },
+        { src: '/img/hero/gle-black.webp', mod: 'gle-black' },
+        { src: '/img/hero/gle-white.webp', mod: 'gle-white' },
       ],
     },
     {
@@ -63,8 +64,8 @@ function slides(motorsTo: string): Slide[] {
       primary: { label: 'Open a store', to: '/vendor', icon: <Store size={16} aria-hidden /> },
       art: 'lifestyle',
       cuts: [
-        { src: '/img/hero/watch.webp', mod: 'watch' },
-        { src: '/img/hero/sneaker.webp', mod: 'sneaker' },
+        { src: '/img/hero/tudor.webp', mod: 'tudor' },
+        { src: '/img/hero/af1.webp', mod: 'af1' },
       ],
     },
   ];

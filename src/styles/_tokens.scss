@@ -5,11 +5,12 @@
 
 /* WorldStreet Design Tokens — generated from the Figma design system
    https://www.figma.com/design/DOkdLhK3pJ9fEwglOwSJfN
-   One semantic vocabulary, four platform themes. Set data-ws-theme on <html> or any subtree:
+   One semantic vocabulary, six modes. Set data-ws-theme on <html> or any subtree:
      "shell"    — wallet/auth/dashboard surfaces (dark, stone + gold #EAB308)
-     "platform" — Academy · Social · Vision · Arcade (near-black + gold #FFCC29)
-     "shop"       — Shop only (warm espresso + coral #F0502F) — Shop's default
-     "shop-light" — Shop's original light paper palette, kept as an opt-in mode
+     "platform" — Academy · Social · Vision · Arcade · Shop (near-black + gold #FFCC29)
+     "platform-light" — user-toggled light inversion of platform (paper + gold)
+     "shop"       — legacy espresso + coral (Shop moved to platform 2026-08-03)
+     "shop-light" — Shop's original light paper palette, legacy opt-in
      "xstream"    — Xstream only (pure black + antique gold #C9A24B)
    Never hardcode a platform hex in app code — use the variables. */
 
@@ -74,6 +75,43 @@
   --ws-overlay-scrim: rgba(0, 0, 0, 0.60);
   --ws-focus-ring: #FFCC29;
   --ws-accent-star: #F97316; /* ratings (Academy) */
+}
+
+/* Platform Light — opt-in inversion of Platform for user-toggled light mode
+   (added 2026-08-03 for Shop's theme switch; any Platform app may use it).
+   Same cool-neutral family and gold brand. Gold FILLS keep #FFCC29 with
+   near-black ink (contrast comes from the ink); gold TEXT darkens to #8A6C00
+   because raw #FFCC29 on white is unreadable (1.6:1). Status hues darken one
+   step for white surfaces. */
+[data-ws-theme="platform-light"] {
+  --ws-bg-page: #FAFAFA;
+  --ws-bg-sunken: #F0F0F2;
+  --ws-bg-surface: #FFFFFF;
+  --ws-bg-raised: #F4F4F6;
+  --ws-bg-chip: #EFEFF2;
+  --ws-bg-track: #E4E4E9;
+  --ws-border-hairline: #E4E4E9;
+  --ws-text-primary: #18181B;
+  --ws-text-muted: #6E6E78;
+  --ws-text-subtle: #9A9AA3;
+  --ws-brand-primary: #FFCC29;
+  --ws-brand-active: #F0BC0F;
+  --ws-brand-dim: #D4A917;
+  --ws-brand-on-primary: #0B0B0F;
+  --ws-brand-gold-text: #8A6C00;
+  --ws-status-success: #059669;
+  --ws-status-danger: #DC2626;
+  --ws-money-credit: #059669;
+  --ws-money-credit-chip: rgba(5, 150, 105, 0.12);
+  --ws-money-debit: #DC2626;
+  --ws-money-debit-chip: rgba(220, 38, 38, 0.12);
+  --ws-money-convert: #8A6C00;
+  --ws-money-convert-chip: rgba(255, 204, 41, 0.20);
+  --ws-status-warning: #D97706;
+  --ws-status-warning-chip: rgba(217, 119, 6, 0.14);
+  --ws-overlay-scrim: rgba(24, 24, 27, 0.45);
+  --ws-focus-ring: #D4A917;
+  --ws-accent-star: #F97316; /* ratings */
 }
 
 /* Shop — dark-first, the app default. A warm espresso ladder rather than

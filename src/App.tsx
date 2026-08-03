@@ -28,11 +28,9 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn, userId]);
 
-  // Show loading state while Clerk is loading
+  // Show the branded boot loader while Clerk is loading.
   if (!isLoaded) {
-    return (
-      <LoadingSpinner fullScreen size="lg" message="Loading WorldStreet..." />
-    );
+    return <LoadingSpinner fullScreen />;
   }
 
   return (

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  Search, MessageCircle, MapPin, Menu, Store, User, LayoutGrid, Compass,
-  Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
+  Search, MessageCircle, MapPin, Menu, Moon, Store, Sun, User, LayoutGrid,
+  Compass, Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
 } from 'lucide-react';
+import { isLight, toggleTheme } from '@/utils/theme';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useCategoryStore } from '@/store/categoryStore';
@@ -40,6 +41,7 @@ export default function Header() {
 
   const [searchBox, setSearchBox] = useState(params.get('search') ?? '');
   const [unread, setUnread] = useState(0);
+  const [light, setLight] = useState(isLight);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
@@ -134,6 +136,16 @@ export default function Header() {
           </form>
 
           <div className="ws-topbar__actions">
+            <button
+              type="button"
+              className="ws-iconbtn"
+              onClick={() => setLight(toggleTheme() === 'platform-light')}
+              aria-label={light ? 'Switch to dark mode' : 'Switch to light mode'}
+              title={light ? 'Dark mode' : 'Light mode'}
+            >
+              {light ? <Moon size={18} /> : <Sun size={18} />}
+            </button>
+
             {/* Admins reach the console from here; there is no other entry
                 point once the old nav row is gone. */}
             {isAuthenticated && user?.role === 'ADMIN' && (

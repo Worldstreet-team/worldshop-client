@@ -195,9 +195,13 @@ cp ../design-tokens/tokens.css src/styles/_tokens.scss   # then re-add the heade
 Do **not** invent palettes. Per `../CLAUDE.md`, the source of truth is the workspace token
 files, mirrored into `src/styles/_tokens.scss` so this app stays deployable on its own:
 
-- `../design-tokens/tokens.css` — CSS variables, 5 modes selected by
-  `data-ws-theme="shell|platform|shop|shop-light|xstream"`.
+- `../design-tokens/tokens.css` — CSS variables, 6 modes selected by
+  `data-ws-theme="shell|platform|platform-light|shop|shop-light|xstream"`.
   **Shop uses `data-ws-theme="platform"`, set on `<html>` in `index.html`.**
+  Users can switch to `platform-light` via the header toggle; the choice
+  persists in localStorage (`ws:theme`) and an inline script in `index.html`
+  applies it before first paint. Runtime toggling lives in `src/utils/theme.ts`
+  — keep the two in sync.
 - `../design-tokens/tailwind.preset.cjs` — semantic classes (`bg-page`, `bg-surface`,
   `text-primary`, `text-muted`, `bg-brand`, `border-hairline`, `rounded-lg` = 10px).
 

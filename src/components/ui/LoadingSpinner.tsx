@@ -29,10 +29,14 @@ export default function LoadingSpinner({
     </div>
   );
 
+  // Full-screen gets the branded boot loader (lockup + gold sweep) rather than
+  // a labelled ring — `message` is intentionally ignored there.
   if (fullScreen) {
     return (
       <div
         className="ws"
+        role="status"
+        aria-label="Loading"
         style={{
           position: 'fixed',
           inset: 0,
@@ -42,7 +46,13 @@ export default function LoadingSpinner({
           zIndex: 'var(--ws-z-modal)' as unknown as number,
         }}
       >
-        {spinner}
+        <div className="ws-loader" aria-hidden>
+          <span className="ws-loader__eyebrow">Worldstreet</span>
+          <span className="ws-loader__word">
+            shop<span className="ws-loader__dot">.</span>
+          </span>
+          <span className="ws-loader__bar" />
+        </div>
       </div>
     );
   }
