@@ -287,8 +287,26 @@ $bp-lg: 1280px;
   @include ws-label;
   color: var(--ws-text-subtle);
   margin-bottom: var(--ws-space-3);
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+  &::-webkit-details-marker { display: none; }
+
+  // Chevron flips when the group is closed.
+  &::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid var(--ws-text-subtle);
+    border-bottom: 1.5px solid var(--ws-text-subtle);
+    transform: rotate(45deg);
+    transition: transform 120ms ease;
+  }
 }
+
+details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 // Subcategories are one-click links, not a second dropdown: this is the level
 // that unlocks attribute facets.

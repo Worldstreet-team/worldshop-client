@@ -191,8 +191,8 @@ export default function Browse() {
 
   const filters = (
     <>
-      <div className="ws-filters__group">
-        <span className="ws-filters__legend">Category</span>
+      <details className="ws-filters__group" open>
+        <summary className="ws-filters__legend">Category</summary>
         <select
           className="ws-select"
           value={openParentId}
@@ -221,10 +221,10 @@ export default function Browse() {
             ))}
           </ul>
         )}
-      </div>
+      </details>
 
-      <div className="ws-filters__group">
-        <span className="ws-filters__legend">Location</span>
+      <details className="ws-filters__group" open>
+        <summary className="ws-filters__legend">Location</summary>
         <select
           className="ws-select"
           value={stateFilter}
@@ -234,10 +234,10 @@ export default function Browse() {
           <option value="">Anywhere in Nigeria</option>
           {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-      </div>
+      </details>
 
-      <div className="ws-filters__group">
-        <span className="ws-filters__legend">Condition</span>
+      <details className="ws-filters__group" open>
+        <summary className="ws-filters__legend">Condition</summary>
         <select
           className="ws-select"
           value={condition}
@@ -247,10 +247,10 @@ export default function Browse() {
           <option value="">Any condition</option>
           {CONDITIONS.map((c) => <option key={c} value={c}>{titleCase(c)}</option>)}
         </select>
-      </div>
+      </details>
 
-      <div className="ws-filters__group">
-        <span className="ws-filters__legend">Price (₦)</span>
+      <details className="ws-filters__group" open>
+        <summary className="ws-filters__legend">Price (₦)</summary>
         <form
           className="ws-pricerange"
           onSubmit={(e) => { e.preventDefault(); applyPrice(); }}
@@ -281,12 +281,12 @@ export default function Browse() {
           {/* Hidden submit so Enter applies the range. */}
           <button type="submit" hidden aria-hidden tabIndex={-1} />
         </form>
-      </div>
+      </details>
 
       {/* Only meaningful once narrowed to a subcategory. */}
       {facets.map((attr) => (
-        <div className="ws-filters__group" key={attr.name}>
-          <span className="ws-filters__legend">{attr.name}</span>
+        <details className="ws-filters__group" key={attr.name} open>
+          <summary className="ws-filters__legend">{attr.name}</summary>
           <select
             className="ws-select"
             value={attrFilters[attr.name] ?? ''}
@@ -296,7 +296,7 @@ export default function Browse() {
             <option value="">Any {attr.name.toLowerCase()}</option>
             {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
-        </div>
+        </details>
       ))}
 
       {categoryId && !isLeaf && (
