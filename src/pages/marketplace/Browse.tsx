@@ -46,6 +46,8 @@ export default function Browse() {
   const search = params.get('search') ?? '';
   const page = Math.max(1, Number(params.get('page')) || 1);
   const sort = params.get('sort') ?? '';
+  const minPrice = params.get('minPrice') ?? '';
+  const maxPrice = params.get('maxPrice') ?? '';
 
   // Selected attribute values, read straight back out of the URL.
   const attrFilters = useMemo(() => {
@@ -55,6 +57,11 @@ export default function Browse() {
     });
     return out;
   }, [params]);
+
+  // Price inputs are drafts committed on blur/Enter, not per keystroke — a
+  // half-typed "1" would otherwise refetch as ₦1.
+  const [priceDraft, setPriceDraft] = useState({ min: minPrice, max: maxPrice });
+  useEffect(() => { setPriceDraft({ min: minPrice, max: maxPrice }); }, [minPrice, maxPrice]);
 
   const parents = useMemo(() => {
     const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));
@@ -129,6 +136,8 @@ export default function Browse() {
     if (condition) query.condition = condition;
     if (search) query.search = search;
     if (sort) query.sort = sort;
+    if (minPrice) query.minPrice = minPrice;
+    if (maxPrice) query.maxPrice = maxPrice;
     for (const [name, value] of Object.entries(attrFilters)) query[`attr.${name}`] = value;
 
     publicMarketplace
@@ -147,7 +156,7 @@ export default function Browse() {
     return () => {
       cancelled = true;
     };
-  }, [page, categoryId, stateFilter, condition, search, sort, attrFilters]);
+  }, [page, categoryId, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters]);
 
   /**
    * Every applied filter as a removable token. Showing them above the results
@@ -160,13 +169,25 @@ export default function Browse() {
     if (selected) out.push({ key: 'cat', label: selected.name, clear: () => setParam({ categoryId: null }) });
     if (stateFilter) out.push({ key: 'state', label: stateFilter, clear: () => setParam({ state: null }) });
     if (condition) out.push({ key: 'cond', label: titleCase(condition), clear: () => setParam({ condition: null }) });
+    if (minPrice || maxPrice) {
+      const fmt = (v: string) => `₦${Number(v).toLocaleString('en-NG')}`;
+      const label =
+        minPrice && maxPrice ? `${fmt(minPrice)} – ${fmt(maxPrice)}`
+        : minPrice ? `From ${fmt(minPrice)}`
+        : `Under ${fmt(maxPrice)}`;
+      out.push({ key: 'price', label, clear: () => setParam({ minPrice: null, maxPrice: null }) });
+    }
     for (const [name, value] of Object.entries(attrFilters)) {
       out.push({ key: `attr.${name}`, label: `${name}: ${value}`, clear: () => setParam({ [`attr.${name}`]: null }) });
     }
     return out;
-  }, [search, selected, stateFilter, condition, attrFilters, setParam]);
+  }, [search, selected, stateFilter, condition, minPrice, maxPrice, attrFilters, setParam]);
 
   const clearAll = () => setParams(new URLSearchParams());
+
+  const applyPrice = () => {
+    setParam({ minPrice: priceDraft.min.trim() || null, maxPrice: priceDraft.max.trim() || null });
+  };
 
   const filters = (
     <>
@@ -226,6 +247,40 @@ export default function Browse() {
           <option value="">Any condition</option>
           {CONDITIONS.map((c) => <option key={c} value={c}>{titleCase(c)}</option>)}
         </select>
+      </div>
+
+      <div className="ws-filters__group">
+        <span className="ws-filters__legend">Price (₦)</span>
+        <form
+          className="ws-pricerange"
+          onSubmit={(e) => { e.preventDefault(); applyPrice(); }}
+        >
+          <input
+            className="ws-field ws-num"
+            type="number"
+            min="0"
+            inputMode="numeric"
+            placeholder="Min"
+            value={priceDraft.min}
+            onChange={(e) => setPriceDraft((d) => ({ ...d, min: e.target.value }))}
+            onBlur={applyPrice}
+            aria-label="Minimum price"
+          />
+          <span aria-hidden>–</span>
+          <input
+            className="ws-field ws-num"
+            type="number"
+            min="0"
+            inputMode="numeric"
+            placeholder="Max"
+            value={priceDraft.max}
+            onChange={(e) => setPriceDraft((d) => ({ ...d, max: e.target.value }))}
+            onBlur={applyPrice}
+            aria-label="Maximum price"
+          />
+          {/* Hidden submit so Enter applies the range. */}
+          <button type="submit" hidden aria-hidden tabIndex={-1} />
+        </form>
       </div>
 
       {/* Only meaningful once narrowed to a subcategory. */}

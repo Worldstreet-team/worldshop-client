@@ -173,6 +173,22 @@ GET('/listings', (_p, q) => {
     rows = rows.filter((l) => (l.attributes ?? {})[name] === value);
   }
 
+  // Price range. A RANGE listing matches if [basePrice, maxPrice] overlaps the
+  // requested window; ON_REQUEST listings have no price to compare, so any
+  // price filter excludes them.
+  const minPrice = q.minPrice ? Number(q.minPrice) : null;
+  const maxPrice = q.maxPrice ? Number(q.maxPrice) : null;
+  if (minPrice != null || maxPrice != null) {
+    rows = rows.filter((l) => {
+      if (l.basePrice == null) return false;
+      const lo = l.basePrice;
+      const hi = l.maxPrice ?? l.basePrice;
+      if (minPrice != null && hi < minPrice) return false;
+      if (maxPrice != null && lo > maxPrice) return false;
+      return true;
+    });
+  }
+
   const sort = q.sort ?? q.sortBy;
   if (sort === 'price_asc') rows = [...rows].sort((a, b) => (a.basePrice ?? 1e15) - (b.basePrice ?? 1e15));
   else if (sort === 'price_desc') rows = [...rows].sort((a, b) => (b.basePrice ?? -1) - (a.basePrice ?? -1));

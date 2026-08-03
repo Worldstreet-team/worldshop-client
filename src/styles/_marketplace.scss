@@ -262,6 +262,19 @@ $bp-lg: 1280px;
   gap: var(--ws-space-2);
 }
 
+.ws-pricerange {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  color: var(--ws-text-subtle);
+
+  input { min-width: 0; }
+  // Spinners fight the compact rail width.
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+  input[type='number'] { -moz-appearance: textfield; }
+}
+
 .ws-filters__group {
   padding-block: var(--ws-space-4);
   border-bottom: 1px solid var(--ws-border-hairline);
