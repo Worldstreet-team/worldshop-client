@@ -274,6 +274,14 @@ body:has(.ws) {
   }
 }
 
+// The native popup list itself can't be fully styled, but Chromium and
+// Firefox honor option colors — without this, options inherit a transparent
+// background and can render unreadable (white-on-white on Windows).
+select option {
+  background-color: var(--ws-bg-raised);
+  color: var(--ws-text-primary);
+}
+
 // Compact select for inline controls (sort, per-page) rather than forms.
 .ws-select--sm {
   height: 36px;

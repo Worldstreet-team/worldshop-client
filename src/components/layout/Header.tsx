@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  Search, MessageCircle, MapPin, Menu, Moon, Store, Sun, User, LayoutGrid,
+  Search, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid,
   Compass, Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
 } from 'lucide-react';
 import { isLight, toggleTheme } from '@/utils/theme';
+import LocationSelect from '@/components/layout/LocationSelect';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useCategoryStore } from '@/store/categoryStore';
 import { chatService } from '@/services/chatService';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 
 /**
  * Marketplace top bar — the Shop pattern from the design system: brand lockup,
@@ -122,17 +122,9 @@ export default function Header() {
               placeholder="Search phones, cars, furniture…"
               aria-label="Search the marketplace"
             />
-            <label className="ws-topbar__location">
-              <MapPin size={16} aria-hidden />
-              <select
-                value={activeState}
-                onChange={(e) => setLocation(e.target.value)}
-                aria-label="Filter by location"
-              >
-                <option value="">All Nigeria</option>
-                {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
+            <div className="ws-topbar__location">
+              <LocationSelect value={activeState} onChange={setLocation} />
+            </div>
           </form>
 
           <div className="ws-topbar__actions">

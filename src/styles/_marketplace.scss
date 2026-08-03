@@ -191,30 +191,102 @@ $bp-lg: 1280px;
 .ws-topbar__location {
   display: none;
   align-items: center;
-  gap: var(--ws-space-1);
   flex: none;
-  padding-left: var(--ws-space-3);
+  padding-left: var(--ws-space-2);
   border-left: 1px solid var(--ws-border-hairline);
-  color: var(--ws-text-muted);
 
   @media (min-width: $bp-md) { display: inline-flex; }
+}
+
+// Custom location dropdown — a native <select> popup can't be styled and
+// rendered unreadable on the glass pill.
+.ws-locpick {
+  position: relative;
+}
+
+.ws-locpick__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  border: 0;
+  background: transparent;
+  font-family: var(--ws-font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+  padding: var(--ws-space-2);
+  border-radius: var(--ws-radius-sm);
 
   svg { color: var(--ws-text-subtle); }
 
-  select {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    font-family: var(--ws-font-ui);
-    font-weight: 500;
-    font-size: 13px;
-    color: inherit;
-    cursor: pointer;
+  span {
     max-width: 108px;
-    &:focus { outline: none; }
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  &:focus-within { color: var(--ws-text-primary); }
+  &:hover,
+  &[aria-expanded='true'] { color: var(--ws-text-primary); }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+.ws-locpick__chevron {
+  transition: transform 140ms ease;
+  [aria-expanded='true'] > & { transform: rotate(180deg); }
+}
+
+.ws-locpick__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  // Above the catbar, which is a later sibling in the sticky header.
+  z-index: 60;
+  width: 216px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: var(--ws-space-2);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  display: grid;
+  gap: 2px;
+}
+
+.ws-locpick__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-2);
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-family: var(--ws-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ws-text-primary);
+  padding: var(--ws-space-2) var(--ws-space-3);
+  border-radius: var(--ws-radius-sm);
+  cursor: pointer;
+
+  &:hover { background: var(--ws-bg-raised); }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+  }
+
+  &.is-active {
+    color: var(--ws-brand-gold-text);
+    background: color-mix(in srgb, var(--ws-brand-primary) 10%, transparent);
+  }
 }
 
 // ─── Browse ─────────────────────────────────────────────────────
