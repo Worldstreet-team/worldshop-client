@@ -1,25 +1,22 @@
 import { Link } from 'react-router-dom';
+import { ArrowUp } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { useCategoryStore } from '@/store/categoryStore';
 
 /**
- * Footer. Two link columns only — this is a marketplace, not a storefront, so
- * there are no shipping, returns or payment pages to link to.
+ * Footer. Marketplace + category + account columns — no shipping, returns or
+ * payment pages because nothing is bought on-platform. Categories come from
+ * the same store the header fills, so no extra fetch happens here.
  */
-
-const footerLinks = {
-  marketplace: [
-    { label: 'Browse listings', href: '/listings' },
-    { label: 'Open a store', href: '/vendor/register' },
-    { label: 'Seller dashboard', href: '/vendor' },
-  ],
-  account: [
-    { label: 'Your account', href: '/account' },
-    { label: 'Messages', href: '/account/messages' },
-    { label: 'Sign in', href: '/auth/login' },
-  ],
-};
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { isAuthenticated } = useAuthStore();
+  const { categories } = useCategoryStore();
+
+  const departments = categories.filter(
+    (c) => !c.parentId && categories.some((child) => child.parentId === c.id),
+  );
 
   return (
     <footer className="ws-footer">
@@ -30,38 +27,76 @@ export default function Footer() {
               <span className="ws-brand__eyebrow">Worldstreet</span>
               <span className="ws-brand__word">shop<span className="ws-brand__dot">.</span></span>
             </Link>
-            <p className="ws-caption ws-muted" style={{ maxWidth: '42ch', marginTop: 'var(--ws-space-3)' }}>
+            <p className="ws-caption ws-muted ws-footer__blurb">
               Buy and sell directly with sellers across Nigeria. Browse listings,
               message the store, and agree your own terms.
             </p>
+            <p className="ws-caption ws-muted ws-footer__blurb">
+              Part of the{' '}
+              <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer">
+                WorldStreet ecosystem
+              </a>
+              — one account across every platform.
+            </p>
           </div>
 
-          <div>
-            <h2 className="ws-label" style={{ marginBottom: 'var(--ws-space-3)' }}>Marketplace</h2>
+          <nav aria-label="Marketplace">
+            <h2 className="ws-label ws-footer__head">Marketplace</h2>
             <ul className="ws-footer__links">
-              {footerLinks.marketplace.map((link) => (
-                <li key={link.href}><Link to={link.href}>{link.label}</Link></li>
-              ))}
+              <li><Link to="/listings">Browse listings</Link></li>
+              <li><Link to="/saved">Saved listings</Link></li>
+              <li><Link to="/vendor/register">Open a store</Link></li>
             </ul>
-          </div>
+          </nav>
 
-          <div>
-            <h2 className="ws-label" style={{ marginBottom: 'var(--ws-space-3)' }}>Account</h2>
+          {departments.length > 0 && (
+            <nav aria-label="Categories">
+              <h2 className="ws-label ws-footer__head">Categories</h2>
+              <ul className="ws-footer__links">
+                {departments.map((c) => (
+                  <li key={c.id}>
+                    <Link to={`/listings?categoryId=${c.id}`}>{c.name}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+
+          <nav aria-label="Account">
+            <h2 className="ws-label ws-footer__head">Account</h2>
             <ul className="ws-footer__links">
-              {footerLinks.account.map((link) => (
-                <li key={link.href}><Link to={link.href}>{link.label}</Link></li>
-              ))}
+              {isAuthenticated ? (
+                <>
+                  <li><Link to="/account">Your account</Link></li>
+                  <li><Link to="/account/messages">Messages</Link></li>
+                </>
+              ) : (
+                <li><Link to="/auth/login">Sign in</Link></li>
+              )}
+              <li>
+                <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer">
+                  WorldStreet dashboard
+                </a>
+              </li>
             </ul>
-          </div>
+          </nav>
         </div>
 
         <div className="ws-footer__base">
           <p>&copy; {currentYear} WorldStreet</p>
-          <div style={{ display: 'flex', gap: 'var(--ws-space-4)' }}>
+          <nav aria-label="Legal" className="ws-footer__legal">
             <Link to="/terms">Terms</Link>
             <Link to="/privacy">Privacy</Link>
             <Link to="/cookies">Cookies</Link>
-          </div>
+          </nav>
+          <button
+            type="button"
+            className="ws-footer__top"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
+            Back to top
+            <ArrowUp size={14} aria-hidden />
+          </button>
         </div>
       </div>
     </footer>

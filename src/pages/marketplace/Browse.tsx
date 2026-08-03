@@ -6,6 +6,7 @@ import { categoryService } from '@/services/productService';
 import type { Category, CategoryAttribute } from '@/types/product.types';
 import ListingCard from '@/components/marketplace/ListingCard';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
  * Marketplace browse.
@@ -37,7 +38,9 @@ export default function Browse() {
   const [listings, setListings] = useState<Array<Listing & { store: PublicStore }>>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [retryTick, setRetryTick] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const categoryId = params.get('categoryId') ?? '';
@@ -83,6 +86,8 @@ export default function Browse() {
     [categories, openParentId],
   );
   const isLeaf = Boolean(selected?.parentId);
+
+  usePageTitle(search ? `“${search}”` : selected ? selected.name : 'Browse listings');
 
   /**
    * Writes filter changes back to the URL. Any change except paging resets to
@@ -132,9 +137,16 @@ export default function Browse() {
     };
   }, [categoryId, isLeaf]);
 
+  // Loading is derived: the grid is loading whenever the last-completed fetch
+  // key lags the requested one — no setState-in-effect needed to reset it.
+  const fetchKey = [
+    page, categoryId, stateFilter, condition, search, sort, minPrice, maxPrice,
+    JSON.stringify(attrFilters), retryTick,
+  ].join('|');
+  const loading = loadedKey !== fetchKey;
+
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
 
     const query: Record<string, unknown> = { page, limit: PER_PAGE };
     if (categoryId) query.categoryId = categoryId;
@@ -153,16 +165,22 @@ export default function Browse() {
         setListings(res.data);
         setTotal(res.pagination.total);
         setTotalPages(res.pagination.totalPages);
+        setFailed(false);
       })
-      .catch(() => undefined)
+      // A failed fetch is not an empty marketplace — without this flag the
+      // empty state would tell a user with a dropped connection that nothing
+      // is listed and invite them to open a store.
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedKey(fetchKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [page, categoryId, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters]);
+  }, [page, categoryId, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters, retryTick, fetchKey]);
 
   /**
    * Every applied filter as a removable token. Showing them above the results
@@ -398,6 +416,20 @@ export default function Browse() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : failed ? (
+            <div className="ws-empty" role="status">
+              <span className="ws-empty__icon"><SearchX size={24} aria-hidden /></span>
+              <h2 className="ws-title">Could not load listings</h2>
+              <p className="ws-caption ws-muted" style={{ maxWidth: '34ch' }}>
+                Check your connection and try again — your filters are still set.
+              </p>
+              <button
+                className="ws-btn ws-btn--sm ws-btn--secondary"
+                onClick={() => setRetryTick((t) => t + 1)}
+              >
+                Try again
+              </button>
             </div>
           ) : listings.length === 0 ? (
             <div className="ws-empty">

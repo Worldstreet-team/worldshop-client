@@ -1,11 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  Search, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid,
+  Search, Heart, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid,
   Compass, Eye, EyeOff, Smartphone, Car, Shirt, House, ShoppingBag,
   Wallet as WalletIcon, type LucideIcon,
 } from 'lucide-react';
 import { isLight, toggleTheme } from '@/utils/theme';
+import { savedListings } from '@/utils/savedListings';
 import LocationSelect from '@/components/layout/LocationSelect';
 import { walletService, type Wallet } from '@/services/walletService';
 import { useAuthStore } from '@/store/authStore';
@@ -48,6 +49,7 @@ export default function Header() {
   const [balanceHidden, setBalanceHidden] = useState(
     () => localStorage.getItem('ws:balance-hidden') === '1',
   );
+  const savedCount = useSyncExternalStore(savedListings.subscribe, savedListings.count);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
@@ -222,6 +224,16 @@ export default function Header() {
             >
               <Compass size={18} />
             </a>
+
+            <Link
+              to="/saved"
+              className="ws-iconbtn"
+              aria-label={savedCount ? `Saved listings, ${savedCount} saved` : 'Saved listings'}
+              title="Saved listings"
+            >
+              <Heart size={18} />
+              {savedCount > 0 && <span className="ws-iconbtn__dot" />}
+            </Link>
 
             <Link to="/vendor" className="ws-btn ws-btn--sm ws-btn--primary ws-topbar__sell">
               <Store size={16} aria-hidden />

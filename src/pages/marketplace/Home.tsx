@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { useCategoryStore } from '@/store/categoryStore';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import HeroCarousel from '@/components/marketplace/HeroCarousel';
 import ListingCard from '@/components/marketplace/ListingCard';
 import StoreCard from '@/components/marketplace/StoreCard';
@@ -73,6 +74,7 @@ function Rail({
 }
 
 export default function Home() {
+  usePageTitle();
   const { categories, fetchCategories } = useCategoryStore();
 
   const [newest, setNewest] = useState<Row[]>([]);
@@ -204,40 +206,68 @@ export default function Home() {
 
         {/* ── Sell band ────────────────────────────────────────────── */}
         <section className="ws-sellband" aria-label="Start selling">
-          <div>
+          <div className="ws-sellband__intro">
+            <p className="ws-sellband__eyebrow">Start selling</p>
             <h2 className="ws-h1">Selling? List it in minutes.</h2>
             <p className="ws-sellband__sub">
               Open a store, post your first listing and talk to buyers directly.
-              No commission on what you sell.
+              What you sell is yours — WorldStreet takes no commission.
             </p>
+            <div className="ws-sellband__actions">
+              <Link to="/vendor" className="ws-btn ws-btn--primary ws-sellband__cta">
+                Open a store
+                <ArrowRight size={16} aria-hidden />
+              </Link>
+              <span className="ws-sellband__note">Free · takes about two minutes</span>
+            </div>
           </div>
-          <Link to="/vendor" className="ws-btn ws-btn--primary ws-sellband__cta">
-            Open a store
-            <ArrowRight size={16} aria-hidden />
-          </Link>
+          {/* Numbered because selling really is a sequence. */}
+          <ol className="ws-sellband__steps">
+            <li className="ws-sellband__step">
+              <span className="ws-sellband__num ws-num" aria-hidden>1</span>
+              <div>
+                <h3 className="ws-sellband__steptitle">Open your store</h3>
+                <p className="ws-sellband__stepcopy">Pick a name, add your location and contact.</p>
+              </div>
+            </li>
+            <li className="ws-sellband__step">
+              <span className="ws-sellband__num ws-num" aria-hidden>2</span>
+              <div>
+                <h3 className="ws-sellband__steptitle">Post your listing</h3>
+                <p className="ws-sellband__stepcopy">Photos, price, condition — live in minutes.</p>
+              </div>
+            </li>
+            <li className="ws-sellband__step">
+              <span className="ws-sellband__num ws-num" aria-hidden>3</span>
+              <div>
+                <h3 className="ws-sellband__steptitle">Chat and close</h3>
+                <p className="ws-sellband__stepcopy">Buyers message you directly. Agree your own terms.</p>
+              </div>
+            </li>
+          </ol>
         </section>
 
         {/* ── How it stays safe ────────────────────────────────────── */}
-        <section className="ws-trust" aria-label="How Shop works">
-          <div className="ws-trust__item">
-            <MessageCircle size={20} aria-hidden />
+        <section className="ws-assure" aria-label="How Shop works">
+          <div className="ws-assure__item">
+            <span className="ws-assure__disc" aria-hidden><MessageCircle size={20} /></span>
             <div>
-              <h3 className="ws-trust__title">Deal direct</h3>
-              <p className="ws-trust__copy">Chat with the seller — no middlemen, no markups.</p>
+              <h3 className="ws-assure__title">Deal direct</h3>
+              <p className="ws-assure__copy">Chat with the seller — no middlemen, no markups.</p>
             </div>
           </div>
-          <div className="ws-trust__item">
-            <ShieldCheck size={20} aria-hidden />
+          <div className="ws-assure__item">
+            <span className="ws-assure__disc" aria-hidden><ShieldCheck size={20} /></span>
             <div>
-              <h3 className="ws-trust__title">Know your seller</h3>
-              <p className="ws-trust__copy">Public ratings, reviews and verification on every store.</p>
+              <h3 className="ws-assure__title">Know your seller</h3>
+              <p className="ws-assure__copy">Public ratings, reviews and verification on every store.</p>
             </div>
           </div>
-          <div className="ws-trust__item">
-            <Tag size={20} aria-hidden />
+          <div className="ws-assure__item">
+            <span className="ws-assure__disc" aria-hidden><Tag size={20} /></span>
             <div>
-              <h3 className="ws-trust__title">Meet safely</h3>
-              <p className="ws-trust__copy">Check the item in person before any money moves.</p>
+              <h3 className="ws-assure__title">Meet safely</h3>
+              <p className="ws-assure__copy">Check the item in person before any money moves.</p>
             </div>
           </div>
         </section>

@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import {
-  X, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus,
+  X, Heart, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus,
   Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
@@ -28,12 +28,25 @@ export default function MobileMenu() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const { categories, fetchCategories } = useCategoryStore();
   const { signOut } = useClerk();
+  const drawerRef = useRef<HTMLElement>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
       fetchCategories();
     }
   }, [isMobileMenuOpen, fetchCategories]);
+
+  // Keyboard users: focus moves into the drawer on open and back to the
+  // hamburger on close — Escape alone closed it but left focus stranded.
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      drawerRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+      return () => {
+        document.querySelector<HTMLElement>('.ws-topbar__menu')?.focus();
+      };
+    }
+  }, [isMobileMenuOpen]);
 
   // Letting the body scroll behind an open sheet makes the page drift under it
   // on touch, so it is locked while the drawer is up.
@@ -51,9 +64,15 @@ export default function MobileMenu() {
   }, [isMobileMenuOpen, closeMobileMenu]);
 
   const handleLogout = async () => {
-    await signOut();
-    logout();
-    closeMobileMenu();
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      logout();
+      closeMobileMenu();
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   // Only top-level departments get a row, matching the Header's chip rail.
@@ -68,7 +87,10 @@ export default function MobileMenu() {
       />
 
       <aside
+        ref={drawerRef}
         className={`ws-drawer${isMobileMenuOpen ? ' is-open' : ''}`}
+        role="dialog"
+        aria-modal="true"
         aria-label="Menu"
         // Off-screen but still in the DOM, so its links stay tabbable without
         // this — inert takes them out of the tab order while closed.
@@ -105,11 +127,16 @@ export default function MobileMenu() {
             <ShoppingBag size={18} aria-hidden />
             Browse listings
           </Link>
+          <Link to="/saved" className="ws-drawer__link" onClick={closeMobileMenu}>
+            <Heart size={18} aria-hidden />
+            Saved listings
+          </Link>
           <a
             href="https://dashboard.worldstreetgold.com"
             className="ws-drawer__link"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={closeMobileMenu}
           >
             <Compass size={18} aria-hidden />
             WorldStreet dashboard
@@ -154,9 +181,14 @@ export default function MobileMenu() {
                 <Store size={18} aria-hidden />
                 Sell on WorldStreet
               </Link>
-              <button onClick={handleLogout} className="ws-drawer__link is-danger">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={signingOut}
+                className="ws-drawer__link is-danger"
+              >
                 <LogOut size={18} aria-hidden />
-                Log out
+                {signingOut ? 'Signing out…' : 'Log out'}
               </button>
             </>
           ) : (

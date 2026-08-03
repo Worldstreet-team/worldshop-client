@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Listing, PublicStore } from '@/services/storeService';
@@ -23,24 +23,35 @@ const CONDITION_LABEL: Record<string, string> = {
   REFURBISHED: 'Refurbished',
 };
 
+/**
+ * The fields a card actually renders. Narrower than Listing so /saved can
+ * feed cards from localStorage snapshots instead of a fetch-by-id endpoint.
+ */
+export type CardListing = Pick<
+  Listing,
+  'id' | 'slug' | 'name' | 'condition' | 'city' | 'state' | 'images' | 'priceType' | 'basePrice' | 'maxPrice'
+>;
+
 export default function ListingCard({
   listing,
   showSeller = false,
 }: {
-  listing: Listing & { store?: PublicStore };
+  listing: CardListing & { store?: PublicStore };
   showSeller?: boolean;
 }) {
   const img = firstImage(listing);
   const location = [listing.city, listing.state].filter(Boolean).join(', ');
   const condition = listing.condition ? CONDITION_LABEL[listing.condition] ?? listing.condition : null;
-  const [saved, setSaved] = useState(() => savedListings.has(listing.id));
+  // Subscribed, not local state: the same listing can sit in two grids (a rail
+  // and /saved), and both hearts must move together.
+  const saved = useSyncExternalStore(savedListings.subscribe, () => savedListings.has(listing.id));
 
   return (
     <Link to={`/listings/${listing.slug}`} className="ws-plink">
       <article className="ws-pcard">
         <div className="ws-pcard__media">
           {img ? (
-            <img src={img} alt="" loading="lazy" />
+            <img src={img} alt={listing.name} loading="lazy" />
           ) : (
             <div className="ws-pcard__noimg">
               <ImageOff size={20} aria-hidden />
@@ -65,7 +76,7 @@ export default function ListingCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setSaved(savedListings.toggle(listing.id));
+              savedListings.toggle(listing);
             }}
           >
             <Heart size={16} aria-hidden />
@@ -89,7 +100,7 @@ export default function ListingCard({
               {/* The rating is the seller's, not the item's — nothing was
                   bought here to rate. */}
               {listing.store.reviewCount > 0 && (
-                <span className="ws-rating">
+                <span className="ws-rating" aria-label={`Seller rated ${listing.store.avgRating.toFixed(1)} out of 5`}>
                   <Star size={12} aria-hidden />
                   {listing.store.avgRating.toFixed(1)}
                 </span>

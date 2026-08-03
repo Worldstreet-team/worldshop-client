@@ -27,6 +27,8 @@ const HomePage = lazy(() => import('@/pages/marketplace/Home'));
 const BrowsePage = lazy(() => import('@/pages/marketplace/Browse'));
 const ListingDetailPage = lazy(() => import('@/pages/marketplace/ListingDetail'));
 const MarketplaceStorePage = lazy(() => import('@/pages/marketplace/StorePage'));
+const SavedPage = lazy(() => import('@/pages/marketplace/Saved'));
+const LegalPage = lazy(() => import('@/pages/Legal'));
 
 // Admin Pages
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
@@ -83,6 +85,14 @@ const router = createBrowserRouter([
         path: 'stores/:slug',
         element: <SuspenseWrapper><MarketplaceStorePage /></SuspenseWrapper>,
       },
+      // Saved hearts are device-local, so this needs no sign-in.
+      {
+        path: 'saved',
+        element: <SuspenseWrapper><SavedPage /></SuspenseWrapper>,
+      },
+      { path: 'terms', element: <SuspenseWrapper><LegalPage doc="terms" /></SuspenseWrapper> },
+      { path: 'privacy', element: <SuspenseWrapper><LegalPage doc="privacy" /></SuspenseWrapper> },
+      { path: 'cookies', element: <SuspenseWrapper><LegalPage doc="cookies" /></SuspenseWrapper> },
       // Legacy ecommerce URLs. Shopping flows (cart, checkout, orders) are
       // gone; browse-shaped ones land on the marketplace, and old store links
       // keep their slug since the backfill preserved it.
@@ -146,6 +156,9 @@ const router = createBrowserRouter([
         path: 'reset-password',
         element: <SuspenseWrapper><ResetPasswordPage /></SuspenseWrapper>,
       },
+      // Without this, /auth/anything-else rendered AuthLayout around an
+      // empty Outlet — a blank page.
+      { path: '*', element: <Navigate to="/auth/login" replace /> },
     ],
   },
   // Vendor registration (protected, but NOT vendor-gated)

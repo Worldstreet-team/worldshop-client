@@ -1628,3 +1628,27 @@ select option {
     scroll-behavior: auto !important;
   }
 }
+
+// ─── Skip link ──────────────────────────────────────────────────
+// Visually hidden until keyboard focus; first tab stop on every page.
+
+.ws-skip {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: var(--ws-radius-md);
+  background: var(--ws-bg-raised);
+  color: var(--ws-text-primary);
+  border: 1px solid var(--ws-border-hairline);
+  font-size: 13px;
+  font-weight: 500;
+  transform: translateY(-200%);
+
+  &:focus-visible {
+    transform: none;
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: 2px;
+  }
+}

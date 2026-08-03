@@ -800,6 +800,32 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   letter-spacing: -0.6px;
 }
 
+.ws-detail__titlerow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  margin-top: var(--ws-space-6);
+}
+
+.ws-detail__acts {
+  display: flex;
+  gap: var(--ws-space-2);
+  flex: none;
+  margin-top: 4px;
+
+  .ws-iconbtn {
+    border: 1px solid var(--ws-border-hairline);
+    background: var(--ws-bg-surface);
+  }
+
+  .ws-iconbtn.is-saved {
+    color: var(--ws-brand-gold-text);
+    border-color: color-mix(in srgb, var(--ws-brand-primary) 35%, transparent);
+    svg { fill: currentColor; }
+  }
+}
+
 .ws-detail__price {
   display: flex;
   align-items: center;
@@ -1076,7 +1102,36 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding-block: 48px var(--ws-space-6);
   grid-template-columns: 1fr;
 
-  @media (min-width: $bp-sm) { grid-template-columns: 2fr 1fr 1fr; gap: 48px; }
+  @media (min-width: $bp-sm) { grid-template-columns: 1fr 1fr; gap: 48px; }
+  @media (min-width: $bp-md) { grid-template-columns: 2fr 1fr 1fr 1fr; }
+}
+
+.ws-footer__head { margin-bottom: var(--ws-space-3); }
+
+.ws-footer__blurb {
+  max-width: 42ch;
+  margin-top: var(--ws-space-3);
+
+  a { color: var(--ws-text-muted); &:hover { color: var(--ws-text-primary); } }
+}
+
+.ws-footer__legal {
+  display: flex;
+  gap: var(--ws-space-4);
+}
+
+.ws-footer__top {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  border: 0;
+  background: transparent;
+  color: var(--ws-text-subtle);
+  font-size: 13px;
+  cursor: pointer;
+  padding: var(--ws-space-1) 0;
+
+  &:hover { color: var(--ws-text-primary); }
 }
 
 .ws-footer__links {
@@ -1631,14 +1686,27 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-sellband {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--ws-space-6);
+  gap: var(--ws-space-8);
   align-items: center;
-  padding: 40px;
+  padding: 44px 40px;
   border-radius: var(--ws-radius-xl);
-  background: var(--ws-bg-surface);
-  border: 1px solid var(--ws-border-hairline);
+  // Gold wash from the top-right corner — the one place on the page where
+  // brand color is allowed to spread beyond a control.
+  background:
+    radial-gradient(
+      110% 170% at 100% 0%,
+      color-mix(in srgb, var(--ws-brand-primary) 10%, var(--ws-bg-surface)),
+      var(--ws-bg-surface) 58%
+    );
+  border: 1px solid color-mix(in srgb, var(--ws-brand-primary) 16%, var(--ws-border-hairline));
 
-  @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1fr) auto; }
+  @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+}
+
+.ws-sellband__eyebrow {
+  @include ws-label;
+  color: var(--ws-brand-gold-text);
+  margin-bottom: var(--ws-space-2);
 }
 
 .ws-sellband__sub {
@@ -1648,36 +1716,187 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   max-width: 52ch;
 }
 
-.ws-sellband__cta {
-  justify-self: start;
-  @media (min-width: $bp-md) { justify-self: end; }
+.ws-sellband__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-4);
+  flex-wrap: wrap;
+  margin-top: var(--ws-space-6);
 }
 
-// ─── Trust row ──────────────────────────────────────────────────
+.ws-sellband__note {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+}
 
-.ws-trust {
+.ws-sellband__steps {
   display: grid;
-  gap: var(--ws-space-6);
-  grid-template-columns: 1fr;
-  padding-top: var(--ws-space-6);
-  border-top: 1px solid var(--ws-border-hairline);
-
-  @media (min-width: $bp-md) { grid-template-columns: repeat(3, 1fr); }
+  gap: var(--ws-space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.ws-trust__item {
+.ws-sellband__step {
   display: flex;
   gap: var(--ws-space-3);
-  svg { flex: none; color: var(--ws-brand-gold-text); margin-top: 2px; }
+  align-items: flex-start;
 }
 
-.ws-trust__title {
+.ws-sellband__num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ws-radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ws-brand-gold-text);
+  background: color-mix(in srgb, var(--ws-brand-primary) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-brand-primary) 22%, transparent);
+}
+
+.ws-sellband__steptitle {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 2px;
 }
 
-.ws-trust__copy {
+.ws-sellband__stepcopy {
   @include ws-caption;
   color: var(--ws-text-muted);
+}
+
+// ─── Value props row (home) ─────────────────────────────────────
+// Named .ws-assure, NOT .ws-trust — that class belongs to the seller
+// trust facts on the listing/store sidebars and the two collided once.
+
+.ws-assure {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: 1fr;
+
+  @media (min-width: $bp-md) { grid-template-columns: repeat(3, 1fr); }
+}
+
+.ws-assure__item {
+  display: flex;
+  gap: var(--ws-space-4);
+  align-items: flex-start;
+  padding: var(--ws-space-6);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+}
+
+.ws-assure__disc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ws-radius-full);
+  color: var(--ws-brand-gold-text);
+  background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
+}
+
+.ws-assure__title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.ws-assure__copy {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+}
+
+// ─── Legal pages ────────────────────────────────────────────────
+
+.ws-legal {
+  max-width: 68ch;
+  margin-inline: auto;
+  padding-block: var(--ws-space-8) var(--ws-space-12);
+
+  section { margin-top: var(--ws-space-8); }
+
+  section p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ws-text-muted);
+    margin-top: var(--ws-space-3);
+  }
+}
+
+.ws-legal__intro {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ws-text-muted);
+  margin-top: var(--ws-space-3);
+}
+
+.ws-legal__foot {
+  margin-top: var(--ws-space-10);
+  padding-top: var(--ws-space-6);
+  border-top: 1px solid var(--ws-border-hairline);
+
+  a { color: var(--ws-brand-gold-text); }
+}
+
+// ─── 404 ────────────────────────────────────────────────────────
+
+.ws-404 {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: var(--ws-space-3);
+  max-width: 480px;
+  margin-inline: auto;
+  padding-block: var(--ws-space-16, 96px) var(--ws-space-12, 72px);
+}
+
+.ws-404__code {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 84px;
+  line-height: 1;
+  letter-spacing: -2px;
+  // Brand-tinted outline numeral: unmistakably a 404, quietly on-brand.
+  color: transparent;
+  -webkit-text-stroke: 2px color-mix(in srgb, var(--ws-brand-primary) 55%, var(--ws-text-subtle));
+}
+
+.ws-404__copy {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  max-width: 44ch;
+}
+
+.ws-404__path {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: var(--ws-radius-sm);
+  background: var(--ws-bg-raised);
+  border: 1px solid var(--ws-border-hairline);
+  word-break: break-all;
+}
+
+.ws-404__search {
+  width: 100%;
+  max-width: 380px;
+  height: 46px;
+  margin-top: var(--ws-space-3);
+  border: 1px solid var(--ws-border-hairline);
+
+  &:focus-within {
+    border-color: var(--ws-brand-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-brand-primary) 18%, transparent);
+  }
+}
+
+.ws-404__links {
+  display: flex;
+  gap: var(--ws-space-3);
+  margin-top: var(--ws-space-3);
 }

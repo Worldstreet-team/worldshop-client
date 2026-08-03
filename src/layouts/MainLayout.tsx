@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, ScrollRestoration } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ToastContainer from '@/components/ui/ToastContainer';
@@ -13,11 +13,16 @@ import VoiceButton from '@/components/common/VoiceButton';
 export default function MainLayout() {
   return (
     <div className="ws ws-shell">
+      {/* First tab stop: past the search bar and category rail. */}
+      <a href="#main" className="ws-skip">Skip to content</a>
       <Header />
-      <main className="ws-shell__main">
+      <main id="main" className="ws-shell__main">
         <Outlet />
       </main>
       <Footer />
+
+      {/* Back/forward restores scroll; new locations start at the top. */}
+      <ScrollRestoration />
 
       {/* Overlay Components */}
       <MobileMenu />

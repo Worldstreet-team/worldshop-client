@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck } from 'lucide-react';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { PackageSearch, ShieldCheck } from 'lucide-react';
 import { publicMarketplace, type PublicStore, type Listing } from '@/services/storeService';
 import SellerCard from '@/components/marketplace/SellerCard';
 import ListingCard from '@/components/marketplace/ListingCard';
 import ReportButton from '@/components/marketplace/ReportButton';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
  * Public storefront.
@@ -17,13 +18,30 @@ import ReportButton from '@/components/marketplace/ReportButton';
 
 export default function StorePage() {
   const { slug } = useParams<{ slug: string }>();
+  // Page lives in the URL so page 2 is shareable and the back button steps
+  // through pages — same rule Browse follows.
+  const [params, setParams] = useSearchParams();
+  const page = Math.max(1, Number(params.get('page')) || 1);
   const [store, setStore] = useState<PublicStore | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  // Loading is derived: the grid is loading whenever the fetched key lags the
+  // requested one. That is what puts skeletons up on every page change — the
+  // old version only ever set loading once, so page 2 showed page 1's grid
+  // frozen until the response landed.
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== `${slug}|${page}`;
   const [notFound, setNotFound] = useState(false);
+
+  usePageTitle(notFound ? 'Store not available' : store?.name);
+
+  const setPage = (next: number) => {
+    const nextParams = new URLSearchParams(params);
+    if (next <= 1) nextParams.delete('page');
+    else nextParams.set('page', String(next));
+    setParams(nextParams);
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -57,7 +75,7 @@ export default function StorePage() {
       })
       .catch(() => undefined)
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedKey(`${slug}|${page}`);
       });
 
     return () => {
@@ -147,7 +165,16 @@ export default function StorePage() {
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <p className="ws-body ws-muted">This seller has no live listings right now.</p>
+              <div className="ws-empty" style={{ marginBlock: 'var(--ws-space-8)' }}>
+                <span className="ws-empty__icon" aria-hidden><PackageSearch size={22} /></span>
+                <h3 className="ws-title">No live listings right now</h3>
+                <p className="ws-caption ws-muted" style={{ maxWidth: '34ch' }}>
+                  This seller has nothing published at the moment — check back, or browse the marketplace.
+                </p>
+                <Link to="/listings" className="ws-btn ws-btn--sm ws-btn--secondary">
+                  Browse listings
+                </Link>
+              </div>
             ) : (
               <div className="ws-grid" style={{ marginTop: 'var(--ws-space-4)' }}>
                 {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
@@ -159,7 +186,7 @@ export default function StorePage() {
                 <button
                   className="ws-btn ws-btn--sm ws-btn--secondary"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
+                  onClick={() => setPage(page - 1)}
                 >
                   Previous
                 </button>
@@ -167,7 +194,7 @@ export default function StorePage() {
                 <button
                   className="ws-btn ws-btn--sm ws-btn--secondary"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
+                  onClick={() => setPage(page + 1)}
                 >
                   Next
                 </button>
@@ -203,13 +230,17 @@ export default function StorePage() {
                 )}
                 {store.address && <p className="ws-caption ws-muted">{store.address}</p>}
               </div>
-
-              <div className="ws-safety" style={{ marginTop: 'var(--ws-space-4)' }}>
-                <ShieldCheck size={16} aria-hidden />
-                <span>WorldStreet does not handle payment or delivery. Check items before paying.</span>
-              </div>
             </div>
           )}
+
+          {/* Always visible — the safety warning must not depend on whether
+              the store filled in its contact details. */}
+          <div className="ws-card">
+            <div className="ws-safety">
+              <ShieldCheck size={16} aria-hidden />
+              <span>WorldStreet does not handle payment or delivery. Check items before paying.</span>
+            </div>
+          </div>
 
           <div style={{ textAlign: 'right' }}>
             <ReportButton

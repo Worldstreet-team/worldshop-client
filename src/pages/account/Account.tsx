@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, User, Store, PlusCircle } from 'lucide-react';
+import { Heart, MessageCircle, User, Store, PlusCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { storeService, type MyStore } from '@/services/storeService';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 export default function AccountPage() {
+  usePageTitle('My account');
   const { user } = useAuthStore();
 
   // Owning a store is what makes someone a seller now — the profile's
@@ -36,6 +38,12 @@ export default function AccountPage() {
       description: 'Conversations with sellers',
     },
     {
+      path: '/saved',
+      Icon: Heart,
+      title: 'Saved Listings',
+      description: 'Listings you hearted, kept on this device',
+    },
+    {
       path: '/account/profile',
       Icon: User,
       title: 'Profile',
@@ -65,7 +73,9 @@ export default function AccountPage() {
       <div className="ws-page__head">
         <div>
           <h1 className="ws-page__title">My Account</h1>
-          <p className="ws-page__sub">Welcome back, {user?.firstName}!</p>
+          <p className="ws-page__sub">
+            {user?.firstName ? `Welcome back, ${user.firstName}!` : 'Welcome back!'}
+          </p>
         </div>
       </div>
 

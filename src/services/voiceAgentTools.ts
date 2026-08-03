@@ -3,28 +3,30 @@ import type { VoiceToolDefinition, VoiceToolHandler } from './voiceAgent';
 
 // ── Navigation Map ──────────────────────────────────────────────
 
+// Every target must be a live route — the pre-pivot map sent people to
+// /cart and /account/orders, pages that no longer exist.
 const NAVIGATION_MAP: Record<string, string> = {
   home: '/',
   'main page': '/',
-  products: '/products',
-  shop: '/products',
-  browse: '/products',
-  categories: '/categories',
-  cart: '/cart',
-  'my cart': '/cart',
-  'shopping cart': '/cart',
-  checkout: '/checkout',
-  'my orders': '/account/orders',
-  'order history': '/account/orders',
-  orders: '/account/orders',
+  listings: '/listings',
+  products: '/listings',
+  shop: '/listings',
+  browse: '/listings',
+  marketplace: '/listings',
+  categories: '/listings',
+  saved: '/saved',
+  'saved items': '/saved',
+  'saved listings': '/saved',
+  wishlist: '/saved',
+  messages: '/account/messages',
+  'my messages': '/account/messages',
+  inbox: '/account/messages',
   'my account': '/account/profile',
   account: '/account/profile',
   profile: '/account/profile',
-  wishlist: '/account/wishlist',
-  'saved items': '/account/wishlist',
-  addresses: '/account/addresses',
-  'my addresses': '/account/addresses',
-  downloads: '/account/downloads',
+  sell: '/vendor',
+  'my store': '/vendor',
+  'seller dashboard': '/vendor',
 };
 
 // ── Tool Definitions (OpenAI function schemas) ──────────────────
