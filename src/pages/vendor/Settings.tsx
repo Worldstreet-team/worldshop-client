@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertCircle, Copy } from 'lucide-react';
 import { storeService, type MyStore } from '@/services/storeService';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 import { useUIStore } from '@/store/uiStore';
@@ -177,190 +178,260 @@ export default function VendorSettings() {
   };
 
   if (loading) {
-    return <div className="vendor-settings"><p style={{ color: '#667085' }}>Loading store…</p></div>;
+    return (
+      <div className="ws-page">
+        <div className="ws-page__head"><h1 className="ws-page__title">Store Settings</h1></div>
+        <div className="ws-skeleton" style={{ height: 400, borderRadius: 'var(--ws-radius-xl)' }} />
+      </div>
+    );
   }
 
   if (!store) {
     return (
-      <div className="vendor-settings">
-        <div className="page-header"><h1>Store Settings</h1></div>
-        <p style={{ color: '#b42318' }}>{error ?? 'Could not load your store.'}</p>
+      <div className="ws-page">
+        <div className="ws-page__head"><h1 className="ws-page__title">Store Settings</h1></div>
+        <div className="ws-alert" role="alert">
+          <AlertCircle size={16} aria-hidden />
+          <span>{error ?? 'Could not load your store.'}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="vendor-settings">
-      <div className="page-header">
-        <h1>Store Settings</h1>
-        <p style={{ color: '#667085' }}>
-          Everything on this page is what buyers see. Your subscription is
-          managed from the <Link to="/vendor">dashboard</Link>.
-        </p>
+    <div className="ws-page" style={{ maxWidth: 860 }}>
+      <div className="ws-page__head">
+        <div>
+          <h1 className="ws-page__title">Store Settings</h1>
+          <p className="ws-page__sub">
+            Everything on this page is what buyers see. Your subscription is
+            managed from the{' '}
+            <Link to="/vendor" style={{ color: 'var(--ws-brand-gold-text)' }}>dashboard</Link>.
+          </p>
+        </div>
       </div>
 
-      {/* ── Store URL ── */}
-      <section className="dashboard-section">
-        <h2>Store link</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <code style={{ background: '#f8f9fc', border: '1px solid #e4e7ec', borderRadius: 6, padding: '0.45rem 0.7rem' }}>
-            {publicUrl}
-          </code>
-          <button type="button" className="btn-secondary" onClick={copyUrl}>
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-          {store.isPubliclyVisible ? (
-            <Link to={`/stores/${store.slug}`} className="btn-secondary">View public page</Link>
-          ) : (
-            <span style={{ color: '#b54708', fontSize: '0.85rem' }}>
-              Not visible to buyers yet — activate from the dashboard.
-            </span>
-          )}
-        </div>
-      </section>
-
-      {error && (
-        <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', marginBottom: '1rem' }}>
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={save}>
-        {/* ── Identity ── */}
-        <section className="dashboard-section">
-          <h2>Identity</h2>
-
-          <div className="form-group">
-            <label htmlFor="name">Store Name *</label>
-            <input id="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
-          </div>
-
-          {/* The one link-breaking control on the page, armed per save. */}
-          {nameChanged && (
-            <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '-0.25rem 0 0.75rem', fontSize: '0.88rem', color: '#475467' }}>
-              <input
-                type="checkbox"
-                checked={regenerateSlug}
-                onChange={(e) => setRegenerateSlug(e.target.checked)}
-                style={{ marginTop: 3 }}
-              />
-              <span>
-                Also update my store link to match the new name.
-                <br />
-                <span style={{ color: '#b54708' }}>
-                  This changes your URL — anywhere you have shared the old link will stop working.
-                </span>
+      <div className="ws-stack--lg">
+        {/* ── Store URL ── */}
+        <section className="ws-card">
+          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Store link</h2>
+          <div style={{ display: 'flex', gap: 'var(--ws-space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <code
+              style={{
+                background: 'var(--ws-bg-sunken)',
+                border: '1px solid var(--ws-border-hairline)',
+                borderRadius: 'var(--ws-radius-md)',
+                padding: '8px 11px',
+                fontSize: 13,
+              }}
+            >
+              {publicUrl}
+            </code>
+            <button type="button" className="ws-btn ws-btn--sm ws-btn--secondary" onClick={copyUrl}>
+              <Copy size={14} aria-hidden />
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            {store.isPubliclyVisible ? (
+              <Link to={`/stores/${store.slug}`} className="ws-btn ws-btn--sm ws-btn--secondary">
+                View public page
+              </Link>
+            ) : (
+              <span className="ws-caption" style={{ color: 'var(--ws-status-warning)' }}>
+                Not visible to buyers yet — activate from the dashboard.
               </span>
-            </label>
-          )}
-
-          <div className="form-group">
-            <label htmlFor="description">About Your Store</label>
-            <textarea
-              id="description"
-              rows={4}
-              maxLength={1000}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What do you sell? Why should a buyer contact you?"
-            />
+            )}
           </div>
         </section>
 
-        {/* ── Branding ── */}
-        <section className="dashboard-section">
-          <h2>Branding</h2>
+        {error && (
+          <div className="ws-alert" role="alert">
+            <AlertCircle size={16} aria-hidden />
+            <span>{error}</span>
+          </div>
+        )}
 
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.35rem' }}>Logo</label>
-              {logo ? (
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <img src={logoPreview ?? logo} alt="" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e4e7ec' }} />
-                  <button type="button" className="btn-secondary" onClick={() => { setLogo(null); setLogoPreview(null); }}>Remove</button>
-                </div>
-              ) : (
-                <input type="file" accept="image/*" disabled={uploading === 'logo'} onChange={(e) => uploadImage('logo', e.target.files)} />
-              )}
-              {uploading === 'logo' && <p style={{ color: '#667085', fontSize: '0.85rem' }}>Uploading…</p>}
+        <form onSubmit={save} className="ws-stack--lg">
+          {/* ── Identity ── */}
+          <section className="ws-card ws-stack--lg">
+            <h2 className="ws-h2">Identity</h2>
+
+            <div className="ws-formfield">
+              <label htmlFor="name" className="ws-formfield__label">Store Name *</label>
+              <input id="name" className="ws-field" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
             </div>
 
-            <div style={{ flex: 1, minWidth: 260 }}>
-              <label style={{ display: 'block', marginBottom: '0.35rem' }}>Banner</label>
-              {banner ? (
-                <div>
-                  <img src={bannerPreview ?? banner} alt="" style={{ width: '100%', maxWidth: 420, height: 90, objectFit: 'cover', borderRadius: 8, border: '1px solid #e4e7ec' }} />
-                  <div>
-                    <button type="button" className="btn-secondary" onClick={() => { setBanner(null); setBannerPreview(null); }} style={{ marginTop: '0.4rem' }}>
+            {/* The one link-breaking control on the page, armed per save. */}
+            {nameChanged && (
+              <label className="ws-check">
+                <input
+                  type="checkbox"
+                  className="ws-check__input"
+                  checked={regenerateSlug}
+                  onChange={(e) => setRegenerateSlug(e.target.checked)}
+                />
+                <span className="ws-check__body">
+                  <span className="ws-check__label">Also update my store link to match the new name.</span>
+                  <span className="ws-check__desc" style={{ color: 'var(--ws-status-warning)' }}>
+                    This changes your URL — anywhere you have shared the old link will stop working.
+                  </span>
+                </span>
+              </label>
+            )}
+
+            <div className="ws-formfield">
+              <label htmlFor="description" className="ws-formfield__label">About Your Store</label>
+              <textarea
+                id="description"
+                className="ws-textarea"
+                rows={4}
+                maxLength={1000}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What do you sell? Why should a buyer contact you?"
+              />
+            </div>
+          </section>
+
+          {/* ── Branding ── */}
+          <section className="ws-card ws-stack--lg">
+            <h2 className="ws-h2">Branding</h2>
+
+            <div style={{ display: 'flex', gap: 'var(--ws-space-8)', flexWrap: 'wrap' }}>
+              <div className="ws-formfield">
+                <span className="ws-formfield__label">Logo</span>
+                {logo ? (
+                  <div style={{ display: 'flex', gap: 'var(--ws-space-2)', alignItems: 'center' }}>
+                    <img
+                      src={logoPreview ?? logo}
+                      alt=""
+                      style={{
+                        width: 64, height: 64, borderRadius: 'var(--ws-radius-pill)',
+                        objectFit: 'cover', border: '1px solid var(--ws-border-hairline)',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="ws-btn ws-btn--sm ws-btn--ghost"
+                      onClick={() => { setLogo(null); setLogoPreview(null); }}
+                    >
                       Remove
                     </button>
                   </div>
-                </div>
-              ) : (
-                <input type="file" accept="image/*" disabled={uploading === 'banner'} onChange={(e) => uploadImage('banner', e.target.files)} />
-              )}
-              {uploading === 'banner' && <p style={{ color: '#667085', fontSize: '0.85rem' }}>Uploading…</p>}
+                ) : (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="ws-file"
+                    disabled={uploading === 'logo'}
+                    onChange={(e) => uploadImage('logo', e.target.files)}
+                  />
+                )}
+                {uploading === 'logo' && <p className="ws-caption ws-muted">Uploading…</p>}
+              </div>
+
+              <div className="ws-formfield" style={{ flex: 1, minWidth: 260 }}>
+                <span className="ws-formfield__label">Banner</span>
+                {banner ? (
+                  <div>
+                    <img
+                      src={bannerPreview ?? banner}
+                      alt=""
+                      style={{
+                        width: '100%', maxWidth: 420, height: 90, objectFit: 'cover',
+                        borderRadius: 'var(--ws-radius-lg)', border: '1px solid var(--ws-border-hairline)',
+                      }}
+                    />
+                    <div>
+                      <button
+                        type="button"
+                        className="ws-btn ws-btn--sm ws-btn--ghost"
+                        onClick={() => { setBanner(null); setBannerPreview(null); }}
+                        style={{ marginTop: 'var(--ws-space-2)' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="ws-file"
+                    disabled={uploading === 'banner'}
+                    onChange={(e) => uploadImage('banner', e.target.files)}
+                  />
+                )}
+                {uploading === 'banner' && <p className="ws-caption ws-muted">Uploading…</p>}
+              </div>
             </div>
+          </section>
+
+          {/* ── Contact ── */}
+          <section className="ws-card ws-stack--lg">
+            <div>
+              <h2 className="ws-h2">Contact</h2>
+              <p className="ws-caption ws-muted">
+                Shown on your store page and listings. Buyers message you on
+                WorldStreet first; these let them also reach you directly. Clearing
+                a field removes it from your page.
+              </p>
+            </div>
+
+            <div className="ws-formgrid">
+              <div className="ws-formfield">
+                <label htmlFor="phone" className="ws-formfield__label">Phone Number</label>
+                <input id="phone" type="tel" className="ws-field" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 08031234567" />
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="whatsapp" className="ws-formfield__label">WhatsApp Number</label>
+                <input id="whatsapp" type="tel" className="ws-field" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="If different from your phone number" />
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="email" className="ws-formfield__label">Contact Email</label>
+                <input id="email" type="email" className="ws-field" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="website" className="ws-formfield__label">Website or Social Page</label>
+                <input id="website" type="url" className="ws-field" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://instagram.com/yourstore" />
+              </div>
+            </div>
+          </section>
+
+          {/* ── Location ── */}
+          <section className="ws-card ws-stack--lg">
+            <h2 className="ws-h2">Location</h2>
+
+            <div className="ws-formgrid">
+              <div className="ws-formfield">
+                <label htmlFor="state" className="ws-formfield__label">State *</label>
+                <select id="state" className="ws-select" value={state} onChange={(e) => setState(e.target.value)}>
+                  <option value="">Select a state</option>
+                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="city" className="ws-formfield__label">City / Area</label>
+                <input id="city" className="ws-field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Ikeja" />
+              </div>
+
+              <div className="ws-formfield ws-formgrid__full">
+                <label htmlFor="address" className="ws-formfield__label">Shop Address</label>
+                <input id="address" className="ws-field" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Shown to buyers if you have a physical shop" />
+              </div>
+            </div>
+          </section>
+
+          <div>
+            <button type="submit" className="ws-btn ws-btn--primary" disabled={saving || uploading != null}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
           </div>
-        </section>
-
-        {/* ── Contact ── */}
-        <section className="dashboard-section">
-          <h2>Contact</h2>
-          <p style={{ color: '#667085', fontSize: '0.88rem' }}>
-            Shown on your store page and listings. Buyers message you on
-            WorldStreet first; these let them also reach you directly. Clearing
-            a field removes it from your page.
-          </p>
-
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
-            <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 08031234567" />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="whatsapp">WhatsApp Number</label>
-            <input id="whatsapp" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="If different from your phone number" />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Contact Email</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="website">Website or Social Page</label>
-            <input id="website" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://instagram.com/yourstore" />
-          </div>
-        </section>
-
-        {/* ── Location ── */}
-        <section className="dashboard-section">
-          <h2>Location</h2>
-
-          <div className="form-group">
-            <label htmlFor="state">State *</label>
-            <select id="state" value={state} onChange={(e) => setState(e.target.value)}>
-              <option value="">Select a state</option>
-              {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="city">City / Area</label>
-            <input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Ikeja" />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Shop Address</label>
-            <input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Shown to buyers if you have a physical shop" />
-          </div>
-        </section>
-
-        <button type="submit" className="btn-primary" disabled={saving || uploading != null}>
-          {saving ? 'Saving…' : 'Save changes'}
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

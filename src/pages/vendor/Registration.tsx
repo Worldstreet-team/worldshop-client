@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Info, AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -141,31 +142,27 @@ export default function VendorRegistration() {
 
   if (checkingStore) {
     return (
-      <div className="vendor-registration">
-        <div className="registration-header"><h1>Create Your Store</h1></div>
-        <p style={{ color: '#667085' }}>Loading…</p>
+      <div className="ws-page">
+        <div className="ws-page__head"><h1 className="ws-page__title">Create Your Store</h1></div>
+        <div className="ws-skeleton" style={{ height: 320, borderRadius: 'var(--ws-radius-xl)' }} />
       </div>
     );
   }
 
   return (
-    <div className="vendor-registration">
-      <div className="registration-header">
-        <h1>Create Your Store</h1>
-        <p>Set up your storefront on the WorldStreet marketplace.</p>
+    <div className="ws-page" style={{ maxWidth: 760 }}>
+      <div className="ws-page__head">
+        <div>
+          <h1 className="ws-page__title">Create Your Store</h1>
+          <p className="ws-page__sub">Set up your storefront on the WorldStreet marketplace.</p>
+        </div>
       </div>
 
       {/* What they are signing up to, stated before the form rather than after. */}
-      <div
-        style={{
-          display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
-          padding: '1rem', borderRadius: 8, background: '#f8f9fc',
-          border: '1px solid #e4e7ec', marginBottom: '1.5rem',
-        }}
-      >
-        <span className="material-icons" style={{ color: '#475467' }}>info</span>
-        <div style={{ fontSize: '0.92rem', color: '#475467', lineHeight: 1.5 }}>
-          <strong style={{ display: 'block', color: '#101828', marginBottom: 2 }}>
+      <div className="ws-alert ws-alert--info" style={{ marginBottom: 'var(--ws-space-6)' }}>
+        <Info size={16} aria-hidden />
+        <div>
+          <strong style={{ display: 'block', color: 'var(--ws-text-primary)', marginBottom: 2 }}>
             {plan
               ? `${formatUsd(plan.amountMinor)} per month to stay visible`
               : 'A monthly subscription keeps your store visible'}
@@ -176,90 +173,103 @@ export default function VendorRegistration() {
         </div>
       </div>
 
-      {serverError && <div className="error-message">{serverError}</div>}
+      {serverError && (
+        <div className="ws-alert" role="alert" style={{ marginBottom: 'var(--ws-space-4)' }}>
+          <AlertCircle size={16} aria-hidden />
+          <span>{serverError}</span>
+        </div>
+      )}
 
-      <form className="registration-form" onSubmit={handleSubmit(onSubmit)}>
-        <div className="form-group">
-          <label htmlFor="name">Store Name *</label>
-          <input id="name" type="text" placeholder="e.g. Bella Fabrics" {...register('name')} />
-          {errors.name && <p className="field-error">{errors.name.message}</p>}
+      <form className="ws-card ws-stack--lg" onSubmit={handleSubmit(onSubmit)}>
+        <div className="ws-formgrid">
+          <div className="ws-formfield ws-formgrid__full">
+            <label htmlFor="name" className="ws-formfield__label">Store Name *</label>
+            <input id="name" type="text" className="ws-field" placeholder="e.g. Bella Fabrics" {...register('name')} />
+            {errors.name && <p className="ws-formfield__error">{errors.name.message}</p>}
+          </div>
+
+          <div className="ws-formfield ws-formgrid__full">
+            <label htmlFor="description" className="ws-formfield__label">About Your Store</label>
+            <textarea
+              id="description"
+              className="ws-textarea"
+              placeholder="What do you sell? What makes your store worth contacting?"
+              {...register('description')}
+            />
+            {errors.description && <p className="ws-formfield__error">{errors.description.message}</p>}
+          </div>
+
+          {/* Buyers browse by state, so this one is required. */}
+          <div className="ws-formfield">
+            <label htmlFor="state" className="ws-formfield__label">State *</label>
+            <select id="state" className="ws-select" {...register('state')}>
+              <option value="">Select a state</option>
+              {NIGERIAN_STATES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            {errors.state && <p className="ws-formfield__error">{errors.state.message}</p>}
+          </div>
+
+          <div className="ws-formfield">
+            <label htmlFor="city" className="ws-formfield__label">City / Area</label>
+            <input id="city" type="text" className="ws-field" placeholder="e.g. Ikeja" {...register('city')} />
+            {errors.city && <p className="ws-formfield__error">{errors.city.message}</p>}
+          </div>
+
+          <div className="ws-formfield ws-formgrid__full">
+            <label htmlFor="address" className="ws-formfield__label">Shop Address</label>
+            <input
+              id="address"
+              type="text"
+              className="ws-field"
+              placeholder="Optional — shown to buyers if you have a physical shop"
+              {...register('address')}
+            />
+            {errors.address && <p className="ws-formfield__error">{errors.address.message}</p>}
+          </div>
+
+          <div className="ws-formfield">
+            <label htmlFor="phone" className="ws-formfield__label">Phone Number</label>
+            <input id="phone" type="tel" className="ws-field" placeholder="e.g. 08031234567" {...register('phone')} />
+            {errors.phone && <p className="ws-formfield__error">{errors.phone.message}</p>}
+          </div>
+
+          <div className="ws-formfield">
+            <label htmlFor="whatsapp" className="ws-formfield__label">WhatsApp Number</label>
+            <input
+              id="whatsapp"
+              type="tel"
+              className="ws-field"
+              placeholder="If different from your phone number"
+              {...register('whatsapp')}
+            />
+            {errors.whatsapp && <p className="ws-formfield__error">{errors.whatsapp.message}</p>}
+          </div>
+
+          <div className="ws-formfield ws-formgrid__full">
+            <label htmlFor="website" className="ws-formfield__label">Website or Social Page</label>
+            <input
+              id="website"
+              type="url"
+              className="ws-field"
+              placeholder="https://instagram.com/yourstore"
+              {...register('website')}
+            />
+            {errors.website && <p className="ws-formfield__error">{errors.website.message}</p>}
+          </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="description">About Your Store</label>
-          <textarea
-            id="description"
-            placeholder="What do you sell? What makes your store worth contacting?"
-            {...register('description')}
-          />
-          {errors.description && <p className="field-error">{errors.description.message}</p>}
-        </div>
-
-        {/* Buyers browse by state, so this one is required. */}
-        <div className="form-group">
-          <label htmlFor="state">State *</label>
-          <select id="state" {...register('state')}>
-            <option value="">Select a state</option>
-            {NIGERIAN_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          {errors.state && <p className="field-error">{errors.state.message}</p>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="city">City / Area</label>
-          <input id="city" type="text" placeholder="e.g. Ikeja" {...register('city')} />
-          {errors.city && <p className="field-error">{errors.city.message}</p>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="address">Shop Address</label>
-          <input
-            id="address"
-            type="text"
-            placeholder="Optional — shown to buyers if you have a physical shop"
-            {...register('address')}
-          />
-          {errors.address && <p className="field-error">{errors.address.message}</p>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="phone">Phone Number</label>
-          <input id="phone" type="tel" placeholder="e.g. 08031234567" {...register('phone')} />
-          {errors.phone && <p className="field-error">{errors.phone.message}</p>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="whatsapp">WhatsApp Number</label>
-          <input
-            id="whatsapp"
-            type="tel"
-            placeholder="If different from your phone number"
-            {...register('whatsapp')}
-          />
-          {errors.whatsapp && <p className="field-error">{errors.whatsapp.message}</p>}
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="website">Website or Social Page</label>
-          <input
-            id="website"
-            type="url"
-            placeholder="https://instagram.com/yourstore"
-            {...register('website')}
-          />
-          {errors.website && <p className="field-error">{errors.website.message}</p>}
-        </div>
-
-        <p style={{ fontSize: '0.85rem', color: '#667085', marginBottom: '1rem' }}>
+        <p className="ws-caption ws-muted">
           Buyers message you on WorldStreet first. Your phone and WhatsApp are
           shown on your store page so they can also reach you directly.
         </p>
 
-        <button type="submit" className="submit-btn" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating Store…' : 'Create My Store'}
-        </button>
+        <div>
+          <button type="submit" className="ws-btn ws-btn--primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating Store…' : 'Create My Store'}
+          </button>
+        </div>
       </form>
     </div>
   );

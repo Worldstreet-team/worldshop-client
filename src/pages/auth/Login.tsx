@@ -30,16 +30,12 @@ export default function LoginPage() {
     }
   }, [isLoaded, isSignedIn, redirectToLogin, returnUrl, navigate, from, returnUrlParam]);
 
+  // This page never renders a form — it hands off to the identity hub — so the
+  // only state it has is "on the way there".
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '50vh',
-      fontSize: '1.1rem',
-      color: '#666',
-    }}>
-      Redirecting to login...
+    <div style={{ display: 'grid', justifyItems: 'center', gap: 'var(--ws-space-3)' }} role="status">
+      <span className="ws-spinner" style={{ fontSize: 24 }} aria-hidden="true" />
+      <p className="ws-body ws-muted">Redirecting to sign in…</p>
     </div>
   );
 }

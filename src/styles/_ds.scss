@@ -1,0 +1,1544 @@
+// WorldStreet design system — component layer for the Shop theme.
+//
+// Everything here reads from the semantic tokens in `_tokens.scss`, so no
+// platform hex appears below. Classes are namespaced `ws-` because the legacy
+// Electro styles (_components, _pages, _vendor…) still own the vendor and admin
+// screens — namespacing lets the marketplace be rebuilt without a specificity
+// fight against them.
+//
+// Specs are 1:1 from design-system/04-components.md.
+
+// ─── Base ───────────────────────────────────────────────────────
+
+.ws {
+  // Scoping root. Applied to the marketplace shell so the token-driven
+  // typography does not leak into the un-migrated screens.
+  font-family: var(--ws-font-ui);
+  color: var(--ws-text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  *,
+  *::before,
+  *::after { box-sizing: border-box; }
+}
+
+// The page ladder starts here. `bg/page` is the floor everything else sits on.
+body:has(.ws) {
+  background: var(--ws-bg-page);
+}
+
+// ─── Type ramp ──────────────────────────────────────────────────
+// Shop resolves display → Space Grotesk, ui → Inter (see _tokens.scss).
+
+// Space Grotesk has no ExtraBold/SemiBold, so on Shop all three Display roles
+// resolve to Bold 700 (02-typography.md). Only the sizes and letter-spacing
+// differ between them.
+@mixin ws-display { font-family: var(--ws-font-display); font-weight: 700; font-size: 30px; letter-spacing: -0.5px; line-height: 1.15; }
+@mixin ws-h1      { font-family: var(--ws-font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.6px; line-height: 1.15; }
+@mixin ws-h2      { font-family: var(--ws-font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.3px; line-height: 1.25; }
+@mixin ws-title   { font-weight: 600; font-size: 16px; line-height: 1.35; }
+@mixin ws-body    { font-weight: 400; font-size: 15px; line-height: 1.5; }
+@mixin ws-caption { font-weight: 400; font-size: 13px; line-height: 1.45; }
+@mixin ws-label   { font-weight: 500; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+@mixin ws-badge   { font-weight: 600; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.ws-display { @include ws-display; }
+.ws-h1      { @include ws-h1; }
+.ws-h2      { @include ws-h2; }
+.ws-title   { @include ws-title; }
+.ws-body    { @include ws-body; }
+.ws-caption { @include ws-caption; }
+.ws-label   { @include ws-label; color: var(--ws-text-muted); }
+
+.ws-muted  { color: var(--ws-text-muted); }
+.ws-subtle { color: var(--ws-text-subtle); }
+
+// Every number that can change gets tabular figures, so columns of prices do
+// not jitter as digits change width.
+.ws-num { font-variant-numeric: tabular-nums; }
+
+// Price is a display-face moment on Shop: Space Grotesk Bold 16.
+.ws-price {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-text-primary);
+  letter-spacing: -0.2px;
+}
+
+// ─── Focus (applies everywhere) ─────────────────────────────────
+
+.ws :focus-visible {
+  outline: 2px solid var(--ws-brand-primary);
+  outline-offset: 2px;
+  border-radius: var(--ws-radius-sm);
+}
+
+// ─── Button ─────────────────────────────────────────────────────
+// Base: height 52, radius 7, padding 12/16, gap 8, label SemiBold 16.
+
+.ws-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ws-space-2);
+  min-height: 52px;
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border-radius: var(--ws-radius-md);
+  border: 1px solid transparent;
+  font-family: var(--ws-font-ui);
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+
+  &:disabled,
+  &[aria-disabled='true'] { opacity: 0.45; pointer-events: none; }
+
+  svg { flex: none; }
+}
+
+.ws-btn--primary {
+  background: var(--ws-brand-primary);
+  border-color: var(--ws-brand-primary);
+  color: var(--ws-brand-on-primary);
+  &:hover { background: var(--ws-brand-active); border-color: var(--ws-brand-active); }
+  &:active { background: var(--ws-brand-dim); border-color: var(--ws-brand-dim); }
+}
+
+.ws-btn--secondary {
+  background: var(--ws-bg-raised);
+  border-color: var(--ws-border-hairline);
+  color: var(--ws-text-primary);
+  &:hover { background: var(--ws-bg-chip); }
+}
+
+.ws-btn--ghost {
+  background: transparent;
+  border-color: var(--ws-border-hairline);
+  color: var(--ws-text-primary);
+  &:hover { background: var(--ws-bg-chip); }
+}
+
+.ws-btn--danger {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--ws-status-danger) 40%, transparent);
+  color: var(--ws-status-danger);
+  &:hover { background: color-mix(in srgb, var(--ws-status-danger) 10%, transparent); }
+}
+
+// Small pill button — "Post", "Follow", "Contact" chips.
+.ws-btn--sm {
+  min-height: 36px;
+  padding: var(--ws-space-2) 18px;
+  border-radius: var(--ws-radius-pill);
+  font-size: 13px;
+}
+
+.ws-btn--block { width: 100%; }
+
+// ─── Badge ──────────────────────────────────────────────────────
+// Height 20, radius 7, padding 4/8, SemiBold 10 uppercase.
+
+.ws-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  height: 20px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-md);
+  @include ws-badge;
+  white-space: nowrap;
+}
+
+.ws-badge--neutral { background: var(--ws-bg-chip); color: var(--ws-text-muted); }
+.ws-badge--success { background: var(--ws-money-credit-chip); color: var(--ws-money-credit); }
+.ws-badge--warning { background: var(--ws-money-convert-chip); color: var(--ws-money-convert); }
+.ws-badge--danger  { background: var(--ws-money-debit-chip); color: var(--ws-money-debit); }
+
+// Overlaid on product photography — ink fill, white text, per the Shop pattern.
+// Both values are deliberately theme-independent: the badge sits on arbitrary
+// listing photos, which look the same in either mode, so tinting it with the
+// theme's ink would make it vanish against a light photo in one mode and a dark
+// one in the other. Same reasoning as the rating-star orange.
+.ws-badge--ink {
+  background: rgba(0, 0, 0, 0.72);
+  color: #FFFFFF;
+}
+
+// ─── Chip (filter / category pill) ──────────────────────────────
+// Shop pattern: icon 17 + label Medium 13, bg/surface + hairline.
+
+.ws-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  height: 36px;
+  padding: 0 var(--ws-space-3);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-primary);
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+
+  &:hover { background: var(--ws-bg-raised); }
+
+  // Active = the sanctioned chip treatment: brand/primary @12% wash with a
+  // brand-colored label (05-screens "Action verbs row"). Brand color is
+  // explicitly reserved for active states, so an inverted ink fill would be an
+  // invention outside the system.
+  &[aria-pressed='true'],
+  &.is-active {
+    background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, transparent);
+    color: var(--ws-brand-gold-text);
+    font-weight: 600;
+  }
+}
+
+// A removable active-filter token. The `x` is the affordance, so the whole
+// chip is the button.
+.ws-chip--dismiss {
+  background: var(--ws-money-convert-chip);
+  border-color: transparent;
+  color: var(--ws-brand-gold-text);
+  &:hover { background: color-mix(in srgb, var(--ws-brand-primary) 18%, transparent); }
+}
+
+// ─── Card ───────────────────────────────────────────────────────
+// Radius 13, padding 16, fill surface, hairline border, no shadow.
+
+.ws-card {
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  padding: var(--ws-space-4);
+}
+
+.ws-card--flush { padding: 0; overflow: hidden; }
+
+// ─── Field ──────────────────────────────────────────────────────
+// Height 52, radius 7, padding 12/16; focus = brand 1.5px.
+
+.ws-field {
+  width: 100%;
+  height: 52px;
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border-radius: var(--ws-radius-md);
+  border: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-surface);
+  color: var(--ws-text-primary);
+  font-family: var(--ws-font-ui);
+  font-size: 15px;
+
+  &::placeholder { color: var(--ws-text-subtle); }
+
+  &:focus {
+    outline: none;
+    border-color: var(--ws-brand-primary);
+    box-shadow: inset 0 0 0 0.5px var(--ws-brand-primary);
+  }
+}
+
+// Sitting on a card, the field recesses instead of stacking surface-on-surface.
+.ws-field--sunken { background: var(--ws-bg-sunken); }
+
+.ws-select {
+  @extend .ws-field;
+  appearance: none;
+  padding-right: 38px;
+  cursor: pointer;
+  // Chevron drawn as a background so the control keeps a native select's
+  // keyboard behaviour without a JS dropdown. A data URI cannot read a CSS
+  // variable, so the stroke is spelled out per theme: this is text/muted for
+  // Shop Dark, overridden below for Shop Light. Keep the two in sync with
+  // --ws-text-muted if the palette moves.
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ABA398' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+
+  [data-ws-theme='shop-light'] & {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236F6B61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
+// ─── Search (pill) ──────────────────────────────────────────────
+
+.ws-search {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  height: 44px;
+  padding: 0 var(--ws-space-4);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-sunken);
+  border: 1px solid transparent;
+  transition: border-color 120ms ease, background-color 120ms ease;
+
+  &:focus-within {
+    border-color: var(--ws-brand-primary);
+    background: var(--ws-bg-surface);
+  }
+
+  svg { color: var(--ws-text-subtle); flex: none; }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    font-family: var(--ws-font-ui);
+    font-size: 14px;
+    color: var(--ws-text-primary);
+    &::placeholder { color: var(--ws-text-subtle); }
+    &:focus { outline: none; }
+    // The native clear affordance fights the pill's alignment.
+    &::-webkit-search-cancel-button { appearance: none; }
+  }
+}
+
+// ─── Tab (web underline) ────────────────────────────────────────
+
+.ws-tabs {
+  display: flex;
+  gap: var(--ws-space-6);
+  border-bottom: 1px solid var(--ws-border-hairline);
+}
+
+.ws-tab {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 10px 4px 0;
+  cursor: pointer;
+  font-family: var(--ws-font-ui);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--ws-text-muted);
+  display: grid;
+  gap: var(--ws-space-2);
+  justify-items: center;
+
+  &::after {
+    content: '';
+    display: block;
+    height: 2px;
+    width: 100%;
+    border-radius: 1px;
+    background: transparent;
+  }
+
+  &.is-active {
+    font-weight: 600;
+    color: var(--ws-text-primary);
+    &::after { background: var(--ws-brand-primary); }
+  }
+}
+
+// ─── Avatar ─────────────────────────────────────────────────────
+
+.ws-avatar {
+  display: grid;
+  place-items: center;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-muted);
+  overflow: hidden;
+  flex: none;
+  font-weight: 600;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.ws-avatar--s { width: 24px; height: 24px; font-size: 10px; }
+.ws-avatar--m { width: 32px; height: 32px; font-size: 12px; }
+.ws-avatar--l { width: 40px; height: 40px; font-size: 14px; }
+
+// ─── Icon chip (48, radius 10, accent wash @13%) ────────────────
+
+.ws-iconchip {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--ws-radius-lg);
+  background: color-mix(in srgb, var(--ws-accent-shop) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ws-accent-shop) 33%, transparent);
+  color: var(--ws-accent-shop);
+  flex: none;
+}
+
+// ─── Skeleton ───────────────────────────────────────────────────
+// bg/raised blocks with a subtle shimmer.
+
+.ws-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--ws-bg-raised);
+  border-radius: var(--ws-radius-md);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--ws-bg-surface) 70%, transparent),
+      transparent
+    );
+    animation: ws-shimmer 1.4s infinite;
+  }
+}
+
+@keyframes ws-shimmer { to { transform: translateX(100%); } }
+
+// ─── Divider ────────────────────────────────────────────────────
+
+.ws-hr {
+  border: 0;
+  border-top: 1px solid var(--ws-border-hairline);
+  margin: 0;
+}
+
+// ─── Button, remaining variants ─────────────────────────────────
+// 04-components defines Primary/Secondary/Ghost/Danger. `outline` and `link`
+// are app-level aliases the existing component API already exposes: outline is
+// Ghost by another name, link is an authored convention for inline text
+// actions (the system has no such variant).
+
+.ws-btn--outline { @extend .ws-btn--ghost; }
+
+.ws-btn--link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ws-brand-gold-text);
+  font-size: 15px;
+  &:hover { text-decoration: underline; }
+}
+
+// The spec's only size step below the 52px default.
+.ws-btn--lg { min-height: 56px; font-size: 17px; }
+
+// Spinner precedes the label and inherits the label color (04-components).
+.ws-btn__spinner {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  animation: ws-spin 720ms linear infinite;
+  svg { width: 100%; height: 100%; display: block; }
+}
+
+@keyframes ws-spin { to { transform: rotate(360deg); } }
+
+// Standalone spinner, same construction, sized by its container's font-size.
+.ws-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 2px solid var(--ws-bg-track);
+  border-top-color: var(--ws-brand-primary);
+  animation: ws-spin 720ms linear infinite;
+}
+
+.ws-spinner--page {
+  font-size: 28px;
+  display: block;
+  margin: var(--ws-space-8) auto;
+}
+
+// ─── Form field (label + control + hint/error column) ───────────
+// The TextField/Select column pattern: uppercase Label 11, then the control.
+
+.ws-formfield {
+  display: grid;
+  gap: var(--ws-space-2);
+  min-width: 0;
+}
+
+.ws-formfield--inline { display: block; }
+
+.ws-formfield__label {
+  @include ws-label;
+  color: var(--ws-text-muted);
+}
+
+.ws-formfield__hint {
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+}
+
+.ws-formfield__error {
+  @include ws-caption;
+  color: var(--ws-status-danger);
+}
+
+// Error state is carried on the control so it survives without the wrapper.
+.ws-field--invalid,
+.ws-select--invalid {
+  border-color: var(--ws-status-danger);
+  &:focus { border-color: var(--ws-status-danger); box-shadow: inset 0 0 0 0.5px var(--ws-status-danger); }
+}
+
+// Multi-line variant of the field — height is content-driven, not fixed.
+.ws-textarea {
+  @extend .ws-field;
+  height: auto;
+  min-height: 108px;
+  padding: var(--ws-space-3) var(--ws-space-4);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+// A field with a leading/trailing icon. The icon is decorative; the input keeps
+// the full hit area so clicking the icon still focuses the control.
+.ws-inputgroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  > .ws-field { width: 100%; }
+
+  .ws-inputgroup__icon {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    color: var(--ws-text-subtle);
+    pointer-events: none;
+  }
+
+  .ws-inputgroup__icon--left { left: var(--ws-space-3); }
+  .ws-inputgroup__icon--right { right: var(--ws-space-3); }
+
+  &:has(.ws-inputgroup__icon--left) > .ws-field { padding-left: 42px; }
+  &:has(.ws-inputgroup__icon--right) > .ws-field { padding-right: 42px; }
+}
+
+// Two-column field grid. Fields collapse to one column below $bp-sm rather
+// than shrinking, because a 52px control with a 15px value needs the width.
+.ws-formgrid {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: 1fr;
+
+  @media (min-width: 640px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+// A field that should span the full grid width (descriptions, addresses).
+.ws-formgrid__full { grid-column: 1 / -1; }
+
+// File input. Left unstyled it renders the browser's own control, which on a
+// dark ladder is a bright grey slab — so the button half is themed explicitly.
+.ws-file {
+  font-family: var(--ws-font-ui);
+  font-size: 13px;
+  color: var(--ws-text-muted);
+  max-width: 100%;
+
+  &::file-selector-button {
+    margin-right: var(--ws-space-3);
+    padding: 9px var(--ws-space-4);
+    border-radius: var(--ws-radius-md);
+    border: 1px solid var(--ws-border-hairline);
+    background: var(--ws-bg-raised);
+    color: var(--ws-text-primary);
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover { background: var(--ws-bg-chip); }
+  }
+
+  &:disabled { opacity: 0.45; pointer-events: none; }
+}
+
+// ─── Checkbox / Radio / Switch ──────────────────────────────────
+// 18×18, radius 4 (checkbox) or pill (radio). The native input drives state and
+// stays focusable; the visual box is a sibling span.
+
+.ws-check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  cursor: pointer;
+
+  &.is-disabled { opacity: 0.45; pointer-events: none; }
+}
+
+.ws-check__input {
+  // Kept in flow (not display:none) so it remains keyboard-reachable; the
+  // visible box is painted by the adjacent span.
+  appearance: none;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border: 1.5px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-sm);
+  background: var(--ws-bg-surface);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    transform: scale(0);
+    transition: transform 120ms ease;
+    background: var(--ws-brand-on-primary);
+    // check glyph as a mask so it tints with the token
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  &:checked {
+    background: var(--ws-brand-primary);
+    border-color: var(--ws-brand-primary);
+    &::after { transform: scale(1); }
+  }
+
+  &:indeterminate {
+    background: var(--ws-brand-primary);
+    border-color: var(--ws-brand-primary);
+    &::after {
+      transform: scale(1);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E") center / contain no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M5 12h14'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+  }
+
+  &[type='radio'] {
+    border-radius: var(--ws-radius-pill);
+    &::after {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--ws-radius-pill);
+      background: var(--ws-brand-primary);
+      -webkit-mask: none;
+      mask: none;
+    }
+    &:checked {
+      background: var(--ws-bg-surface);
+      border-width: 2px;
+      border-color: var(--ws-brand-primary);
+    }
+  }
+}
+
+.ws-check__body { display: grid; gap: 2px; min-width: 0; }
+
+.ws-check__label {
+  font-size: 14px;
+  color: var(--ws-text-primary);
+  cursor: pointer;
+}
+
+.ws-check__desc {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+}
+
+// Track 44×24, knob 18, inset 3.
+.ws-switch {
+  appearance: none;
+  margin: 0;
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex: none;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-track);
+  border: 1px solid var(--ws-border-hairline);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--ws-radius-pill);
+    background: var(--ws-text-muted);
+    transition: transform 120ms ease, background-color 120ms ease;
+  }
+
+  &:checked {
+    background: var(--ws-brand-primary);
+    border-color: var(--ws-brand-primary);
+    &::after { transform: translateX(20px); background: var(--ws-brand-on-primary); }
+  }
+
+  &:disabled { opacity: 0.45; pointer-events: none; }
+}
+
+// ─── Menu (dropdown) ────────────────────────────────────────────
+// Width 220, radius 10, surface fill, Shadow/Nav.
+
+.ws-menu {
+  min-width: 220px;
+  padding: 6px 0;
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  box-shadow: var(--ws-shadow-nav);
+  z-index: var(--ws-z-dropdown);
+}
+
+.ws-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px var(--ws-space-4);
+  background: none;
+  border: 0;
+  text-align: left;
+  text-decoration: none;
+  font-family: var(--ws-font-ui);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--ws-text-primary);
+  cursor: pointer;
+
+  svg { color: var(--ws-text-muted); flex: none; }
+
+  &:hover { background: var(--ws-bg-raised); }
+
+  &.is-danger {
+    color: var(--ws-status-danger);
+    svg { color: var(--ws-status-danger); }
+  }
+}
+
+// ─── Modal ──────────────────────────────────────────────────────
+
+.ws-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--ws-overlay-scrim);
+  z-index: var(--ws-z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--ws-space-4);
+  overflow-y: auto;
+}
+
+.ws-modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  box-shadow: var(--ws-shadow-sheet);
+  padding: var(--ws-space-6);
+  display: grid;
+  gap: 14px;
+}
+
+.ws-modal--wide { max-width: 720px; }
+
+.ws-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+}
+
+.ws-modal__title { @include ws-h2; }
+
+.ws-modal__close {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--ws-text-subtle);
+  display: grid;
+  place-items: center;
+  border-radius: var(--ws-radius-sm);
+  &:hover { color: var(--ws-text-primary); }
+}
+
+.ws-modal__body {
+  @include ws-body;
+  color: var(--ws-text-muted);
+}
+
+.ws-modal__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ws-space-3);
+
+  // Modal buttons are one step shorter than the page default (04-components).
+  .ws-btn { min-height: 44px; padding: 11px 18px; font-size: 15px; }
+}
+
+// On phones the modal becomes a bottom sheet: full width, top corners only.
+@media (max-width: 639px) {
+  .ws-scrim { place-items: end center; padding: 0; }
+
+  .ws-modal {
+    max-width: none;
+    border-radius: var(--ws-radius-xl) var(--ws-radius-xl) 0 0;
+    border-bottom: 0;
+  }
+}
+
+// ─── Drawer (mobile navigation) ─────────────────────────────────
+// A left sheet rather than the Modal's bottom sheet: it is navigation, so it
+// wants the full height and a persistent header.
+
+.ws-drawer__scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--ws-overlay-scrim);
+  z-index: var(--ws-z-modal);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms var(--ws-ease), visibility 200ms;
+
+  &.is-open { opacity: 1; visibility: visible; }
+}
+
+.ws-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(320px, 86vw);
+  z-index: calc(var(--ws-z-modal) + 1);
+  background: var(--ws-bg-surface);
+  border-right: 1px solid var(--ws-border-hairline);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 200ms var(--ws-ease);
+
+  &.is-open { transform: translateX(0); }
+}
+
+.ws-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
+  position: sticky;
+  top: 0;
+  background: var(--ws-bg-surface);
+}
+
+.ws-drawer__nav {
+  padding: var(--ws-space-2) 0;
+  display: grid;
+  align-content: start;
+}
+
+.ws-drawer__link {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-3) var(--ws-space-4);
+  background: none;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  font-family: var(--ws-font-ui);
+  font-size: 15px;
+  color: var(--ws-text-primary);
+  cursor: pointer;
+
+  svg { color: var(--ws-text-muted); flex: none; }
+
+  &:hover { background: var(--ws-bg-raised); }
+
+  &.is-danger { color: var(--ws-status-danger); svg { color: var(--ws-status-danger); } }
+}
+
+// Count of listings in a category, pushed to the trailing edge.
+.ws-drawer__count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--ws-text-subtle);
+}
+
+.ws-drawer__section {
+  @include ws-label;
+  color: var(--ws-text-muted);
+  padding: var(--ws-space-4) var(--ws-space-4) var(--ws-space-2);
+}
+
+// ─── Inbox (buyer ↔ seller chat) ────────────────────────────────
+// Two panes on desktop; a 240px-minimum list beside a thread leaves the thread
+// ~100px wide on a phone, so below $bp-md they stack.
+
+.ws-inbox {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: 1fr;
+
+  @media (min-width: 900px) { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); }
+}
+
+.ws-inbox__list {
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-bg-surface);
+  overflow: hidden;
+  align-self: start;
+}
+
+.ws-inbox__head {
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ws-inbox__scroll {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.ws-inbox__item {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--ws-border-hairline);
+  // The active marker is a leading rule; it is always present so selecting a
+  // row does not shift its text sideways.
+  border-left: 3px solid transparent;
+  background: none;
+  color: var(--ws-text-primary);
+  display: grid;
+  gap: 2px;
+
+  &:hover { background: var(--ws-bg-raised); }
+
+  &.is-active {
+    background: var(--ws-bg-raised);
+    border-left-color: var(--ws-brand-primary);
+  }
+}
+
+.ws-inbox__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ws-space-2);
+  align-items: center;
+}
+
+.ws-inbox__name { font-weight: 600; font-size: 14px; }
+.ws-inbox__name--unread { font-weight: 700; }
+
+// Unread count. Danger rather than brand: it is a notification, not a CTA.
+.ws-inbox__count {
+  background: var(--ws-status-danger);
+  color: #FFFFFF;
+  border-radius: var(--ws-radius-pill);
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+// One-line previews; the thread is where the full text lives.
+.ws-inbox__preview,
+.ws-inbox__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--ws-text-muted);
+}
+
+.ws-inbox__sub { font-size: 12px; color: var(--ws-text-subtle); }
+
+.ws-inbox__thread {
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-bg-surface);
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+}
+
+.ws-inbox__threadhead {
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
+
+  a { color: var(--ws-brand-gold-text); text-decoration: none; &:hover { text-decoration: underline; } }
+}
+
+.ws-inbox__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--ws-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-2);
+  max-height: 420px;
+}
+
+.ws-bubble {
+  max-width: 78%;
+  padding: 9px 13px;
+  border-radius: var(--ws-radius-xl);
+  font-size: 14px;
+  line-height: 1.45;
+  background: var(--ws-bg-sunken);
+  border: 1px solid var(--ws-border-hairline);
+  align-self: flex-start;
+  // The tail corner marks who is speaking without needing a drawn tail.
+  border-bottom-left-radius: 2px;
+}
+
+// Own messages take the sanctioned brand wash (the FilterChip-selected
+// treatment) rather than a solid brand fill — a column of solid coral would
+// make the brand color the loudest thing on the page.
+.ws-bubble--mine {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--ws-brand-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ws-brand-dim) 33%, transparent);
+  border-bottom-left-radius: var(--ws-radius-xl);
+  border-bottom-right-radius: 2px;
+}
+
+.ws-bubble__body { white-space: pre-wrap; word-break: break-word; }
+
+.ws-bubble__time {
+  font-size: 11px;
+  color: var(--ws-text-subtle);
+  margin-top: 2px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-inbox__compose {
+  display: flex;
+  gap: var(--ws-space-2);
+  padding: var(--ws-space-3);
+  border-top: 1px solid var(--ws-border-hairline);
+
+  .ws-field { flex: 1; height: 44px; }
+  .ws-btn { min-height: 44px; }
+}
+
+// ─── Toast ──────────────────────────────────────────────────────
+
+.ws-toasts {
+  position: fixed;
+  top: var(--ws-space-4);
+  right: var(--ws-space-4);
+  z-index: var(--ws-z-toast);
+  display: grid;
+  gap: var(--ws-space-2);
+  pointer-events: none;
+}
+
+.ws-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--ws-space-3) 14px;
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-raised);
+  border: 1px solid var(--ws-border-hairline);
+  box-shadow: var(--ws-shadow-nav);
+  color: var(--ws-text-primary);
+  font-weight: 500;
+  font-size: 14px;
+  pointer-events: auto;
+  max-width: 380px;
+
+  svg { flex: none; }
+}
+
+.ws-toast--success svg { color: var(--ws-status-success); }
+.ws-toast--danger svg { color: var(--ws-status-danger); }
+.ws-toast--neutral svg { color: var(--ws-text-muted); }
+
+.ws-toast__close {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin-left: auto;
+  cursor: pointer;
+  color: var(--ws-text-subtle);
+  display: grid;
+  place-items: center;
+  &:hover { color: var(--ws-text-primary); }
+}
+
+// ─── Progress ───────────────────────────────────────────────────
+
+.ws-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ws-bg-track);
+  overflow: hidden;
+}
+
+.ws-progress__bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ws-brand-primary);
+  transition: width 200ms var(--ws-ease);
+}
+
+// ─── Pagination ─────────────────────────────────────────────────
+// 32×32 items, radius 7, current page on bg/raised.
+
+.ws-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--ws-space-6);
+  flex-wrap: wrap;
+}
+
+.ws-pagination__item {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: var(--ws-radius-md);
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-family: var(--ws-font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-text-muted);
+
+  &:hover { background: var(--ws-bg-raised); color: var(--ws-text-primary); }
+
+  &.is-current {
+    background: var(--ws-bg-raised);
+    border-color: var(--ws-border-hairline);
+    font-weight: 600;
+    color: var(--ws-text-primary);
+  }
+
+  &:disabled { opacity: 0.45; pointer-events: none; }
+}
+
+.ws-pagination__gap {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--ws-text-subtle);
+  font-size: 13px;
+}
+
+// ─── List row (settings / data rows) ────────────────────────────
+
+.ws-listrow {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
+  text-decoration: none;
+  color: inherit;
+
+  &:last-child { border-bottom: 0; }
+}
+
+.ws-listrow--link:hover { background: var(--ws-bg-raised); }
+
+.ws-listrow__body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.ws-listrow__title { @include ws-title; }
+.ws-listrow__sub { @include ws-caption; color: var(--ws-text-muted); }
+
+// ─── Table (vendor / admin data grids) ──────────────────────────
+// Authored convention: the system has no table component, so this is the
+// ListRow pattern laid out on a real <table> for sortable/scannable data.
+
+.ws-table-wrap { overflow-x: auto; }
+
+.ws-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th {
+    @include ws-label;
+    color: var(--ws-text-muted);
+    text-align: left;
+    padding: var(--ws-space-3) var(--ws-space-4);
+    border-bottom: 1px solid var(--ws-border-hairline);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: var(--ws-space-3) var(--ws-space-4);
+    border-bottom: 1px solid var(--ws-border-hairline);
+    color: var(--ws-text-primary);
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: var(--ws-bg-raised); }
+
+  // Money and counts line up only with tabular figures.
+  .ws-table__num { font-variant-numeric: tabular-nums; text-align: right; }
+}
+
+// ─── Stat card (dashboard metrics) ──────────────────────────────
+
+.ws-stats {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.ws-stat {
+  @extend .ws-card;
+  display: grid;
+  gap: var(--ws-space-2);
+}
+
+.ws-stat__label { @include ws-label; color: var(--ws-text-muted); }
+
+.ws-stat__value {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ws-text-primary);
+}
+
+.ws-stat__delta {
+  @include ws-caption;
+  &.is-up { color: var(--ws-money-credit); }
+  &.is-down { color: var(--ws-money-debit); }
+}
+
+// ─── Section header ─────────────────────────────────────────────
+
+.ws-sectionhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--ws-space-4);
+}
+
+// ─── Page shell for the non-marketplace screens ─────────────────
+// Account/vendor/admin screens are plain document pages: a centered column on
+// bg/page with the standard web gutter.
+
+.ws-page {
+  max-width: var(--ws-container-max);
+  margin: 0 auto;
+  padding: var(--ws-space-8) var(--ws-space-6);
+
+  @media (min-width: 1024px) { padding: var(--ws-space-8) 48px; }
+}
+
+.ws-page__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--ws-space-6);
+}
+
+.ws-page__title { @include ws-h1; }
+.ws-page__sub { @include ws-body; color: var(--ws-text-muted); margin-top: var(--ws-space-1); }
+
+// A vertical rhythm helper so pages don't each invent their own gap.
+.ws-stack { display: grid; gap: var(--ws-space-4); }
+.ws-stack--lg { display: grid; gap: var(--ws-space-6); }
+
+// ─── Console shell (vendor + admin) ─────────────────────────────
+// A fixed sidebar beside a scrolling main column. Both back-office areas use
+// this; they differ only in what goes in the nav.
+
+.ws-console {
+  --ws-sidebar-w: 248px;
+
+  min-height: 100vh;
+  background: var(--ws-bg-page);
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: var(--ws-sidebar-w) minmax(0, 1fr);
+  }
+
+  &.is-collapsed { --ws-sidebar-w: 72px; }
+}
+
+.ws-console__backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: var(--ws-overlay-scrim);
+  z-index: var(--ws-z-modal);
+
+  .is-open & { display: block; }
+
+  @media (min-width: 1024px) { display: none !important; }
+}
+
+.ws-console__side {
+  background: var(--ws-bg-surface);
+  border-right: 1px solid var(--ws-border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-2);
+  padding-block: var(--ws-space-3);
+
+  // Below the desktop breakpoint the sidebar is a drawer.
+  @media (max-width: 1023px) {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(280px, 84vw);
+    z-index: calc(var(--ws-z-modal) + 1);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 200ms var(--ws-ease);
+
+    .is-open & { transform: translateX(0); }
+  }
+
+  @media (min-width: 1024px) {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+.ws-console__brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-2);
+  padding: var(--ws-space-2) var(--ws-space-4) var(--ws-space-3);
+  border-bottom: 1px solid var(--ws-border-hairline);
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  // A long store name must not push the collapse button off the edge.
+  min-width: 0;
+
+  > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.ws-console__nav {
+  display: grid;
+  gap: 2px;
+  padding-inline: var(--ws-space-2);
+}
+
+.ws-console__link {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  padding: 10px var(--ws-space-3);
+  border-radius: var(--ws-radius-md);
+  text-decoration: none;
+  font-family: var(--ws-font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ws-text-muted);
+  white-space: nowrap;
+
+  svg { flex: none; }
+
+  &:hover { background: var(--ws-bg-raised); color: var(--ws-text-primary); }
+
+  // Active nav is one of the sanctioned brand moments.
+  &.active {
+    background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
+    color: var(--ws-brand-gold-text);
+    font-weight: 600;
+  }
+
+  // Collapsed rail: icons only, labels hidden rather than unmounted so the
+  // markup does not change shape between states.
+  .ws-console.is-collapsed & {
+    @media (min-width: 1024px) {
+      justify-content: center;
+      padding-inline: 0;
+      .ws-console__label { display: none; }
+    }
+  }
+}
+
+.ws-console__section {
+  @include ws-label;
+  color: var(--ws-text-subtle);
+  padding: var(--ws-space-4) var(--ws-space-4) var(--ws-space-1);
+
+  .ws-console.is-collapsed & {
+    @media (min-width: 1024px) { display: none; }
+  }
+}
+
+// Pushes "View store" / sign-out to the bottom of the rail.
+.ws-console__foot {
+  margin-top: auto;
+  padding-top: var(--ws-space-3);
+  border-top: 1px solid var(--ws-border-hairline);
+}
+
+.ws-console__main { min-width: 0; display: flex; flex-direction: column; }
+
+.ws-console__head {
+  position: sticky;
+  top: 0;
+  z-index: var(--ws-z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-3) var(--ws-space-6);
+  background: var(--ws-bg-page);
+  border-bottom: 1px solid var(--ws-border-hairline);
+}
+
+.ws-console__burger {
+  @media (min-width: 1024px) { display: none; }
+}
+
+.ws-console__body { flex: 1; }
+
+// ─── Auth shell ─────────────────────────────────────────────────
+// A single centered column on bg/page. Sign-in and sign-up mostly bounce
+// straight out to the identity hub, so this is a waypoint, not a destination —
+// it stays deliberately plain.
+
+.ws-auth {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--ws-space-6);
+  background: var(--ws-bg-page);
+}
+
+.ws-auth__panel {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  justify-items: center;
+  gap: var(--ws-space-6);
+
+  > .ws-card { width: 100%; }
+}
+
+// ─── Alert (inline form + page errors) ──────────────────────────
+
+.ws-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: var(--ws-space-3) var(--ws-space-4);
+  border-radius: var(--ws-radius-lg);
+  font-size: 14px;
+  background: var(--ws-money-debit-chip);
+  color: var(--ws-status-danger);
+  border: 1px solid color-mix(in srgb, var(--ws-status-danger) 30%, transparent);
+
+  svg { flex: none; margin-top: 1px; }
+}
+
+.ws-alert--success {
+  background: var(--ws-money-credit-chip);
+  color: var(--ws-status-success);
+  border-color: color-mix(in srgb, var(--ws-status-success) 30%, transparent);
+}
+
+.ws-alert--warning {
+  background: var(--ws-status-warning-chip);
+  color: var(--ws-status-warning);
+  border-color: color-mix(in srgb, var(--ws-status-warning) 30%, transparent);
+}
+
+.ws-alert--info {
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-muted);
+  border-color: var(--ws-border-hairline);
+}
+
+// ─── Badge, remaining tones ─────────────────────────────────────
+// The component API predates the system's 4 tones; these map the extras on.
+
+.ws-badge--brand {
+  background: var(--ws-money-convert-chip);
+  color: var(--ws-brand-gold-text);
+}
+
+.ws-badge--info { @extend .ws-badge--neutral; }
+.ws-badge--outline {
+  background: transparent;
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-muted);
+}
+
+.ws-badge--dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ws-radius-pill);
+  background: currentColor;
+  flex: none;
+}
+
+// ─── Motion ─────────────────────────────────────────────────────
+
+@media (prefers-reduced-motion: reduce) {
+  .ws *,
+  .ws *::before,
+  .ws *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

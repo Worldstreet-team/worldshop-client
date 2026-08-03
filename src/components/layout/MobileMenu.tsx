@@ -1,16 +1,26 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
+import {
+  X, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus,
+  Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
+} from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
 import { useCategoryStore } from '@/store/categoryStore';
 
-// Map category slugs to icons (material icons)
-const categoryIcons: Record<string, string> = {
-  electronics: 'devices',
-  fashion: 'checkroom',
-  'home-garden': 'home',
-  'sports-outdoors': 'fitness_center',
+/**
+ * The drawer is the Header's nav on small screens, so it mirrors the same
+ * destinations. Pre-pivot entries (Sale, Featured, "Browse All Products") went
+ * with the buying flows — Browse has no query params for them.
+ */
+
+// Same department→icon map the Header uses; the API carries no icon field.
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  electronics: Smartphone,
+  vehicles: Car,
+  fashion: Shirt,
+  'home-property': House,
 };
 
 export default function MobileMenu() {
@@ -25,155 +35,144 @@ export default function MobileMenu() {
     }
   }, [isMobileMenuOpen, fetchCategories]);
 
+  // Letting the body scroll behind an open sheet makes the page drift under it
+  // on touch, so it is locked while the drawer is up.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeMobileMenu(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isMobileMenuOpen, closeMobileMenu]);
+
   const handleLogout = async () => {
     await signOut();
     logout();
     closeMobileMenu();
   };
 
+  // Only top-level departments get a row, matching the Header's chip rail.
+  const topCategories = categories.filter((c) => !c.parentId);
+
   return (
-    <>
-      {/* Overlay */}
+    <div className="ws">
       <div
-        className={`mobile-menu-overlay ${isMobileMenuOpen ? 'active' : ''}`}
+        className={`ws-drawer__scrim${isMobileMenuOpen ? ' is-open' : ''}`}
         onClick={closeMobileMenu}
+        aria-hidden="true"
       />
 
-      {/* Menu */}
-      <div className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div className="mobile-menu-header">
-          <Link to="/" onClick={closeMobileMenu} className="mobile-menu-brand">
-            <img src="/images/worldstreet-mark.png" alt="WorldStreet" className="mobile-menu-logo" width="32" height="32" />
-            <span className="mobile-menu-brand-text">WorldStreet<span className="logo-dot">.</span></span>
+      <aside
+        className={`ws-drawer${isMobileMenuOpen ? ' is-open' : ''}`}
+        aria-label="Menu"
+        // Off-screen but still in the DOM, so its links stay tabbable without
+        // this — inert takes them out of the tab order while closed.
+        inert={!isMobileMenuOpen || undefined}
+      >
+        <div className="ws-drawer__head">
+          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldShop home">
+            <span className="ws-brand__eyebrow">Worldstreet</span>
+            <span className="ws-brand__word">shop<span className="ws-brand__dot">.</span></span>
           </Link>
-          <button
-            className="close-btn"
-            onClick={closeMobileMenu}
-            aria-label="Close menu"
-          >
-            <span className="material-icons">close</span>
+          <button className="ws-iconbtn" onClick={closeMobileMenu} aria-label="Close menu">
+            <X size={20} />
           </button>
         </div>
 
-        {/* User Info */}
         {isAuthenticated && (
-          <div className="mobile-menu-user">
-            <span className="material-icons">account_circle</span>
-            <span>Hi, {user?.firstName}</span>
+          <div className="ws-listrow">
+            <span className="ws-avatar ws-avatar--m">
+              {user?.firstName ? user.firstName.charAt(0).toUpperCase() : <User size={16} />}
+            </span>
+            <div className="ws-listrow__body">
+              <span className="ws-listrow__title">{user?.firstName ?? 'Your account'}</span>
+              <span className="ws-listrow__sub">Signed in</span>
+            </div>
           </div>
         )}
 
-        {/* Navigation Links */}
-        <nav className="mobile-menu-nav">
-          <ul>
-            <li>
-              <Link to="/" onClick={closeMobileMenu}>
-                <span className="material-icons">home</span>
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link to="/products" onClick={closeMobileMenu}>
-                <span className="material-icons">storefront</span>
-                Shop
-              </Link>
-            </li>
-            <li>
-              <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer">
-                <span className="material-icons">dashboard</span>
-                Main Dashboard
-              </a>
-            </li>
-          </ul>
+        <nav className="ws-drawer__nav">
+          <Link to="/" className="ws-drawer__link" onClick={closeMobileMenu}>
+            <Home size={18} aria-hidden />
+            Home
+          </Link>
+          <Link to="/listings" className="ws-drawer__link" onClick={closeMobileMenu}>
+            <ShoppingBag size={18} aria-hidden />
+            Browse listings
+          </Link>
+          <a
+            href="https://dashboard.worldstreetgold.com"
+            className="ws-drawer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Compass size={18} aria-hidden />
+            WorldStreet dashboard
+          </a>
 
-          {/* Categories */}
-          {categories.length > 0 && (
+          {topCategories.length > 0 && (
             <>
-              <div className="mobile-menu-section-title">Categories</div>
-              <ul>
-                {categories.map((cat) => (
-                  <li key={cat.id}>
-                    <Link to={`/listings?categoryId=${cat.id}`} onClick={closeMobileMenu}>
-                      <span className="material-icons">
-                        {categoryIcons[cat.slug] ?? 'category'}
-                      </span>
-                      {cat.name}
-                      {cat.productCount !== undefined && (
-                        <span className="mobile-menu-badge">{cat.productCount}</span>
-                      )}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <div className="ws-drawer__section">Categories</div>
+              {topCategories.map((cat) => {
+                const Icon = CATEGORY_ICON[cat.slug] ?? ShoppingBag;
+                return (
+                  <Link
+                    key={cat.id}
+                    to={`/listings?categoryId=${cat.id}`}
+                    className="ws-drawer__link"
+                    onClick={closeMobileMenu}
+                  >
+                    <Icon size={18} aria-hidden />
+                    {cat.name}
+                    {cat.productCount !== undefined && (
+                      <span className="ws-drawer__count">{cat.productCount}</span>
+                    )}
+                  </Link>
+                );
+              })}
             </>
           )}
 
-          <hr className="mobile-menu-divider" />
+          <hr className="ws-hr" style={{ margin: 'var(--ws-space-2) 0' }} />
 
-          <ul>
-            <li>
-              <Link to="/products?featured=true" onClick={closeMobileMenu}>
-                <span className="material-icons">star</span>
-                Featured
+          {isAuthenticated ? (
+            <>
+              <Link to="/account" className="ws-drawer__link" onClick={closeMobileMenu}>
+                <User size={18} aria-hidden />
+                My account
               </Link>
-            </li>
-            <li>
-              <Link to="/products?sale=true" onClick={closeMobileMenu}>
-                <span className="material-icons mobile-menu-sale-icon">local_offer</span>
-                Sale
+              <Link to="/account/messages" className="ws-drawer__link" onClick={closeMobileMenu}>
+                <MessageCircle size={18} aria-hidden />
+                Messages
               </Link>
-            </li>
-          </ul>
-
-          <hr className="mobile-menu-divider" />
-
-          <ul>
-            {isAuthenticated ? (
-              <>
-                <li>
-                  <Link to="/account" onClick={closeMobileMenu}>
-                    <span className="material-icons">person</span>
-                    My Account
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/account/messages" onClick={closeMobileMenu}>
-                    <span className="material-icons">forum</span>
-                    My Messages
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/vendor" onClick={closeMobileMenu}>
-                    <span className="material-icons">storefront</span>
-                    Sell on WorldStreet
-                  </Link>
-                </li>
-                <li>
-                  <button onClick={handleLogout} className="mobile-menu-logout">
-                    <span className="material-icons">logout</span>
-                    Logout
-                  </button>
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <Link to="/auth/login" onClick={closeMobileMenu}>
-                    <span className="material-icons">login</span>
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/auth/register" onClick={closeMobileMenu}>
-                    <span className="material-icons">person_add</span>
-                    Register
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
+              <Link to="/vendor" className="ws-drawer__link" onClick={closeMobileMenu}>
+                <Store size={18} aria-hidden />
+                Sell on WorldStreet
+              </Link>
+              <button onClick={handleLogout} className="ws-drawer__link is-danger">
+                <LogOut size={18} aria-hidden />
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/auth/login" className="ws-drawer__link" onClick={closeMobileMenu}>
+                <LogIn size={18} aria-hidden />
+                Log in
+              </Link>
+              <Link to="/auth/register" className="ws-drawer__link" onClick={closeMobileMenu}>
+                <UserPlus size={18} aria-hidden />
+                Create account
+              </Link>
+            </>
+          )}
         </nav>
-      </div>
-    </>
+      </aside>
+    </div>
   );
 }

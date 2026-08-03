@@ -106,94 +106,88 @@ export default function ReportButton({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={openDialog}
-        style={{
-          background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-          color: '#98a2b3', fontSize: '0.8rem', textDecoration: 'underline',
-        }}
-      >
+      <button type="button" onClick={openDialog} className="ws-btn ws-btn--link ws-caption">
         {label}
       </button>
 
       {open && (
         <div
+          className="ws ws-scrim"
           role="dialog"
           aria-modal="true"
           aria-label={`Report this ${noun}`}
           onClick={close}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(16,24,40,0.5)',
-            display: 'grid', placeItems: 'center', padding: '1rem', zIndex: 1000,
-          }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ background: 'white', borderRadius: 10, padding: '1.25rem', width: '100%', maxWidth: 440 }}
-          >
+          <div className="ws-modal" onClick={(e) => e.stopPropagation()}>
             {done ? (
               <>
-                <h3 style={{ margin: '0 0 0.5rem' }}>Report received</h3>
-                <p style={{ color: '#475467', fontSize: '0.92rem' }}>
+                <div className="ws-modal__head">
+                  <h3 className="ws-modal__title">Report received</h3>
+                </div>
+                <p className="ws-modal__body">
                   Thanks for flagging this. Our team reviews reports and takes
                   action where needed — we will not always be able to tell you
                   the outcome.
                 </p>
-                <button className="btn-primary" onClick={close} style={{ marginTop: '0.75rem' }}>Close</button>
+                <div className="ws-modal__foot">
+                  <button className="ws-btn ws-btn--primary" onClick={close}>Close</button>
+                </div>
               </>
             ) : (
-              <form onSubmit={submit}>
-                <h3 style={{ margin: '0 0 0.25rem' }}>Report this {noun}</h3>
-                {targetName && (
-                  <p style={{ color: '#667085', fontSize: '0.85rem', margin: '0 0 0.75rem' }}>{targetName}</p>
-                )}
+              <form onSubmit={submit} className="ws-stack">
+                <div className="ws-modal__head">
+                  <div>
+                    <h3 className="ws-modal__title">Report this {noun}</h3>
+                    {targetName && <p className="ws-caption ws-muted">{targetName}</p>}
+                  </div>
+                </div>
 
                 {error && (
-                  <div style={{ background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', padding: '0.5rem 0.75rem', borderRadius: 6, marginBottom: '0.75rem', fontSize: '0.88rem' }}>
-                    {error}
+                  <div className="ws-alert" role="alert">
+                    <span>{error}</span>
                   </div>
                 )}
 
-                <fieldset style={{ border: 'none', padding: 0, margin: '0 0 0.75rem' }}>
-                  <legend style={{ fontSize: '0.85rem', color: '#475467', marginBottom: '0.4rem' }}>
+                <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <legend className="ws-formfield__label" style={{ marginBottom: 'var(--ws-space-2)' }}>
                     What is wrong with it?
                   </legend>
-                  <div style={{ display: 'grid', gap: '0.35rem' }}>
+                  <div className="ws-stack">
                     {reasons.map((r) => (
-                      <label key={r.value} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.9rem', cursor: 'pointer' }}>
+                      <label key={r.value} className="ws-check">
                         <input
                           type="radio"
                           name="reason"
+                          className="ws-check__input"
                           value={r.value}
                           checked={reason === r.value}
                           onChange={() => setReason(r.value)}
                         />
-                        {r.label}
+                        <span className="ws-check__label">{r.label}</span>
                       </label>
                     ))}
                   </div>
                 </fieldset>
 
                 <textarea
+                  className="ws-textarea"
                   rows={3}
                   placeholder="Anything else that would help us look into it (optional)"
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   maxLength={1000}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
                 />
 
-                <p style={{ fontSize: '0.78rem', color: '#98a2b3', marginTop: '0.5rem', lineHeight: 1.4 }}>
+                <p className="ws-caption ws-subtle">
                   Reports are not anonymous to WorldStreet, but the seller is not
                   told who reported them.
                 </p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.85rem' }}>
-                  <button type="submit" className="btn-primary" disabled={submitting}>
+                <div className="ws-modal__foot">
+                  <button type="button" className="ws-btn ws-btn--ghost" onClick={close}>Cancel</button>
+                  <button type="submit" className="ws-btn ws-btn--primary" disabled={submitting}>
                     {submitting ? 'Submitting…' : 'Submit report'}
                   </button>
-                  <button type="button" className="btn-secondary" onClick={close}>Cancel</button>
                 </div>
               </form>
             )}

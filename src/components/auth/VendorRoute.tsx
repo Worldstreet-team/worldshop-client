@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { Navigate, useLocation, Link } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { storeService, type StoreStatus } from '@/services/storeService';
+import { GateLoading, GateBlocked } from './RouteGate';
 
 interface VendorRouteProps {
   children: React.ReactNode;
@@ -47,57 +49,20 @@ export default function VendorRoute({ children }: VendorRouteProps) {
   const storeChecked = !isSignedIn || store.checked;
   const storeStatus = store.status;
 
-  // Show loading state while Clerk is initializing or profile is syncing
+  // Clerk initializing, the profile syncing, or the store lookup in flight.
   if (!isLoaded || (isSignedIn && isLoading) || (isSignedIn && !storeChecked)) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        fontSize: '1.2rem',
-        color: '#666'
-      }}>
-        Loading...
-      </div>
-    );
+    return <GateLoading />;
   }
 
-  // Not signed in
   if (!isSignedIn) {
     const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '60vh',
-        padding: '2rem',
-        textAlign: 'center'
-      }}>
-        <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem', color: '#333' }}>
-          Vendor Access Required
-        </h2>
-        <p style={{ marginBottom: '2rem', color: '#666', maxWidth: '400px' }}>
-          Please log in to access the vendor dashboard.
-        </p>
-        <Link
-          to={`/auth/login?returnUrl=${returnUrl}`}
-          style={{
-            display: 'inline-block',
-            padding: '0.75rem 2rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px',
-            fontSize: '1rem',
-            fontWeight: '500',
-          }}
-        >
-          Go to Login
-        </Link>
-      </div>
+      <GateBlocked
+        title="Seller access required"
+        message="Please sign in to access your store dashboard."
+        actionTo={`/auth/login?returnUrl=${returnUrl}`}
+        actionLabel="Go to sign in"
+      />
     );
   }
 
@@ -106,45 +71,32 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     return <Navigate to="/vendor/register" replace />;
   }
 
-  // Store is banned
   if (storeStatus === 'BANNED') {
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '60vh',
-        padding: '2rem',
-        textAlign: 'center'
-      }}>
-        <h2 style={{ marginBottom: '1rem', fontSize: '1.5rem', color: '#dc3545' }}>
-          Account Banned
-        </h2>
-        <p style={{ marginBottom: '2rem', color: '#666', maxWidth: '400px' }}>
-          Your store has been banned. Please contact support.
-        </p>
-        <Link to="/" style={{ color: '#007bff', textDecoration: 'none' }}>
-          Return to Store
-        </Link>
-      </div>
+      <GateBlocked
+        tone="danger"
+        title="Store banned"
+        message="Your store has been banned. Please contact support if you think this is a mistake."
+        actionTo="/"
+        actionLabel="Back to the marketplace"
+      />
     );
   }
 
-  // Store is suspended — show read-only banner
+  // Suspended sellers keep read-only access, so the dashboard still renders —
+  // the banner is what tells them why nothing saves.
   if (storeStatus === 'SUSPENDED') {
     return (
-      <div>
-        <div style={{
-          backgroundColor: '#fff3cd',
-          borderBottom: '1px solid #ffc107',
-          padding: '0.75rem 1.5rem',
-          textAlign: 'center',
-          color: '#856404',
-          fontSize: '0.95rem',
-          fontWeight: 500,
-        }}>
-          Your store is suspended and hidden from buyers. You have read-only access. Please contact support.
+      <div className="ws">
+        <div
+          className="ws-alert ws-alert--warning"
+          style={{ borderRadius: 0, border: 0, borderBottom: '1px solid var(--ws-status-warning)', justifyContent: 'center' }}
+          role="status"
+        >
+          <AlertTriangle size={16} aria-hidden />
+          <span>
+            Your store is suspended and hidden from buyers. You have read-only access. Please contact support.
+          </span>
         </div>
         {children}
       </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { AlertCircle, FolderTree, Users, Store } from 'lucide-react';
 import { adminReportService, type AdminReportStats } from '@/services/reportService';
 
 /**
@@ -41,103 +42,111 @@ export default function AdminDashboard() {
   const reviewing = stats?.byStatus.REVIEWING ?? 0;
 
   return (
-    <div className="admin-dashboard">
-      <div className="page-header">
-        <h1>Admin</h1>
-        <p style={{ color: '#667085' }}>
-          Moderation is the job now: nothing is transacted on the platform, so
-          de-listing is the only enforcement lever.
-        </p>
+    <div className="ws-page">
+      <div className="ws-page__head">
+        <div>
+          <h1 className="ws-page__title">Admin</h1>
+          <p className="ws-page__sub">
+            Moderation is the job now: nothing is transacted on the platform, so
+            de-listing is the only enforcement lever.
+          </p>
+        </div>
       </div>
 
-      {loading ? (
-        <p style={{ color: '#667085' }}>Loading…</p>
-      ) : error ? (
-        <p style={{ color: '#b42318' }}>{error}</p>
-      ) : stats && (
-        <>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-content">
-                <span className="stat-label">Open Reports</span>
-                <span className="stat-value" style={{ color: open > 0 ? '#b42318' : undefined }}>{open}</span>
+      <div className="ws-stack--lg">
+        {loading ? (
+          <div className="ws-stats">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="ws-skeleton" style={{ height: 96, borderRadius: 'var(--ws-radius-xl)' }} />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="ws-alert" role="alert">
+            <AlertCircle size={16} aria-hidden />
+            <span>{error}</span>
+          </div>
+        ) : stats && (
+          <>
+            <div className="ws-stats">
+              <div className="ws-stat">
+                <span className="ws-stat__label">Open Reports</span>
+                <span
+                  className="ws-stat__value"
+                  style={open > 0 ? { color: 'var(--ws-status-danger)' } : undefined}
+                >
+                  {open}
+                </span>
               </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-content">
-                <span className="stat-label">Reported Targets</span>
-                <span className="stat-value">{stats.openTargets}</span>
+              <div className="ws-stat">
+                <span className="ws-stat__label">Reported Targets</span>
+                <span className="ws-stat__value">{stats.openTargets}</span>
               </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-content">
-                <span className="stat-label">Being Reviewed</span>
-                <span className="stat-value">{reviewing}</span>
+              <div className="ws-stat">
+                <span className="ws-stat__label">Being Reviewed</span>
+                <span className="ws-stat__value">{reviewing}</span>
               </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-content">
-                <span className="stat-label">Resolved</span>
-                <span className="stat-value">
+              <div className="ws-stat">
+                <span className="ws-stat__label">Resolved</span>
+                <span className="ws-stat__value">
                   {(stats.byStatus.ACTIONED ?? 0) + (stats.byStatus.DISMISSED ?? 0)}
                 </span>
               </div>
             </div>
-          </div>
 
-          {stats.mostReported.length > 0 ? (
-            <section className="dashboard-section">
-              <h2>Most reported</h2>
-              <div className="data-table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Target</th>
-                      <th>Type</th>
-                      <th>Reports</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.mostReported.map((t) => (
-                      <tr key={`${t.targetType}:${t.targetId}`}>
-                        <td>{t.label}</td>
-                        <td style={{ color: '#667085' }}>{t.targetType.toLowerCase()}</td>
-                        <td><strong>{t.reportCount}</strong></td>
+            {stats.mostReported.length > 0 ? (
+              <section>
+                <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Most reported</h2>
+                <div className="ws-card ws-card--flush ws-table-wrap">
+                  <table className="ws-table">
+                    <thead>
+                      <tr>
+                        <th>Target</th>
+                        <th>Type</th>
+                        <th className="ws-table__num">Reports</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* The full queue (claim / dismiss / action) has API support but
-                  no page yet — these counts come from the same endpoints. */}
-              <p style={{ color: '#98a2b3', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                Acting on reports is currently done via the moderation API; a
-                full queue screen is the next admin build.
-              </p>
-            </section>
-          ) : open === 0 ? (
-            <p style={{ color: '#667085' }}>Nothing in the moderation queue. Quiet is good.</p>
-          ) : null}
-        </>
-      )}
+                    </thead>
+                    <tbody>
+                      {stats.mostReported.map((t) => (
+                        <tr key={`${t.targetType}:${t.targetId}`}>
+                          <td>{t.label}</td>
+                          <td className="ws-muted">{t.targetType.toLowerCase()}</td>
+                          <td className="ws-table__num"><strong>{t.reportCount}</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* The full queue (claim / dismiss / action) has API support but
+                    no page yet — these counts come from the same endpoints. */}
+                <p className="ws-caption ws-subtle" style={{ marginTop: 'var(--ws-space-2)' }}>
+                  Acting on reports is currently done via the moderation API; a
+                  full queue screen is the next admin build.
+                </p>
+              </section>
+            ) : open === 0 ? (
+              <p className="ws-body ws-muted">Nothing in the moderation queue. Quiet is good.</p>
+            ) : null}
+          </>
+        )}
 
-      <section className="dashboard-section">
-        <h2>Manage</h2>
-        <div className="quick-links-grid">
-          <Link to="/admin/categories" className="quick-link-card">
-            <span className="material-icons">category</span>
-            <span>Categories & Attributes</span>
-          </Link>
-          <Link to="/admin/users" className="quick-link-card">
-            <span className="material-icons">group</span>
-            <span>Users & Roles</span>
-          </Link>
-          <Link to="/listings" className="quick-link-card">
-            <span className="material-icons">storefront</span>
-            <span>View Marketplace</span>
-          </Link>
-        </div>
-      </section>
+        <section>
+          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Manage</h2>
+          <div className="ws-stats">
+            <Link to="/admin/categories" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <FolderTree size={18} aria-hidden />
+              <span className="ws-title">Categories &amp; Attributes</span>
+            </Link>
+            <Link to="/admin/users" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <Users size={18} aria-hidden />
+              <span className="ws-title">Users &amp; Roles</span>
+            </Link>
+            <Link to="/listings" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <Store size={18} aria-hidden />
+              <span className="ws-title">View Marketplace</span>
+            </Link>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

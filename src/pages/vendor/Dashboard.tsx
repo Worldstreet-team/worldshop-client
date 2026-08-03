@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  AlertCircle, AlertTriangle, Info, Eye, EyeOff, Wallet, CalendarCheck,
+  Package, MessageCircle, MailOpen, Star, Store, ExternalLink,
+  type LucideIcon,
+} from 'lucide-react';
 import { storeService, type VendorDashboard, type DashboardAlert } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
@@ -34,10 +39,10 @@ const errMessage = (err: unknown, fallback: string) => {
 
 const errStatus = (err: unknown) => toApiError(err, '').statusCode;
 
-const ALERT_ICON: Record<DashboardAlert['severity'], string> = {
-  critical: 'error',
-  warning: 'warning',
-  info: 'info',
+const ALERT: Record<DashboardAlert['severity'], { cls: string; Icon: LucideIcon }> = {
+  critical: { cls: '', Icon: AlertCircle },
+  warning: { cls: 'ws-alert--warning', Icon: AlertTriangle },
+  info: { cls: 'ws-alert--info', Icon: Info },
 };
 
 /** Plain-language store state — "DRAFT" means nothing to a vendor. */
@@ -128,13 +133,13 @@ export default function VendorDashboard() {
 
   if (loading) {
     return (
-      <div className="vendor-dashboard">
-        <div className="dashboard-header"><h1>Dashboard</h1></div>
-        <div className="stats-grid">
+      <div className="ws-page">
+        <div className="ws-page__head"><h1 className="ws-page__title">Dashboard</h1></div>
+        <div className="ws-stats">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="stat-card skeleton">
-              <div className="skeleton-row" style={{ height: 20, width: '60%' }} />
-              <div className="skeleton-row" style={{ height: 32, width: '40%', marginTop: 8 }} />
+            <div key={i} className="ws-card ws-stack">
+              <div className="ws-skeleton" style={{ height: 12, width: '60%' }} />
+              <div className="ws-skeleton" style={{ height: 28, width: '40%' }} />
             </div>
           ))}
         </div>
@@ -144,16 +149,15 @@ export default function VendorDashboard() {
 
   if (error || !data) {
     return (
-      <div className="vendor-dashboard">
-        <div className="dashboard-header"><h1>Dashboard</h1></div>
-        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#666' }}>
-          <span className="material-icons" style={{ fontSize: '3rem', color: '#dc3545', display: 'block', marginBottom: '1rem' }}>
-            error_outline
-          </span>
-          <p style={{ marginBottom: '1rem' }}>{error}</p>
-          <button onClick={load} style={{ padding: '0.5rem 1.5rem', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-            Retry
-          </button>
+      <div className="ws-page">
+        <div className="ws-page__head"><h1 className="ws-page__title">Dashboard</h1></div>
+        <div className="ws-empty">
+          <div className="ws-empty__icon" style={{ color: 'var(--ws-status-danger)' }}>
+            <AlertCircle size={26} aria-hidden />
+          </div>
+          <h2 className="ws-title">Could not load your dashboard</h2>
+          <p className="ws-caption ws-muted" style={{ maxWidth: '40ch' }}>{error}</p>
+          <button onClick={load} className="ws-btn ws-btn--sm ws-btn--primary">Retry</button>
         </div>
       </div>
     );
@@ -167,238 +171,211 @@ export default function VendorDashboard() {
   /** What the wallet is charged — credit covers the rest. */
   const dueMinor = wallet?.dueMinor ?? sub?.plan.amountMinor ?? 0;
 
+  const VisibilityIcon = visibility.tone === 'good' ? Eye : EyeOff;
+
   return (
-    <div className="vendor-dashboard">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
-        <span style={{ fontSize: '0.95rem', color: visibility.tone === 'good' ? '#1a7f37' : '#b42318', fontWeight: 600 }}>
-          <span className="material-icons" style={{ fontSize: '1rem', verticalAlign: 'text-bottom', marginRight: 4 }}>
-            {visibility.tone === 'good' ? 'visibility' : 'visibility_off'}
-          </span>
+    <div className="ws-page">
+      <div className="ws-page__head">
+        <h1 className="ws-page__title">Dashboard</h1>
+        <span
+          className="ws-badge"
+          style={{
+            background: visibility.tone === 'good' ? 'var(--ws-money-credit-chip)' : 'var(--ws-money-debit-chip)',
+            color: visibility.tone === 'good' ? 'var(--ws-status-success)' : 'var(--ws-status-danger)',
+          }}
+        >
+          <VisibilityIcon size={12} aria-hidden />
           {visibility.text}
         </span>
       </div>
 
-      {/* Whatever needs doing, most urgent first. */}
-      {data.alerts.length > 0 && (
-        <div className="dashboard-alerts" style={{ display: 'grid', gap: '0.5rem', marginBottom: '1.25rem' }}>
-          {data.alerts.map((alert) => (
-            <div
-              key={alert.type}
-              className={`dashboard-info-bar alert-${alert.severity}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.6rem',
-                padding: '0.75rem 1rem',
-                borderRadius: 8,
-                background: alert.severity === 'critical' ? '#fef3f2' : alert.severity === 'warning' ? '#fffaeb' : '#f8f9fa',
-                border: `1px solid ${alert.severity === 'critical' ? '#fda29b' : alert.severity === 'warning' ? '#fec84b' : '#e4e7ec'}`,
-                color: alert.severity === 'critical' ? '#b42318' : alert.severity === 'warning' ? '#b54708' : '#475467',
-              }}
-            >
-              <span className="material-icons" style={{ fontSize: '1.2rem' }}>{ALERT_ICON[alert.severity]}</span>
-              <span style={{ flex: 1 }}>{alert.message}</span>
-              {needsPayment && (alert.type === 'ACTIVATE' || alert.type === 'PAYMENT_FAILED' || alert.type === 'EXPIRED') && (
-                <button
-                  onClick={handleActivate}
-                  disabled={charging}
-                  style={{
-                    padding: '0.4rem 1rem', background: '#b42318', color: 'white',
-                    border: 'none', borderRadius: 6, cursor: charging ? 'wait' : 'pointer', fontWeight: 600,
-                  }}
-                >
-                  {charging ? 'Processing…' : `Pay ${formatUsd(dueMinor)}`}
-                </button>
-              )}
+      <div className="ws-stack--lg">
+        {/* Whatever needs doing, most urgent first. */}
+        {data.alerts.length > 0 && (
+          <div className="ws-stack">
+            {data.alerts.map((alert) => {
+              const { cls, Icon } = ALERT[alert.severity];
+              return (
+                <div key={alert.type} className={`ws-alert ${cls}`.trim()}>
+                  <Icon size={16} aria-hidden />
+                  <span style={{ flex: 1 }}>{alert.message}</span>
+                  {needsPayment && ['ACTIVATE', 'PAYMENT_FAILED', 'EXPIRED'].includes(alert.type) && (
+                    <button
+                      onClick={handleActivate}
+                      disabled={charging}
+                      className="ws-btn ws-btn--sm ws-btn--primary"
+                    >
+                      {charging ? 'Processing…' : `Pay ${formatUsd(dueMinor)}`}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* The wallet the subscription is charged against. Shown always, not
+            just when payment is due: "can I afford the renewal" is a question
+            vendors ask before the alert appears. Just the number — what to do
+            about it is the alert's job. */}
+        <div className="ws-card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+          <span className="ws-iconchip">
+            <Wallet size={22} aria-hidden />
+          </span>
+          <div>
+            <span className="ws-label">WorldStreet dollar wallet</span>
+            <div className="ws-stat__value">
+              {wallet ? formatUsd(wallet.availableMinor) : 'Unavailable'}
             </div>
-          ))}
+          </div>
         </div>
-      )}
 
-      {/* The wallet the subscription is charged against. Shown always, not just
-          when payment is due: "can I afford the renewal" is a question vendors
-          ask before the alert appears. Just the number — what to do about it is
-          the alert's job. */}
-      <div
-        className="dashboard-wallet"
-        style={{
-          display: 'flex', alignItems: 'center', gap: '0.75rem',
-          padding: '0.85rem 1rem', marginBottom: '1.25rem', borderRadius: 8,
-          background: '#ffffff', border: '1px solid #e4e7ec',
-        }}
-      >
-        <span className="material-icons" style={{ color: '#667085' }}>account_balance_wallet</span>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.8rem', color: '#667085' }}>WorldStreet dollar wallet</span>
-          <strong style={{ fontSize: '1.25rem', color: '#101828' }}>
-            {wallet ? formatUsd(wallet.availableMinor) : 'Unavailable'}
-          </strong>
-        </div>
-      </div>
-
-      {/* The four numbers that matter now. */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon"><span className="material-icons">event_available</span></div>
-          <div className="stat-content">
-            <span className="stat-label">Days Remaining</span>
-            <span className="stat-value">{sub?.daysRemaining != null && sub.daysRemaining > 0 ? sub.daysRemaining : '—'}</span>
-            <span className="stat-sub" style={{ fontSize: '0.8rem', color: '#667085' }}>
+        {/* The four numbers that matter now. */}
+        <div className="ws-stats">
+          <div className="ws-stat">
+            <span className="ws-stat__label"><CalendarCheck size={12} aria-hidden /> Days Remaining</span>
+            <span className="ws-stat__value">
+              {sub?.daysRemaining != null && sub.daysRemaining > 0 ? sub.daysRemaining : '—'}
+            </span>
+            <span className="ws-stat__delta ws-muted">
               {sub?.currentPeriodEnd ? `Renews ${formatDate(sub.currentPeriodEnd)}` : 'Not active'}
             </span>
           </div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-icon"><span className="material-icons">inventory_2</span></div>
-          <div className="stat-content">
-            <span className="stat-label">Live Listings</span>
-            <span className="stat-value">{data.listings.published}</span>
-            <span className="stat-sub" style={{ fontSize: '0.8rem', color: '#667085' }}>
+          <div className="ws-stat">
+            <span className="ws-stat__label"><Package size={12} aria-hidden /> Live Listings</span>
+            <span className="ws-stat__value">{data.listings.published}</span>
+            <span className="ws-stat__delta ws-muted">
               {data.listings.draft > 0 ? `${data.listings.draft} in draft` : 'All published'}
             </span>
           </div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-icon"><span className="material-icons">forum</span></div>
-          <div className="stat-content">
-            <span className="stat-label">Inquiries This Period</span>
-            <span className="stat-value">{data.engagement.inquiriesThisPeriod}</span>
-            <span className="stat-sub" style={{ fontSize: '0.8rem', color: '#667085' }}>
-              since {formatDate(data.engagement.since)}
-            </span>
+          <div className="ws-stat">
+            <span className="ws-stat__label"><MessageCircle size={12} aria-hidden /> Inquiries This Period</span>
+            <span className="ws-stat__value">{data.engagement.inquiriesThisPeriod}</span>
+            <span className="ws-stat__delta ws-muted">since {formatDate(data.engagement.since)}</span>
           </div>
-        </div>
 
-        <Link to="/vendor/messages" className="stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="stat-icon"><span className="material-icons">mark_email_unread</span></div>
-          <div className="stat-content">
-            <span className="stat-label">Unread Messages</span>
-            <span className="stat-value">{data.inbox.unread}</span>
-            <span className="stat-sub" style={{ fontSize: '0.8rem', color: '#667085' }}>
+          <Link to="/vendor/messages" className="ws-stat ws-plink">
+            <span className="ws-stat__label"><MailOpen size={12} aria-hidden /> Unread Messages</span>
+            <span className="ws-stat__value">{data.inbox.unread}</span>
+            <span className="ws-stat__delta ws-muted">
               {data.inbox.openThreads} open conversation{data.inbox.openThreads === 1 ? '' : 's'}
             </span>
-          </div>
-        </Link>
-      </div>
+          </Link>
+        </div>
 
-      {/* What buyers see about this seller. */}
-      <section className="dashboard-section">
-        <h2>How buyers see you</h2>
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-content">
-              <span className="stat-label">Response Rate</span>
-              <span className="stat-value">
+        {/* What buyers see about this seller. */}
+        <section>
+          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>How buyers see you</h2>
+          <div className="ws-stats">
+            <div className="ws-stat">
+              <span className="ws-stat__label">Response Rate</span>
+              <span className="ws-stat__value">
                 {data.engagement.responseRate != null ? `${Math.round(data.engagement.responseRate * 100)}%` : '—'}
               </span>
             </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-content">
-              <span className="stat-label">Avg. Reply Time</span>
-              <span className="stat-value">{formatResponseTime(data.engagement.avgResponseMins)}</span>
+            <div className="ws-stat">
+              <span className="ws-stat__label">Avg. Reply Time</span>
+              <span className="ws-stat__value">{formatResponseTime(data.engagement.avgResponseMins)}</span>
             </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-content">
-              <span className="stat-label">Rating</span>
-              <span className="stat-value">
-                {data.reputation.reviewCount > 0 ? `${data.reputation.avgRating.toFixed(1)} ★` : '—'}
+            <div className="ws-stat">
+              <span className="ws-stat__label">Rating</span>
+              <span className="ws-stat__value">
+                {data.reputation.reviewCount > 0 ? data.reputation.avgRating.toFixed(1) : '—'}
+                {data.reputation.reviewCount > 0 && (
+                  <Star size={16} aria-hidden style={{ color: 'var(--ws-accent-star, #F97316)', fill: 'var(--ws-accent-star, #F97316)', marginLeft: 4 }} />
+                )}
               </span>
-              <span className="stat-sub" style={{ fontSize: '0.8rem', color: '#667085' }}>
+              <span className="ws-stat__delta ws-muted">
                 {data.reputation.reviewCount} review{data.reputation.reviewCount === 1 ? '' : 's'}
               </span>
             </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-content">
-              <span className="stat-label">Listing Views</span>
-              <span className="stat-value">{data.engagement.views}</span>
+            <div className="ws-stat">
+              <span className="ws-stat__label">Listing Views</span>
+              <span className="ws-stat__value">{data.engagement.views}</span>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Subscription detail. Credit is spent before the wallet, so it is only
-          shown when there is some — otherwise it is noise. */}
-      {sub && (
-        <section className="dashboard-section">
-          <h2>Subscription</h2>
-          <div className="data-table-container">
-            <table className="data-table">
-              <tbody>
-                <tr>
-                  <td>Plan</td>
-                  <td><strong>{sub.plan.name}</strong> — {formatUsd(sub.plan.amountMinor)}/month</td>
-                </tr>
-                <tr>
-                  <td>Status</td>
-                  <td>{sub.status.replace(/_/g, ' ').toLowerCase()}</td>
-                </tr>
-                <tr>
-                  <td>Current period</td>
-                  <td>{formatDate(sub.currentPeriodStart)} — {formatDate(sub.currentPeriodEnd)}</td>
-                </tr>
-                <tr>
-                  <td>Auto-renew</td>
-                  <td>{sub.autoRenew ? 'On' : 'Off'}</td>
-                </tr>
-                {sub.creditMinor > 0 && (
+        {/* Subscription detail. Credit is spent before the wallet, so it is
+            only shown when there is some — otherwise it is noise. */}
+        {sub && (
+          <section>
+            <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Subscription</h2>
+            <div className="ws-card ws-card--flush ws-table-wrap">
+              <table className="ws-table">
+                <tbody>
                   <tr>
-                    <td>Store credit</td>
-                    <td>{formatUsd(sub.creditMinor)} — used before your wallet is charged</td>
+                    <td>Plan</td>
+                    <td><strong>{sub.plan.name}</strong> — {formatUsd(sub.plan.amountMinor)}/month</td>
                   </tr>
-                )}
-                <tr>
-                  <td>Wallet balance</td>
-                  <td>{wallet ? formatUsd(wallet.availableMinor) : 'Unavailable right now'}</td>
-                </tr>
-                {sub.lastCharge && (
                   <tr>
-                    <td>Last payment</td>
-                    <td>
-                      {sub.lastCharge.status === 'PAID'
-                        ? `${formatUsd(sub.lastCharge.amountMinor)} on ${formatDate(sub.lastCharge.chargedAt)}`
-                        : `Failed${sub.lastCharge.failureCode ? ` (${sub.lastCharge.failureCode.replace(/_/g, ' ').toLowerCase()})` : ''}`}
-                    </td>
+                    <td>Status</td>
+                    <td>{sub.status.replace(/_/g, ' ').toLowerCase()}</td>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                  <tr>
+                    <td>Current period</td>
+                    <td>{formatDate(sub.currentPeriodStart)} — {formatDate(sub.currentPeriodEnd)}</td>
+                  </tr>
+                  <tr>
+                    <td>Auto-renew</td>
+                    <td>{sub.autoRenew ? 'On' : 'Off'}</td>
+                  </tr>
+                  {sub.creditMinor > 0 && (
+                    <tr>
+                      <td>Store credit</td>
+                      <td>{formatUsd(sub.creditMinor)} — used before your wallet is charged</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td>Wallet balance</td>
+                    <td>{wallet ? formatUsd(wallet.availableMinor) : 'Unavailable right now'}</td>
+                  </tr>
+                  {sub.lastCharge && (
+                    <tr>
+                      <td>Last payment</td>
+                      <td>
+                        {sub.lastCharge.status === 'PAID'
+                          ? `${formatUsd(sub.lastCharge.amountMinor)} on ${formatDate(sub.lastCharge.chargedAt)}`
+                          : `Failed${sub.lastCharge.failureCode ? ` (${sub.lastCharge.failureCode.replace(/_/g, ' ').toLowerCase()})` : ''}`}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        <section>
+          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Quick Links</h2>
+          <div className="ws-stats">
+            <Link to="/vendor/products" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <Package size={18} aria-hidden />
+              <span className="ws-title">Manage Listings</span>
+            </Link>
+            <Link to="/vendor/messages" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <MessageCircle size={18} aria-hidden />
+              <span className="ws-title">Messages</span>
+            </Link>
+            <Link to="/vendor/reviews?unreplied=1" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <Star size={18} aria-hidden />
+              <span className="ws-title">Reviews</span>
+            </Link>
+            <Link to="/vendor/settings" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+              <Store size={18} aria-hidden />
+              <span className="ws-title">Store Profile</span>
+            </Link>
+            {data.store.publiclyVisible && (
+              <Link to={`/stores/${data.store.slug}`} className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+                <ExternalLink size={18} aria-hidden />
+                <span className="ws-title">View Public Store</span>
+              </Link>
+            )}
           </div>
         </section>
-      )}
-
-      <section className="dashboard-section">
-        <h2>Quick Links</h2>
-        <div className="quick-links-grid">
-          <Link to="/vendor/products" className="quick-link-card">
-            <span className="material-icons">inventory_2</span>
-            <span>Manage Listings</span>
-          </Link>
-          <Link to="/vendor/messages" className="quick-link-card">
-            <span className="material-icons">forum</span>
-            <span>Messages</span>
-          </Link>
-          <Link to="/vendor/reviews?unreplied=1" className="quick-link-card">
-            <span className="material-icons">star_rate</span>
-            <span>Reviews</span>
-          </Link>
-          <Link to="/vendor/settings" className="quick-link-card">
-            <span className="material-icons">storefront</span>
-            <span>Store Profile</span>
-          </Link>
-          {data.store.publiclyVisible && (
-            <Link to={`/stores/${data.store.slug}`} className="quick-link-card">
-              <span className="material-icons">open_in_new</span>
-              <span>View Public Store</span>
-            </Link>
-          )}
-        </div>
-      </section>
+      </div>
     </div>
   );
 }

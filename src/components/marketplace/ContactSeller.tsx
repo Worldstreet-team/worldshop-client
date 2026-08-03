@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
+import { CheckCircle2, Phone, ShieldAlert, MessageCircle } from 'lucide-react';
 import { chatService } from '@/services/chatService';
 import type { PublicListing } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
@@ -66,57 +67,70 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
 
   if (sentId) {
     return (
-      <div style={{ border: '1px solid #a6f4c5', background: '#ecfdf3', borderRadius: 8, padding: '1rem' }}>
-        <strong style={{ color: '#027a48', display: 'block', marginBottom: 4 }}>Message sent</strong>
-        <p style={{ color: '#475467', fontSize: '0.9rem', marginBottom: '0.75rem' }}>
+      <div className="ws-card ws-sent">
+        <span className="ws-sent__icon"><CheckCircle2 size={20} aria-hidden /></span>
+        <h2 className="ws-title">Message sent</h2>
+        <p className="ws-caption ws-muted">
           {store.name} has been notified. Replies appear in your messages.
         </p>
-        <button className="btn-primary" onClick={() => navigate('/account/messages')}>
-          Go to my messages
+        <button
+          className="ws-btn ws-btn--primary ws-btn--block"
+          onClick={() => navigate('/account/messages')}
+        >
+          Go to messages
         </button>
       </div>
     );
   }
 
   return (
-    <div style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '1rem' }}>
-      <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.05rem' }}>Contact seller</h3>
+    <div className="ws-card ws-contact">
+      <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Contact seller</h2>
 
+      <label className="ws-label" htmlFor="contact-message">Your message</label>
       <textarea
+        id="contact-message"
         rows={3}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         maxLength={2000}
-        style={{ width: '100%', padding: '0.6rem', border: '1px solid #e4e7ec', borderRadius: 6, marginBottom: '0.5rem' }}
+        className="ws-textarea"
       />
 
-      <button className="btn-primary" onClick={handleSend} disabled={sending} style={{ width: '100%' }}>
+      <button
+        className="ws-btn ws-btn--primary ws-btn--block"
+        onClick={handleSend}
+        disabled={sending}
+      >
+        <MessageCircle size={18} aria-hidden />
         {sending ? 'Sending…' : isSignedIn ? 'Send message' : 'Sign in to message'}
       </button>
 
       {(store.phone || store.whatsapp) && (
-        <div style={{ marginTop: '0.75rem', borderTop: '1px solid #f2f4f7', paddingTop: '0.75rem' }}>
-          <p style={{ fontSize: '0.8rem', color: '#667085', marginBottom: '0.5rem' }}>
-            Or reach them directly
-          </p>
+        <div className="ws-contact__direct">
+          <span className="ws-label">Or reach them directly</span>
 
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div className="ws-contact__row">
             {store.phone && (
               showPhone ? (
-                <a href={`tel:${store.phone}`} className="btn-secondary">{store.phone}</a>
+                <a href={`tel:${store.phone}`} className="ws-btn ws-btn--sm ws-btn--secondary ws-num">
+                  <Phone size={14} aria-hidden />
+                  {store.phone}
+                </a>
               ) : (
                 // Revealed on click rather than rendered outright — it keeps
                 // the number away from casual scrapers and lets the platform
                 // see that contact was made.
-                <button className="btn-secondary" onClick={() => setShowPhone(true)}>
-                  Show phone number
+                <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => setShowPhone(true)}>
+                  <Phone size={14} aria-hidden />
+                  Show number
                 </button>
               )
             )}
 
             {store.whatsapp && (
               <a
-                className="btn-secondary"
+                className="ws-btn ws-btn--sm ws-btn--secondary"
                 href={waLink(store.whatsapp, listing.name)}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -128,9 +142,12 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
         </div>
       )}
 
-      <p style={{ fontSize: '0.78rem', color: '#98a2b3', marginTop: '0.75rem', lineHeight: 1.4 }}>
-        WorldStreet does not handle payment or delivery for this item. Meet in a
-        safe place and check the item before paying.
+      <p className="ws-safety">
+        <ShieldAlert size={16} aria-hidden />
+        <span>
+          WorldStreet does not handle payment or delivery for this item. Meet in
+          a safe place and check the item before paying.
+        </span>
       </p>
     </div>
   );

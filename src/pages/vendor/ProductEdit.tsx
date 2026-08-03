@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { AlertCircle, Plus, X } from 'lucide-react';
 import {
   listingService,
   type Listing,
@@ -71,9 +72,10 @@ function mapServerFieldPath(path: string): { field: string; label: string } {
   return { field: head, label: FIELD_LABELS[head] ?? head };
 }
 
-const errorText: React.CSSProperties = { color: '#b42318', fontSize: '0.85rem', margin: '0.25rem 0 0' };
-const errorBorder = (bad: boolean): React.CSSProperties | undefined =>
-  bad ? { borderColor: '#fda29b' } : undefined;
+// Error styling is carried on classes rather than inline style objects so the
+// invalid state resolves through the theme's danger token.
+const fieldCls = (bad: boolean) => `ws-field${bad ? ' ws-field--invalid' : ''}`;
+const selectCls = (bad: boolean) => `ws-select${bad ? ' ws-select--invalid' : ''}`;
 
 type ImageRef = Record<string, unknown> & { key?: string; url?: string };
 
@@ -351,401 +353,501 @@ export default function ListingEdit() {
   );
 
   if (loading) {
-    return <div className="vendor-product-edit"><p style={{ color: '#667085' }}>Loading listing…</p></div>;
+    return (
+      <div className="ws-page">
+        <div className="ws-page__head"><h1 className="ws-page__title">Edit Listing</h1></div>
+        <div className="ws-skeleton" style={{ height: 420, borderRadius: 'var(--ws-radius-xl)' }} />
+      </div>
+    );
   }
 
   const readOnly = listing?.status === 'REMOVED';
 
   return (
-    <div className="vendor-product-edit">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>{isNew ? 'Add Listing' : 'Edit Listing'}</h1>
-        <Link to="/vendor/products" className="btn-secondary">Back to listings</Link>
+    <div className="ws-page" style={{ maxWidth: 900 }}>
+      <div className="ws-page__head">
+        <h1 className="ws-page__title">{isNew ? 'Add Listing' : 'Edit Listing'}</h1>
+        <Link to="/vendor/products" className="ws-btn ws-btn--sm ws-btn--secondary">
+          Back to listings
+        </Link>
       </div>
 
-      {readOnly && (
-        <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', marginBottom: '1rem' }}>
-          This listing was removed by an administrator and cannot be edited.
-        </div>
-      )}
-
-      {problems && problems.length > 0 && (
-        <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', marginBottom: '1rem' }}>
-          {problems.length === 1 ? (
-            problems[0]
-          ) : (
-            <>
-              <strong>Fix the following before saving:</strong>
-              <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
-                {problems.map((p, i) => <li key={i}>{p}</li>)}
-              </ul>
-            </>
-          )}
-        </div>
-      )}
-
-      <form onSubmit={(e) => { e.preventDefault(); save(false); }}>
-        {/* ── Basics ── */}
-        <section className="dashboard-section">
-          <h2>Basics</h2>
-
-          <div className="form-group">
-            <label htmlFor="name">Product Name *</label>
-            <input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Ankara Maxi Dress"
-              aria-invalid={!!fieldErrors.name}
-              style={errorBorder(!!fieldErrors.name)}
-            />
-            {fieldErrors.name && <p style={errorText}>{fieldErrors.name}</p>}
+      <div className="ws-stack--lg">
+        {readOnly && (
+          <div className="ws-alert" role="alert">
+            <AlertCircle size={16} aria-hidden />
+            <span>This listing was removed by an administrator and cannot be edited.</span>
           </div>
+        )}
 
-          <div className="form-group">
-            <label htmlFor="description">Description *</label>
-            <textarea
-              id="description"
-              rows={5}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the product in detail — buyers decide whether to message you from this."
-              aria-invalid={!!fieldErrors.description}
-              style={errorBorder(!!fieldErrors.description)}
-            />
-            {fieldErrors.description && <p style={errorText}>{fieldErrors.description}</p>}
+        {problems && problems.length > 0 && (
+          <div className="ws-alert" role="alert">
+            <AlertCircle size={16} aria-hidden />
+            {problems.length === 1 ? (
+              <span>{problems[0]}</span>
+            ) : (
+              <span>
+                <strong>Fix the following before saving:</strong>
+                <ul style={{ margin: 'var(--ws-space-1) 0 0', paddingLeft: '1.2rem' }}>
+                  {problems.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              </span>
+            )}
           </div>
+        )}
 
-          {/* Listings attach to a subcategory: that is where the attributes
-              live, and where buyers browse. */}
-          <div className="form-group">
-            <label htmlFor="parent">Category *</label>
-            <select
-              id="parent"
-              value={parentId}
-              onChange={(e) => { setParentId(e.target.value); setCategoryId(''); setAttributes({}); }}
-            >
-              <option value="">Select a category</option>
-              {parents.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            {!parentId && fieldErrors.category && <p style={errorText}>{fieldErrors.category}</p>}
-          </div>
+        <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="ws-stack--lg">
+          {/* ── Basics ── */}
+          <section className="ws-card ws-stack--lg">
+            <h2 className="ws-h2">Basics</h2>
 
-          {parentId && (
-            <div className="form-group">
-              <label htmlFor="category">Subcategory *</label>
-              <select
-                id="category"
-                value={categoryId}
-                onChange={(e) => { setCategoryId(e.target.value); setAttributes({}); }}
-                aria-invalid={!!fieldErrors.category}
-                style={errorBorder(!!fieldErrors.category)}
-              >
-                <option value="">Select a subcategory</option>
-                {children.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              {fieldErrors.category && <p style={errorText}>{fieldErrors.category}</p>}
+            <div className="ws-formfield">
+              <label htmlFor="name" className="ws-formfield__label">Product Name *</label>
+              <input
+                id="name"
+                className={fieldCls(!!fieldErrors.name)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Ankara Maxi Dress"
+                aria-invalid={!!fieldErrors.name}
+              />
+              {fieldErrors.name && <p className="ws-formfield__error">{fieldErrors.name}</p>}
             </div>
-          )}
-        </section>
 
-        {/* ── Price ── */}
-        <section className="dashboard-section">
-          <h2>Price</h2>
+            <div className="ws-formfield">
+              <label htmlFor="description" className="ws-formfield__label">Description *</label>
+              <textarea
+                id="description"
+                className={`ws-textarea${fieldErrors.description ? ' ws-field--invalid' : ''}`}
+                rows={5}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the product in detail — buyers decide whether to message you from this."
+                aria-invalid={!!fieldErrors.description}
+              />
+              {fieldErrors.description && <p className="ws-formfield__error">{fieldErrors.description}</p>}
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="priceType">Pricing</label>
-            <select id="priceType" value={priceType} onChange={(e) => setPriceType(e.target.value as PriceType)}>
-              <option value="FIXED">Fixed price</option>
-              <option value="RANGE">Price range</option>
-              <option value="ON_REQUEST">Contact for price</option>
-            </select>
-          </div>
-
-          {priceType !== 'ON_REQUEST' && (
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label htmlFor="basePrice">{priceType === 'RANGE' ? 'From (₦)' : 'Price (₦)'}</label>
-                <input
-                  id="basePrice"
-                  type="number"
-                  min="0"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(e.target.value)}
-                  aria-invalid={!!fieldErrors.basePrice}
-                  style={errorBorder(!!fieldErrors.basePrice)}
-                />
-                {fieldErrors.basePrice && <p style={errorText}>{fieldErrors.basePrice}</p>}
+            {/* Listings attach to a subcategory: that is where the attributes
+                live, and where buyers browse. */}
+            <div className="ws-formgrid">
+              <div className="ws-formfield">
+                <label htmlFor="parent" className="ws-formfield__label">Category *</label>
+                <select
+                  id="parent"
+                  className="ws-select"
+                  value={parentId}
+                  onChange={(e) => { setParentId(e.target.value); setCategoryId(''); setAttributes({}); }}
+                >
+                  <option value="">Select a category</option>
+                  {parents.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {!parentId && fieldErrors.category && (
+                  <p className="ws-formfield__error">{fieldErrors.category}</p>
+                )}
               </div>
+
+              {parentId && (
+                <div className="ws-formfield">
+                  <label htmlFor="category" className="ws-formfield__label">Subcategory *</label>
+                  <select
+                    id="category"
+                    className={selectCls(!!fieldErrors.category)}
+                    value={categoryId}
+                    onChange={(e) => { setCategoryId(e.target.value); setAttributes({}); }}
+                    aria-invalid={!!fieldErrors.category}
+                  >
+                    <option value="">Select a subcategory</option>
+                    {children.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  {fieldErrors.category && <p className="ws-formfield__error">{fieldErrors.category}</p>}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ── Price ── */}
+          <section className="ws-card ws-stack--lg">
+            <h2 className="ws-h2">Price</h2>
+
+            <div className="ws-formgrid">
+              <div className="ws-formfield">
+                <label htmlFor="priceType" className="ws-formfield__label">Pricing</label>
+                <select
+                  id="priceType"
+                  className="ws-select"
+                  value={priceType}
+                  onChange={(e) => setPriceType(e.target.value as PriceType)}
+                >
+                  <option value="FIXED">Fixed price</option>
+                  <option value="RANGE">Price range</option>
+                  <option value="ON_REQUEST">Contact for price</option>
+                </select>
+              </div>
+
+              {priceType !== 'ON_REQUEST' && (
+                <div className="ws-formfield">
+                  <label htmlFor="basePrice" className="ws-formfield__label">
+                    {priceType === 'RANGE' ? 'From (₦)' : 'Price (₦)'}
+                  </label>
+                  <input
+                    id="basePrice"
+                    type="number"
+                    min="0"
+                    className={`${fieldCls(!!fieldErrors.basePrice)} ws-num`}
+                    value={basePrice}
+                    onChange={(e) => setBasePrice(e.target.value)}
+                    aria-invalid={!!fieldErrors.basePrice}
+                  />
+                  {fieldErrors.basePrice && <p className="ws-formfield__error">{fieldErrors.basePrice}</p>}
+                </div>
+              )}
+
               {priceType === 'RANGE' && (
-                <div className="form-group" style={{ flex: 1 }}>
-                  <label htmlFor="maxPrice">To (₦)</label>
+                <div className="ws-formfield">
+                  <label htmlFor="maxPrice" className="ws-formfield__label">To (₦)</label>
                   <input
                     id="maxPrice"
                     type="number"
                     min="0"
+                    className={`${fieldCls(!!fieldErrors.maxPrice)} ws-num`}
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(e.target.value)}
                     aria-invalid={!!fieldErrors.maxPrice}
-                    style={errorBorder(!!fieldErrors.maxPrice)}
                   />
-                  {fieldErrors.maxPrice && <p style={errorText}>{fieldErrors.maxPrice}</p>}
+                  {fieldErrors.maxPrice && <p className="ws-formfield__error">{fieldErrors.maxPrice}</p>}
                 </div>
               )}
             </div>
+
+            <label className="ws-check">
+              <input
+                type="checkbox"
+                className="ws-check__input"
+                checked={isNegotiable}
+                onChange={(e) => setIsNegotiable(e.target.checked)}
+              />
+              <span className="ws-check__label">Price is negotiable</span>
+            </label>
+          </section>
+
+          {/* ── Photos ── */}
+          <section className="ws-card ws-stack--lg">
+            <div>
+              <h2 className="ws-h2">Photos</h2>
+              <p className="ws-caption ws-muted">At least one photo is required to publish.</p>
+            </div>
+
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="ws-file"
+              disabled={uploading}
+              onChange={(e) => handleUpload(e.target.files)}
+            />
+            {uploading && <p className="ws-caption ws-muted">Uploading…</p>}
+            {fieldErrors.images && <p className="ws-formfield__error">{fieldErrors.images}</p>}
+
+            {images.length > 0 && (
+              <div style={{ display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap' }}>
+                {images.map((img, i) => (
+                  <div key={i} style={{ position: 'relative' }}>
+                    <img
+                      src={imageSrc(img)}
+                      alt=""
+                      style={{
+                        width: 96, height: 96, objectFit: 'cover',
+                        borderRadius: 'var(--ws-radius-lg)',
+                        border: '1px solid var(--ws-border-hairline)',
+                        display: 'block',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
+                      style={{
+                        position: 'absolute', top: -6, right: -6, width: 22, height: 22,
+                        borderRadius: 'var(--ws-radius-pill)', border: 'none',
+                        background: 'var(--ws-status-danger)', color: '#fff', cursor: 'pointer',
+                        display: 'grid', placeItems: 'center', lineHeight: 1,
+                      }}
+                      aria-label="Remove image"
+                    >
+                      <X size={13} aria-hidden />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Category attributes: the filterable layer ── */}
+          {productAttrs.length > 0 && (
+            <section className="ws-card ws-stack--lg">
+              <div>
+                <h2 className="ws-h2">Product Details</h2>
+                <p className="ws-caption ws-muted">
+                  Buyers filter search results by these, so fill in as many as apply.
+                </p>
+              </div>
+
+              <div className="ws-formgrid">
+                {productAttrs.map((attr) => (
+                  <div className="ws-formfield" key={attr.name}>
+                    <label htmlFor={`attr-${attr.name}`} className="ws-formfield__label">
+                      {attr.name}{attr.isRequired ? ' *' : ''}
+                    </label>
+
+                    {attr.type === 'SELECT' ? (
+                      <select
+                        id={`attr-${attr.name}`}
+                        className={selectCls(!!fieldErrors[`attr-${attr.name}`])}
+                        value={attributes[attr.name] ?? ''}
+                        onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
+                        aria-invalid={!!fieldErrors[`attr-${attr.name}`]}
+                      >
+                        <option value="">Select {attr.name.toLowerCase()}</option>
+                        {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        id={`attr-${attr.name}`}
+                        type={attr.type === 'NUMBER' ? 'number' : 'text'}
+                        className={fieldCls(!!fieldErrors[`attr-${attr.name}`])}
+                        value={attributes[attr.name] ?? ''}
+                        onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
+                        aria-invalid={!!fieldErrors[`attr-${attr.name}`]}
+                      />
+                    )}
+                    {fieldErrors[`attr-${attr.name}`] && (
+                      <p className="ws-formfield__error">{fieldErrors[`attr-${attr.name}`]}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input type="checkbox" checked={isNegotiable} onChange={(e) => setIsNegotiable(e.target.checked)} />
-            Price is negotiable
-          </label>
-        </section>
+          {/* ── Custom fields: anything the category does not cover ── */}
+          <section className="ws-card ws-stack--lg">
+            <div>
+              <h2 className="ws-h2">Additional Details</h2>
+              <p className="ws-caption ws-muted">
+                Add anything specific to this product that the fields above do not cover.
+                These appear on your listing but are not used in search filters.
+              </p>
+            </div>
 
-        {/* ── Photos ── */}
-        <section className="dashboard-section">
-          <h2>Photos</h2>
-          <p style={{ color: '#667085', fontSize: '0.88rem' }}>At least one photo is required to publish.</p>
+            {customFields.length > 0 && (
+              <div className="ws-stack">
+                {customFields.map((field, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap' }}>
+                    <input
+                      className="ws-field"
+                      placeholder="Label — e.g. Warranty"
+                      value={field.label}
+                      onChange={(e) => setCustomFields((f) => f.map((x, idx) => (idx === i ? { ...x, label: e.target.value } : x)))}
+                      style={{ flex: 1, minWidth: 140 }}
+                    />
+                    <input
+                      className="ws-field"
+                      placeholder="Value — e.g. 6 months"
+                      value={field.value}
+                      onChange={(e) => setCustomFields((f) => f.map((x, idx) => (idx === i ? { ...x, value: e.target.value } : x)))}
+                      style={{ flex: 2, minWidth: 180 }}
+                    />
+                    <button
+                      type="button"
+                      className="ws-btn ws-btn--ghost"
+                      onClick={() => setCustomFields((f) => f.filter((_, idx) => idx !== i))}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <input type="file" accept="image/*" multiple disabled={uploading} onChange={(e) => handleUpload(e.target.files)} />
-          {uploading && <p style={{ color: '#667085' }}>Uploading…</p>}
-          {fieldErrors.images && <p style={errorText}>{fieldErrors.images}</p>}
+            {customFields.length < MAX_CUSTOM_FIELDS && (
+              <div>
+                <button
+                  type="button"
+                  className="ws-btn ws-btn--sm ws-btn--secondary"
+                  onClick={() => setCustomFields((f) => [...f, { label: '', value: '' }])}
+                >
+                  <Plus size={14} aria-hidden />
+                  Add field
+                </button>
+              </div>
+            )}
+          </section>
 
-          {images.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-              {images.map((img, i) => (
-                <div key={i} style={{ position: 'relative' }}>
-                  <img
-                    src={imageSrc(img)}
-                    alt=""
-                    style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 6, border: '1px solid #e4e7ec' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                    style={{
-                      position: 'absolute', top: -6, right: -6, width: 22, height: 22,
-                      borderRadius: '50%', border: 'none', background: '#b42318', color: 'white', cursor: 'pointer',
-                    }}
-                    aria-label="Remove image"
-                  >
-                    ×
-                  </button>
+          {/* ── Variants ── */}
+          {variantAttrs.length > 0 && (
+            <section className="ws-card ws-stack--lg">
+              <div>
+                <h2 className="ws-h2">Variants</h2>
+                <p className="ws-caption ws-muted">
+                  Add a row per {variantAttrs.map((a) => a.name.toLowerCase()).join(' / ')} you offer.
+                  Leave empty if this product has only one version.
+                </p>
+              </div>
+              {fieldErrors.variants && <p className="ws-formfield__error">{fieldErrors.variants}</p>}
+
+              {variants.map((variant, i) => (
+                <div
+                  key={i}
+                  style={{
+                    border: '1px solid var(--ws-border-hairline)',
+                    borderRadius: 'var(--ws-radius-lg)',
+                    padding: 'var(--ws-space-3)',
+                    background: 'var(--ws-bg-sunken)',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <div className="ws-formfield" style={{ flex: 1, minWidth: 160 }}>
+                      <label className="ws-formfield__label">Name</label>
+                      <input
+                        className="ws-field"
+                        placeholder="e.g. Red / XL"
+                        value={variant.name}
+                        onChange={(e) => setVariants((v) => v.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))}
+                      />
+                    </div>
+
+                    {variantAttrs.map((attr) => (
+                      <div className="ws-formfield" key={attr.name} style={{ minWidth: 130 }}>
+                        <label className="ws-formfield__label">{attr.name}{attr.isRequired ? ' *' : ''}</label>
+                        {attr.type === 'SELECT' ? (
+                          <select
+                            className="ws-select"
+                            value={variant.attributes[attr.name] ?? ''}
+                            onChange={(e) =>
+                              setVariants((v) => v.map((x, idx) =>
+                                idx === i ? { ...x, attributes: { ...x.attributes, [attr.name]: e.target.value } } : x))}
+                          >
+                            <option value="">—</option>
+                            {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                          </select>
+                        ) : (
+                          <input
+                            className="ws-field"
+                            value={variant.attributes[attr.name] ?? ''}
+                            onChange={(e) =>
+                              setVariants((v) => v.map((x, idx) =>
+                                idx === i ? { ...x, attributes: { ...x.attributes, [attr.name]: e.target.value } } : x))}
+                          />
+                        )}
+                      </div>
+                    ))}
+
+                    <div className="ws-formfield" style={{ minWidth: 120 }}>
+                      <label className="ws-formfield__label">Price (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="ws-field ws-num"
+                        value={variant.price ?? ''}
+                        onChange={(e) =>
+                          setVariants((v) => v.map((x, idx) =>
+                            idx === i ? { ...x, price: e.target.value === '' ? undefined : Number(e.target.value) } : x))}
+                      />
+                    </div>
+
+                    <label className="ws-check" style={{ paddingBottom: 'var(--ws-space-3)' }}>
+                      <input
+                        type="checkbox"
+                        className="ws-check__input"
+                        checked={variant.isAvailable !== false}
+                        onChange={(e) =>
+                          setVariants((v) => v.map((x, idx) => (idx === i ? { ...x, isAvailable: e.target.checked } : x)))}
+                      />
+                      <span className="ws-check__label">Available</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      className="ws-btn ws-btn--ghost"
+                      onClick={() => setVariants((v) => v.filter((_, idx) => idx !== i))}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
-            </div>
-          )}
-        </section>
 
-        {/* ── Category attributes: the filterable layer ── */}
-        {productAttrs.length > 0 && (
-          <section className="dashboard-section">
-            <h2>Product Details</h2>
-            <p style={{ color: '#667085', fontSize: '0.88rem' }}>
-              Buyers filter search results by these, so fill in as many as apply.
-            </p>
-
-            {productAttrs.map((attr) => (
-              <div className="form-group" key={attr.name}>
-                <label htmlFor={`attr-${attr.name}`}>
-                  {attr.name}{attr.isRequired ? ' *' : ''}
-                </label>
-
-                {attr.type === 'SELECT' ? (
-                  <select
-                    id={`attr-${attr.name}`}
-                    value={attributes[attr.name] ?? ''}
-                    onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
-                    aria-invalid={!!fieldErrors[`attr-${attr.name}`]}
-                    style={errorBorder(!!fieldErrors[`attr-${attr.name}`])}
-                  >
-                    <option value="">Select {attr.name.toLowerCase()}</option>
-                    {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                ) : (
-                  <input
-                    id={`attr-${attr.name}`}
-                    type={attr.type === 'NUMBER' ? 'number' : 'text'}
-                    value={attributes[attr.name] ?? ''}
-                    onChange={(e) => setAttributes((a) => ({ ...a, [attr.name]: e.target.value }))}
-                    aria-invalid={!!fieldErrors[`attr-${attr.name}`]}
-                    style={errorBorder(!!fieldErrors[`attr-${attr.name}`])}
-                  />
-                )}
-                {fieldErrors[`attr-${attr.name}`] && <p style={errorText}>{fieldErrors[`attr-${attr.name}`]}</p>}
+              <div>
+                <button
+                  type="button"
+                  className="ws-btn ws-btn--sm ws-btn--secondary"
+                  onClick={() => setVariants((v) => [...v, { name: '', attributes: {}, isAvailable: true }])}
+                >
+                  <Plus size={14} aria-hidden />
+                  Add variant
+                </button>
               </div>
-            ))}
-          </section>
-        )}
-
-        {/* ── Custom fields: anything the category does not cover ── */}
-        <section className="dashboard-section">
-          <h2>Additional Details</h2>
-          <p style={{ color: '#667085', fontSize: '0.88rem' }}>
-            Add anything specific to this product that the fields above do not cover.
-            These appear on your listing but are not used in search filters.
-          </p>
-
-          {customFields.map((field, i) => (
-            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <input
-                placeholder="Label — e.g. Warranty"
-                value={field.label}
-                onChange={(e) => setCustomFields((f) => f.map((x, idx) => (idx === i ? { ...x, label: e.target.value } : x)))}
-                style={{ flex: 1 }}
-              />
-              <input
-                placeholder="Value — e.g. 6 months"
-                value={field.value}
-                onChange={(e) => setCustomFields((f) => f.map((x, idx) => (idx === i ? { ...x, value: e.target.value } : x)))}
-                style={{ flex: 2 }}
-              />
-              <button type="button" className="btn-secondary" onClick={() => setCustomFields((f) => f.filter((_, idx) => idx !== i))}>
-                Remove
-              </button>
-            </div>
-          ))}
-
-          {customFields.length < MAX_CUSTOM_FIELDS && (
-            <button type="button" className="btn-secondary" onClick={() => setCustomFields((f) => [...f, { label: '', value: '' }])}>
-              + Add field
-            </button>
+            </section>
           )}
-        </section>
 
-        {/* ── Variants ── */}
-        {variantAttrs.length > 0 && (
-          <section className="dashboard-section">
-            <h2>Variants</h2>
-            <p style={{ color: '#667085', fontSize: '0.88rem' }}>
-              Add a row per {variantAttrs.map((a) => a.name.toLowerCase()).join(' / ')} you offer.
-              Leave empty if this product has only one version.
-            </p>
-            {fieldErrors.variants && <p style={errorText}>{fieldErrors.variants}</p>}
+          {/* ── Location & condition ── */}
+          <section className="ws-card ws-stack--lg">
+            <h2 className="ws-h2">Item Details</h2>
 
-            {variants.map((variant, i) => (
-              <div key={i} style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '0.75rem', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                  <div className="form-group" style={{ flex: 1, minWidth: 160, marginBottom: 0 }}>
-                    <label>Name</label>
-                    <input
-                      placeholder="e.g. Red / XL"
-                      value={variant.name}
-                      onChange={(e) => setVariants((v) => v.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))}
-                    />
-                  </div>
-
-                  {variantAttrs.map((attr) => (
-                    <div className="form-group" key={attr.name} style={{ minWidth: 130, marginBottom: 0 }}>
-                      <label>{attr.name}{attr.isRequired ? ' *' : ''}</label>
-                      {attr.type === 'SELECT' ? (
-                        <select
-                          value={variant.attributes[attr.name] ?? ''}
-                          onChange={(e) =>
-                            setVariants((v) => v.map((x, idx) =>
-                              idx === i ? { ...x, attributes: { ...x.attributes, [attr.name]: e.target.value } } : x))}
-                        >
-                          <option value="">—</option>
-                          {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
-                        </select>
-                      ) : (
-                        <input
-                          value={variant.attributes[attr.name] ?? ''}
-                          onChange={(e) =>
-                            setVariants((v) => v.map((x, idx) =>
-                              idx === i ? { ...x, attributes: { ...x.attributes, [attr.name]: e.target.value } } : x))}
-                        />
-                      )}
-                    </div>
+            <div className="ws-formgrid">
+              <div className="ws-formfield">
+                <label htmlFor="condition" className="ws-formfield__label">Condition</label>
+                <select id="condition" className="ws-select" value={condition} onChange={(e) => setCondition(e.target.value)}>
+                  <option value="">Not specified</option>
+                  {CONDITIONS.map((c) => (
+                    <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>
                   ))}
-
-                  <div className="form-group" style={{ minWidth: 120, marginBottom: 0 }}>
-                    <label>Price (₦)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={variant.price ?? ''}
-                      onChange={(e) =>
-                        setVariants((v) => v.map((x, idx) =>
-                          idx === i ? { ...x, price: e.target.value === '' ? undefined : Number(e.target.value) } : x))}
-                    />
-                  </div>
-
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={variant.isAvailable !== false}
-                      onChange={(e) =>
-                        setVariants((v) => v.map((x, idx) => (idx === i ? { ...x, isAvailable: e.target.checked } : x)))}
-                    />
-                    Available
-                  </label>
-
-                  <button type="button" className="btn-secondary" onClick={() => setVariants((v) => v.filter((_, idx) => idx !== i))}>
-                    Remove
-                  </button>
-                </div>
+                </select>
               </div>
-            ))}
 
+              {/* Defaults to the store's location server-side when left blank. */}
+              <div className="ws-formfield">
+                <label htmlFor="state" className="ws-formfield__label">State</label>
+                <select id="state" className="ws-select" value={state} onChange={(e) => setState(e.target.value)}>
+                  <option value="">Same as my store</option>
+                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="city" className="ws-formfield__label">City / Area</label>
+                <input id="city" className="ws-field" value={city} onChange={(e) => setCity(e.target.value)} />
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="tags" className="ws-formfield__label">Tags</label>
+                <input
+                  id="tags"
+                  className="ws-field"
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="Comma separated — helps buyers find this in search"
+                />
+              </div>
+            </div>
+          </section>
+
+          <div style={{ display: 'flex', gap: 'var(--ws-space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button type="submit" className="ws-btn ws-btn--secondary" disabled={saving || readOnly}>
+              {saving ? 'Saving…' : 'Save as draft'}
+            </button>
             <button
               type="button"
-              className="btn-secondary"
-              onClick={() => setVariants((v) => [...v, { name: '', attributes: {}, isAvailable: true }])}
+              className="ws-btn ws-btn--primary"
+              disabled={saving || readOnly}
+              onClick={() => save(true)}
             >
-              + Add variant
+              {saving ? 'Saving…' : 'Save & publish'}
             </button>
-          </section>
-        )}
-
-        {/* ── Location & condition ── */}
-        <section className="dashboard-section">
-          <h2>Item Details</h2>
-
-          <div className="form-group">
-            <label htmlFor="condition">Condition</label>
-            <select id="condition" value={condition} onChange={(e) => setCondition(e.target.value)}>
-              <option value="">Not specified</option>
-              {CONDITIONS.map((c) => (
-                <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>
-              ))}
-            </select>
+            <span className="ws-caption ws-muted">Drafts are only visible to you.</span>
           </div>
-
-          {/* Defaults to the store's location server-side when left blank. */}
-          <div className="form-group">
-            <label htmlFor="state">State</label>
-            <select id="state" value={state} onChange={(e) => setState(e.target.value)}>
-              <option value="">Same as my store</option>
-              {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="city">City / Area</label>
-            <input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="tags">Tags</label>
-            <input
-              id="tags"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="Comma separated — helps buyers find this in search"
-            />
-          </div>
-        </section>
-
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <button type="submit" className="btn-secondary" disabled={saving || readOnly}>
-            {saving ? 'Saving…' : 'Save as draft'}
-          </button>
-          <button type="button" className="btn-primary" disabled={saving || readOnly} onClick={() => save(true)}>
-            {saving ? 'Saving…' : 'Save & publish'}
-          </button>
-          <span style={{ color: '#667085', fontSize: '0.85rem' }}>Drafts are only visible to you.</span>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

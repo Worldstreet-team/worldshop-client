@@ -133,89 +133,73 @@ export default function Inbox({ side }: { side: InboxSide }) {
     isVendor ? (c.buyer?.name ?? c.listing?.name ?? 'a listing') : c.store.name;
 
   return (
-    // Layout lives in `.inbox` (_pages.scss) rather than inline so the two
-    // panes can collapse to a single column on mobile — a 240px-minimum list
-    // beside a thread leaves the thread ~100px wide on a phone.
-    <div className="inbox">
+    <div className="ws-inbox">
       {/* ── Conversation list ── */}
-      <aside style={{ border: '1px solid #e4e7ec', borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e4e7ec', fontWeight: 600 }}>
+      <aside className="ws-inbox__list">
+        <div className="ws-inbox__head">
           {isVendor ? 'Customer messages' : 'My conversations'}
         </div>
 
         {loadingList ? (
-          <p style={{ padding: '1rem', color: '#667085' }}>Loading…</p>
+          <div className="ws-stack" style={{ padding: 'var(--ws-space-4)' }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="ws-skeleton" style={{ height: 44 }} />
+            ))}
+          </div>
         ) : conversations.length === 0 ? (
-          <div style={{ padding: '1.5rem 1rem', color: '#667085', fontSize: '0.9rem' }}>
+          <p className="ws-caption ws-muted" style={{ padding: 'var(--ws-space-6) var(--ws-space-4)' }}>
             {isVendor
               ? 'No one has messaged you yet. Buyers contact you from your listings, so publishing more of them is the fastest way to get inquiries.'
               : 'You have not messaged any sellers yet.'}
-          </div>
+          </p>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: 560, overflowY: 'auto' }}>
-            {conversations.map((c) => {
-              const active = c.id === activeId;
-              return (
-                <li key={c.id}>
-                  <button
-                    onClick={() => setActiveId(c.id)}
-                    style={{
-                      width: '100%', textAlign: 'left', cursor: 'pointer',
-                      padding: '0.75rem 1rem', border: 'none',
-                      borderBottom: '1px solid #f2f4f7',
-                      background: active ? '#f8f9fc' : 'white',
-                      borderLeft: `3px solid ${active ? '#101828' : 'transparent'}`,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-                      <span style={{ fontWeight: c.unread > 0 ? 700 : 600, fontSize: '0.92rem' }}>
-                        {counterpartName(c)}
-                      </span>
-                      {c.unread > 0 && (
-                        <span style={{ background: '#b42318', color: 'white', borderRadius: 999, padding: '0 0.45rem', fontSize: '0.72rem', fontWeight: 700 }}>
-                          {c.unread}
-                        </span>
-                      )}
-                    </div>
+          <ul className="ws-inbox__scroll">
+            {conversations.map((c) => (
+              <li key={c.id}>
+                <button
+                  onClick={() => setActiveId(c.id)}
+                  className={`ws-inbox__item${c.id === activeId ? ' is-active' : ''}`}
+                >
+                  <div className="ws-inbox__row">
+                    <span className={`ws-inbox__name${c.unread > 0 ? ' ws-inbox__name--unread' : ''}`}>
+                      {counterpartName(c)}
+                    </span>
+                    {c.unread > 0 && <span className="ws-inbox__count">{c.unread}</span>}
+                  </div>
 
-                    {/* What the buyer is asking about — only meaningful on the
-                        vendor side, and only once the title is the buyer. */}
-                    {isVendor && c.buyer && (
-                      <div style={{ color: '#98a2b3', fontSize: '0.78rem', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {c.listing?.name ?? 'Listing removed'}
-                      </div>
-                    )}
-                    <div style={{ color: '#667085', fontSize: '0.82rem', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.lastMessage
-                        ? `${c.lastMessage.senderRole === (isVendor ? 'VENDOR' : 'BUYER') ? 'You: ' : ''}${c.lastMessage.body}`
-                        : 'No messages yet'}
-                    </div>
-                    <div style={{ color: '#98a2b3', fontSize: '0.75rem', marginTop: 2 }}>
-                      {timeAgo(c.lastMessageAt)}
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
+                  {/* What the buyer is asking about — only meaningful on the
+                      vendor side, and only once the title is the buyer. */}
+                  {isVendor && c.buyer && (
+                    <div className="ws-inbox__sub">{c.listing?.name ?? 'Listing removed'}</div>
+                  )}
+                  <div className="ws-inbox__preview">
+                    {c.lastMessage
+                      ? `${c.lastMessage.senderRole === (isVendor ? 'VENDOR' : 'BUYER') ? 'You: ' : ''}${c.lastMessage.body}`
+                      : 'No messages yet'}
+                  </div>
+                  <div className="ws-inbox__sub">{timeAgo(c.lastMessageAt)}</div>
+                </button>
+              </li>
+            ))}
           </ul>
         )}
       </aside>
 
       {/* ── Thread ── */}
-      <section style={{ border: '1px solid #e4e7ec', borderRadius: 8, display: 'flex', flexDirection: 'column' }}>
+      <section className="ws-inbox__thread">
         {!activeId || !thread ? (
-          <div style={{ margin: 'auto', color: '#667085', padding: '2rem', textAlign: 'center' }}>
+          <p className="ws-body ws-muted" style={{ margin: 'auto', padding: 'var(--ws-space-8)', textAlign: 'center' }}>
             {loadingThread ? 'Loading conversation…' : 'Select a conversation to read it.'}
-          </div>
+          </p>
         ) : (
           <>
-            <header style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e4e7ec' }}>
-              <div style={{ fontWeight: 600 }}>
+            <header className="ws-inbox__threadhead">
+              <div className="ws-title">
                 {isVendor
                   ? thread.buyer?.name ?? thread.listing?.name ?? 'Listing removed'
                   : thread.store.name}
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#667085' }}>
+              <div className="ws-caption ws-muted">
                 {isVendor ? (
                   // The listing may be gone; the conversation outlives it.
                   thread.listing ? (
@@ -233,25 +217,13 @@ export default function Inbox({ side }: { side: InboxSide }) {
               </div>
             </header>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: 420 }}>
+            <div className="ws-inbox__messages">
               {thread.messages.map((m) => {
                 const mine = m.senderRole === thread.myRole;
                 return (
-                  <div
-                    key={m.id}
-                    style={{
-                      alignSelf: mine ? 'flex-end' : 'flex-start',
-                      maxWidth: '78%',
-                      background: mine ? '#101828' : '#f2f4f7',
-                      color: mine ? 'white' : '#101828',
-                      padding: '0.55rem 0.8rem',
-                      borderRadius: 12,
-                      borderBottomRightRadius: mine ? 2 : 12,
-                      borderBottomLeftRadius: mine ? 12 : 2,
-                    }}
-                  >
-                    <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.body}</div>
-                    <div style={{ fontSize: '0.7rem', opacity: 0.7, marginTop: 2, textAlign: 'right' }}>
+                  <div key={m.id} className={`ws-bubble${mine ? ' ws-bubble--mine' : ''}`}>
+                    <div className="ws-bubble__body">{m.body}</div>
+                    <div className="ws-bubble__time">
                       {clockTime(m.createdAt)}
                       {mine && m.readAt ? ' · Read' : ''}
                     </div>
@@ -262,19 +234,23 @@ export default function Inbox({ side }: { side: InboxSide }) {
             </div>
 
             {thread.status === 'BLOCKED' ? (
-              <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #e4e7ec', color: '#b42318' }}>
-                This conversation has been closed by WorldStreet.
+              <div className="ws-alert" style={{ margin: 'var(--ws-space-3)' }}>
+                <span>This conversation has been closed by WorldStreet.</span>
               </div>
             ) : (
-              <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem', borderTop: '1px solid #e4e7ec' }}>
+              <form onSubmit={handleSend} className="ws-inbox__compose">
                 <input
+                  className="ws-field"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder={isVendor ? 'Reply to this buyer…' : 'Ask the seller a question…'}
                   maxLength={2000}
-                  style={{ flex: 1, padding: '0.55rem 0.75rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
                 />
-                <button type="submit" className="btn-primary" disabled={sending || !draft.trim()}>
+                <button
+                  type="submit"
+                  className="ws-btn ws-btn--primary"
+                  disabled={sending || !draft.trim()}
+                >
                   {sending ? 'Sending…' : 'Send'}
                 </button>
               </form>

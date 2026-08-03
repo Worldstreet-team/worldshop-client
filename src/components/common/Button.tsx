@@ -10,6 +10,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
+// `md` is the system's default 52px button, so it carries no modifier.
+const SIZE_CLASS: Record<NonNullable<ButtonProps['size']>, string> = {
+  sm: 'ws-btn--sm',
+  md: '',
+  lg: 'ws-btn--lg',
+};
+
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
@@ -26,13 +33,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseClass = 'btn';
-    const variantClass = `btn-${variant}`;
-    const sizeClass = `btn-${size}`;
-    const widthClass = fullWidth ? 'btn-full' : '';
-    const loadingClass = loading ? 'btn-loading' : '';
-
-    const classes = [baseClass, variantClass, sizeClass, widthClass, loadingClass, className]
+    const classes = [
+      'ws-btn',
+      `ws-btn--${variant}`,
+      SIZE_CLASS[size],
+      fullWidth ? 'ws-btn--block' : '',
+      className,
+    ]
       .filter(Boolean)
       .join(' ');
 
@@ -41,18 +48,20 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={classes}
         disabled={disabled || loading}
+        aria-busy={loading || undefined}
         {...props}
       >
         {loading && (
-          <span className="btn-spinner" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" className="spinner-icon">
+          <span className="ws-btn__spinner" aria-hidden="true">
+            {/* currentColor so the spinner tracks the label, per 04-components. */}
+            <svg viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="31.4 31.4" />
             </svg>
           </span>
         )}
-        {!loading && leftIcon && <span className="btn-icon btn-icon-left">{leftIcon}</span>}
-        <span className="btn-text">{children}</span>
-        {!loading && rightIcon && <span className="btn-icon btn-icon-right">{rightIcon}</span>}
+        {!loading && leftIcon}
+        <span>{children}</span>
+        {!loading && rightIcon}
       </button>
     );
   }

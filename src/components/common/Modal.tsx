@@ -65,37 +65,41 @@ export default function Modal({
     }
   };
 
+  // The system defines one modal width (440) plus a wide variant; the older
+  // 5-step size scale collapses onto those two.
+  const isWide = size === 'lg' || size === 'xl' || size === 'full';
+
   const modalContent = (
-    <div className="modal-overlay" onClick={handleOverlayClick} aria-modal="true" role="dialog">
+    <div className="ws ws-scrim" onClick={handleOverlayClick} aria-modal="true" role="dialog">
       <div
         ref={modalRef}
-        className={`modal modal-${size}`}
+        className={`ws-modal${isWide ? ' ws-modal--wide' : ''}`}
         tabIndex={-1}
         aria-labelledby={title ? 'modal-title' : undefined}
       >
         {(title || showCloseButton) && (
-          <div className="modal-header">
+          <div className="ws-modal__head">
             {title && (
-              <h2 id="modal-title" className="modal-title">
+              <h2 id="modal-title" className="ws-modal__title">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 type="button"
-                className="modal-close"
+                className="ws-modal__close"
                 onClick={onClose}
                 aria-label="Close modal"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                   <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             )}
           </div>
         )}
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
+        <div className="ws-modal__body">{children}</div>
+        {footer && <div className="ws-modal__foot">{footer}</div>}
       </div>
     </div>
   );

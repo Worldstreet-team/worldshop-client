@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { BadgeCheck, Star, MessageSquare, Clock, Package, CalendarDays } from 'lucide-react';
 import type { PublicStore } from '@/services/storeService';
 
 /**
@@ -14,6 +15,9 @@ const VERIFICATION_LABEL: Record<string, string> = {
   EMAIL_VERIFIED: 'Email verified',
   ID_VERIFIED: 'ID verified',
   BUSINESS_VERIFIED: 'Business verified',
+  BASIC: 'Basic',
+  VERIFIED: 'Verified',
+  PREMIUM: 'Premium seller',
 };
 
 function responseTime(mins: number | null): string | null {
@@ -29,70 +33,70 @@ export default function SellerCard({ store }: { store: PublicStore }) {
   const memberSince = new Date(store.createdAt).toLocaleDateString('en-NG', { month: 'short', year: 'numeric' });
 
   return (
-    <div style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '1rem' }}>
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-        {store.logo ? (
-          <img src={store.logo} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#f2f4f7', display: 'grid', placeItems: 'center', color: '#667085', fontWeight: 700 }}>
-            {store.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+    <div className="ws-card">
+      <Link to={`/stores/${store.slug}`} className="ws-sellerrow">
+        <span className="ws-avatar ws-avatar--l" style={{ width: 44, height: 44 }}>
+          {store.logo
+            ? <img src={store.logo} alt="" />
+            : store.name.charAt(0).toUpperCase()}
+        </span>
 
-        <div style={{ minWidth: 0 }}>
-          <Link to={`/stores/${store.slug}`} style={{ fontWeight: 600, display: 'block' }}>
-            {store.name}
-          </Link>
-          <div style={{ fontSize: '0.8rem', color: '#667085' }}>
+        <span style={{ minWidth: 0 }}>
+          <span className="ws-title" style={{ display: 'block' }}>{store.name}</span>
+          <span className="ws-caption ws-subtle">
             {[store.city, store.state].filter(Boolean).join(', ')}
-          </div>
-        </div>
-      </div>
+          </span>
+        </span>
+      </Link>
 
       {verification && (
-        <div style={{ marginTop: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: 4, background: '#ecfdf3', color: '#027a48', padding: '0.15rem 0.5rem', borderRadius: 999, fontSize: '0.78rem', fontWeight: 600 }}>
-          <span className="material-icons" style={{ fontSize: '0.9rem' }}>verified</span>
+        <span className="ws-badge ws-badge--success" style={{ marginTop: 'var(--ws-space-3)' }}>
+          <BadgeCheck size={12} aria-hidden />
           {verification}
-        </div>
+        </span>
       )}
 
-      <dl style={{ margin: '0.85rem 0 0', display: 'grid', gap: '0.35rem', fontSize: '0.86rem' }}>
+      <dl className="ws-trust">
         {store.reviewCount > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <dt style={{ color: '#667085' }}>Rating</dt>
-            <dd style={{ margin: 0, fontWeight: 600 }}>
-              {store.avgRating.toFixed(1)} ★ ({store.reviewCount})
-            </dd>
+          <div className="ws-trust__row">
+            <dt><Star size={14} aria-hidden /> Rating</dt>
+            <dd>{store.avgRating.toFixed(1)} ({store.reviewCount})</dd>
           </div>
         )}
 
         {/* The signal a seller cannot fake: unanswered threads count against it. */}
         {store.responseRate != null && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <dt style={{ color: '#667085' }}>Replies to</dt>
-            <dd style={{ margin: 0, fontWeight: 600 }}>{Math.round(store.responseRate * 100)}% of messages</dd>
+          <div className="ws-trust__row">
+            <dt><MessageSquare size={14} aria-hidden /> Replies to</dt>
+            <dd>{Math.round(store.responseRate * 100)}% of messages</dd>
           </div>
         )}
 
         {replyTime && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <dt style={{ color: '#667085' }}>Usually replies in</dt>
-            <dd style={{ margin: 0, fontWeight: 600 }}>{replyTime}</dd>
+          <div className="ws-trust__row">
+            <dt><Clock size={14} aria-hidden /> Usually replies in</dt>
+            <dd>{replyTime}</dd>
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <dt style={{ color: '#667085' }}>Listings</dt>
-          <dd style={{ margin: 0, fontWeight: 600 }}>{store.listingCount}</dd>
-        </div>
+        {store.listingCount != null && (
+          <div className="ws-trust__row">
+            <dt><Package size={14} aria-hidden /> Listings</dt>
+            <dd>{store.listingCount}</dd>
+          </div>
+        )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <dt style={{ color: '#667085' }}>On WorldStreet since</dt>
-          <dd style={{ margin: 0, fontWeight: 600 }}>{memberSince}</dd>
+        <div className="ws-trust__row">
+          <dt><CalendarDays size={14} aria-hidden /> Selling since</dt>
+          <dd>{memberSince}</dd>
         </div>
       </dl>
 
-      <Link to={`/stores/${store.slug}`} className="btn-secondary" style={{ display: 'block', textAlign: 'center', marginTop: '0.85rem' }}>
+      <Link
+        to={`/stores/${store.slug}`}
+        className="ws-btn ws-btn--sm ws-btn--secondary ws-btn--block"
+        style={{ marginTop: 'var(--ws-space-4)' }}
+      >
         View all listings
       </Link>
     </div>

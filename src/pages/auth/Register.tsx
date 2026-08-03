@@ -26,16 +26,11 @@ export default function RegisterPage() {
     }
   }, [isLoaded, isSignedIn, redirectToRegister, returnUrl, navigate]);
 
+  // Like Login, this is a hand-off to the identity hub rather than a real form.
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '50vh',
-      fontSize: '1.1rem',
-      color: '#666',
-    }}>
-      Redirecting to register...
+    <div style={{ display: 'grid', justifyItems: 'center', gap: 'var(--ws-space-3)' }} role="status">
+      <span className="ws-spinner" style={{ fontSize: 24 }} aria-hidden="true" />
+      <p className="ws-body ws-muted">Redirecting to sign up…</p>
     </div>
   );
 }

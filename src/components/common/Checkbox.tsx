@@ -4,7 +4,7 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
   label?: string;
   description?: string;
   error?: string;
-  size?: 'sm' | 'md' | 'lg';
+  // No `size`: the system's Checkbox is 18×18, full stop.
   indeterminate?: boolean;
 }
 
@@ -14,7 +14,6 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       label,
       description,
       error,
-      size = 'md',
       indeterminate = false,
       className = '',
       id,
@@ -25,19 +24,16 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const generatedId = useId();
     const checkboxId = id || generatedId;
 
-    const wrapperClass = [
-      'checkbox-wrapper',
-      `checkbox-${size}`,
-      error ? 'checkbox-error' : '',
-      props.disabled ? 'checkbox-disabled' : '',
-      className,
-    ]
+    const wrapperClass = ['ws-check', props.disabled ? 'is-disabled' : '', className]
       .filter(Boolean)
       .join(' ');
 
     return (
-      <div className={wrapperClass}>
-        <div className="checkbox-container">
+      <div>
+        <div className={wrapperClass}>
+          {/* The native input is styled directly (appearance:none + a masked
+              ::after check), so it stays focusable and no sibling span is
+              needed to paint the box. */}
           <input
             ref={(element) => {
               if (element) {
@@ -51,33 +47,22 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             }}
             type="checkbox"
             id={checkboxId}
-            className="checkbox-input"
+            className="ws-check__input"
             aria-invalid={!!error}
             aria-describedby={
               error ? `${checkboxId}-error` : description ? `${checkboxId}-description` : undefined
             }
             {...props}
           />
-          <span className="checkbox-checkmark" aria-hidden="true">
-            {indeterminate ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path d="M5 12h14" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </span>
           {(label || description) && (
-            <div className="checkbox-content">
+            <div className="ws-check__body">
               {label && (
-                <label htmlFor={checkboxId} className="checkbox-label">
+                <label htmlFor={checkboxId} className="ws-check__label">
                   {label}
                 </label>
               )}
               {description && (
-                <span id={`${checkboxId}-description`} className="checkbox-description">
+                <span id={`${checkboxId}-description`} className="ws-check__desc">
                   {description}
                 </span>
               )}
@@ -85,7 +70,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           )}
         </div>
         {error && (
-          <span id={`${checkboxId}-error`} className="checkbox-error-message" role="alert">
+          <span id={`${checkboxId}-error`} className="ws-formfield__error" role="alert">
             {error}
           </span>
         )}

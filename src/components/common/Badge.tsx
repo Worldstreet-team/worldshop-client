@@ -10,6 +10,19 @@ interface BadgeProps {
   className?: string;
 }
 
+// This component's variant list predates the system, which defines exactly four
+// tones (Success / Warning / Danger / Neutral) plus the brand wash. Map onto
+// those rather than inventing fills.
+const TONE_CLASS: Record<NonNullable<BadgeProps['variant']>, string> = {
+  default: 'ws-badge--neutral',
+  primary: 'ws-badge--brand',
+  secondary: 'ws-badge--neutral',
+  success: 'ws-badge--success',
+  warning: 'ws-badge--warning',
+  danger: 'ws-badge--danger',
+  info: 'ws-badge--info',
+};
+
 export default function Badge({
   children,
   variant = 'default',
@@ -20,20 +33,21 @@ export default function Badge({
   className = '',
 }: BadgeProps) {
   const classes = [
-    'badge',
-    `badge-${variant}`,
-    `badge-${size}`,
-    rounded ? 'badge-rounded' : '',
-    outline ? 'badge-outline' : '',
-    dot ? 'badge-dot' : '',
+    'ws-badge',
+    outline ? 'ws-badge--outline' : TONE_CLASS[variant],
+    dot ? 'ws-badge--dot' : '',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
+  // The system's badge has one height (20) and one radius (7); `size` and
+  // `rounded` survive for API compatibility but only `rounded` has a visual
+  // effect, as a pill.
+  const style = rounded ? { borderRadius: 'var(--ws-radius-pill)' } : undefined;
+
   return (
-    <span className={classes}>
-      {dot && <span className="badge-dot-indicator" aria-hidden="true" />}
+    <span className={classes} style={style} data-size={size}>
       {children}
     </span>
   );
@@ -73,7 +87,7 @@ export function StatusBadge({ status }: { status: string }) {
 // Sale/Discount badge
 export function SaleBadge({ percentage }: { percentage: number }) {
   return (
-    <Badge variant="danger" size="sm" className="sale-badge">
+    <Badge variant="danger" size="sm" className="ws-num">
       -{percentage}%
     </Badge>
   );

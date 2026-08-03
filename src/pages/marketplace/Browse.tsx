@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { SearchX, X, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { categoryService } from '@/services/productService';
 import type { Category, CategoryAttribute } from '@/types/product.types';
@@ -23,6 +24,8 @@ import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 const CONDITIONS = ['NEW', 'USED', 'REFURBISHED'] as const;
 const PER_PAGE = 24;
 
+const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+
 export default function Browse() {
   const [params, setParams] = useSearchParams();
 
@@ -35,7 +38,7 @@ export default function Browse() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [searchBox, setSearchBox] = useState(params.get('search') ?? '');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const categoryId = params.get('categoryId') ?? '';
   const stateFilter = params.get('state') ?? '';
@@ -117,6 +120,7 @@ export default function Browse() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
 
     const query: Record<string, unknown> = { page, limit: PER_PAGE };
     if (categoryId) query.categoryId = categoryId;
@@ -143,182 +147,229 @@ export default function Browse() {
     };
   }, [page, categoryId, stateFilter, condition, search, attrFilters]);
 
-  const activeFilterCount =
-    (categoryId ? 1 : 0) + (stateFilter ? 1 : 0) + (condition ? 1 : 0) + Object.keys(attrFilters).length;
+  /**
+   * Every applied filter as a removable token. Showing them above the results
+   * is what makes a narrowed result set legible — a buyer who sees 3 items
+   * needs to know which of five filters caused that.
+   */
+  const activeTokens = useMemo(() => {
+    const out: Array<{ key: string; label: string; clear: () => void }> = [];
+    if (search) out.push({ key: 'search', label: `“${search}”`, clear: () => setParam({ search: null }) });
+    if (selected) out.push({ key: 'cat', label: selected.name, clear: () => setParam({ categoryId: null }) });
+    if (stateFilter) out.push({ key: 'state', label: stateFilter, clear: () => setParam({ state: null }) });
+    if (condition) out.push({ key: 'cond', label: titleCase(condition), clear: () => setParam({ condition: null }) });
+    for (const [name, value] of Object.entries(attrFilters)) {
+      out.push({ key: `attr.${name}`, label: `${name}: ${value}`, clear: () => setParam({ [`attr.${name}`]: null }) });
+    }
+    return out;
+  }, [search, selected, stateFilter, condition, attrFilters, setParam]);
 
-  const clearAll = () => setParams(search ? new URLSearchParams({ search }) : new URLSearchParams());
+  const clearAll = () => setParams(new URLSearchParams());
+
+  const filters = (
+    <>
+      <div className="ws-filters__group">
+        <span className="ws-filters__legend">Category</span>
+        <select
+          className="ws-select"
+          value={openParentId}
+          onChange={(e) => setParam({ categoryId: e.target.value })}
+          aria-label="Category"
+        >
+          <option value="">All categories</option>
+          {parents.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+
+        {/* Subcategories are links rather than a second dropdown: they are the
+            level that unlocks facets, so they should be one click. */}
+        {siblings.length > 0 && (
+          <ul className="ws-subcats">
+            {siblings.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  className={`ws-subcat${c.id === categoryId ? ' is-active' : ''}`}
+                  onClick={() => setParam({ categoryId: c.id === categoryId ? openParentId : c.id })}
+                  aria-pressed={c.id === categoryId}
+                >
+                  {c.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="ws-filters__group">
+        <span className="ws-filters__legend">Location</span>
+        <select
+          className="ws-select"
+          value={stateFilter}
+          onChange={(e) => setParam({ state: e.target.value })}
+          aria-label="Location"
+        >
+          <option value="">Anywhere in Nigeria</option>
+          {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+
+      <div className="ws-filters__group">
+        <span className="ws-filters__legend">Condition</span>
+        <select
+          className="ws-select"
+          value={condition}
+          onChange={(e) => setParam({ condition: e.target.value })}
+          aria-label="Condition"
+        >
+          <option value="">Any condition</option>
+          {CONDITIONS.map((c) => <option key={c} value={c}>{titleCase(c)}</option>)}
+        </select>
+      </div>
+
+      {/* Only meaningful once narrowed to a subcategory. */}
+      {facets.map((attr) => (
+        <div className="ws-filters__group" key={attr.name}>
+          <span className="ws-filters__legend">{attr.name}</span>
+          <select
+            className="ws-select"
+            value={attrFilters[attr.name] ?? ''}
+            onChange={(e) => setParam({ [`attr.${attr.name}`]: e.target.value })}
+            aria-label={attr.name}
+          >
+            <option value="">Any {attr.name.toLowerCase()}</option>
+            {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+      ))}
+
+      {categoryId && !isLeaf && (
+        <p className="ws-filters__hint">
+          Pick a subcategory to filter by brand, size and other details.
+        </p>
+      )}
+    </>
+  );
 
   return (
-    // Vertical padding only — the shorthand would zero out the side gutters
-    // `.container` provides, putting content flush against the viewport edge.
-    <div className="container browse-page" style={{ paddingBlock: '1.5rem' }}>
-      <h1 style={{ marginBottom: '0.75rem' }}>Marketplace</h1>
-
-      <form
-        onSubmit={(e) => { e.preventDefault(); setParam({ search: searchBox }); }}
-        style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}
-      >
-        <input
-          type="search"
-          value={searchBox}
-          onChange={(e) => setSearchBox(e.target.value)}
-          placeholder="What are you looking for?"
-          style={{ flex: 1, padding: '0.6rem 0.85rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
-        />
-        <button type="submit" className="btn-primary">Search</button>
-      </form>
-
-      {/* Sidebar + results collapse to a single column on mobile; see
-          `.browse-page__layout` in _pages.scss. */}
-      <div className="browse-page__layout">
-        {/* ── Filters ── */}
-        <aside className="browse-page__filters">
-          {activeFilterCount > 0 && (
-            <button className="btn-secondary" onClick={clearAll}>
-              Clear {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
-            </button>
-          )}
-
-          <div>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: '#667085', marginBottom: '0.5rem' }}>
-              Category
-            </h3>
-            <select
-              value={openParentId}
-              onChange={(e) => setParam({ categoryId: e.target.value })}
-              style={{ width: '100%', padding: '0.45rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
-            >
-              <option value="">All categories</option>
-              {parents.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-
-            {/* Subcategories are links rather than a second dropdown: they are
-                the level that unlocks facets, so they should be one click. */}
-            {siblings.length > 0 && (
-              <ul style={{ listStyle: 'none', margin: '0.5rem 0 0', padding: 0, display: 'grid', gap: 2 }}>
-                {siblings.map((c) => (
-                  <li key={c.id}>
-                    <button
-                      onClick={() => setParam({ categoryId: c.id })}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem 0',
-                        color: c.id === categoryId ? '#101828' : '#475467',
-                        fontWeight: c.id === categoryId ? 700 : 400,
-                        fontSize: '0.88rem', textAlign: 'left',
-                      }}
-                    >
-                      {c.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: '#667085', marginBottom: '0.5rem' }}>
-              Location
-            </h3>
-            <select
-              value={stateFilter}
-              onChange={(e) => setParam({ state: e.target.value })}
-              style={{ width: '100%', padding: '0.45rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
-            >
-              <option value="">Anywhere in Nigeria</option>
-              {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: '#667085', marginBottom: '0.5rem' }}>
-              Condition
-            </h3>
-            <select
-              value={condition}
-              onChange={(e) => setParam({ condition: e.target.value })}
-              style={{ width: '100%', padding: '0.45rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
-            >
-              <option value="">Any condition</option>
-              {CONDITIONS.map((c) => (
-                <option key={c} value={c}>{c.charAt(0) + c.slice(1).toLowerCase()}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Only meaningful once narrowed to a subcategory. */}
-          {facets.map((attr) => (
-            <div key={attr.name}>
-              <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', color: '#667085', marginBottom: '0.5rem' }}>
-                {attr.name}
-              </h3>
-              <select
-                value={attrFilters[attr.name] ?? ''}
-                onChange={(e) => setParam({ [`attr.${attr.name}`]: e.target.value })}
-                style={{ width: '100%', padding: '0.45rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
-              >
-                <option value="">Any {attr.name.toLowerCase()}</option>
-                {attr.options.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-          ))}
-
-          {categoryId && !isLeaf && (
-            <p style={{ fontSize: '0.8rem', color: '#98a2b3', lineHeight: 1.4 }}>
-              Pick a subcategory to filter by size, brand and other details.
-            </p>
-          )}
+    <div className="ws-wrap">
+      <div className="ws-browse">
+        <aside
+          className={`ws-filters${filtersOpen ? ' is-open' : ''}`}
+          id="browse-filters"
+        >
+          {filters}
         </aside>
 
-        {/* ── Results ── */}
         <div>
-          <div style={{ color: '#667085', marginBottom: '0.75rem' }}>
-            {loading ? 'Searching…' : `${total} listing${total === 1 ? '' : 's'}`}
-            {selected && <> in <strong>{selected.name}</strong></>}
-            {stateFilter && <> · {stateFilter}</>}
+          <div className="ws-browse__head">
+            <div>
+              <h1 className="ws-h1">{selected ? selected.name : 'Marketplace'}</h1>
+              <p className="ws-caption ws-muted ws-num" aria-live="polite">
+                {loading
+                  ? 'Searching…'
+                  : `${total.toLocaleString('en-NG')} ${total === 1 ? 'listing' : 'listings'}`}
+                {stateFilter && !loading && ` in ${stateFilter}`}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="ws-btn ws-btn--sm ws-btn--secondary ws-browse__filtertoggle"
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              aria-controls="browse-filters"
+            >
+              <SlidersHorizontal size={16} aria-hidden />
+              Filters{activeTokens.length > 0 && ` (${activeTokens.length})`}
+            </button>
           </div>
 
-          {!loading && listings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#667085' }}>
-              <span className="material-icons" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem' }}>
-                search_off
-              </span>
-              <p style={{ marginBottom: '0.75rem' }}>
-                {activeFilterCount > 0
-                  ? 'Nothing matches these filters yet.'
-                  : 'No listings on the marketplace yet.'}
+          {activeTokens.length > 0 && (
+            <div className="ws-activefilters">
+              {activeTokens.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  className="ws-chip ws-chip--dismiss"
+                  onClick={t.clear}
+                  aria-label={`Remove filter ${t.label}`}
+                >
+                  {t.label}
+                  <X size={14} aria-hidden />
+                </button>
+              ))}
+              {activeTokens.length > 1 && (
+                <button type="button" className="ws-chip" onClick={clearAll}>
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {loading ? (
+            // Skeletons match the card's real proportions so the grid does not
+            // reflow when results land.
+            <div className="ws-grid" aria-hidden>
+              {Array.from({ length: 8 }, (_, i) => (
+                <div className="ws-pcard" key={i}>
+                  <div className="ws-skeleton ws-pcard__media" />
+                  <div className="ws-pcard__body">
+                    <div className="ws-skeleton" style={{ height: 14, width: '90%' }} />
+                    <div className="ws-skeleton" style={{ height: 14, width: '55%' }} />
+                    <div className="ws-skeleton" style={{ height: 11, width: '40%', marginTop: 4 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="ws-empty">
+              <span className="ws-empty__icon"><SearchX size={24} aria-hidden /></span>
+              <h2 className="ws-title">
+                {activeTokens.length > 0 ? 'No matches' : 'Nothing listed yet'}
+              </h2>
+              <p className="ws-caption ws-muted" style={{ maxWidth: '34ch' }}>
+                {activeTokens.length > 0
+                  ? 'Try removing a filter or searching a wider area.'
+                  : 'Be the first to list something on the marketplace.'}
               </p>
-              {activeFilterCount > 0 ? (
-                <button className="btn-secondary" onClick={clearAll}>Clear filters</button>
+              {activeTokens.length > 0 ? (
+                <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={clearAll}>
+                  Clear filters
+                </button>
               ) : (
-                // The empty marketplace is a supply problem, so the call to
+                // An empty marketplace is a supply problem, so the call to
                 // action is to become a seller.
-                <Link to="/vendor/register" className="btn-primary">Open a store</Link>
+                <Link to="/vendor/register" className="ws-btn ws-btn--sm ws-btn--primary">
+                  Open a store
+                </Link>
               )}
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div className="ws-grid">
               {listings.map((l) => <ListingCard key={l.id} listing={l} showSeller />)}
             </div>
           )}
 
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1.5rem' }}>
+          {totalPages > 1 && !loading && (
+            <nav className="ws-pager" aria-label="Pagination">
               <button
-                className="btn-secondary"
+                className="ws-btn ws-btn--sm ws-btn--secondary"
                 disabled={page <= 1}
                 onClick={() => setParam({ page: String(page - 1) }, { keepPage: true })}
               >
+                <ChevronLeft size={16} aria-hidden />
                 Previous
               </button>
-              <span style={{ color: '#667085' }}>Page {page} of {totalPages}</span>
+              <span className="ws-pager__status">Page {page} of {totalPages}</span>
               <button
-                className="btn-secondary"
+                className="ws-btn ws-btn--sm ws-btn--secondary"
                 disabled={page >= totalPages}
                 onClick={() => setParam({ page: String(page + 1) }, { keepPage: true })}
               >
                 Next
+                <ChevronRight size={16} aria-hidden />
               </button>
-            </div>
+            </nav>
           )}
         </div>
       </div>

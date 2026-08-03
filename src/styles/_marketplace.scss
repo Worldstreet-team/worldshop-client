@@ -1,0 +1,911 @@
+// Marketplace screens — layout for the buyer-facing Shop surfaces.
+//
+// Follows design-system/05-screens-and-patterns.md → "Shop (light marketplace)":
+// top bar on bg/surface with brand lockup + pill search + location pill, category
+// pill chips, and a 4-col product grid (gap 24, card radius 13, image 300×210,
+// condition badge overlaid top-left).
+//
+// Breakpoints 640 / 1024 / 1280; gutters 48 web, 24 mobile.
+
+@use 'ds' as *;
+
+$bp-sm: 640px;
+$bp-md: 1024px;
+$bp-lg: 1280px;
+
+.ws-shell {
+  // The sticky header is the 64px bar plus the 60px category-chip row. Sticky
+  // offsets below derive from this rather than hardcoding 64 and sliding under.
+  --ws-header-h: 124px;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ws-bg-page);
+}
+
+.ws-shell__main { flex: 1; }
+
+.ws-wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: var(--ws-space-6);
+
+  @media (min-width: $bp-md) { padding-inline: 48px; }
+}
+
+// ─── Top bar ────────────────────────────────────────────────────
+
+.ws-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--ws-bg-surface);
+  border-bottom: 1px solid var(--ws-border-hairline);
+}
+
+.ws-topbar__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-4);
+  height: 64px;
+}
+
+// Brand lockup: eyebrow over wordmark, per the Shop top-bar spec.
+.ws-brand {
+  display: grid;
+  gap: 1px;
+  text-decoration: none;
+  flex: none;
+  line-height: 1;
+
+  &__eyebrow {
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ws-text-subtle);
+  }
+
+  &__word {
+    font-family: var(--ws-font-display);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    color: var(--ws-text-primary);
+  }
+
+  // The period is the brand's full stop — the one coral moment in the lockup.
+  &__dot { color: var(--ws-brand-primary); }
+}
+
+.ws-topbar__search {
+  flex: 1;
+  min-width: 0;
+  max-width: 520px;
+  display: none;
+
+  @media (min-width: $bp-sm) { display: flex; }
+}
+
+.ws-topbar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+}
+
+.ws-iconbtn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ws-radius-pill);
+  border: 0;
+  background: transparent;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  transition: background-color 120ms ease, color 120ms ease;
+
+  &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
+}
+
+// Unread dot on the messages icon — count lives in the inbox, not the chrome.
+.ws-iconbtn__dot {
+  position: absolute;
+  top: var(--ws-space-2);
+  right: var(--ws-space-2);
+  width: var(--ws-space-2);
+  height: var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-brand-primary);
+  border: 1.5px solid var(--ws-bg-surface);
+}
+
+// Second row: category chips scroll horizontally rather than wrapping, so the
+// bar height never changes as categories load.
+.ws-catbar {
+  border-bottom: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-surface);
+}
+
+.ws-catbar__scroll {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  padding-block: var(--ws-space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ws-topbar__sell {
+  display: none;
+  @media (min-width: $bp-md) { display: inline-flex; }
+}
+
+// The hamburger only exists below the desktop breakpoint, where the category
+// chips and rail collapse into the drawer.
+.ws-topbar__menu {
+  @media (min-width: $bp-md) { display: none; }
+}
+
+// Cross-app links are desktop-only; the drawer carries them on small screens.
+.ws-topbar__admin {
+  display: none;
+  @media (min-width: $bp-md) { display: grid; }
+}
+
+// A native select wearing the chip's clothes: keeps keyboard and mobile
+// behaviour, loses the platform border.
+.ws-topbar__location {
+  display: none;
+  padding-right: var(--ws-space-2);
+
+  @media (min-width: $bp-md) { display: inline-flex; }
+
+  select {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    font-family: var(--ws-font-ui);
+    font-weight: 500;
+    font-size: 13px;
+    color: inherit;
+    cursor: pointer;
+    max-width: 108px;
+    &:focus { outline: none; }
+  }
+
+  &:focus-within {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+// ─── Browse ─────────────────────────────────────────────────────
+
+.ws-browse {
+  display: grid;
+  gap: var(--ws-space-6);
+  padding-block: var(--ws-space-6) 64px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: 244px minmax(0, 1fr);
+    gap: 40px;
+  }
+}
+
+.ws-browse__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--ws-space-4);
+}
+
+// Filters read as one recessed rail, divided by hairlines rather than stacked
+// cards — the design system's list rule.
+.ws-filters {
+  align-self: start;
+  // Below desktop the rail collapses behind the Filters button; the grid needs
+  // the whole width there.
+  display: none;
+
+  &.is-open {
+    display: block;
+    padding: var(--ws-space-4);
+    border: 1px solid var(--ws-border-hairline);
+    border-radius: var(--ws-radius-xl);
+    background: var(--ws-bg-surface);
+  }
+
+  @media (min-width: $bp-md) {
+    display: block;
+    position: sticky;
+    top: calc(var(--ws-header-h) + var(--ws-space-4));
+    max-height: calc(100vh - var(--ws-header-h) - var(--ws-space-8));
+    overflow-y: auto;
+    padding-right: var(--ws-space-2);
+
+    // The desktop rail is never a card — hairlines do the dividing.
+    &.is-open {
+      padding: 0 var(--ws-space-2) 0 0;
+      border: 0;
+      background: none;
+    }
+  }
+}
+
+.ws-filters__hint {
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+  padding-top: var(--ws-space-4);
+}
+
+.ws-browse__filtertoggle {
+  @media (min-width: $bp-md) { display: none; }
+}
+
+.ws-filters__group {
+  padding-block: var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
+
+  &:first-child { padding-top: 0; }
+  &:last-child { border-bottom: 0; }
+}
+
+.ws-filters__legend {
+  @include ws-label;
+  color: var(--ws-text-subtle);
+  margin-bottom: var(--ws-space-3);
+  display: block;
+}
+
+// Subcategories are one-click links, not a second dropdown: this is the level
+// that unlocks attribute facets.
+.ws-subcats {
+  list-style: none;
+  margin: var(--ws-space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ws-space-1);
+}
+
+.ws-subcat {
+  appearance: none;
+  border: 0;
+  background: none;
+  width: 100%;
+  text-align: left;
+  padding: var(--ws-space-2);
+  border-radius: var(--ws-radius-md);
+  font-family: var(--ws-font-ui);
+  font-size: 14px;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+
+  &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
+
+  &.is-active {
+    color: var(--ws-text-primary);
+    font-weight: 600;
+    background: var(--ws-bg-chip);
+  }
+}
+
+.ws-activefilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-2);
+  margin-bottom: var(--ws-space-4);
+}
+
+// ─── Product grid ───────────────────────────────────────────────
+
+.ws-grid {
+  display: grid;
+  gap: var(--ws-space-6);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.ws-plink { text-decoration: none; color: inherit; display: block; }
+
+.ws-pcard {
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 140ms ease, background-color 140ms ease;
+
+  // Hover lightens one ladder step and firms the border. Never scale.
+  .ws-plink:hover & {
+    background: var(--ws-bg-raised);
+    border-color: var(--ws-text-subtle);
+  }
+}
+
+.ws-pcard__media {
+  position: relative;
+  aspect-ratio: 300 / 210;
+  background: var(--ws-bg-sunken);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.ws-pcard__badges {
+  position: absolute;
+  top: var(--ws-space-2);
+  left: var(--ws-space-2);
+  display: flex;
+  gap: var(--ws-space-1);
+}
+
+.ws-pcard__noimg {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--ws-text-subtle);
+  gap: var(--ws-space-1);
+  @include ws-caption;
+}
+
+.ws-pcard__body {
+  padding: var(--ws-space-3);
+  display: grid;
+  gap: var(--ws-space-1);
+  align-content: start;
+  flex: 1;
+}
+
+.ws-pcard__title {
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ws-text-primary);
+  // Two lines then ellipsis: one line truncates too many real product names.
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.7em;
+}
+
+.ws-pcard__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  font-size: 11px;
+  color: var(--ws-text-subtle);
+  min-width: 0;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.ws-pcard__seller {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  font-size: 12px;
+  color: var(--ws-text-muted);
+  margin-top: 2px;
+  min-width: 0;
+
+  b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.ws-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  color: var(--ws-text-muted);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+
+  // "Rating stars are always orange #F97316, filled" — theme-independent, and
+  // only the platform theme declares the token, hence the literal fallback.
+  svg {
+    color: var(--ws-accent-star, #F97316);
+    fill: var(--ws-accent-star, #F97316);
+  }
+}
+
+// Interactive rating (leaving a review) — each star is a real button.
+.ws-rating__star {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0 1px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+// ─── Empty / results states ─────────────────────────────────────
+
+.ws-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--ws-space-3);
+  text-align: center;
+  padding: 72px var(--ws-space-6);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-bg-surface);
+}
+
+.ws-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-subtle);
+}
+
+// ─── Pagination ─────────────────────────────────────────────────
+
+.ws-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ws-space-3);
+  margin-top: var(--ws-space-8);
+}
+
+.ws-pager__status {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+// ─── Listing detail ─────────────────────────────────────────────
+
+.ws-detail {
+  display: grid;
+  gap: var(--ws-space-6);
+  padding-block: var(--ws-space-6) 64px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 40px;
+    align-items: start;
+  }
+}
+
+.ws-gallery {
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  overflow: hidden;
+  background: var(--ws-bg-surface);
+}
+
+.ws-gallery__main {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--ws-bg-sunken);
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+.ws-gallery__thumbs {
+  display: flex;
+  gap: var(--ws-space-2);
+  padding: var(--ws-space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ws-thumb {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: var(--ws-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-sunken);
+  cursor: pointer;
+  padding: 0;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  &.is-active { border-color: var(--ws-brand-primary); border-width: 1.5px; }
+}
+
+.ws-spec {
+  display: grid;
+  grid-template-columns: 1fr;
+
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+// Spec rows are hairline-divided, not boxed — matches ListRow conventions.
+.ws-spec__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-3) 0;
+  border-bottom: 1px solid var(--ws-border-hairline);
+  font-size: 14px;
+
+  dt { color: var(--ws-text-muted); }
+  dd { margin: 0; color: var(--ws-text-primary); font-weight: 500; text-align: right; }
+
+  @media (min-width: $bp-sm) {
+    &:nth-child(odd) { padding-right: var(--ws-space-6); }
+    &:nth-child(even) { padding-left: var(--ws-space-6); }
+  }
+}
+
+.ws-aside {
+  display: grid;
+  gap: var(--ws-space-4);
+  align-content: start;
+
+  @media (min-width: $bp-md) {
+    position: sticky;
+    top: calc(var(--ws-header-h) + var(--ws-space-4));
+  }
+}
+
+// Price is the one place the display face goes large on this page.
+.ws-price--lg {
+  font-size: 28px;
+  letter-spacing: -0.6px;
+}
+
+.ws-detail__price {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  flex-wrap: wrap;
+  margin-top: var(--ws-space-2);
+}
+
+.ws-detail__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  flex-wrap: wrap;
+  margin-top: var(--ws-space-2);
+  @include ws-caption;
+  color: var(--ws-text-muted);
+
+  svg { color: var(--ws-text-subtle); flex: none; }
+}
+
+.ws-detail__section {
+  margin-top: var(--ws-space-8);
+
+  > h2 { margin-bottom: var(--ws-space-3); }
+}
+
+// The .ws-textarea primitive lives in _ds.scss. Inside the contact card it
+// recesses rather than stacking surface-on-surface, and it is shorter because
+// it sits in a sidebar column.
+.ws-contact .ws-textarea {
+  min-height: 84px;
+  margin-block: var(--ws-space-2) var(--ws-space-3);
+  background: var(--ws-bg-sunken);
+}
+
+.ws-contact__direct {
+  margin-top: var(--ws-space-4);
+  padding-top: var(--ws-space-4);
+  border-top: 1px solid var(--ws-border-hairline);
+}
+
+.ws-contact__row {
+  display: flex;
+  gap: var(--ws-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--ws-space-2);
+}
+
+// Confirmation state after a message sends.
+.ws-sent {
+  display: grid;
+  justify-items: start;
+  gap: var(--ws-space-2);
+}
+
+.ws-sent__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-money-credit-chip);
+  color: var(--ws-money-credit);
+  margin-bottom: var(--ws-space-1);
+}
+
+// Tags are searches, not decoration — each one runs a query.
+.ws-taglist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-2);
+  margin-top: var(--ws-space-6);
+}
+
+.ws-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-muted);
+  font-size: 12px;
+  text-decoration: none;
+
+  &:hover { background: var(--ws-bg-track); color: var(--ws-text-primary); }
+}
+
+// The safety note is deliberately quiet — informative, not alarming.
+.ws-safety {
+  display: flex;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-3);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-sunken);
+  color: var(--ws-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+
+  svg { flex: none; margin-top: 1px; color: var(--ws-text-subtle); }
+}
+
+.ws-sellerrow {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.ws-trust {
+  display: grid;
+  gap: var(--ws-space-2);
+  margin-top: var(--ws-space-3);
+  padding-top: var(--ws-space-3);
+  border-top: 1px solid var(--ws-border-hairline);
+}
+
+.ws-trust__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  font-size: 13px;
+
+  dt { color: var(--ws-text-muted); display: flex; align-items: center; gap: 6px; }
+  dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+}
+
+// ─── Reviews ────────────────────────────────────────────────────
+
+.ws-reviews__summary {
+  display: flex;
+  gap: var(--ws-space-8);
+  flex-wrap: wrap;
+  align-items: center;
+  margin-block: var(--ws-space-3) var(--ws-space-6);
+}
+
+.ws-reviews__score {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+}
+
+// The 5→1 star histogram. Each row is [label, track, count].
+.ws-reviews__bars {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  display: grid;
+  gap: var(--ws-space-1);
+}
+
+.ws-reviews__bar {
+  display: grid;
+  grid-template-columns: 12px 1fr 20px;
+  align-items: center;
+  gap: var(--ws-space-2);
+  font-size: 12px;
+  color: var(--ws-text-muted);
+  font-variant-numeric: tabular-nums;
+
+  span:last-child { text-align: right; }
+}
+
+.ws-reviews__bartrack {
+  height: 6px;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-track);
+  overflow: hidden;
+}
+
+// Star-colored, matching .ws-rating — this bar counts stars, so it is not a
+// brand moment.
+.ws-reviews__barfill {
+  height: 100%;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-accent-star, #F97316);
+}
+
+.ws-review {
+  border-top: 1px solid var(--ws-border-hairline);
+  padding-top: var(--ws-space-3);
+}
+
+.ws-review__head {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  flex-wrap: wrap;
+}
+
+.ws-review__date {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ws-text-subtle);
+}
+
+// The seller's public answer, indented under the review it responds to.
+.ws-review__reply {
+  margin-top: var(--ws-space-3);
+  margin-left: var(--ws-space-4);
+  padding-left: var(--ws-space-3);
+  border-left: 3px solid var(--ws-border-hairline);
+}
+
+// ─── Store page ─────────────────────────────────────────────────
+
+.ws-storehead {
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  overflow: hidden;
+  background: var(--ws-bg-surface);
+  margin-bottom: var(--ws-space-6);
+}
+
+.ws-storehead__banner {
+  height: 160px;
+  background: var(--ws-bg-sunken);
+  position: relative;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  // A scrim keeps the logo legible over any banner photo.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    // Black, not a theme ink: this sits on arbitrary banner photography, which
+    // does not change with the theme, so the scrim must not either.
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 60%);
+  }
+
+  @media (min-width: $bp-sm) { height: 200px; }
+}
+
+.ws-storehead__body {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-4);
+  flex-wrap: wrap;
+}
+
+.ws-storehead__logo {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--ws-radius-lg);
+  border: 2px solid var(--ws-bg-surface);
+  background: var(--ws-bg-chip);
+  overflow: hidden;
+  margin-top: -44px;
+  flex: none;
+
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+
+// ─── Footer ─────────────────────────────────────────────────────
+
+.ws-footer {
+  border-top: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-surface);
+  margin-top: auto;
+}
+
+.ws-footer__grid {
+  display: grid;
+  gap: var(--ws-space-6);
+  padding-block: 48px var(--ws-space-6);
+  grid-template-columns: 1fr;
+
+  @media (min-width: $bp-sm) { grid-template-columns: 2fr 1fr 1fr; gap: 48px; }
+}
+
+.ws-footer__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ws-space-2);
+
+  a {
+    color: var(--ws-text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    &:hover { color: var(--ws-text-primary); }
+  }
+}
+
+.ws-footer__base {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  flex-wrap: wrap;
+  padding-block: var(--ws-space-4);
+  border-top: 1px solid var(--ws-border-hairline);
+  font-size: 13px;
+  color: var(--ws-text-subtle);
+
+  p { margin: 0; }
+
+  a {
+    color: var(--ws-text-subtle);
+    text-decoration: none;
+    &:hover { color: var(--ws-text-primary); }
+  }
+}
+
+// ─── Breadcrumb ─────────────────────────────────────────────────
+
+.ws-crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  padding-top: var(--ws-space-4);
+  font-size: 13px;
+  color: var(--ws-text-subtle);
+  flex-wrap: wrap;
+
+  a { color: var(--ws-text-muted); text-decoration: none; &:hover { color: var(--ws-text-primary); } }
+  svg { flex: none; }
+}

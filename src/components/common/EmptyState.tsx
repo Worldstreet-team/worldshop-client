@@ -21,12 +21,12 @@ export default function EmptyState({
   className = '',
 }: EmptyStateProps) {
   return (
-    <div className={`empty-state ${className}`}>
-      <div className="empty-state-icon">
+    <div className={`ws ws-empty ${className}`.trim()}>
+      <div className="ws-empty__icon">
         {icon || (
           <svg
-            width="64"
-            height="64"
+            width="26"
+            height="26"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -39,21 +39,23 @@ export default function EmptyState({
           </svg>
         )}
       </div>
-      <h3 className="empty-state-title">{title}</h3>
-      <p className="empty-state-description">{description}</p>
-      
-      {(actionLabel && (actionLink || onAction)) && (
-        <div className="empty-state-action">
-          {actionLink ? (
-            <Link to={actionLink} className="btn btn-primary">
-              {actionLabel}
-            </Link>
-          ) : (
-            <button onClick={onAction} className="btn btn-primary">
-              {actionLabel}
-            </button>
-          )}
-        </div>
+      <h3 className="ws-title">{title}</h3>
+      {/* max ~36ch keeps the caption from running the full card width. */}
+      <p className="ws-caption ws-muted" style={{ maxWidth: '36ch' }}>
+        {description}
+      </p>
+
+      {/* Never more than one action, per 04-components. */}
+      {actionLabel && (actionLink || onAction) && (
+        actionLink ? (
+          <Link to={actionLink} className="ws-btn ws-btn--primary ws-btn--sm">
+            {actionLabel}
+          </Link>
+        ) : (
+          <button onClick={onAction} className="ws-btn ws-btn--primary ws-btn--sm">
+            {actionLabel}
+          </button>
+        )
       )}
     </div>
   );

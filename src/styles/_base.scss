@@ -1,11 +1,11 @@
-// WorldStreet Shop - Base Styles
+// Global reset and element defaults.
+//
+// Everything here reads from the semantic tokens in `_tokens.scss`, so the
+// document itself follows whatever `data-ws-theme` is set on <html>. This
+// replaced the Electro reset, which hardcoded the old light palette and so
+// painted a white page behind the dark theme.
 
-@use 'variables' as *;
-@use 'mixins' as *;
-
-// ============================================
-// RESET & BOX SIZING
-// ============================================
+// ─── Reset ──────────────────────────────────────────────────────
 
 *,
 *::before,
@@ -23,74 +23,50 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  // The page floor. Set here as well as on body so overscroll on iOS reveals
+  // the theme color rather than white.
+  background-color: var(--ws-bg-page);
+  // Native form controls, scrollbars and the like follow this.
+  color-scheme: dark;
 }
+
+// Shop Light is the one mode where the browser's own chrome should stay light.
+html[data-ws-theme='shop-light'] { color-scheme: light; }
 
 body {
-  font-family: $font-family-primary;
-  font-size: $font-size-base;
-  font-weight: $font-weight-normal;
-  line-height: $line-height-base;
-  color: $text-primary;
-  background-color: $bg-primary;
+  font-family: var(--ws-font-ui);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ws-text-primary);
+  background-color: var(--ws-bg-page);
+  min-height: 100vh;
 }
 
-// ============================================
-// TYPOGRAPHY
-// ============================================
+// ─── Typography ─────────────────────────────────────────────────
+// Sizes come from the ws-* type ramp; these are only the element defaults for
+// anything that has not been given a ramp class.
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: $font-family-heading;
-  font-weight: $font-weight-bold;
-  line-height: $line-height-sm;
-  margin-bottom: $spacing-md;
-}
-
-h1 { font-size: $font-size-4xl; }
-h2 { font-size: $font-size-3xl; }
-h3 { font-size: $font-size-2xl; }
-h4 { font-size: $font-size-xl; }
-h5 { font-size: $font-size-lg; }
-h6 { font-size: $font-size-md; }
-
-p {
-  margin-bottom: $spacing-md;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
 }
 
 a {
-  color: $secondary-color;
+  color: inherit;
   text-decoration: none;
-  transition: color $transition-fast;
-  
-  &:hover {
-    color: $primary-color;
-  }
+  transition: color var(--ws-motion-fast) var(--ws-ease);
 }
 
-// ============================================
-// LISTS
-// ============================================
-
-ul, ol {
-  list-style: none;
-}
-
-// ============================================
-// IMAGES
-// ============================================
+ul, ol { list-style: none; }
 
 img {
   max-width: 100%;
   height: auto;
   display: block;
 }
-
-// ============================================
-// FORM ELEMENTS
-// ============================================
 
 button {
   font-family: inherit;
@@ -103,62 +79,41 @@ select {
   font-family: inherit;
 }
 
-// ============================================
-// TABLES
-// ============================================
-
 table {
   border-collapse: collapse;
   width: 100%;
 }
 
-// ============================================
-// HR
-// ============================================
-
 hr {
   border: 0;
   height: 1px;
-  background-color: $border-light;
-  margin: $spacing-lg 0;
+  background-color: var(--ws-border-hairline);
 }
 
-// ============================================
-// SELECTION
-// ============================================
+// ─── Selection & focus ──────────────────────────────────────────
 
 ::selection {
-  background-color: $primary-color;
-  color: $secondary-color;
+  background-color: var(--ws-brand-primary);
+  color: var(--ws-brand-on-primary);
 }
 
-// ============================================
-// FOCUS VISIBLE
-// ============================================
-
 :focus-visible {
-  outline: 2px solid $primary-color;
+  outline: 2px solid var(--ws-focus-ring);
   outline-offset: 2px;
 }
 
-// ============================================
-// SCROLLBAR
-// ============================================
+// ─── Scrollbar ──────────────────────────────────────────────────
 
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
-  background: $gray-100;
-}
+::-webkit-scrollbar-track { background: var(--ws-bg-sunken); }
 
 ::-webkit-scrollbar-thumb {
-  background: $gray-400;
-  border-radius: $radius-sm;
-  
-  &:hover {
-    background: $gray-500;
-  }
+  background: var(--ws-bg-raised);
+  border-radius: var(--ws-radius-sm);
+
+  &:hover { background: var(--ws-bg-chip); }
 }

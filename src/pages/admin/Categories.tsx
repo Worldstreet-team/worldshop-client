@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Plus, FolderTree, Trash2, X } from 'lucide-react';
 import { adminService, type AdminCategory, type CreateCategoryData, type UpdateCategoryData } from '@/services/adminService';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
@@ -146,54 +147,75 @@ export default function AdminCategories() {
   const showForm = isCreating || selectedCategory;
 
   return (
-    <div className="admin-categories">
-      <div className="page-header">
-        <h1>Categories ({categories.length})</h1>
-        <button className="btn btn-primary" onClick={handleCreate}>
-          <span className="material-icons">add</span>
+    <div className="ws-page">
+      <div className="ws-page__head">
+        <h1 className="ws-page__title">
+          Categories <span className="ws-muted ws-num" style={{ fontWeight: 400 }}>({categories.length})</span>
+        </h1>
+        <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={handleCreate}>
+          <Plus size={14} aria-hidden />
           Add Category
         </button>
       </div>
 
-      <div className="categories-container">
-        {/* Categories List */}
-        <div className="categories-tree">
+      {/* List beside the editor — the same split the detail pages use. */}
+      <div className="ws-detail" style={{ paddingBlock: 0 }}>
+        <div className="ws-card ws-card--flush">
           {loading ? (
-            <div className="empty-state">
-              <p>Loading categories...</p>
+            <div className="ws-stack" style={{ padding: 'var(--ws-space-4)' }}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="ws-skeleton" style={{ height: 44 }} />
+              ))}
             </div>
           ) : categories.length === 0 ? (
-            <div className="empty-state">
-              <span className="material-icons">category</span>
-              <h2>No categories yet</h2>
-              <p>Create your first category to organize products.</p>
+            <div className="ws-empty" style={{ border: 0 }}>
+              <div className="ws-empty__icon">
+                <FolderTree size={26} aria-hidden />
+              </div>
+              <h2 className="ws-title">No categories yet</h2>
+              <p className="ws-caption ws-muted">Create your first category to organize listings.</p>
             </div>
           ) : (
-            <div className="category-list">
+            <div>
               {categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className={`category-item ${selectedCategory?.id === cat.id ? 'selected' : ''} ${!cat.isActive ? 'inactive' : ''}`}
+                  className="ws-listrow ws-listrow--link"
                   onClick={() => handleSelectCategory(cat)}
+                  style={{
+                    cursor: 'pointer',
+                    background: selectedCategory?.id === cat.id ? 'var(--ws-bg-raised)' : undefined,
+                    opacity: cat.isActive ? 1 : 0.55,
+                  }}
                 >
-                  <div className="category-item-info">
-                    {cat.image && <img src={cat.image} alt={cat.name} className="category-thumb" />}
-                    <div>
-                      <strong>{cat.name}</strong>
-                      <small>{cat.productCount ?? 0} products</small>
-                      {cat.parent && <small className="text-muted"> · in {cat.parent.name}</small>}
-                    </div>
+                  {cat.image && (
+                    <img
+                      src={cat.image}
+                      alt=""
+                      style={{
+                        width: 32, height: 32, objectFit: 'cover', flex: 'none',
+                        borderRadius: 'var(--ws-radius-md)',
+                        border: '1px solid var(--ws-border-hairline)',
+                      }}
+                    />
+                  )}
+                  <div className="ws-listrow__body">
+                    <span className="ws-listrow__title">{cat.name}</span>
+                    <span className="ws-listrow__sub">
+                      {cat.productCount ?? 0} listings
+                      {cat.parent && ` · in ${cat.parent.name}`}
+                    </span>
                   </div>
-                  <div className="category-item-actions">
-                    {!cat.isActive && <span className="badge badge-secondary">Inactive</span>}
-                    <button
-                      className="btn-icon btn-icon-danger"
-                      title="Deactivate"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, cat.name); }}
-                    >
-                      <span className="material-icons">delete</span>
-                    </button>
-                  </div>
+                  {!cat.isActive && <span className="ws-badge ws-badge--neutral">Inactive</span>}
+                  <button
+                    className="ws-iconbtn"
+                    title="Deactivate"
+                    aria-label={`Deactivate ${cat.name}`}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, cat.name); }}
+                    style={{ color: 'var(--ws-status-danger)' }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -201,90 +223,149 @@ export default function AdminCategories() {
         </div>
 
         {/* Category Edit Panel */}
-        <div className="category-edit-panel">
-          {showForm ? (
-            <form onSubmit={handleSubmit}>
-              <h2>{isCreating ? 'New Category' : `Edit: ${selectedCategory?.name}`}</h2>
+        <aside className="ws-aside">
+          <div className="ws-card">
+            {showForm ? (
+              <form onSubmit={handleSubmit} className="ws-stack--lg">
+                <h2 className="ws-h2">
+                  {isCreating ? 'New Category' : `Edit: ${selectedCategory?.name}`}
+                </h2>
 
-              <div className="form-group">
-                <label htmlFor="catName">Name *</label>
-                <input id="catName" type="text" placeholder="Category name"
-                  value={formName} onChange={(e) => setFormName(e.target.value)} required />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="catDesc">Description</label>
-                <textarea id="catDesc" rows={3} placeholder="Category description"
-                  value={formDesc} onChange={(e) => setFormDesc(e.target.value)} />
-              </div>
-
-              <div className="form-group">
-                <label>Image</label>
-                {formImage && (
-                  <div className="category-image-preview">
-                    <img src={formImage} alt="Category" />
-                    <button type="button" className="btn-icon-sm btn-icon-danger"
-                      onClick={() => setFormImage('')}>
-                      <span className="material-icons">close</span>
-                    </button>
-                  </div>
-                )}
-                <label className="image-upload-zone small">
-                  <span className="material-icons">{uploadingImage ? 'hourglass_empty' : 'cloud_upload'}</span>
-                  <p>{uploadingImage ? 'Uploading...' : 'Upload image'}</p>
-                  <input type="file" accept="image/*" hidden
-                    onChange={handleImageUpload} disabled={uploadingImage} />
-                </label>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="catIcon">Icon Name</label>
-                <input id="catIcon" type="text" placeholder="e.g. smartphone"
-                  value={formIcon} onChange={(e) => setFormIcon(e.target.value)} />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="catParent">Parent Category</label>
-                <select id="catParent" value={formParentId} onChange={(e) => setFormParentId(e.target.value)}>
-                  <option value="">None (top-level)</option>
-                  {categories
-                    .filter((c) => c.id !== selectedCategory?.id)
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="catOrder">Sort Order</label>
-                  <input id="catOrder" type="number" min="0"
-                    value={formSortOrder} onChange={(e) => setFormSortOrder(e.target.value)} />
+                <div className="ws-formfield">
+                  <label htmlFor="catName" className="ws-formfield__label">Name *</label>
+                  <input
+                    id="catName"
+                    type="text"
+                    className="ws-field"
+                    placeholder="Category name"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    required
+                  />
                 </div>
-              </div>
 
-              <label className="checkbox-label">
-                <input type="checkbox" checked={formIsActive} onChange={(e) => setFormIsActive(e.target.checked)} />
-                <span>Active</span>
-              </label>
+                <div className="ws-formfield">
+                  <label htmlFor="catDesc" className="ws-formfield__label">Description</label>
+                  <textarea
+                    id="catDesc"
+                    className="ws-textarea"
+                    rows={3}
+                    placeholder="Category description"
+                    value={formDesc}
+                    onChange={(e) => setFormDesc(e.target.value)}
+                  />
+                </div>
 
-              <div className="form-actions" style={{ marginTop: '1rem' }}>
-                <button type="submit" className="btn btn-primary btn-block" disabled={saving}>
-                  {saving ? 'Saving...' : isCreating ? 'Create Category' : 'Update Category'}
-                </button>
-                <button type="button" className="btn btn-secondary btn-block"
-                  onClick={() => { setSelectedCategory(null); setIsCreating(false); resetForm(); }}>
-                  Cancel
-                </button>
-              </div>
-            </form>
-          ) : (
-            <>
-              <h2>Category Details</h2>
-              <p>Select a category to edit or create a new one.</p>
-            </>
-          )}
-        </div>
+                <div className="ws-formfield">
+                  <span className="ws-formfield__label">Image</span>
+                  {formImage && (
+                    <div style={{ position: 'relative', width: 'fit-content' }}>
+                      <img
+                        src={formImage}
+                        alt=""
+                        style={{
+                          width: 96, height: 96, objectFit: 'cover', display: 'block',
+                          borderRadius: 'var(--ws-radius-lg)',
+                          border: '1px solid var(--ws-border-hairline)',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormImage('')}
+                        aria-label="Remove image"
+                        style={{
+                          position: 'absolute', top: -6, right: -6, width: 22, height: 22,
+                          borderRadius: 'var(--ws-radius-pill)', border: 'none',
+                          background: 'var(--ws-status-danger)', color: '#fff', cursor: 'pointer',
+                          display: 'grid', placeItems: 'center',
+                        }}
+                      >
+                        <X size={13} aria-hidden />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="ws-file"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                  />
+                  {uploadingImage && <p className="ws-caption ws-muted">Uploading…</p>}
+                </div>
+
+                <div className="ws-formfield">
+                  <label htmlFor="catIcon" className="ws-formfield__label">Icon Name</label>
+                  <input
+                    id="catIcon"
+                    type="text"
+                    className="ws-field"
+                    placeholder="e.g. smartphone"
+                    value={formIcon}
+                    onChange={(e) => setFormIcon(e.target.value)}
+                  />
+                </div>
+
+                <div className="ws-formfield">
+                  <label htmlFor="catParent" className="ws-formfield__label">Parent Category</label>
+                  <select
+                    id="catParent"
+                    className="ws-select"
+                    value={formParentId}
+                    onChange={(e) => setFormParentId(e.target.value)}
+                  >
+                    <option value="">None (top-level)</option>
+                    {categories
+                      .filter((c) => c.id !== selectedCategory?.id)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="ws-formfield">
+                  <label htmlFor="catOrder" className="ws-formfield__label">Sort Order</label>
+                  <input
+                    id="catOrder"
+                    type="number"
+                    min="0"
+                    className="ws-field ws-num"
+                    value={formSortOrder}
+                    onChange={(e) => setFormSortOrder(e.target.value)}
+                  />
+                </div>
+
+                <label className="ws-check">
+                  <input
+                    type="checkbox"
+                    className="ws-check__input"
+                    checked={formIsActive}
+                    onChange={(e) => setFormIsActive(e.target.checked)}
+                  />
+                  <span className="ws-check__label">Active</span>
+                </label>
+
+                <div className="ws-stack">
+                  <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={saving}>
+                    {saving ? 'Saving…' : isCreating ? 'Create Category' : 'Update Category'}
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-btn ws-btn--ghost ws-btn--block"
+                    onClick={() => { setSelectedCategory(null); setIsCreating(false); resetForm(); }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <h2 className="ws-h2">Category Details</h2>
+                <p className="ws-body ws-muted">Select a category to edit, or create a new one.</p>
+              </>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   );

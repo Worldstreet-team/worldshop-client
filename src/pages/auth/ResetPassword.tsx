@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,15 +35,15 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="auth-page reset-password-page">
-        <div className="error-message">
-          <span className="material-icons">error</span>
-          <h1>Invalid Link</h1>
-          <p>This password reset link is invalid or has expired.</p>
-          <Link to="/auth/forgot-password" className="btn btn-primary">
-            Request New Link
-          </Link>
-        </div>
+      <div style={{ display: 'grid', justifyItems: 'center', textAlign: 'center', gap: 'var(--ws-space-3)' }}>
+        <span className="ws-empty__icon" style={{ color: 'var(--ws-status-danger)' }}>
+          <AlertCircle size={26} aria-hidden />
+        </span>
+        <h1 className="ws-h2">Invalid link</h1>
+        <p className="ws-body ws-muted">This password reset link is invalid or has expired.</p>
+        <Link to="/auth/forgot-password" className="ws-btn ws-btn--sm ws-btn--primary">
+          Request a new link
+        </Link>
       </div>
     );
   }
@@ -63,63 +64,68 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="auth-page reset-password-page">
-      <h1>Reset Password</h1>
-      <p className="auth-subtitle">Enter your new password below.</p>
+    <div className="ws-stack--lg">
+      <div>
+        <h1 className="ws-h2">Reset password</h1>
+        <p className="ws-body ws-muted">Enter your new password below.</p>
+      </div>
 
       {error && (
-        <div className="alert alert-error">
-          <span className="material-icons">error</span>
+        <div className="ws-alert" role="alert">
+          <AlertCircle size={16} aria-hidden />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
-        <div className="form-group">
-          <label htmlFor="password">New Password</label>
-          <div className="password-input">
+      <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
+        <div className="ws-formfield">
+          <label htmlFor="password" className="ws-formfield__label">New Password</label>
+          {/* The reveal toggle is a real button inside the group, so it needs
+              pointer events that .ws-inputgroup__icon deliberately removes. */}
+          <div className="ws-inputgroup">
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="At least 8 characters"
-              className={errors.password ? 'error' : ''}
+              className={`ws-field ${errors.password ? 'ws-field--invalid' : ''}`}
+              style={{ paddingRight: 42 }}
               {...register('password')}
             />
             <button
               type="button"
-              className="password-toggle"
+              className="ws-inputgroup__icon ws-inputgroup__icon--right"
+              style={{ pointerEvents: 'auto', background: 'none', border: 0, cursor: 'pointer' }}
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              <span className="material-icons">
-                {showPassword ? 'visibility_off' : 'visibility'}
-              </span>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <span className="error-message">{errors.password.message}</span>}
+          {errors.password && <span className="ws-formfield__error">{errors.password.message}</span>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm Password</label>
+        <div className="ws-formfield">
+          <label htmlFor="confirmPassword" className="ws-formfield__label">Confirm Password</label>
           <input
             id="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             placeholder="Confirm your password"
-            className={errors.confirmPassword ? 'error' : ''}
+            className={`ws-field ${errors.confirmPassword ? 'ws-field--invalid' : ''}`}
             {...register('confirmPassword')}
           />
           {errors.confirmPassword && (
-            <span className="error-message">{errors.confirmPassword.message}</span>
+            <span className="ws-formfield__error">{errors.confirmPassword.message}</span>
           )}
         </div>
 
-        <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
-          {isLoading ? 'Resetting...' : 'Reset Password'}
+        <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={isLoading}>
+          {isLoading ? 'Resetting…' : 'Reset password'}
         </button>
       </form>
 
-      <p className="auth-footer">
+      <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
         Remember your password?{' '}
-        <Link to="/auth/login">Sign in</Link>
+        <Link to="/auth/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
       </p>
     </div>
   );

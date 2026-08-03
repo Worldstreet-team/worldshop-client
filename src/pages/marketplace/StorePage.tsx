@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
 import { publicMarketplace, type PublicStore, type Listing } from '@/services/storeService';
 import SellerCard from '@/components/marketplace/SellerCard';
 import ListingCard from '@/components/marketplace/ListingCard';
@@ -66,66 +67,151 @@ export default function StorePage() {
 
   if (notFound) {
     return (
-      <div className="container" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-        <h1>Store not available</h1>
-        <p style={{ color: '#667085', marginBottom: '1rem' }}>
-          This store may have closed, or its subscription is not currently active.
-        </p>
-        <Link to="/listings" className="btn-primary">Browse the marketplace</Link>
+      <div className="ws-wrap">
+        <div className="ws-empty" style={{ marginBlock: 64 }}>
+          <h1 className="ws-h2">Store not available</h1>
+          <p className="ws-caption ws-muted" style={{ maxWidth: '40ch' }}>
+            This store may have closed, or its subscription is not currently active.
+          </p>
+          <Link to="/listings" className="ws-btn ws-btn--sm ws-btn--primary">
+            Browse the marketplace
+          </Link>
+        </div>
       </div>
     );
   }
 
-  if (!store) return <div className="container"><p style={{ color: '#667085', padding: '2rem 0' }}>Loading…</p></div>;
+  if (!store) {
+    return (
+      <div className="ws-wrap">
+        <div className="ws-detail">
+          <div>
+            <div className="ws-skeleton" style={{ height: 200, borderRadius: 'var(--ws-radius-xl)' }} />
+            <div className="ws-skeleton" style={{ height: 28, width: '40%', marginTop: 24 }} />
+            <div className="ws-skeleton" style={{ height: 18, width: '25%', marginTop: 12 }} />
+          </div>
+          <div className="ws-skeleton" style={{ height: 280, borderRadius: 'var(--ws-radius-xl)' }} />
+        </div>
+      </div>
+    );
+  }
+
+  const location = [store.city, store.state].filter(Boolean).join(', ');
+  const hasContact = store.phone || store.whatsapp || store.website || store.address;
 
   return (
-    <div className="container store-page" style={{ padding: '1.5rem 0' }}>
-      {store.banner && (
-        <img
-          src={store.banner}
-          alt=""
-          style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 8, marginBottom: '1rem' }}
-        />
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) minmax(260px, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+    <div className="ws-wrap">
+      <div className="ws-detail">
         <div>
-          <h1 style={{ marginBottom: '0.25rem' }}>{store.name}</h1>
-          <div style={{ color: '#667085', marginBottom: '0.75rem' }}>
-            {[store.city, store.state].filter(Boolean).join(', ')}
+          {/* Banner + logo read as one masthead, so they share a card rather
+              than stacking as separate blocks. */}
+          <div className="ws-storehead">
+            {store.banner && (
+              <div className="ws-storehead__banner">
+                <img src={store.banner} alt="" />
+              </div>
+            )}
+            <div className="ws-storehead__body">
+              {store.logo && (
+                <div className="ws-storehead__logo">
+                  <img src={store.logo} alt="" />
+                </div>
+              )}
+              <div style={{ minWidth: 0 }}>
+                <h1 className="ws-h1">{store.name}</h1>
+                {location && <p className="ws-caption ws-muted">{location}</p>}
+              </div>
+            </div>
           </div>
 
           {store.description && (
-            <p style={{ color: '#344054', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{store.description}</p>
+            <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap' }}>
+              {store.description}
+            </p>
           )}
 
-          <h2 style={{ fontSize: '1.15rem', marginTop: '1.5rem' }}>
-            Listings {total > 0 && <span style={{ color: '#667085', fontWeight: 400 }}>({total})</span>}
-          </h2>
+          <section className="ws-detail__section">
+            <h2 className="ws-h2">
+              Listings{' '}
+              {total > 0 && <span className="ws-muted ws-num" style={{ fontWeight: 400 }}>({total})</span>}
+            </h2>
 
-          {loading ? (
-            <p style={{ color: '#667085' }}>Loading listings…</p>
-          ) : listings.length === 0 ? (
-            <p style={{ color: '#667085' }}>This seller has no live listings right now.</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '1rem', marginTop: '0.75rem' }}>
-              {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
-            </div>
-          )}
+            {loading ? (
+              <div className="ws-grid" style={{ marginTop: 'var(--ws-space-4)' }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="ws-skeleton"
+                    style={{ aspectRatio: '3 / 4', borderRadius: 'var(--ws-radius-xl)' }}
+                  />
+                ))}
+              </div>
+            ) : listings.length === 0 ? (
+              <p className="ws-body ws-muted">This seller has no live listings right now.</p>
+            ) : (
+              <div className="ws-grid" style={{ marginTop: 'var(--ws-space-4)' }}>
+                {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
+              </div>
+            )}
 
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem' }}>
-              <button className="btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</button>
-              <span style={{ color: '#667085' }}>Page {page} of {totalPages}</span>
-              <button className="btn-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
-            </div>
-          )}
+            {totalPages > 1 && (
+              <div className="ws-pager">
+                <button
+                  className="ws-btn ws-btn--sm ws-btn--secondary"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  Previous
+                </button>
+                <span className="ws-pager__status ws-num">Page {page} of {totalPages}</span>
+                <button
+                  className="ws-btn ws-btn--sm ws-btn--secondary"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </section>
         </div>
 
-        <div style={{ position: 'sticky', top: '1rem' }}>
+        <aside className="ws-aside">
           <SellerCard store={store} />
 
-          <div style={{ textAlign: 'right', marginTop: '0.5rem' }}>
+          {hasContact && (
+            <div className="ws-card">
+              <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Contact</h2>
+              <div className="ws-stack">
+                {store.phone && (
+                  <a href={`tel:${store.phone}`} className="ws-plink ws-num">{store.phone}</a>
+                )}
+                {store.whatsapp && (
+                  <a
+                    href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ws-plink"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+                {store.website && (
+                  <a href={store.website} target="_blank" rel="noopener noreferrer" className="ws-plink">
+                    Website
+                  </a>
+                )}
+                {store.address && <p className="ws-caption ws-muted">{store.address}</p>}
+              </div>
+
+              <div className="ws-safety" style={{ marginTop: 'var(--ws-space-4)' }}>
+                <ShieldCheck size={16} aria-hidden />
+                <span>WorldStreet does not handle payment or delivery. Check items before paying.</span>
+              </div>
+            </div>
+          )}
+
+          <div style={{ textAlign: 'right' }}>
             <ReportButton
               targetType="STORE"
               targetId={store.id}
@@ -133,29 +219,7 @@ export default function StorePage() {
               label="Report this store"
             />
           </div>
-
-          {(store.phone || store.whatsapp || store.website || store.address) && (
-            <div style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '1rem', marginTop: '1rem' }}>
-              <h3 style={{ margin: '0 0 0.6rem', fontSize: '1rem' }}>Contact</h3>
-              <div style={{ display: 'grid', gap: '0.4rem', fontSize: '0.88rem' }}>
-                {store.phone && <a href={`tel:${store.phone}`}>{store.phone}</a>}
-                {store.whatsapp && (
-                  <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-                    WhatsApp
-                  </a>
-                )}
-                {store.website && (
-                  <a href={store.website} target="_blank" rel="noopener noreferrer">Website</a>
-                )}
-                {store.address && <div style={{ color: '#667085' }}>{store.address}</div>}
-              </div>
-
-              <p style={{ fontSize: '0.78rem', color: '#98a2b3', marginTop: '0.75rem', lineHeight: 1.4 }}>
-                WorldStreet does not handle payment or delivery. Check items before paying.
-              </p>
-            </div>
-          )}
-        </div>
+        </aside>
       </div>
     </div>
   );

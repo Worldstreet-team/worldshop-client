@@ -1,285 +1,213 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import {
+  Search, MessageCircle, MapPin, Menu, Store, User, LayoutGrid, Compass,
+  Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
+} from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useCategoryStore } from '@/store/categoryStore';
-import CategoryDropdown from './MegaMenu';
+import { chatService } from '@/services/chatService';
+import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 
 /**
- * Marketplace header.
+ * Marketplace top bar — the Shop pattern from the design system: brand lockup,
+ * pill search, location pill, avatar, then a scrolling row of category chips.
  *
- * The ecommerce version carried a cart button, a wishlist badge and sale
- * tabs — furniture for a shop that transacted on-platform. Nothing is bought
- * here any more, so the header's two jobs are search and "sell here": search
- * feeds the browse page, and the Sell link is the supply side's front door.
+ * Nothing is bought here, so the bar has two jobs: find something, or go sell
+ * something. There is no cart, no wishlist badge, no sale tab.
  */
 
-const navLinks = [
-  { to: '/listings', label: 'Marketplace' },
-  { to: '/vendor', label: 'Sell on WorldStreet', isSale: true },
-];
+/**
+ * Category chips carry an icon (05-screens: "icon 17 + label Medium 13"). The
+ * API has no icon field, so departments map to the lucide names the icon set
+ * already reserves for Shop: smartphone, car, shirt, house, shopping-bag.
+ */
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  electronics: Smartphone,
+  vehicles: Car,
+  fashion: Shirt,
+  'home-property': House,
+};
 
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [params] = useSearchParams();
   const { isAuthenticated, user } = useAuthStore();
   const { toggleMobileMenu } = useUIStore();
-  const { categories, isLoading: categoriesLoading, fetchCategories } = useCategoryStore();
+  const { categories, fetchCategories } = useCategoryStore();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [searchBox, setSearchBox] = useState(params.get('search') ?? '');
+  const [unread, setUnread] = useState(0);
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
+
+  // The search box mirrors the URL so a shared link shows its own query.
+  useEffect(() => { setSearchBox(params.get('search') ?? ''); }, [params]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 60);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (!isAuthenticated) { setUnread(0); return; }
+    let cancelled = false;
+    chatService.unread()
+      .then((res) => { if (!cancelled) setUnread(res.data.total); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
 
-  useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isSearchOpen]);
+  // Only top-level categories earn a chip; the rail handles the rest.
+  const topCategories = useMemo(() => {
+    const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));
+    return categories.filter((c) => !c.parentId && withChildren.has(c.id));
+  }, [categories]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const selectedId = params.get('categoryId') ?? '';
+  // A chip stays lit while you are inside one of its subcategories — otherwise
+  // drilling into "Phones" makes the "Electronics" chip look unselected.
+  const activeCategory = useMemo(() => {
+    const selected = categories.find((c) => c.id === selectedId);
+    return selected?.parentId ?? selectedId;
+  }, [categories, selectedId]);
+  const activeState = params.get('state') ?? '';
+  const onBrowse = location.pathname === '/' || location.pathname.startsWith('/listings');
+
+  const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/listings?search=${encodeURIComponent(searchQuery.trim())}`);
-      setIsSearchOpen(false);
-      setSearchQuery('');
-    }
+    const q = searchBox.trim();
+    navigate(q ? `/listings?search=${encodeURIComponent(q)}` : '/listings');
   };
 
-  const handleDropdownEnter = useCallback(() => {
-    if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current);
-    }
-    setIsCategoryDropdownOpen(true);
-  }, []);
+  const setLocation = (value: string) => {
+    const next = new URLSearchParams(onBrowse ? params : undefined);
+    if (value) next.set('state', value); else next.delete('state');
+    next.delete('page');
+    navigate(`/listings?${next.toString()}`);
+  };
 
-  const handleDropdownLeave = useCallback(() => {
-    dropdownTimeoutRef.current = setTimeout(() => {
-      setIsCategoryDropdownOpen(false);
-    }, 150);
-  }, []);
-
-  const closeDropdown = useCallback(() => {
-    setIsCategoryDropdownOpen(false);
-  }, []);
-
-  const isActiveLink = (to: string) => {
-    if (to === '/') return location.pathname === '/';
-    return location.pathname.startsWith(to.split('?')[0]);
+  const goCategory = (id: string) => {
+    const next = new URLSearchParams();
+    // Switching department drops attribute facets — they belong to the old one.
+    const search = params.get('search');
+    if (search) next.set('search', search);
+    if (activeState) next.set('state', activeState);
+    if (id) next.set('categoryId', id);
+    navigate(`/listings?${next.toString()}`);
   };
 
   return (
-    <header className={`site-header ${isScrolled ? 'header-scrolled' : ''}`}>
-      {/* ─── Row 1: Logo + Search + Icons ─── */}
-      <div className="header-main">
-        <div className="container">
-          {/* Logo + Hamburger */}
-          <div className="header-logo-group">
-            <Link to="/" className="header-logo">
-              <img
-                src="/images/worldstreet-mark.png"
-                alt="WorldStreet"
-                className="logo-icon"
-                width="36"
-                height="36"
-              />
-              <span className="logo-text">WorldStreet<span className="logo-dot">.</span></span>
-            </Link>
-            <button
-              className="mobile-menu-toggle"
-              onClick={toggleMobileMenu}
-              aria-label="Open navigation menu"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
-                <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
+    <header className="ws-topbar">
+      <div className="ws-wrap">
+        <div className="ws-topbar__row">
+          <button
+            className="ws-iconbtn ws-topbar__menu"
+            onClick={toggleMobileMenu}
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
 
-          {/* Search Bar — Desktop */}
-          <div className="header-search desktop-search">
-            <form onSubmit={handleSearchSubmit} className="search-form">
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search the marketplace"
-                className="search-input"
-                aria-label="Search listings"
-              />
-              <button type="submit" className="search-btn" aria-label="Submit search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="M21 21l-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </form>
-          </div>
+          <Link to="/" className="ws-brand" aria-label="WorldShop home">
+            <span className="ws-brand__eyebrow">Worldstreet</span>
+            <span className="ws-brand__word">shop<span className="ws-brand__dot">.</span></span>
+          </Link>
 
-          {/* Header Action Icons */}
-          <div className="header-icons">
-            {/* Mobile Search Toggle */}
-            <button
-              className="header-icon-btn mobile-search-toggle"
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              aria-label="Toggle search"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+          <form className="ws-search ws-topbar__search" onSubmit={submitSearch} role="search">
+            <Search size={18} aria-hidden />
+            <input
+              type="search"
+              value={searchBox}
+              onChange={(e) => setSearchBox(e.target.value)}
+              placeholder="Search phones, cars, furniture…"
+              aria-label="Search the marketplace"
+            />
+          </form>
 
-            {/* Messages — the marketplace's core interaction */}
-            {isAuthenticated && (
-              <Link
-                to="/account/messages"
-                className="header-icon-btn icon-muted"
-                aria-label="Messages"
+          <div className="ws-topbar__actions">
+            <label className="ws-chip ws-topbar__location">
+              <MapPin size={16} aria-hidden />
+              <select
+                value={activeState}
+                onChange={(e) => setLocation(e.target.value)}
+                aria-label="Filter by location"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <option value="">All Nigeria</option>
+                {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+
+            {/* Admins reach the console from here; there is no other entry
+                point once the old nav row is gone. */}
+            {isAuthenticated && user?.role === 'ADMIN' && (
+              <Link to="/admin" className="ws-iconbtn ws-topbar__admin" aria-label="Admin console">
+                <LayoutGrid size={18} />
               </Link>
             )}
 
-            {/* Account */}
+            <a
+              href="https://dashboard.worldstreetgold.com"
+              className="ws-iconbtn ws-topbar__admin"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="WorldStreet dashboard (opens in a new tab)"
+              title="WorldStreet dashboard"
+            >
+              <Compass size={18} />
+            </a>
+
+            <Link to="/vendor" className="ws-btn ws-btn--sm ws-btn--secondary ws-topbar__sell">
+              <Store size={16} aria-hidden />
+              Sell
+            </Link>
+
+            {isAuthenticated && (
+              <Link to="/account/messages" className="ws-iconbtn" aria-label={unread ? `Messages, ${unread} unread` : 'Messages'}>
+                <MessageCircle size={20} />
+                {unread > 0 && <span className="ws-iconbtn__dot" />}
+              </Link>
+            )}
+
             <Link
               to="/account"
-              className="header-icon-btn account-btn"
-              aria-label={isAuthenticated ? 'Account' : 'Sign In'}
+              className="ws-avatar ws-avatar--m"
+              aria-label={isAuthenticated ? 'Your account' : 'Sign in'}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              {isAuthenticated && (
-                <span className="user-name">{user?.firstName}</span>
-              )}
+              {isAuthenticated && user?.firstName
+                ? user.firstName.charAt(0).toUpperCase()
+                : <User size={16} aria-hidden />}
             </Link>
           </div>
         </div>
       </div>
 
-      {/* ─── Row 2: Departments + Nav ─── */}
-      <div className="header-bottom">
-        <div className="container">
-          {/* All Departments Dropdown */}
-          <div
-            className="nav-categories-trigger"
-            onMouseEnter={handleDropdownEnter}
-            onMouseLeave={handleDropdownLeave}
-          >
-            <button
-              className="categories-btn"
-              aria-expanded={isCategoryDropdownOpen}
-              aria-haspopup="true"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                <path d="M3 12h18M3 6h18M3 18h18" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>Categories</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12" className="chevron">
-                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <CategoryDropdown
-              categories={categories}
-              isOpen={isCategoryDropdownOpen}
-              isLoading={categoriesLoading}
-              onMouseEnter={handleDropdownEnter}
-              onMouseLeave={handleDropdownLeave}
-              onLinkClick={closeDropdown}
-            />
-          </div>
-
-          {/* Secondary Nav Links */}
-          <nav className="header-nav-inline">
-            <ul className="nav-menu">
-              {navLinks.map((link) => (
-                <li key={link.to} className="nav-item">
-                  <Link
-                    to={link.to}
-                    className={`nav-link ${isActiveLink(link.to) ? 'active' : ''} ${link.isSale ? 'nav-link-sale' : ''}`}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-              {isAuthenticated && user?.role === 'ADMIN' && (
-                <li className="nav-item">
-                  <Link
-                    to="/admin"
-                    className={`nav-link nav-link-admin ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
-                  >
-                    Dashboard
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </nav>
-
-          {/* Main Dashboard Link */}
-          <a
-            href="https://dashboard.worldstreetgold.com"
-            className="header-dashboard-link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            Main Dashboard
-          </a>
-        </div>
-      </div>
-
-      {/* Mobile Search Bar */}
-      <div className={`header-mobile-search ${isSearchOpen ? 'open' : ''}`}>
-        <div className="container">
-          <form onSubmit={handleSearchSubmit} className="search-form">
-            <input
-              ref={searchInputRef}
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search the marketplace"
-              className="search-input"
-            />
-            <button type="submit" className="search-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+      {/* Category chips. Kept out of the sticky row so the bar stays 64px. */}
+      <div className="ws-catbar">
+        <div className="ws-wrap">
+          <div className="ws-catbar__scroll">
             <button
               type="button"
-              className="search-close"
-              onClick={() => setIsSearchOpen(false)}
-              aria-label="Close search"
+              className={`ws-chip${!activeCategory ? ' is-active' : ''}`}
+              aria-pressed={!activeCategory}
+              onClick={() => goCategory('')}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ShoppingBag size={16} aria-hidden />
+              All
             </button>
-          </form>
+            {topCategories.map((c) => {
+              const Icon = CATEGORY_ICON[c.slug] ?? ShoppingBag;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`ws-chip${activeCategory === c.id ? ' is-active' : ''}`}
+                  aria-pressed={activeCategory === c.id}
+                  onClick={() => goCategory(c.id)}
+                >
+                  <Icon size={16} aria-hidden />
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </header>

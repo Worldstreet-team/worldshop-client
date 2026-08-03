@@ -9,6 +9,12 @@ interface RatingStarsProps {
   className?: string;
 }
 
+const STAR_PX: Record<NonNullable<RatingStarsProps['size']>, number> = {
+  sm: 12,
+  md: 14,
+  lg: 18,
+};
+
 export default function RatingStars({
   rating,
   maxRating = 5,
@@ -37,16 +43,12 @@ export default function RatingStars({
     const filled = rating >= value;
     const halfFilled = rating >= value - 0.5 && rating < value;
 
-    const starClass = [
-      'rating-star',
-      filled ? 'rating-star-filled' : halfFilled ? 'rating-star-half' : 'rating-star-empty',
-      interactive ? 'rating-star-interactive' : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
+    // Star color comes from .ws-rating's svg rule (always orange, filled), so
+    // the per-star classes only need to carry the interactive affordance.
+    const starClass = interactive ? 'ws-rating__star' : '';
 
     const StarIcon = () => (
-      <svg viewBox="0 0 24 24" className="rating-star-icon">
+      <svg viewBox="0 0 24 24" width={STAR_PX[size]} height={STAR_PX[size]}>
         {halfFilled ? (
           <>
             <defs>
@@ -97,16 +99,14 @@ export default function RatingStars({
 
   return (
     <div
-      className={`rating rating-${size} ${className}`}
+      className={`ws-rating ${className}`.trim()}
       role={interactive ? undefined : 'img'}
       aria-label={interactive ? undefined : `Rating: ${rating} out of ${maxRating} stars`}
     >
-      <div className="rating-stars">
-        {Array.from({ length: maxRating }).map((_, index) => renderStar(index))}
-      </div>
-      {showValue && <span className="rating-value">{rating.toFixed(1)}</span>}
+      {Array.from({ length: maxRating }).map((_, index) => renderStar(index))}
+      {showValue && <span className="ws-num">{rating.toFixed(1)}</span>}
       {reviewCount !== undefined && (
-        <span className="rating-count">({reviewCount} reviews)</span>
+        <span className="ws-caption ws-subtle">({reviewCount} reviews)</span>
       )}
     </div>
   );

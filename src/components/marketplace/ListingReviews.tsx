@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/clerk-react';
+import { Star, Info } from 'lucide-react';
 import {
   marketplaceReviewService,
   type MarketplaceReview,
@@ -28,32 +29,44 @@ const errMessage = (err: unknown, fallback: string) => {
   return fieldError || e.message;
 };
 
-const Stars = ({ value, size = '1rem' }: { value: number; size?: string }) => (
-  <span style={{ color: '#f79009', fontSize: size, letterSpacing: 1 }} aria-label={`${value} out of 5`}>
-    {'★'.repeat(Math.round(value))}
-    <span style={{ color: '#e4e7ec' }}>{'★'.repeat(5 - Math.round(value))}</span>
-  </span>
-);
+// Stars are the one theme-independent color in the system (always orange,
+// filled). Unfilled ones drop to the track color so they read as "empty" in
+// both a light and a dark ladder.
+const Stars = ({ value, size = 14 }: { value: number; size?: number }) => {
+  const filled = Math.round(value);
+  return (
+    <span className="ws-rating" aria-label={`${value} out of 5`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          size={size}
+          aria-hidden
+          style={n <= filled ? undefined : { color: 'var(--ws-bg-track)', fill: 'var(--ws-bg-track)' }}
+        />
+      ))}
+    </span>
+  );
+};
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 2 }}>
+    <div className="ws-rating">
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           type="button"
+          className="ws-rating__star"
           onClick={() => onChange(n)}
           aria-label={`${n} star${n === 1 ? '' : 's'}`}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-            fontSize: '1.6rem', lineHeight: 1,
-            color: n <= value ? '#f79009' : '#e4e7ec',
-          }}
         >
-          ★
+          <Star
+            size={22}
+            aria-hidden
+            style={n <= value ? undefined : { color: 'var(--ws-bg-track)', fill: 'var(--ws-bg-track)' }}
+          />
         </button>
       ))}
     </div>
@@ -178,32 +191,34 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
   const count = summary?.reviewCount ?? 0;
 
   return (
-    <section style={{ marginTop: '2rem' }}>
-      <h2 style={{ fontSize: '1.15rem' }}>Reviews {count > 0 && <span style={{ color: '#667085', fontWeight: 400 }}>({count})</span>}</h2>
+    <section className="ws-detail__section">
+      <h2 className="ws-h2">
+        Reviews {count > 0 && <span className="ws-muted ws-num" style={{ fontWeight: 400 }}>({count})</span>}
+      </h2>
 
       {/* ── Summary ── */}
       {count > 0 && summary && (
-        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center', margin: '0.75rem 0 1.25rem' }}>
+        <div className="ws-reviews__summary">
           <div>
-            <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{summary.averageRating.toFixed(1)}</div>
+            <div className="ws-reviews__score">{summary.averageRating.toFixed(1)}</div>
             <Stars value={summary.averageRating} />
-            <div style={{ fontSize: '0.82rem', color: '#667085' }}>
+            <div className="ws-caption ws-muted">
               {count} review{count === 1 ? '' : 's'}
               {summary.verifiedCount ? ` · ${summary.verifiedCount} verified` : ''}
             </div>
           </div>
 
-          <div style={{ flex: 1, minWidth: 200, maxWidth: 320 }}>
+          <div className="ws-reviews__bars">
             {([5, 4, 3, 2, 1] as const).map((star) => {
               const n = summary.distribution[String(star) as '1'] ?? 0;
               const pct = count ? (n / count) * 100 : 0;
               return (
-                <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
-                  <span style={{ width: 12, color: '#667085' }}>{star}</span>
-                  <div style={{ flex: 1, height: 6, background: '#f2f4f7', borderRadius: 999 }}>
-                    <div style={{ width: `${pct}%`, height: '100%', background: '#f79009', borderRadius: 999 }} />
+                <div key={star} className="ws-reviews__bar">
+                  <span>{star}</span>
+                  <div className="ws-reviews__bartrack">
+                    <div className="ws-reviews__barfill" style={{ width: `${pct}%` }} />
                   </div>
-                  <span style={{ width: 20, color: '#667085', textAlign: 'right' }}>{n}</span>
+                  <span>{n}</span>
                 </div>
               );
             })}
@@ -213,131 +228,144 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
 
       {/* ── Write / edit ── */}
       {isSignedIn && (
-        <div style={{ marginBottom: '1.25rem' }}>
+        <div style={{ marginBottom: 'var(--ws-space-6)' }}>
           {mine && !writing ? (
-            <div style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '0.85rem' }}>
-              <div style={{ fontSize: '0.85rem', color: '#667085', marginBottom: 4 }}>Your review</div>
+            <div className="ws-card">
+              <span className="ws-label">Your review</span>
               <Stars value={mine.rating} />
-              <p style={{ margin: '0.35rem 0', whiteSpace: 'pre-wrap' }}>{mine.comment}</p>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn-secondary" onClick={() => setWriting(true)}>Edit</button>
-                <button className="btn-secondary" onClick={removeMine}>Delete</button>
+              <p className="ws-body" style={{ whiteSpace: 'pre-wrap', margin: 'var(--ws-space-2) 0' }}>
+                {mine.comment}
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--ws-space-2)' }}>
+                <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => setWriting(true)}>
+                  Edit
+                </button>
+                <button className="ws-btn ws-btn--sm ws-btn--danger" onClick={removeMine}>
+                  Delete
+                </button>
               </div>
             </div>
           ) : writing ? (
-            <form onSubmit={submit} style={{ border: '1px solid #e4e7ec', borderRadius: 8, padding: '0.85rem' }}>
+            <form onSubmit={submit} className="ws-card ws-stack">
               {formError && (
-                <div style={{ background: '#fef3f2', border: '1px solid #fda29b', color: '#b42318', padding: '0.5rem 0.75rem', borderRadius: 6, marginBottom: '0.65rem' }}>
-                  {formError}
+                <div className="ws-alert" role="alert">
+                  <Info size={16} aria-hidden />
+                  <span>{formError}</span>
                 </div>
               )}
 
               <StarPicker value={rating} onChange={setRating} />
 
               <input
+                className="ws-field"
                 placeholder="Title (optional)"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={120}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #e4e7ec', borderRadius: 6, margin: '0.6rem 0 0.5rem' }}
               />
 
               <textarea
+                className="ws-textarea"
                 rows={4}
                 placeholder="How was dealing with this seller? What should other buyers know?"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 maxLength={2000}
-                style={{ width: '100%', padding: '0.5rem', border: '1px solid #e4e7ec', borderRadius: 6 }}
               />
 
               {eligibility && !eligibility.wouldBeVerified && !mine && (
-                <p style={{ fontSize: '0.8rem', color: '#98a2b3', margin: '0.35rem 0 0' }}>
+                <p className="ws-caption ws-subtle">
                   This will show as unverified until the seller replies to your message.
                 </p>
               )}
 
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.65rem' }}>
-                <button type="submit" className="btn-primary" disabled={submitting}>
+              <div style={{ display: 'flex', gap: 'var(--ws-space-2)' }}>
+                <button type="submit" className="ws-btn ws-btn--sm ws-btn--primary" disabled={submitting}>
                   {submitting ? 'Posting…' : mine ? 'Save changes' : 'Post review'}
                 </button>
-                <button type="button" className="btn-secondary" onClick={() => setWriting(false)}>Cancel</button>
+                <button
+                  type="button"
+                  className="ws-btn ws-btn--sm ws-btn--ghost"
+                  onClick={() => setWriting(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           ) : eligibility?.canReview ? (
-            <button className="btn-secondary" onClick={() => setWriting(true)}>Write a review</button>
+            <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => setWriting(true)}>
+              Write a review
+            </button>
           ) : eligibility?.reason ? (
             // The gate, stated before any effort is spent on writing.
-            <p style={{ fontSize: '0.88rem', color: '#667085', margin: 0 }}>
-              <span className="material-icons" style={{ fontSize: '1rem', verticalAlign: 'text-bottom', marginRight: 4 }}>
-                info
-              </span>
-              {eligibility.reason}
-            </p>
+            <div className="ws-alert ws-alert--info">
+              <Info size={16} aria-hidden />
+              <span>{eligibility.reason}</span>
+            </div>
           ) : null}
         </div>
       )}
 
       {/* ── List ── */}
       {loading ? (
-        <p style={{ color: '#667085' }}>Loading reviews…</p>
+        <div className="ws-stack">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="ws-skeleton" style={{ height: 72 }} />
+          ))}
+        </div>
       ) : count === 0 ? (
-        <p style={{ color: '#667085' }}>
+        <p className="ws-body ws-muted">
           No reviews yet. Reviews here come from buyers who have actually contacted this seller.
         </p>
       ) : (
         <>
           {(summary?.verifiedCount ?? 0) > 0 && (summary?.verifiedCount ?? 0) < count && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: '#475467', marginBottom: '0.75rem' }}>
+            <label className="ws-check" style={{ marginBottom: 'var(--ws-space-3)' }}>
               <input
                 type="checkbox"
+                className="ws-check__input"
                 checked={verifiedOnly}
                 onChange={(e) => { setVerifiedOnly(e.target.checked); setPage(1); }}
               />
-              Only show reviews from buyers the seller replied to
+              <span className="ws-check__label">
+                Only show reviews from buyers the seller replied to
+              </span>
             </label>
           )}
 
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div className="ws-stack--lg">
             {reviews.map((r) => (
-              <article key={r.id} style={{ borderTop: '1px solid #f2f4f7', paddingTop: '0.85rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <Stars value={r.rating} size="0.9rem" />
-                  <strong style={{ fontSize: '0.9rem' }}>{r.userName}</strong>
+              <article key={r.id} className="ws-review">
+                <div className="ws-review__head">
+                  <Stars value={r.rating} size={13} />
+                  <strong style={{ fontSize: 14 }}>{r.userName}</strong>
 
                   {/* Not "verified purchase" — nothing was purchased here. */}
                   {r.isVerified && (
                     <span
+                      className="ws-badge ws-badge--success"
                       title="This buyer messaged the seller and got a reply"
-                      style={{ background: '#ecfdf3', color: '#027a48', padding: '0.1rem 0.45rem', borderRadius: 999, fontSize: '0.72rem', fontWeight: 600 }}
                     >
                       Contacted this seller
                     </span>
                   )}
 
                   {r.status === 'FLAGGED' && (
-                    <span style={{ background: '#fffaeb', color: '#b54708', padding: '0.1rem 0.45rem', borderRadius: 999, fontSize: '0.72rem', fontWeight: 600 }}>
-                      Reported — under review
-                    </span>
+                    <span className="ws-badge ws-badge--warning">Reported — under review</span>
                   )}
 
-                  <span style={{ color: '#98a2b3', fontSize: '0.78rem', marginLeft: 'auto' }}>
-                    {formatDate(r.createdAt)}
-                  </span>
+                  <span className="ws-review__date">{formatDate(r.createdAt)}</span>
                 </div>
 
-                {r.title && <div style={{ fontWeight: 600, marginTop: '0.3rem' }}>{r.title}</div>}
-                <p style={{ margin: '0.25rem 0 0', whiteSpace: 'pre-wrap', color: '#344054', lineHeight: 1.55 }}>
+                {r.title && <div className="ws-title" style={{ marginTop: 'var(--ws-space-1)' }}>{r.title}</div>}
+                <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap', marginTop: 'var(--ws-space-1)' }}>
                   {r.comment}
                 </p>
 
-                {/* The seller's answer. They have no refund or resolution lever
-                    in this model, so a public reply is their only defence. */}
-                {/* Shown on other people's reviews only — reporting your own
-                    is meaningless, and it is the seller who usually spots a
-                    fake one. */}
+                {/* Shown on other people's reviews only — reporting your own is
+                    meaningless, and it is the seller who usually spots a fake. */}
                 {!(mine && mine.id === r.id) && (
-                  <div style={{ marginTop: '0.35rem' }}>
+                  <div style={{ marginTop: 'var(--ws-space-2)' }}>
                     <ReportButton
                       targetType="REVIEW"
                       targetId={r.id}
@@ -347,13 +375,19 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
                   </div>
                 )}
 
+                {/* The seller's answer. They have no refund or resolution lever
+                    in this model, so a public reply is their only defence. */}
                 {r.vendorReply && (
-                  <div style={{ marginTop: '0.6rem', marginLeft: '1rem', paddingLeft: '0.75rem', borderLeft: '3px solid #e4e7ec' }}>
-                    <div style={{ fontSize: '0.8rem', color: '#667085', fontWeight: 600 }}>
+                  <div className="ws-review__reply">
+                    <div className="ws-caption" style={{ fontWeight: 600 }}>
                       Seller replied
-                      {r.vendorRepliedAt && <span style={{ fontWeight: 400 }}> · {formatDate(r.vendorRepliedAt)}</span>}
+                      {r.vendorRepliedAt && (
+                        <span className="ws-muted" style={{ fontWeight: 400 }}> · {formatDate(r.vendorRepliedAt)}</span>
+                      )}
                     </div>
-                    <p style={{ margin: '0.2rem 0 0', whiteSpace: 'pre-wrap', color: '#475467' }}>{r.vendorReply}</p>
+                    <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap', marginTop: 2 }}>
+                      {r.vendorReply}
+                    </p>
                   </div>
                 )}
               </article>
@@ -361,10 +395,22 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
           </div>
 
           {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem' }}>
-              <button className="btn-secondary" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</button>
-              <span style={{ color: '#667085' }}>Page {page} of {totalPages}</span>
-              <button className="btn-secondary" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</button>
+            <div className="ws-pager">
+              <button
+                className="ws-btn ws-btn--sm ws-btn--secondary"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </button>
+              <span className="ws-pager__status ws-num">Page {page} of {totalPages}</span>
+              <button
+                className="ws-btn ws-btn--sm ws-btn--secondary"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </button>
             </div>
           )}
         </>

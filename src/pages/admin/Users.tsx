@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Search } from 'lucide-react';
 import { adminService, type AdminUser, type AdminUserFilters } from '@/services/adminService';
 import type { Pagination } from '@/types/common.types';
 import { useUIStore } from '@/store/uiStore';
@@ -58,23 +59,38 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="admin-users">
-      <div className="page-header">
-        <h1>Users {pagination && <small>({pagination.total})</small>}</h1>
+    <div className="ws-page">
+      <div className="ws-page__head">
+        <h1 className="ws-page__title">
+          Users {pagination && <span className="ws-muted ws-num" style={{ fontWeight: 400 }}>({pagination.total})</span>}
+        </h1>
       </div>
 
-      <div className="filters-bar">
-        <form onSubmit={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, page: 1 })); }} style={{ display: 'contents' }}>
-          <input
-            type="search"
-            placeholder="Search users..."
-            className="search-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div
+        style={{
+          display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap',
+          alignItems: 'center', marginBottom: 'var(--ws-space-4)',
+        }}
+      >
+        <form
+          onSubmit={(e) => { e.preventDefault(); setFilters((f) => ({ ...f, page: 1 })); }}
+          role="search"
+        >
+          <div className="ws-search">
+            <Search size={16} aria-hidden />
+            <input
+              type="search"
+              placeholder="Search users…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search users"
+            />
+          </div>
         </form>
         <select
-          className="filter-select"
+          className="ws-select"
+          style={{ width: 'auto', height: 44 }}
+          aria-label="Filter by role"
           value={filters.role || ''}
           onChange={(e) => setFilters((f) => ({ ...f, role: (e.target.value || undefined) as AdminUserFilters['role'], page: 1 }))}
         >
@@ -84,40 +100,60 @@ export default function AdminUsers() {
         </select>
       </div>
 
-      <div className="data-table-container">
-        <table className="data-table">
+      <div className="ws-card ws-card--flush ws-table-wrap">
+        <table className="ws-table">
           <thead>
             <tr>
               <th>User</th>
               <th>Role</th>
               <th>Vendor</th>
               <th>Joined</th>
-              <th>Actions</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={5}><div className="skeleton-row" /></td></tr>
+                <tr key={i}>
+                  <td colSpan={5}><div className="ws-skeleton" style={{ height: 20 }} /></td>
+                </tr>
               ))
             ) : users.length === 0 ? (
-              <tr><td colSpan={5} className="empty-row"><p>No users found.</p></td></tr>
+              <tr>
+                <td colSpan={5}>
+                  <p className="ws-body ws-muted" style={{ textAlign: 'center', padding: 'var(--ws-space-6)' }}>
+                    No users found.
+                  </p>
+                </td>
+              </tr>
             ) : users.map((user) => (
               <tr key={user.id}>
                 <td>
-                  <strong>{user.firstName} {user.lastName}</strong>
-                  <small className="text-muted d-block">{user.email}</small>
+                  <div style={{ fontWeight: 600 }}>{user.firstName} {user.lastName}</div>
+                  <div className="ws-caption ws-muted">{user.email}</div>
                 </td>
-                <td><span className={`badge ${user.role === 'ADMIN' ? 'badge-success' : 'badge-default'}`}>{user.role}</span></td>
-                <td>{user.isVendor ? `${user.storeName || 'Vendor'} (${user.vendorStatus || 'N/A'})` : '-'}</td>
-                <td>{formatDate(user.createdAt)}</td>
                 <td>
+                  <span className={`ws-badge ${user.role === 'ADMIN' ? 'ws-badge--brand' : 'ws-badge--neutral'}`}>
+                    {user.role}
+                  </span>
+                </td>
+                <td>{user.isVendor ? `${user.storeName || 'Vendor'} (${user.vendorStatus || 'N/A'})` : '—'}</td>
+                <td className="ws-num">{formatDate(user.createdAt)}</td>
+                <td style={{ textAlign: 'right' }}>
                   {user.role === 'ADMIN' ? (
-                    <button className="btn btn-secondary btn-sm" disabled={updatingId === user.id} onClick={() => updateRole(user, 'CUSTOMER')}>
+                    <button
+                      className="ws-btn ws-btn--sm ws-btn--secondary"
+                      disabled={updatingId === user.id}
+                      onClick={() => updateRole(user, 'CUSTOMER')}
+                    >
                       Demote
                     </button>
                   ) : (
-                    <button className="btn btn-primary btn-sm" disabled={updatingId === user.id} onClick={() => updateRole(user, 'ADMIN')}>
+                    <button
+                      className="ws-btn ws-btn--sm ws-btn--primary"
+                      disabled={updatingId === user.id}
+                      onClick={() => updateRole(user, 'ADMIN')}
+                    >
                       Promote
                     </button>
                   )}
@@ -129,10 +165,24 @@ export default function AdminUsers() {
       </div>
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="pagination">
-          <button disabled={!pagination.hasPrevPage} onClick={() => setFilters((f) => ({ ...f, page: (f.page || 1) - 1 }))}>Previous</button>
-          <span>Page {pagination.page} of {pagination.totalPages}</span>
-          <button disabled={!pagination.hasNextPage} onClick={() => setFilters((f) => ({ ...f, page: (f.page || 1) + 1 }))}>Next</button>
+        <div className="ws-pager">
+          <button
+            className="ws-btn ws-btn--sm ws-btn--secondary"
+            disabled={!pagination.hasPrevPage}
+            onClick={() => setFilters((f) => ({ ...f, page: (f.page || 1) - 1 }))}
+          >
+            Previous
+          </button>
+          <span className="ws-pager__status ws-num">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <button
+            className="ws-btn ws-btn--sm ws-btn--secondary"
+            disabled={!pagination.hasNextPage}
+            onClick={() => setFilters((f) => ({ ...f, page: (f.page || 1) + 1 }))}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

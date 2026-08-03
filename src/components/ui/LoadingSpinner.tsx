@@ -4,32 +4,44 @@ interface LoadingSpinnerProps {
   message?: string;
 }
 
-export default function LoadingSpinner({ 
-  size = 'md', 
-  fullScreen = false,
-  message 
-}: LoadingSpinnerProps) {
-  const sizeClasses = {
-    sm: 'spinner-sm',
-    md: 'spinner-md',
-    lg: 'spinner-lg',
-  };
+// The spinner is sized by font-size (it is a 1em ring), so the scale is px here
+// rather than a class per step.
+const SIZE_PX: Record<NonNullable<LoadingSpinnerProps['size']>, number> = {
+  sm: 16,
+  md: 28,
+  lg: 40,
+};
 
+export default function LoadingSpinner({
+  size = 'md',
+  fullScreen = false,
+  message,
+}: LoadingSpinnerProps) {
   const spinner = (
     <div
-      className={`loading-spinner ${sizeClasses[size]}`}
+      className="ws"
       role="status"
       aria-live="polite"
+      style={{ display: 'grid', justifyItems: 'center', gap: 'var(--ws-space-3)' }}
     >
-      <div className="loading-spinner-brand" aria-hidden="true">WS</div>
-      <div className="spinner" aria-hidden="true"></div>
-      {message && <p className="spinner-message">{message}</p>}
+      <span className="ws-spinner" style={{ fontSize: SIZE_PX[size] }} aria-hidden="true" />
+      {message && <p className="ws-caption ws-muted">{message}</p>}
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="loading-overlay">
+      <div
+        className="ws"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'grid',
+          placeItems: 'center',
+          background: 'var(--ws-bg-page)',
+          zIndex: 'var(--ws-z-modal)' as unknown as number,
+        }}
+      >
         {spinner}
       </div>
     );

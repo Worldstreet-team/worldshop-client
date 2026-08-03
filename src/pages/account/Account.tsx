@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MessageCircle, User, Store, PlusCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { storeService, type MyStore } from '@/services/storeService';
 
@@ -30,15 +31,15 @@ export default function AccountPage() {
   const menuItems = [
     {
       path: '/account/messages',
-      icon: 'forum',
+      Icon: MessageCircle,
       title: 'My Messages',
-      description: 'Conversations with sellers'
+      description: 'Conversations with sellers',
     },
     {
       path: '/account/profile',
-      icon: 'person',
+      Icon: User,
       title: 'Profile',
-      description: 'Update your information'
+      description: 'Update your information',
     },
   ];
 
@@ -46,7 +47,7 @@ export default function AccountPage() {
   const vendorItem = store
     ? {
         path: '/vendor',
-        icon: 'storefront',
+        Icon: Store,
         title: 'Store Dashboard',
         description: store.isPubliclyVisible
           ? `Manage ${store.name}`
@@ -54,33 +55,30 @@ export default function AccountPage() {
       }
     : {
         path: '/vendor/register',
-        icon: 'add_business',
+        Icon: PlusCircle,
         title: 'Open a Store',
         description: 'List your products and reach buyers on WorldStreet',
       };
 
   return (
-    <div className="account-page">
-      <div className="container">
-        <div className="account-header">
-          <h1>My Account</h1>
-          <p>Welcome back, {user?.firstName}!</p>
+    <div className="ws-page">
+      <div className="ws-page__head">
+        <div>
+          <h1 className="ws-page__title">My Account</h1>
+          <p className="ws-page__sub">Welcome back, {user?.firstName}!</p>
         </div>
+      </div>
 
-        <div className="account-grid">
-          {menuItems.map((item) => (
-            <Link key={item.path} to={item.path} className="account-card">
-              <span className="material-icons">{item.icon}</span>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-            </Link>
-          ))}
-          <Link to={vendorItem.path} className="account-card vendor-cta">
-            <span className="material-icons">{vendorItem.icon}</span>
-            <h3>{vendorItem.title}</h3>
-            <p>{vendorItem.description}</p>
+      <div className="ws-stats">
+        {[...menuItems, vendorItem].map(({ path, Icon, title, description }) => (
+          <Link key={path} to={path} className="ws-card ws-stack ws-plink">
+            <span className="ws-iconchip">
+              <Icon size={22} aria-hidden />
+            </span>
+            <h2 className="ws-title">{title}</h2>
+            <p className="ws-caption ws-muted">{description}</p>
           </Link>
-        </div>
+        ))}
       </div>
     </div>
   );

@@ -23,18 +23,26 @@ export default function RouteError() {
     );
 
   return (
-    <div className="route-error">
-      <div className="route-error-inner">
-        <h1>{isChunkError ? 'A new version is available' : 'Something went wrong'}</h1>
-        <p>
+    // Carries `ws` itself: an error boundary can render outside MainLayout, so
+    // it cannot rely on an ancestor to scope the token-driven typography.
+    <div className="ws ws-page" style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}>
+      <div className="ws-empty">
+        <h1 className="ws-h2">
+          {isChunkError ? 'A new version is available' : 'Something went wrong'}
+        </h1>
+        <p className="ws-body ws-muted" style={{ maxWidth: '44ch' }}>
           {isChunkError
             ? 'The store was updated while this tab was open. Reload to get the latest version.'
-            : "We hit an unexpected error. Reloading usually fixes it."}
+            : 'We hit an unexpected error. Reloading usually fixes it.'}
         </p>
-        <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
+        <button
+          type="button"
+          className="ws-btn ws-btn--primary ws-btn--sm"
+          onClick={() => window.location.reload()}
+        >
           Reload page
         </button>
-        {!isChunkError && <p className="route-error-detail">{message}</p>}
+        {!isChunkError && <p className="ws-caption ws-subtle">{message}</p>}
       </div>
     </div>
   );

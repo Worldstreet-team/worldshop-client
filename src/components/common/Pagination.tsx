@@ -61,93 +61,72 @@ export default function Pagination({
   };
 
   return (
-    <nav className={`pagination ${className}`} aria-label="Pagination">
-      <ul className="pagination-list">
-        {/* First Page */}
-        {showFirstLast && (
-          <li className="pagination-item">
-            <button
-              className="pagination-btn pagination-first"
-              onClick={() => onPageChange(1)}
-              disabled={currentPage === 1}
-              aria-label="Go to first page"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </li>
-        )}
+    <nav className={`ws-pagination ${className}`.trim()} aria-label="Pagination">
+      {showFirstLast && (
+        <button
+          className="ws-pagination__item"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          aria-label="Go to first page"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+            <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
 
-        {/* Previous */}
-        <li className="pagination-item">
+      <button
+        className="ws-pagination__item"
+        onClick={handlePrevious}
+        disabled={currentPage === 1}
+        aria-label="Go to previous page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+          <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {pages.map((page, index) =>
+        page === 'ellipsis' ? (
+          <span key={`gap-${index}`} className="ws-pagination__gap" aria-hidden="true">
+            &hellip;
+          </span>
+        ) : (
           <button
-            className="pagination-btn pagination-prev"
-            onClick={handlePrevious}
-            disabled={currentPage === 1}
-            aria-label="Go to previous page"
+            key={page}
+            className={`ws-pagination__item${page === currentPage ? ' is-current' : ''}`}
+            onClick={() => onPageChange(page)}
+            aria-current={page === currentPage ? 'page' : undefined}
+            aria-label={`Go to page ${page}`}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            {page}
           </button>
-        </li>
+        )
+      )}
 
-        {/* Page Numbers */}
-        {pages.map((page, index) => (
-          <li key={`${page}-${index}`} className="pagination-item">
-            {page === 'ellipsis' ? (
-              <span className="pagination-ellipsis" aria-hidden="true">
-                &hellip;
-              </span>
-            ) : (
-              <button
-                className={`pagination-btn pagination-number ${page === currentPage ? 'active' : ''}`}
-                onClick={() => onPageChange(page)}
-                aria-current={page === currentPage ? 'page' : undefined}
-                aria-label={`Go to page ${page}`}
-              >
-                {page}
-              </button>
-            )}
-          </li>
-        ))}
+      <button
+        className="ws-pagination__item"
+        onClick={handleNext}
+        disabled={currentPage === totalPages}
+        aria-label="Go to next page"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+          <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
-        {/* Next */}
-        <li className="pagination-item">
-          <button
-            className="pagination-btn pagination-next"
-            onClick={handleNext}
-            disabled={currentPage === totalPages}
-            aria-label="Go to next page"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </li>
-
-        {/* Last Page */}
-        {showFirstLast && (
-          <li className="pagination-item">
-            <button
-              className="pagination-btn pagination-last"
-              onClick={() => onPageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              aria-label="Go to last page"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                <path d="M13 17l5-5-5-5M6 17l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </li>
-        )}
-      </ul>
-
-      {/* Mobile-friendly info */}
-      <div className="pagination-info">
-        Page {currentPage} of {totalPages}
-      </div>
+      {showFirstLast && (
+        <button
+          className="ws-pagination__item"
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          aria-label="Go to last page"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+            <path d="M13 17l5-5-5-5M6 17l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
     </nav>
   );
 }

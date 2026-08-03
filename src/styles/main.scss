@@ -1,36 +1,21 @@
 // WorldStreet Shop - Main Stylesheet
-// Imports all partials in the correct order
+//
+// Four layers, in order:
+//   tokens       the semantic variables, selected by data-ws-theme on <html>
+//   base         reset + element defaults, all reading from those tokens
+//   ds           the design-system component layer (ws-* classes)
+//   marketplace  the marketplace-specific compositions built on ds
+//
+// The Electro partials that used to sit between base and ds (_components,
+// _pages, _product, _orders, _layout, _vendor, _admin, _variables, _mixins)
+// were deleted once every screen moved onto ws-*. They hardcoded the old light
+// palette, so they could not have survived the dark theme intact.
+//
+// The Material Icons and Open Sans webfonts went with them: icons are now
+// lucide-react everywhere, and Shop's own pairing (Space Grotesk + Inter) is
+// preloaded in index.html.
 
-// 1. Foundation
-@use 'variables' as *;
-@use 'mixins' as *;
-
-// 2. Base styles
+@use 'tokens';
 @use 'base';
-
-// 3. Components
-@use 'components';
-
-// 4. Product Components
-@use 'product';
-
-// 5. Layout
-@use 'layout';
-
-// 6. Pages
-@use 'pages';
-
-// 7. Orders
-@use 'orders';
-
-// 8. Admin
-@use 'admin';
-
-// 9. Vendor
-@use 'vendor';
-
-// Import Google Material Icons
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-
-// Import Google Fonts
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+@use 'ds';
+@use 'marketplace';
