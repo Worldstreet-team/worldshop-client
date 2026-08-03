@@ -10,7 +10,7 @@ import {
 } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
-import { firstImage } from '@/utils/listingFormat';
+import { firstImage, fmtNaira } from '@/utils/listingFormat';
 import { imageFallback, PRODUCT_PLACEHOLDER } from '@/utils/imageFallback';
 
 /**
@@ -58,13 +58,16 @@ const STATUS_STYLE: Record<ListingStatus, { cls: string; label: string }> = {
   REMOVED: { cls: 'ws-badge--danger', label: 'Removed by admin' },
 };
 
+// Same shape as utils/listingFormat's priceLabel, but the vendor table shows a
+// dash for an unpriced fixed listing — the buyer-facing "Contact for price"
+// copy would read oddly in the seller's own console. ₦ formatting still comes
+// from the shared util so it can never drift.
 function priceLabel(l: Listing): string {
   if (l.priceType === 'ON_REQUEST') return 'Contact for price';
-  const fmt = (n: number) => '₦' + n.toLocaleString('en-NG');
   if (l.priceType === 'RANGE' && l.basePrice != null && l.maxPrice != null) {
-    return `${fmt(l.basePrice)} – ${fmt(l.maxPrice)}`;
+    return `${fmtNaira(l.basePrice)} – ${fmtNaira(l.maxPrice)}`;
   }
-  return l.basePrice != null ? fmt(l.basePrice) : '—';
+  return l.basePrice != null ? fmtNaira(l.basePrice) : '—';
 }
 
 export default function VendorListings() {

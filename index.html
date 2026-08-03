@@ -14,10 +14,13 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
+  <!-- Sanctioned literal: mirrors --ws-bg-page (platform) — a meta tag cannot
+       read a CSS variable. Keep in sync with src/utils/theme.ts. -->
   <meta name="theme-color" content="#0B0B0F" />
 
   <!-- Apply the stored theme before first paint so a light-mode user never
-       sees a dark flash. Key/values mirrored in src/utils/theme.ts. -->
+       sees a dark flash. Key/values mirrored in src/utils/theme.ts; the
+       #FAFAFA literal mirrors --ws-bg-page (platform-light). -->
   <script>
     try {
       var wsTheme = localStorage.getItem('ws:theme');

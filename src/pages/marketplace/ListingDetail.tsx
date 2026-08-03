@@ -8,6 +8,7 @@ import ListingCard from '@/components/marketplace/ListingCard';
 import ListingReviews from '@/components/marketplace/ListingReviews';
 import ReportButton from '@/components/marketplace/ReportButton';
 import { savedListings } from '@/utils/savedListings';
+import { fmtNaira, imageSrc, priceLabel, type ImageRef } from '@/utils/listingFormat';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
@@ -22,19 +23,6 @@ import { usePageTitle } from '@/hooks/usePageTitle';
  * fields. They are presented as one spec table because a buyer does not care
  * about the distinction — only search does.
  */
-
-const fmtNaira = (n: number) => '₦' + n.toLocaleString('en-NG');
-
-function priceLabel(l: PublicListing): string {
-  if (l.priceType === 'ON_REQUEST') return 'Contact for price';
-  if (l.priceType === 'RANGE' && l.basePrice != null && l.maxPrice != null) {
-    return `${fmtNaira(l.basePrice)} – ${fmtNaira(l.maxPrice)}`;
-  }
-  return l.basePrice != null ? fmtNaira(l.basePrice) : 'Contact for price';
-}
-
-type ImageRef = Record<string, unknown> & { key?: string; url?: string };
-const imageSrc = (img: ImageRef) => String(img.url || img.key || '');
 
 /** "Listed 3 days ago" — coarse on purpose; freshness, not a timestamp. */
 function listedAgo(iso: string): string | null {

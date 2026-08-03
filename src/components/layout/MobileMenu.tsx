@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import {
   X, Heart, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus,
-  Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
+  Smartphone, Car, Shirt, House, ShoppingBag, GraduationCap, Users, Zap,
+  type LucideIcon,
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
 import { useAuthStore } from '@/store/authStore';
@@ -97,9 +98,14 @@ export default function MobileMenu() {
         inert={!isMobileMenuOpen || undefined}
       >
         <div className="ws-drawer__head">
-          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldShop home">
-            <span className="ws-brand__eyebrow">Worldstreet</span>
-            <span className="ws-brand__word">shop<span className="ws-brand__dot">.</span></span>
+          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldStreet Shop home">
+            {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
+                "WorldStreet" Poppins SemiBold 15 + gold app eyebrow. */}
+            <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
+            <span className="ws-brand__stack">
+              <span className="ws-brand__word">WorldStreet</span>
+              <span className="ws-brand__eyebrow">Shop</span>
+            </span>
           </Link>
           <button className="ws-iconbtn" onClick={closeMobileMenu} aria-label="Close menu">
             <X size={20} />
@@ -131,6 +137,8 @@ export default function MobileMenu() {
             <Heart size={18} aria-hidden />
             Saved listings
           </Link>
+          {/* Cross-app link set per the DS TopNav spec (Shop is this app). */}
+          <div className="ws-drawer__section">Ecosystem</div>
           <a
             href="https://dashboard.worldstreetgold.com"
             className="ws-drawer__link"
@@ -139,7 +147,37 @@ export default function MobileMenu() {
             onClick={closeMobileMenu}
           >
             <Compass size={18} aria-hidden />
-            WorldStreet dashboard
+            Dashboard
+          </a>
+          <a
+            href="https://academy.worldstreetgold.com"
+            className="ws-drawer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeMobileMenu}
+          >
+            <GraduationCap size={18} aria-hidden />
+            Academy
+          </a>
+          <a
+            href="https://xtreme.worldstreetgold.com"
+            className="ws-drawer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeMobileMenu}
+          >
+            <Zap size={18} aria-hidden />
+            Xstream
+          </a>
+          <a
+            href="https://social.worldstreetgold.com"
+            className="ws-drawer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={closeMobileMenu}
+          >
+            <Users size={18} aria-hidden />
+            Social
           </a>
 
           {topCategories.length > 0 && (

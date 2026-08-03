@@ -76,7 +76,7 @@ export const productService = {
     return res.data;
   },
 
-  // Get product reviews (stays mock for now)
+  // Get product reviews
   getProductReviews: (productId: string, page = 1, limit = 10) =>
     api.get<PaginatedResponse<Review>>(`/products/${productId}/reviews`, { page, limit }),
 

@@ -92,7 +92,7 @@ body:has(.ws) {
   line-height: 1;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color var(--ws-motion-fast) var(--ws-ease), border-color var(--ws-motion-fast) var(--ws-ease), color var(--ws-motion-fast) var(--ws-ease);
 
   &:disabled,
   &[aria-disabled='true'] { opacity: 0.45; pointer-events: none; }
@@ -186,7 +186,7 @@ body:has(.ws) {
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background-color var(--ws-motion-fast) var(--ws-ease), border-color var(--ws-motion-fast) var(--ws-ease), color var(--ws-motion-fast) var(--ws-ease);
 
   &:hover { background: var(--ws-bg-raised); }
 
@@ -301,7 +301,7 @@ select option {
   border-radius: var(--ws-radius-pill);
   background: var(--ws-bg-sunken);
   border: 1px solid transparent;
-  transition: border-color 120ms ease, background-color 120ms ease;
+  transition: border-color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
 
   &:focus-within {
     border-color: var(--ws-brand-primary);
@@ -417,7 +417,8 @@ select option {
       color-mix(in srgb, var(--ws-bg-surface) 70%, transparent),
       transparent
     );
-    animation: ws-shimmer 1.4s infinite;
+    // Indeterminate loops derive from the motion scale (06-motion).
+    animation: ws-shimmer calc(var(--ws-motion-slow) * 4) var(--ws-ease) infinite;
   }
 }
 
@@ -457,7 +458,8 @@ select option {
   width: 18px;
   height: 18px;
   flex: none;
-  animation: ws-spin 720ms linear infinite;
+  // 640ms revolution, derived from the motion ladder (2 x motion-slow).
+  animation: ws-spin calc(var(--ws-motion-slow) * 2) linear infinite;
   svg { width: 100%; height: 100%; display: block; }
 }
 
@@ -471,7 +473,8 @@ select option {
   border-radius: 50%;
   border: 2px solid var(--ws-bg-track);
   border-top-color: var(--ws-brand-primary);
-  animation: ws-spin 720ms linear infinite;
+  // 640ms revolution, derived from the motion ladder (2 x motion-slow).
+  animation: ws-spin calc(var(--ws-motion-slow) * 2) linear infinite;
 }
 
 .ws-spinner--page {
@@ -509,12 +512,14 @@ select option {
 .ws-loader__dot {
   display: inline-block;
   color: var(--ws-brand-primary);
-  animation: ws-loader-breathe 1100ms ease-in-out infinite;
+  // Opacity-only breathing (the DS caps scale at 0.98–1); loop duration
+  // derives from the motion scale.
+  animation: ws-loader-breathe calc(var(--ws-motion-slow) * 3.5) var(--ws-ease) infinite;
 }
 
 @keyframes ws-loader-breathe {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.35); opacity: 0.72; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
 }
 
 .ws-loader__bar {
@@ -534,7 +539,7 @@ select option {
     width: 40%;
     border-radius: inherit;
     background: var(--ws-brand-primary);
-    animation: ws-loader-sweep 1200ms cubic-bezier(0.4, 0, 0.4, 1) infinite;
+    animation: ws-loader-sweep calc(var(--ws-motion-slow) * 4) var(--ws-ease) infinite;
   }
 }
 
@@ -681,14 +686,14 @@ select option {
   cursor: pointer;
   display: grid;
   place-items: center;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color var(--ws-motion-fast) var(--ws-ease), border-color var(--ws-motion-fast) var(--ws-ease);
 
   &::after {
     content: '';
     width: 10px;
     height: 10px;
     transform: scale(0);
-    transition: transform 120ms ease;
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
     background: var(--ws-brand-on-primary);
     // check glyph as a mask so it tints with the token
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
@@ -754,7 +759,7 @@ select option {
   background: var(--ws-bg-track);
   border: 1px solid var(--ws-border-hairline);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color var(--ws-motion-fast) var(--ws-ease), border-color var(--ws-motion-fast) var(--ws-ease);
 
   &::after {
     content: '';
@@ -765,7 +770,7 @@ select option {
     height: 18px;
     border-radius: var(--ws-radius-pill);
     background: var(--ws-text-muted);
-    transition: transform 120ms ease, background-color 120ms ease;
+    transition: transform var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
   }
 
   &:checked {
@@ -901,7 +906,7 @@ select option {
   z-index: var(--ws-z-modal);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 200ms var(--ws-ease), visibility 200ms;
+  transition: opacity var(--ws-motion-base) var(--ws-ease), visibility var(--ws-motion-base);
 
   &.is-open { opacity: 1; visibility: visible; }
 }
@@ -919,7 +924,7 @@ select option {
   flex-direction: column;
   overflow-y: auto;
   transform: translateX(-100%);
-  transition: transform 200ms var(--ws-ease);
+  transition: transform var(--ws-motion-base) var(--ws-ease);
 
   &.is-open { transform: translateX(0); }
 }
@@ -1049,7 +1054,7 @@ select option {
 // Unread count. Danger rather than brand: it is a notification, not a CTA.
 .ws-inbox__count {
   background: var(--ws-status-danger);
-  color: #FFFFFF;
+  color: #FFFFFF; // sanctioned literal: white on a status fill, theme-independent
   border-radius: var(--ws-radius-pill);
   padding: 0 7px;
   font-size: 11px;
@@ -1200,7 +1205,7 @@ select option {
   height: 100%;
   border-radius: 2px;
   background: var(--ws-brand-primary);
-  transition: width 200ms var(--ws-ease);
+  transition: width var(--ws-motion-base) var(--ws-ease);
 }
 
 // ─── Pagination ─────────────────────────────────────────────────
@@ -1426,7 +1431,7 @@ select option {
     z-index: calc(var(--ws-z-modal) + 1);
     overflow-y: auto;
     transform: translateX(-100%);
-    transition: transform 200ms var(--ws-ease);
+    transition: transform var(--ws-motion-base) var(--ws-ease);
 
     .is-open & { transform: translateX(0); }
   }
@@ -1616,6 +1621,28 @@ select option {
   flex: none;
 }
 
+// ─── Thumbnail remove control ───────────────────────────────────
+// The small circular "remove" affordance overlapping an uploaded image's
+// corner (vendor/admin image pickers). It sits on photography, so like
+// .ws-badge--ink the glyph is literal white — the danger fill itself does
+// not shift enough between modes to carry a theme ink.
+
+.ws-thumbremove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-status-danger);
+  color: #FFFFFF; // on the danger fill — theme-independent, see .ws-badge--ink
+  cursor: pointer;
+  line-height: 1;
+}
+
 // ─── Motion ─────────────────────────────────────────────────────
 
 @media (prefers-reduced-motion: reduce) {
@@ -1636,7 +1663,7 @@ select option {
   position: fixed;
   top: 8px;
   left: 8px;
-  z-index: 100;
+  z-index: var(--ws-z-sticky);
   padding: 10px 16px;
   border-radius: var(--ws-radius-md);
   background: var(--ws-bg-raised);

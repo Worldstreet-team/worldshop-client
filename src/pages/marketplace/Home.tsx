@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowRight, BadgePercent, Car, House, MessageCircle, ShieldCheck, Shirt,
-  ShoppingBag, Smartphone, Tag, Ticket, type LucideIcon,
+  ArrowRight, Car, House, MessageCircle, ShieldCheck, Shirt,
+  ShoppingBag, Smartphone, Tag, type LucideIcon,
 } from 'lucide-react';
 import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { useCategoryStore } from '@/store/categoryStore';
@@ -14,7 +14,7 @@ import StoreCard from '@/components/marketplace/StoreCard';
 /**
  * The landing page. The full marketplace grid lives at /listings; this page's
  * job is orientation — segment the catalog the way the big marketplaces do
- * (hero → categories → curated rails → promo → sellers) and funnel a visitor
+ * (hero → categories → curated rails → sellers) and funnel a visitor
  * toward browsing or selling.
  *
  * Every section is fed by the same public /listings endpoint the browse page
@@ -161,34 +161,6 @@ export default function Home() {
 
         <Rail title="Trending now" to="/listings" items={newest} loading={loading} />
 
-        {/* ── Promo placeholder — coupons aren't live yet ──────────── */}
-        <section className="ws-promo" aria-label="Coupons are coming">
-          <div>
-            <h2 className="ws-promo__title">Coupons land here soon.</h2>
-            <p className="ws-promo__sub">
-              Seller deals and season openers are on their way. Until then,
-              fresh finds drop every day.
-            </p>
-            <Link to="/listings" className="ws-btn ws-btn--primary">
-              See what&rsquo;s new
-            </Link>
-          </div>
-          <div className="ws-promo__cards" aria-hidden>
-            <span className="ws-promo__card ws-promo__card--1">
-              <Tag size={22} />
-              Deals
-            </span>
-            <span className="ws-promo__card ws-promo__card--2">
-              <BadgePercent size={22} />
-              Coupons
-            </span>
-            <span className="ws-promo__card ws-promo__card--3">
-              <Ticket size={22} />
-              Soon
-            </span>
-          </div>
-        </section>
-
         <Rail title="Under ₦100,000" to="/listings?maxPrice=100000" items={deals} loading={loading} />
         {vehiclesId && (
           <Rail title="Motors" to={`/listings?categoryId=${vehiclesId}`} items={motors} loading={loading} />
@@ -247,28 +219,28 @@ export default function Home() {
           </ol>
         </section>
 
-        {/* ── How it stays safe ────────────────────────────────────── */}
+        {/* ── How it stays safe — one hairline-divided trust row ───── */}
         <section className="ws-assure" aria-label="How Shop works">
           <div className="ws-assure__item">
-            <span className="ws-assure__disc" aria-hidden><MessageCircle size={20} /></span>
-            <div>
-              <h3 className="ws-assure__title">Deal direct</h3>
-              <p className="ws-assure__copy">Chat with the seller — no middlemen, no markups.</p>
-            </div>
+            <h3 className="ws-assure__title">
+              <MessageCircle size={16} aria-hidden />
+              Deal direct
+            </h3>
+            <p className="ws-assure__copy">Chat with the seller — no middlemen, no markups.</p>
           </div>
           <div className="ws-assure__item">
-            <span className="ws-assure__disc" aria-hidden><ShieldCheck size={20} /></span>
-            <div>
-              <h3 className="ws-assure__title">Know your seller</h3>
-              <p className="ws-assure__copy">Public ratings, reviews and verification on every store.</p>
-            </div>
+            <h3 className="ws-assure__title">
+              <ShieldCheck size={16} aria-hidden />
+              Know your seller
+            </h3>
+            <p className="ws-assure__copy">Public ratings, reviews and verification on every store.</p>
           </div>
           <div className="ws-assure__item">
-            <span className="ws-assure__disc" aria-hidden><Tag size={20} /></span>
-            <div>
-              <h3 className="ws-assure__title">Meet safely</h3>
-              <p className="ws-assure__copy">Check the item in person before any money moves.</p>
-            </div>
+            <h3 className="ws-assure__title">
+              <Tag size={16} aria-hidden />
+              Meet safely
+            </h3>
+            <p className="ws-assure__copy">Check the item in person before any money moves.</p>
           </div>
         </section>
       </div>

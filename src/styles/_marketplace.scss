@@ -14,9 +14,11 @@ $bp-md: 1024px;
 $bp-lg: 1280px;
 
 .ws-shell {
-  // The sticky header is the 64px bar plus the 60px category-chip row. Sticky
-  // offsets below derive from this rather than hardcoding 64 and sliding under.
-  --ws-header-h: 124px;
+  // The sticky header is the 64px bar (TopNav spec) + the category-chip row
+  // (12 + 36 + 12 + 1px border = 61) + the topbar's own bottom hairline.
+  // Sticky offsets below derive from this rather than hardcoding and sliding
+  // under.
+  --ws-header-h: 126px;
 
   min-height: 100vh;
   display: flex;
@@ -37,55 +39,62 @@ $bp-lg: 1280px;
 
 // ─── Top bar ────────────────────────────────────────────────────
 
-// Glass chrome: the bar keeps the page visible through a blur instead of
-// stacking an opaque surface on it — the marketplace shows through its own
-// navigation. Solid fallback first for browsers without backdrop-filter.
+// Opaque surface bar with a bottom hairline, per the TopNav spec.
 .ws-topbar {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: var(--ws-z-sticky);
   background: var(--ws-bg-surface);
   border-bottom: 1px solid var(--ws-border-hairline);
-
-  @supports (backdrop-filter: blur(1px)) {
-    background: color-mix(in srgb, var(--ws-bg-page) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
-  }
 }
 
 .ws-topbar__row {
   display: flex;
   align-items: center;
   gap: var(--ws-space-4);
-  height: 72px;
+  height: 64px;
 }
 
-// Brand lockup: eyebrow over wordmark, per the Shop top-bar spec.
+// Unified ecosystem brand lockup (05-screens): gold wsa-mark 26px, unboxed +
+// "WorldStreet" Poppins SemiBold 15 + gold uppercase app eyebrow — identical
+// structure across Academy / Social / Shop, only the eyebrow text differs.
 .ws-brand {
-  display: grid;
-  gap: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   text-decoration: none;
   flex: none;
   line-height: 1;
 
-  &__eyebrow {
-    font-size: 8px;
-    font-weight: 500;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--ws-text-subtle);
+  &__mark {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    flex: none;
+  }
+
+  &__stack {
+    display: grid;
+    gap: 2px;
+    text-align: left;
   }
 
   &__word {
     font-family: var(--ws-font-display);
-    font-weight: 700;
-    font-size: 22px;
-    letter-spacing: -0.5px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.2px;
     color: var(--ws-text-primary);
   }
 
-  // The period is the brand's full stop — the one gold moment in the lockup.
-  &__dot { color: var(--ws-brand-primary); }
+  // App-name eyebrow — the lockup's one gold moment (brand/gold-text).
+  &__eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ws-brand-gold-text);
+  }
 }
 
 .ws-topbar__search {
@@ -95,15 +104,13 @@ $bp-lg: 1280px;
   margin-inline: auto;
   display: none;
   height: 46px;
-  // On glass, the pill needs its own edge to read as a control.
+  // Sitting on the surface bar, the pill needs its own edge to read as a control.
   border: 1px solid var(--ws-border-hairline);
 
   @media (min-width: $bp-sm) { display: flex; }
 
-  &:focus-within {
-    border-color: var(--ws-brand-primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-brand-primary) 18%, transparent);
-  }
+  // SearchField focus is a brand border, not a halo (04-components).
+  &:focus-within { border-color: var(--ws-brand-primary); }
 }
 
 // Wallet balance pill, per the shared ecosystem topbar (Academy shows the
@@ -155,9 +162,10 @@ $bp-lg: 1280px;
   align-items: center;
   gap: var(--ws-space-2);
 
-  // Signed-in avatar earns a gold ring on hover — the account is a brand moment.
-  .ws-avatar { transition: box-shadow 140ms ease; }
-  .ws-avatar:hover { box-shadow: 0 0 0 2px var(--ws-brand-primary); }
+  // Hover is the standard one-step surface lighten; the gold ring stays
+  // reserved for keyboard focus.
+  .ws-avatar { transition: background-color var(--ws-motion-fast) var(--ws-ease); }
+  .ws-avatar:hover { background: var(--ws-bg-raised); }
 }
 
 .ws-iconbtn {
@@ -172,7 +180,7 @@ $bp-lg: 1280px;
   cursor: pointer;
   text-decoration: none;
   position: relative;
-  transition: background-color 120ms ease, color 120ms ease;
+  transition: background-color var(--ws-motion-fast) var(--ws-ease), color var(--ws-motion-fast) var(--ws-ease);
 
   &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
 }
@@ -190,15 +198,10 @@ $bp-lg: 1280px;
 }
 
 // Second row: category chips scroll horizontally rather than wrapping, so the
-// bar height never changes as categories load. Shares the top row's glass.
+// bar height never changes as categories load. Shares the top row's surface.
 .ws-catbar {
   border-bottom: 1px solid var(--ws-border-hairline);
   background: var(--ws-bg-surface);
-
-  @supports (backdrop-filter: blur(1px)) {
-    background: color-mix(in srgb, var(--ws-bg-page) 78%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
-  }
 }
 
 .ws-catbar__scroll {
@@ -243,7 +246,7 @@ $bp-lg: 1280px;
 }
 
 // Custom location dropdown — a native <select> popup can't be styled and
-// rendered unreadable on the glass pill.
+// rendered unreadable inside the search pill.
 .ws-locpick {
   position: relative;
 }
@@ -281,24 +284,24 @@ $bp-lg: 1280px;
 }
 
 .ws-locpick__chevron {
-  transition: transform 140ms ease;
+  transition: transform var(--ws-motion-fast) var(--ws-ease);
   [aria-expanded='true'] > & { transform: rotate(180deg); }
 }
 
+// Menu spec: width 220, radius 10, Shadow/Nav.
 .ws-locpick__panel {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  // Above the catbar, which is a later sibling in the sticky header.
-  z-index: 60;
-  width: 216px;
+  z-index: var(--ws-z-dropdown);
+  width: 220px;
   max-height: 320px;
   overflow-y: auto;
   padding: var(--ws-space-2);
   background: var(--ws-bg-surface);
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-lg);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ws-shadow-nav);
   display: grid;
   gap: 2px;
 }
@@ -445,7 +448,7 @@ $bp-lg: 1280px;
     border-right: 1.5px solid var(--ws-text-subtle);
     border-bottom: 1.5px solid var(--ws-text-subtle);
     transform: rotate(45deg);
-    transition: transform 120ms ease;
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
   }
 }
 
@@ -512,7 +515,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  transition: border-color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease), transform var(--ws-motion-fast) var(--ws-ease);
 
   // Hover lifts 2px (translate, never scale) onto the raised step with a
   // faint brand tint on the border.
@@ -540,7 +543,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: #FFFFFF;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 120ms ease, background-color 120ms ease;
+  transition: opacity var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
 
   @media (hover: none) { opacity: 1; }
 
@@ -1186,7 +1189,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 // ─── Home landing ───────────────────────────────────────────────
 // Segmented marketplace home in the eBay/Jumia mold: hero, category discs,
-// horizontal listing rails, a promo strip, sellers, sell band, trust row.
+// horizontal listing rails, sellers, sell band, trust row.
 // Every card in it is live inventory from /listings — nothing hand-picked.
 
 .ws-home {
@@ -1194,24 +1197,6 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   flex-direction: column;
   gap: 56px;
   padding-block: var(--ws-space-6) 72px;
-
-  // Sections settle in one after another on load; a landing that assembles
-  // itself reads as designed, where an instant grid reads as dumped.
-  > * {
-    animation: ws-rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
-  }
-  @for $i from 1 through 10 {
-    > :nth-child(#{$i}) { animation-delay: #{($i - 1) * 70}ms; }
-  }
-}
-
-@keyframes ws-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ws-home > * { animation: none; }
 }
 
 .ws-home__heading { margin-bottom: var(--ws-space-4); }
@@ -1219,24 +1204,28 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // ─── Hero carousel ──────────────────────────────────────────────
 // eBay-style rotating banner. The track slides horizontally; each slide is
 // copy on the left, a composition of product cutouts on the right. Cutouts
-// (PNGs with alpha) get contour drop-shadows and a slow float, which is what
-// separates "objects in space" from "pictures in boxes".
+// (PNGs with alpha) sit static with contour drop-shadows, which is what
+// separates "objects in space" from "pictures in boxes". Gold stays in the
+// CTA and the <em> title accents — the surface itself is quiet.
 
 .ws-hero {
   position: relative;
   overflow: hidden;
   border-radius: var(--ws-radius-xl);
   border: 1px solid var(--ws-border-hairline);
-  // A whisper of gold rising from the bottom edge keeps the brand present
-  // without spending it on a surface (gold stays reserved for CTAs).
-  background:
-    radial-gradient(120% 90% at 85% 110%, color-mix(in srgb, var(--ws-brand-primary) 9%, transparent), transparent 60%),
-    var(--ws-bg-surface);
+  background: var(--ws-bg-surface);
+  // The one entrance on the page: an opacity-only reveal of the hero.
+  animation: ws-hero-in var(--ws-motion-slow) var(--ws-ease) both;
+}
+
+@keyframes ws-hero-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .ws-hero__track {
   display: flex;
-  transition: transform 560ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--ws-motion-slow) var(--ws-ease);
 
   @media (prefers-reduced-motion: reduce) { transition: none; }
 }
@@ -1254,7 +1243,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   // Off-screen slides drop out of the tab order and AT tree once the track
   // finishes moving.
   visibility: hidden;
-  transition: visibility 0s 560ms;
+  transition: visibility 0s var(--ws-motion-slow);
   &.is-active { visibility: visible; transition: visibility 0s; }
 
   @media (min-width: $bp-md) {
@@ -1309,52 +1298,35 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 // ── Cutout art ──
 // Sizes are height-based so mixed aspect ratios still compose; positions and
-// rotations are per-cutout. `rotate`/`translate` are the individual transform
-// properties, so the float animation (translate) never clobbers the rotation.
+// rotations are per-cutout.
 
 .ws-hero__art {
   position: relative;
   height: 240px;
 
   @media (min-width: $bp-md) { height: 360px; }
-
-  // Warm pool of light behind the objects so they sit IN the scene.
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 12% 4%;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, color-mix(in srgb, var(--ws-brand-primary) 14%, transparent), transparent);
-    filter: blur(24px);
-  }
 }
 
 .ws-hero__cut {
   position: absolute;
   max-width: none;
+  // Contour shadow on photography — theme-independent, same rule as the
+  // listing-photo scrim.
   filter: drop-shadow(0 30px 36px rgba(0, 0, 0, 0.55));
-  animation: ws-float 7s ease-in-out infinite;
-
-  @media (prefers-reduced-motion: reduce) { animation: none; }
-}
-
-@keyframes ws-float {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -12px; }
 }
 
 // Electronics jumble
-.ws-hero__cut--macbook { height: 60%; left: 0; top: 0; rotate: -6deg; z-index: 1; animation-delay: 0.9s; }
+.ws-hero__cut--macbook { height: 60%; left: 0; top: 0; rotate: -6deg; z-index: 1; }
 .ws-hero__cut--phones  { height: 86%; right: 2%; bottom: 2%; z-index: 2; }
-.ws-hero__cut--boombox { height: 40%; left: 8%; bottom: 0; rotate: 5deg; z-index: 3; animation-delay: 1.8s; }
+.ws-hero__cut--boombox { height: 40%; left: 8%; bottom: 0; rotate: 5deg; z-index: 3; }
 
 // Motors: the two GLEs, white leading.
-.ws-hero__cut--gle-black { width: 72%; left: 0; top: 4%; z-index: 1; animation-delay: 1.1s; }
+.ws-hero__cut--gle-black { width: 72%; left: 0; top: 4%; z-index: 1; }
 .ws-hero__cut--gle-white { width: 88%; right: -4%; bottom: 2%; z-index: 2; }
 
 // Lifestyle
 .ws-hero__cut--tudor { height: 88%; left: 6%; bottom: 2%; rotate: -6deg; z-index: 1; }
-.ws-hero__cut--af1   { height: 60%; right: 0; bottom: 0; z-index: 2; animation-delay: 1.2s; }
+.ws-hero__cut--af1   { height: 60%; right: 0; bottom: 0; z-index: 2; }
 
 // ── Carousel controls ──
 
@@ -1390,7 +1362,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding: 0;
   background: var(--ws-text-subtle);
   cursor: pointer;
-  transition: width 200ms ease, background-color 200ms ease;
+  transition: width var(--ws-motion-base) var(--ws-ease), background-color var(--ws-motion-base) var(--ws-ease);
 
   &.is-active {
     width: 22px;
@@ -1429,7 +1401,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   background: var(--ws-bg-surface);
   border: 1px solid var(--ws-border-hairline);
   color: var(--ws-text-muted);
-  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
+  transition: border-color var(--ws-motion-fast) var(--ws-ease), color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
 }
 
 .ws-cat:hover .ws-cat__disc {
@@ -1479,85 +1451,6 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   > * { scroll-snap-align: start; }
 }
 
-// ─── Promo strip (coupon placeholder) ───────────────────────────
-
-.ws-promo {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 40px;
-  align-items: center;
-  padding: 40px;
-  border-radius: var(--ws-radius-xl);
-  background:
-    linear-gradient(115deg, color-mix(in srgb, var(--ws-brand-primary) 14%, var(--ws-bg-surface)) 0%, var(--ws-bg-surface) 65%);
-  border: 1px solid color-mix(in srgb, var(--ws-brand-primary) 25%, transparent);
-  overflow: hidden;
-
-  @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1fr) 340px; }
-}
-
-.ws-promo__title {
-  @include ws-h1;
-  margin-bottom: var(--ws-space-2);
-}
-
-.ws-promo__sub {
-  font-size: 14px;
-  color: var(--ws-text-muted);
-  max-width: 44ch;
-  margin-bottom: var(--ws-space-6);
-}
-
-.ws-promo__cards {
-  position: relative;
-  height: 190px;
-  display: none;
-  @media (min-width: $bp-md) { display: block; }
-}
-
-.ws-promo__card {
-  position: absolute;
-  width: 118px;
-  height: 152px;
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ws-space-2);
-  font-family: var(--ws-font-display);
-  font-weight: 600;
-  font-size: 15px;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
-
-  &--1 {
-    left: 0;
-    top: 20px;
-    transform: rotate(-10deg);
-    background: var(--ws-bg-raised);
-    border: 1px solid var(--ws-border-hairline);
-    color: var(--ws-text-muted);
-  }
-  &--2 {
-    left: 106px;
-    top: 4px;
-    transform: rotate(2deg);
-    background: var(--ws-bg-surface);
-    border: 1px solid var(--ws-border-hairline);
-    color: var(--ws-text-primary);
-    z-index: 2;
-  }
-  &--3 {
-    right: 0;
-    top: 26px;
-    transform: rotate(11deg);
-    background: var(--ws-brand-primary);
-    color: var(--ws-brand-on-primary);
-    font-weight: 700;
-    z-index: 1;
-  }
-}
-
 // ─── Sellers row ────────────────────────────────────────────────
 
 .ws-sellers {
@@ -1579,7 +1472,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   overflow: hidden;
   text-decoration: none;
   color: var(--ws-text-primary);
-  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  transition: border-color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease), transform var(--ws-motion-fast) var(--ws-ease);
 
   &:hover {
     background: var(--ws-bg-raised);
@@ -1678,11 +1571,13 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin-top: auto;
   padding-top: var(--ws-space-4);
 
-  svg { transition: transform 140ms ease; }
+  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
 }
 
 // ─── Sell band ──────────────────────────────────────────────────
 
+// Quiet surface card — gold stays in the primary CTA and the numbered
+// step chips.
 .ws-sellband {
   display: grid;
   grid-template-columns: 1fr;
@@ -1690,15 +1585,8 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   align-items: center;
   padding: 44px 40px;
   border-radius: var(--ws-radius-xl);
-  // Gold wash from the top-right corner — the one place on the page where
-  // brand color is allowed to spread beyond a control.
-  background:
-    radial-gradient(
-      110% 170% at 100% 0%,
-      color-mix(in srgb, var(--ws-brand-primary) 10%, var(--ws-bg-surface)),
-      var(--ws-bg-surface) 58%
-    );
-  border: 1px solid color-mix(in srgb, var(--ws-brand-primary) 16%, var(--ws-border-hairline));
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
 
   @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
 }
@@ -1771,40 +1659,44 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // ─── Value props row (home) ─────────────────────────────────────
 // Named .ws-assure, NOT .ws-trust — that class belongs to the seller
 // trust facts on the listing/store sidebars and the two collided once.
+// One hairline-divided row, not a rack of feature cards: quiet, caption
+// weight, no accent discs.
 
 .ws-assure {
   display: grid;
-  gap: var(--ws-space-4);
   grid-template-columns: 1fr;
+  border-block: 1px solid var(--ws-border-hairline);
 
   @media (min-width: $bp-md) { grid-template-columns: repeat(3, 1fr); }
 }
 
 .ws-assure__item {
-  display: flex;
-  gap: var(--ws-space-4);
-  align-items: flex-start;
-  padding: var(--ws-space-6);
-  border-radius: var(--ws-radius-lg);
-  background: var(--ws-bg-surface);
-  border: 1px solid var(--ws-border-hairline);
-}
-
-.ws-assure__disc {
-  flex: none;
   display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--ws-radius-full);
-  color: var(--ws-brand-gold-text);
-  background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
+  gap: var(--ws-space-1);
+  align-content: start;
+  padding: var(--ws-space-4) 0;
+  border-top: 1px solid var(--ws-border-hairline);
+
+  &:first-child { border-top: 0; }
+
+  @media (min-width: $bp-md) {
+    border-top: 0;
+    padding: var(--ws-space-4) var(--ws-space-6);
+    border-left: 1px solid var(--ws-border-hairline);
+
+    &:first-child { border-left: 0; padding-left: 0; }
+    &:last-child { padding-right: 0; }
+  }
 }
 
 .ws-assure__title {
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 2px;
+
+  svg { flex: none; color: var(--ws-text-muted); }
 }
 
 .ws-assure__copy {
@@ -1889,10 +1781,8 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin-top: var(--ws-space-3);
   border: 1px solid var(--ws-border-hairline);
 
-  &:focus-within {
-    border-color: var(--ws-brand-primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-brand-primary) 18%, transparent);
-  }
+  // Same brand-border focus as the topbar search — no halo.
+  &:focus-within { border-color: var(--ws-brand-primary); }
 }
 
 .ws-404__links {

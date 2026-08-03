@@ -3,7 +3,7 @@ import type { Listing } from '@/services/storeService';
 /** Listing prices stay in naira; only the subscription is USD. */
 export const fmtNaira = (n: number) => '₦' + n.toLocaleString('en-NG');
 
-type ImageRef = Record<string, unknown> & { key?: string; url?: string };
+export type ImageRef = Record<string, unknown> & { key?: string; url?: string };
 
 /** Uploads return a key; some records already carry a resolved URL. */
 export const imageSrc = (img: ImageRef): string => String(img.url || img.key || '');

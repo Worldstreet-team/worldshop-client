@@ -565,13 +565,8 @@ export default function ListingEdit() {
                     />
                     <button
                       type="button"
+                      className="ws-thumbremove"
                       onClick={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                      style={{
-                        position: 'absolute', top: -6, right: -6, width: 22, height: 22,
-                        borderRadius: 'var(--ws-radius-pill)', border: 'none',
-                        background: 'var(--ws-status-danger)', color: '#fff', cursor: 'pointer',
-                        display: 'grid', placeItems: 'center', lineHeight: 1,
-                      }}
                       aria-label="Remove image"
                     >
                       <X size={13} aria-hidden />

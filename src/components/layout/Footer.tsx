@@ -23,9 +23,14 @@ export default function Footer() {
       <div className="ws-wrap">
         <div className="ws-footer__grid">
           <div>
-            <Link to="/" className="ws-brand" aria-label="WorldShop home">
-              <span className="ws-brand__eyebrow">Worldstreet</span>
-              <span className="ws-brand__word">shop<span className="ws-brand__dot">.</span></span>
+            <Link to="/" className="ws-brand" aria-label="WorldStreet Shop home">
+              {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
+                  "WorldStreet" Poppins SemiBold 15 + gold app eyebrow. */}
+              <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
+              <span className="ws-brand__stack">
+                <span className="ws-brand__word">WorldStreet</span>
+                <span className="ws-brand__eyebrow">Shop</span>
+              </span>
             </Link>
             <p className="ws-caption ws-muted ws-footer__blurb">
               Buy and sell directly with sellers across Nigeria. Browse listings,
@@ -73,10 +78,26 @@ export default function Footer() {
               ) : (
                 <li><Link to="/auth/login">Sign in</Link></li>
               )}
+            </ul>
+          </nav>
+
+          {/* Cross-app link set per the DS TopNav spec (Dashboard · Academy ·
+              Xstream · Social — Shop is this app). Same subdomain family the
+              vendor console already links to. */}
+          <nav aria-label="WorldStreet ecosystem">
+            <h2 className="ws-label ws-footer__head">Ecosystem</h2>
+            <ul className="ws-footer__links">
               <li>
-                <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer">
-                  WorldStreet dashboard
-                </a>
+                <a href="https://dashboard.worldstreetgold.com" target="_blank" rel="noopener noreferrer">Dashboard</a>
+              </li>
+              <li>
+                <a href="https://academy.worldstreetgold.com" target="_blank" rel="noopener noreferrer">Academy</a>
+              </li>
+              <li>
+                <a href="https://xtreme.worldstreetgold.com" target="_blank" rel="noopener noreferrer">Xstream</a>
+              </li>
+              <li>
+                <a href="https://social.worldstreetgold.com" target="_blank" rel="noopener noreferrer">Social</a>
               </li>
             </ul>
           </nav>

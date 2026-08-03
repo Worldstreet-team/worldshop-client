@@ -10,6 +10,10 @@ const DARK = 'platform';
 const LIGHT = 'platform-light';
 
 // Keep the browser chrome (mobile address bar) matched to the page.
+// Sanctioned literals: a <meta> tag cannot read a CSS variable, so these
+// mirror --ws-bg-page for platform / platform-light in _tokens.scss (also
+// duplicated in index.html's theme-color meta + inline script). If the
+// palette moves, update all three together.
 const THEME_COLOR: Record<string, string> = { [DARK]: '#0B0B0F', [LIGHT]: '#FAFAFA' };
 
 export function currentTheme(): string {

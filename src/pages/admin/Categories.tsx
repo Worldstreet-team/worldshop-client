@@ -271,14 +271,9 @@ export default function AdminCategories() {
                       />
                       <button
                         type="button"
+                        className="ws-thumbremove"
                         onClick={() => setFormImage('')}
                         aria-label="Remove image"
-                        style={{
-                          position: 'absolute', top: -6, right: -6, width: 22, height: 22,
-                          borderRadius: 'var(--ws-radius-pill)', border: 'none',
-                          background: 'var(--ws-status-danger)', color: '#fff', cursor: 'pointer',
-                          display: 'grid', placeItems: 'center',
-                        }}
                       >
                         <X size={13} aria-hidden />
                       </button>

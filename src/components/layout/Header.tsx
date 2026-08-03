@@ -42,8 +42,18 @@ export default function Header() {
   const { toggleMobileMenu } = useUIStore();
   const { categories, fetchCategories } = useCategoryStore();
 
-  const [searchBox, setSearchBox] = useState(params.get('search') ?? '');
-  const [unread, setUnread] = useState(0);
+  const urlSearch = params.get('search') ?? '';
+  const [searchBox, setSearchBox] = useState(urlSearch);
+  // The search box mirrors the URL so a shared link shows its own query —
+  // adjusted during render (not in an effect) per react.dev's derived-state
+  // guidance, guarded so it only fires when the URL itself changes.
+  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+  if (urlSearch !== prevUrlSearch) {
+    setPrevUrlSearch(urlSearch);
+    setSearchBox(urlSearch);
+  }
+
+  const [unreadTotal, setUnreadTotal] = useState(0);
   const [light, setLight] = useState(isLight);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [balanceHidden, setBalanceHidden] = useState(
@@ -53,17 +63,18 @@ export default function Header() {
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
-  // The search box mirrors the URL so a shared link shows its own query.
-  useEffect(() => { setSearchBox(params.get('search') ?? ''); }, [params]);
-
+  // Signed-out state is derived at render (`unread` below), like the wallet
+  // pill — resetting in the effect would be a synchronous setState.
   useEffect(() => {
-    if (!isAuthenticated) { setUnread(0); return; }
+    if (!isAuthenticated) return;
     let cancelled = false;
     chatService.unread()
-      .then((res) => { if (!cancelled) setUnread(res.data.total); })
+      .then((res) => { if (!cancelled) setUnreadTotal(res.data.total); })
       .catch(() => undefined);
     return () => { cancelled = true; };
   }, [isAuthenticated]);
+
+  const unread = isAuthenticated ? unreadTotal : 0;
 
   // Wallet balance for the navbar pill. Signed-out state is derived at render
   // (`balance` below) rather than reset here, so nothing stale ever shows.
@@ -145,9 +156,14 @@ export default function Header() {
             <Menu size={20} />
           </button>
 
-          <Link to="/" className="ws-brand" aria-label="WorldShop home">
-            <span className="ws-brand__eyebrow">Worldstreet</span>
-            <span className="ws-brand__word">shop<span className="ws-brand__dot">.</span></span>
+          <Link to="/" className="ws-brand" aria-label="WorldStreet Shop home">
+            {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
+                "WorldStreet" Poppins SemiBold 15 + gold app eyebrow. */}
+            <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
+            <span className="ws-brand__stack">
+              <span className="ws-brand__word">WorldStreet</span>
+              <span className="ws-brand__eyebrow">Shop</span>
+            </span>
           </Link>
 
           <form className="ws-search ws-topbar__search" onSubmit={submitSearch} role="search">
