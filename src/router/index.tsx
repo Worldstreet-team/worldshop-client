@@ -23,6 +23,7 @@ const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPassword'));
 const AccountPage = lazy(() => import('@/pages/account/Account'));
 const ProfilePage = lazy(() => import('@/pages/account/Profile'));
 const AccountMessagesPage = lazy(() => import('@/pages/account/Messages'));
+const HomePage = lazy(() => import('@/pages/marketplace/Home'));
 const BrowsePage = lazy(() => import('@/pages/marketplace/Browse'));
 const ListingDetailPage = lazy(() => import('@/pages/marketplace/ListingDetail'));
 const MarketplaceStorePage = lazy(() => import('@/pages/marketplace/StorePage'));
@@ -64,10 +65,11 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     errorElement: <RouteError />,
     children: [
-      // The marketplace IS the site now — the root is browse.
+      // The root is a segmented landing (hero, rails, promo); the full
+      // marketplace grid lives at /listings.
       {
         index: true,
-        element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>,
+        element: <SuspenseWrapper><HomePage /></SuspenseWrapper>,
       },
       {
         path: 'listings',

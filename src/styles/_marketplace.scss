@@ -985,3 +985,383 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   a { color: var(--ws-text-muted); text-decoration: none; &:hover { color: var(--ws-text-primary); } }
   svg { flex: none; }
 }
+
+// ─── Home landing ───────────────────────────────────────────────
+// Segmented marketplace home in the eBay/Jumia mold: hero, category discs,
+// horizontal listing rails, a promo strip, sellers, sell band, trust row.
+// Every card in it is live inventory from /listings — nothing hand-picked.
+
+.ws-home {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  padding-block: var(--ws-space-6) 72px;
+
+  // Sections settle in one after another on load; a landing that assembles
+  // itself reads as designed, where an instant grid reads as dumped.
+  > * {
+    animation: ws-rise 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @for $i from 1 through 10 {
+    > :nth-child(#{$i}) { animation-delay: #{($i - 1) * 70}ms; }
+  }
+}
+
+@keyframes ws-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-home > * { animation: none; }
+}
+
+.ws-home__heading { margin-bottom: var(--ws-space-4); }
+
+// ─── Hero ───────────────────────────────────────────────────────
+
+.ws-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: 40px var(--ws-space-6);
+  border-radius: var(--ws-radius-xl);
+  border: 1px solid var(--ws-border-hairline);
+  // A whisper of gold rising from the bottom edge keeps the brand present
+  // without spending it on a surface (gold stays reserved for CTAs).
+  background:
+    radial-gradient(120% 90% at 85% 110%, color-mix(in srgb, var(--ws-brand-primary) 9%, transparent), transparent 60%),
+    var(--ws-bg-surface);
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    padding: 56px 48px;
+  }
+}
+
+.ws-hero__eyebrow {
+  @include ws-label;
+  color: var(--ws-brand-gold-text);
+  margin-bottom: var(--ws-space-3);
+}
+
+.ws-hero__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: -1px;
+  line-height: 1.08;
+  margin-bottom: var(--ws-space-4);
+  text-wrap: balance;
+
+  @media (min-width: $bp-md) { font-size: 46px; }
+
+  em {
+    font-style: normal;
+    color: var(--ws-brand-gold-text);
+  }
+}
+
+.ws-hero__sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ws-text-muted);
+  max-width: 46ch;
+  margin-bottom: var(--ws-space-6);
+}
+
+.ws-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-3);
+}
+
+.ws-hero__stat {
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+  margin-top: var(--ws-space-4);
+}
+
+// The deck: the three newest photographed listings, fanned like a hand of
+// cards. Live data as the hero image — the page opens with what the
+// marketplace actually holds today.
+.ws-hero__deck {
+  position: relative;
+  height: 300px;
+  max-width: 400px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.ws-hero__card {
+  position: absolute;
+  width: 200px;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--ws-radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-raised);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  transition: transform 200ms ease, border-color 200ms ease;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &--0 { left: 0; top: 30px; transform: rotate(-8deg); z-index: 1; }
+  &--1 { left: 50%; top: 0; transform: translateX(-50%); z-index: 2; }
+  &--2 { right: 0; top: 34px; transform: rotate(8deg); z-index: 1; }
+
+  // Side cards keep their price chips clear of the centre card's overlap.
+  &--2 .ws-hero__price { left: auto; right: var(--ws-space-2); }
+
+  &:hover {
+    transform: rotate(0) translateY(-8px);
+    border-color: color-mix(in srgb, var(--ws-brand-primary) 40%, var(--ws-border-hairline));
+    z-index: 3;
+  }
+  &--1:hover { transform: translateX(-50%) translateY(-8px); }
+}
+
+.ws-hero__price {
+  position: absolute;
+  bottom: var(--ws-space-2);
+  left: var(--ws-space-2);
+  padding: 3px 9px;
+  border-radius: var(--ws-radius-pill);
+  // On photography — theme-independent, same rule as .ws-badge--ink.
+  background: rgba(0, 0, 0, 0.72);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+// ─── Category discs ─────────────────────────────────────────────
+
+.ws-cats {
+  display: flex;
+  gap: var(--ws-space-6);
+  overflow-x: auto;
+  padding-block: var(--ws-space-1);
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ws-cat {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ws-space-3);
+  width: 96px;
+  text-decoration: none;
+  color: var(--ws-text-primary);
+}
+
+.ws-cat__disc {
+  width: 84px;
+  height: 84px;
+  border-radius: var(--ws-radius-pill);
+  display: grid;
+  place-items: center;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-muted);
+  transition: border-color 140ms ease, color 140ms ease, background-color 140ms ease;
+}
+
+.ws-cat:hover .ws-cat__disc {
+  background: color-mix(in srgb, var(--ws-brand-primary) 8%, var(--ws-bg-surface));
+  border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, transparent);
+  color: var(--ws-brand-gold-text);
+}
+
+.ws-cat__label {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+// ─── Listing rails ──────────────────────────────────────────────
+
+.ws-rail__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  margin-bottom: var(--ws-space-4);
+}
+
+.ws-rail__more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ws-brand-gold-text);
+  text-decoration: none;
+  &:hover { color: var(--ws-brand-active); }
+}
+
+.ws-rail__track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 220px;
+  gap: var(--ws-space-4);
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: var(--ws-space-2);
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+
+  > * { scroll-snap-align: start; }
+}
+
+// ─── Promo strip (coupon placeholder) ───────────────────────────
+
+.ws-promo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: 40px;
+  border-radius: var(--ws-radius-xl);
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--ws-brand-primary) 14%, var(--ws-bg-surface)) 0%, var(--ws-bg-surface) 65%);
+  border: 1px solid color-mix(in srgb, var(--ws-brand-primary) 25%, transparent);
+  overflow: hidden;
+
+  @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+
+.ws-promo__title {
+  @include ws-h1;
+  margin-bottom: var(--ws-space-2);
+}
+
+.ws-promo__sub {
+  font-size: 14px;
+  color: var(--ws-text-muted);
+  max-width: 44ch;
+  margin-bottom: var(--ws-space-6);
+}
+
+.ws-promo__cards {
+  position: relative;
+  height: 190px;
+  display: none;
+  @media (min-width: $bp-md) { display: block; }
+}
+
+.ws-promo__card {
+  position: absolute;
+  width: 118px;
+  height: 152px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ws-space-2);
+  font-family: var(--ws-font-display);
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+
+  &--1 {
+    left: 0;
+    top: 20px;
+    transform: rotate(-10deg);
+    background: var(--ws-bg-raised);
+    border: 1px solid var(--ws-border-hairline);
+    color: var(--ws-text-muted);
+  }
+  &--2 {
+    left: 106px;
+    top: 4px;
+    transform: rotate(2deg);
+    background: var(--ws-bg-surface);
+    border: 1px solid var(--ws-border-hairline);
+    color: var(--ws-text-primary);
+    z-index: 2;
+  }
+  &--3 {
+    right: 0;
+    top: 26px;
+    transform: rotate(11deg);
+    background: var(--ws-brand-primary);
+    color: var(--ws-brand-on-primary);
+    font-weight: 700;
+    z-index: 1;
+  }
+}
+
+// ─── Sellers row ────────────────────────────────────────────────
+
+.ws-sellers {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: 1fr;
+  @media (min-width: $bp-md) { grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: $bp-lg) { grid-template-columns: repeat(4, 1fr); }
+}
+
+// ─── Sell band ──────────────────────────────────────────────────
+
+.ws-sellband {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ws-space-6);
+  align-items: center;
+  padding: 40px;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+
+  @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1fr) auto; }
+}
+
+.ws-sellband__sub {
+  font-size: 14px;
+  color: var(--ws-text-muted);
+  margin-top: var(--ws-space-2);
+  max-width: 52ch;
+}
+
+.ws-sellband__cta {
+  justify-self: start;
+  @media (min-width: $bp-md) { justify-self: end; }
+}
+
+// ─── Trust row ──────────────────────────────────────────────────
+
+.ws-trust {
+  display: grid;
+  gap: var(--ws-space-6);
+  grid-template-columns: 1fr;
+  padding-top: var(--ws-space-6);
+  border-top: 1px solid var(--ws-border-hairline);
+
+  @media (min-width: $bp-md) { grid-template-columns: repeat(3, 1fr); }
+}
+
+.ws-trust__item {
+  display: flex;
+  gap: var(--ws-space-3);
+  svg { flex: none; color: var(--ws-brand-gold-text); margin-top: 2px; }
+}
+
+.ws-trust__title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.ws-trust__copy {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+}
