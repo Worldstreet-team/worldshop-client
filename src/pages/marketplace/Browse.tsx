@@ -59,9 +59,15 @@ export default function Browse() {
   }, [params]);
 
   // Price inputs are drafts committed on blur/Enter, not per keystroke — a
-  // half-typed "1" would otherwise refetch as ₦1.
+  // half-typed "1" would otherwise refetch as ₦1. When the URL changes from
+  // elsewhere (pill ×, back button) the drafts re-seed during render rather
+  // than in an effect, so there is no flash of stale input.
   const [priceDraft, setPriceDraft] = useState({ min: minPrice, max: maxPrice });
-  useEffect(() => { setPriceDraft({ min: minPrice, max: maxPrice }); }, [minPrice, maxPrice]);
+  const [priceSeed, setPriceSeed] = useState({ min: minPrice, max: maxPrice });
+  if (priceSeed.min !== minPrice || priceSeed.max !== maxPrice) {
+    setPriceSeed({ min: minPrice, max: maxPrice });
+    setPriceDraft({ min: minPrice, max: maxPrice });
+  }
 
   const parents = useMemo(() => {
     const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));

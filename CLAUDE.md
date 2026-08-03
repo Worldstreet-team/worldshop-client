@@ -197,23 +197,24 @@ files, mirrored into `src/styles/_tokens.scss` so this app stays deployable on i
 
 - `../design-tokens/tokens.css` — CSS variables, 5 modes selected by
   `data-ws-theme="shell|platform|shop|shop-light|xstream"`.
-  **Shop uses `data-ws-theme="shop"`, set on `<html>` in `index.html`.**
+  **Shop uses `data-ws-theme="platform"`, set on `<html>` in `index.html`.**
 - `../design-tokens/tailwind.preset.cjs` — semantic classes (`bg-page`, `bg-surface`,
   `text-primary`, `text-muted`, `bg-brand`, `border-hairline`, `rounded-lg` = 10px).
 
-**Shop is dark-first as of design system 1.1.0.** Its palette is a warm espresso ladder —
-page `#0F0C0A` → sunken `#171310` → surface `#201B17` → raised `#2C2621`, ink `#FAF9F5` —
-with coral `#F0502F` unchanged as the brand. Fonts are **Space Grotesk** (display) +
-**Inter** (body), not the Poppins/Public Sans pair the shell apps use. Money and stats
-always use tabular numerals (`.ws-num`).
+**Shop ships on the Platform theme as of 2026-08-03** — the same mode as
+Academy/Social/Vision/Arcade, so the ecosystem's web apps read as one brand: page
+`#0B0B0F` → sunken `#08080A` → surface `#15151A` → raised `#1F1F26`, ink `#FAFAFA`, gold
+`#FFCC29` as brand. Fonts are **Poppins** (display) + **Public Sans** (UI). Money and
+stats always use tabular numerals (`.ws-num`).
 
-`shop-light` is the original paper palette, kept as an opt-in mode. It is not the default,
-and nothing in the app selects it — but `_ds.scss` carries a `[data-ws-theme='shop-light']`
-override for the one thing that cannot read a CSS variable (the `.ws-select` chevron, which
-is a data-URI SVG). Keep that override in sync if the palette moves.
+The legacy `shop` (espresso + coral) and `shop-light` (paper) modes remain in the token
+file but nothing in the app selects them. `_ds.scss` still carries a
+`[data-ws-theme='shop-light']` override for the one thing that cannot read a CSS variable
+(the `.ws-select` chevron, a data-URI SVG); the default chevron stroke is Platform's
+text/muted `#8E8E97` — keep both in sync if the palette moves.
 
 The desktop reference screen is **"Shop Browse"** on the Figma page *Screens / Web* — follow
-its layout and density; the palette there is the pre-1.1.0 light one.
+its layout and density; the palette there predates the move to Platform.
 
 Note: Tailwind is **not currently installed here**, so the preset is aspirational until
 someone wires it up; `tokens.css` can be imported as-is.
