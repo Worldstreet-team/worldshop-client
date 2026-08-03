@@ -29,11 +29,9 @@ body:has(.ws) {
 }
 
 // ─── Type ramp ──────────────────────────────────────────────────
-// Shop resolves display → Space Grotesk, ui → Inter (see _tokens.scss).
-
-// Space Grotesk has no ExtraBold/SemiBold, so on Shop all three Display roles
-// resolve to Bold 700 (02-typography.md). Only the sizes and letter-spacing
-// differ between them.
+// Platform resolves display → Poppins, ui → Public Sans (see _tokens.scss).
+// All three Display roles resolve to Bold 700 (02-typography.md). Only the
+// sizes and letter-spacing differ between them.
 @mixin ws-display { font-family: var(--ws-font-display); font-weight: 700; font-size: 30px; letter-spacing: -0.5px; line-height: 1.15; }
 @mixin ws-h1      { font-family: var(--ws-font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.6px; line-height: 1.15; }
 @mixin ws-h2      { font-family: var(--ws-font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.3px; line-height: 1.25; }
@@ -58,7 +56,7 @@ body:has(.ws) {
 // not jitter as digits change width.
 .ws-num { font-variant-numeric: tabular-nums; }
 
-// Price is a display-face moment on Shop: Space Grotesk Bold 16.
+// Price is a display-face moment: Poppins Bold 16.
 .ws-price {
   font-family: var(--ws-font-display);
   font-weight: 700;
@@ -260,9 +258,9 @@ body:has(.ws) {
   // Chevron drawn as a background so the control keeps a native select's
   // keyboard behaviour without a JS dropdown. A data URI cannot read a CSS
   // variable, so the stroke is spelled out per theme: this is text/muted for
-  // Shop Dark, overridden below for Shop Light. Keep the two in sync with
-  // --ws-text-muted if the palette moves.
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ABA398' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  // Platform, overridden below for the legacy Shop Light mode. Keep the two
+  // in sync with --ws-text-muted if the palette moves.
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238E8E97' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
 

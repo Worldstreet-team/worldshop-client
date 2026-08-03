@@ -8,7 +8,7 @@ import { firstImage, priceLabel } from '@/utils/listingFormat';
  * drift apart on price formatting or what counts as a missing photo.
  *
  * Follows the Shop product-card spec: radius 13, 300×210 media, condition badge
- * overlaid top-left, title Medium 14, price Space Grotesk Bold 16, location
+ * overlaid top-left, title Medium 14, price display-face Bold 16, location
  * caption 11 in `text/subtle`.
  *
  * The seller line is optional: on a store page every card has the same seller,
