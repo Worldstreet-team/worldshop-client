@@ -351,14 +351,49 @@ $bp-lg: 1280px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: border-color 140ms ease, background-color 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
 
-  // Hover lightens one ladder step and firms the border. Never scale.
+  // Hover lifts 2px (translate, never scale) onto the raised step with a
+  // faint brand tint on the border.
   .ws-plink:hover & {
     background: var(--ws-bg-raised);
-    border-color: var(--ws-text-subtle);
+    border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, var(--ws-border-hairline));
+    transform: translateY(-2px);
   }
 }
+
+// Save-heart: revealed on hover (always visible once saved, and on touch
+// devices where hover doesn't exist).
+.ws-pcard__save {
+  position: absolute;
+  top: var(--ws-space-2);
+  right: var(--ws-space-2);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  // Sits on photography — theme-independent, same rule as .ws-badge--ink.
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background-color 120ms ease;
+
+  @media (hover: none) { opacity: 1; }
+
+  &:hover { background: rgba(0, 0, 0, 0.75); }
+
+  &.is-saved {
+    opacity: 1;
+    color: var(--ws-brand-primary);
+    svg { fill: currentColor; }
+  }
+}
+
+.ws-plink:hover .ws-pcard__save,
+.ws-pcard__save:focus-visible { opacity: 1; }
 
 .ws-pcard__media {
   position: relative;

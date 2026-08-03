@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ImageOff, MapPin, Star } from 'lucide-react';
+import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Listing, PublicStore } from '@/services/storeService';
 import { firstImage, priceLabel } from '@/utils/listingFormat';
+import { savedListings } from '@/utils/savedListings';
 
 /**
  * A listing in a grid. Shared by browse and the storefront so the two never
@@ -31,6 +33,7 @@ export default function ListingCard({
   const img = firstImage(listing);
   const location = [listing.city, listing.state].filter(Boolean).join(', ');
   const condition = listing.condition ? CONDITION_LABEL[listing.condition] ?? listing.condition : null;
+  const [saved, setSaved] = useState(() => savedListings.has(listing.id));
 
   return (
     <Link to={`/listings/${listing.slug}`} className="ws-plink">
@@ -52,11 +55,26 @@ export default function ListingCard({
               <span className="ws-badge ws-badge--ink">{condition}</span>
             </div>
           )}
+
+          {/* Inside a <Link>, so the heart must suppress navigation itself. */}
+          <button
+            type="button"
+            className={`ws-pcard__save${saved ? ' is-saved' : ''}`}
+            aria-label={saved ? 'Remove from saved' : 'Save listing'}
+            aria-pressed={saved}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSaved(savedListings.toggle(listing.id));
+            }}
+          >
+            <Heart size={16} aria-hidden />
+          </button>
         </div>
 
         <div className="ws-pcard__body">
-          <h3 className="ws-pcard__title">{listing.name}</h3>
           <div className="ws-price">{priceLabel(listing)}</div>
+          <h3 className="ws-pcard__title">{listing.name}</h3>
 
           {location && (
             <p className="ws-pcard__meta">
