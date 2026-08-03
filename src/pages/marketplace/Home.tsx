@@ -8,7 +8,7 @@ import { publicMarketplace, type Listing, type PublicStore } from '@/services/st
 import { useCategoryStore } from '@/store/categoryStore';
 import HeroCarousel from '@/components/marketplace/HeroCarousel';
 import ListingCard from '@/components/marketplace/ListingCard';
-import SellerCard from '@/components/marketplace/SellerCard';
+import StoreCard from '@/components/marketplace/StoreCard';
 
 /**
  * The landing page. The full marketplace grid lives at /listings; this page's
@@ -197,7 +197,7 @@ export default function Home() {
           <section aria-label="Sellers to know">
             <h2 className="ws-h2 ws-home__heading">Sellers to know</h2>
             <div className="ws-sellers">
-              {sellers.map((s) => <SellerCard key={s.id} store={s} />)}
+              {sellers.map((s) => <StoreCard key={s.id} store={s} />)}
             </div>
           </section>
         )}
