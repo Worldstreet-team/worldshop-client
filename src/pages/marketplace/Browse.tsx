@@ -45,6 +45,7 @@ export default function Browse() {
   const condition = params.get('condition') ?? '';
   const search = params.get('search') ?? '';
   const page = Math.max(1, Number(params.get('page')) || 1);
+  const sort = params.get('sort') ?? '';
 
   // Selected attribute values, read straight back out of the URL.
   const attrFilters = useMemo(() => {
@@ -127,6 +128,7 @@ export default function Browse() {
     if (stateFilter) query.state = stateFilter;
     if (condition) query.condition = condition;
     if (search) query.search = search;
+    if (sort) query.sort = sort;
     for (const [name, value] of Object.entries(attrFilters)) query[`attr.${name}`] = value;
 
     publicMarketplace
@@ -145,7 +147,7 @@ export default function Browse() {
     return () => {
       cancelled = true;
     };
-  }, [page, categoryId, stateFilter, condition, search, attrFilters]);
+  }, [page, categoryId, stateFilter, condition, search, sort, attrFilters]);
 
   /**
    * Every applied filter as a removable token. Showing them above the results
@@ -272,16 +274,31 @@ export default function Browse() {
               </p>
             </div>
 
-            <button
-              type="button"
-              className="ws-btn ws-btn--sm ws-btn--secondary ws-browse__filtertoggle"
-              onClick={() => setFiltersOpen((v) => !v)}
-              aria-expanded={filtersOpen}
-              aria-controls="browse-filters"
-            >
-              <SlidersHorizontal size={16} aria-hidden />
-              Filters{activeTokens.length > 0 && ` (${activeTokens.length})`}
-            </button>
+            <div className="ws-browse__controls">
+              {/* Sort gets no active-filter pill: it narrows nothing, it only
+                  reorders. */}
+              <select
+                className="ws-select ws-select--sm"
+                value={sort}
+                onChange={(e) => setParam({ sort: e.target.value || null })}
+                aria-label="Sort listings"
+              >
+                <option value="">Newest first</option>
+                <option value="price_asc">Price: low to high</option>
+                <option value="price_desc">Price: high to low</option>
+              </select>
+
+              <button
+                type="button"
+                className="ws-btn ws-btn--sm ws-btn--secondary ws-browse__filtertoggle"
+                onClick={() => setFiltersOpen((v) => !v)}
+                aria-expanded={filtersOpen}
+                aria-controls="browse-filters"
+              >
+                <SlidersHorizontal size={16} aria-hidden />
+                Filters{activeTokens.length > 0 && ` (${activeTokens.length})`}
+              </button>
+            </div>
           </div>
 
           {activeTokens.length > 0 && (

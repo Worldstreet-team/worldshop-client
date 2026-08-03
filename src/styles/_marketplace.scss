@@ -256,6 +256,12 @@ $bp-lg: 1280px;
   @media (min-width: $bp-md) { display: none; }
 }
 
+.ws-browse__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+}
+
 .ws-filters__group {
   padding-block: var(--ws-space-4);
   border-bottom: 1px solid var(--ws-border-hairline);

@@ -269,6 +269,14 @@ body:has(.ws) {
   }
 }
 
+// Compact select for inline controls (sort, per-page) rather than forms.
+.ws-select--sm {
+  height: 36px;
+  width: auto;
+  font-size: 13px;
+  padding-block: 0;
+}
+
 // ─── Search (pill) ──────────────────────────────────────────────
 
 .ws-search {
