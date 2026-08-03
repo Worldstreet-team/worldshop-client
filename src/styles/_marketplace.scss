@@ -37,19 +37,27 @@ $bp-lg: 1280px;
 
 // ─── Top bar ────────────────────────────────────────────────────
 
+// Glass chrome: the bar keeps the page visible through a blur instead of
+// stacking an opaque surface on it — the marketplace shows through its own
+// navigation. Solid fallback first for browsers without backdrop-filter.
 .ws-topbar {
   position: sticky;
   top: 0;
   z-index: 50;
   background: var(--ws-bg-surface);
   border-bottom: 1px solid var(--ws-border-hairline);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background: color-mix(in srgb, var(--ws-bg-page) 78%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+  }
 }
 
 .ws-topbar__row {
   display: flex;
   align-items: center;
   gap: var(--ws-space-4);
-  height: 64px;
+  height: 72px;
 }
 
 // Brand lockup: eyebrow over wordmark, per the Shop top-bar spec.
@@ -83,17 +91,29 @@ $bp-lg: 1280px;
 .ws-topbar__search {
   flex: 1;
   min-width: 0;
-  max-width: 520px;
+  max-width: 600px;
+  margin-inline: auto;
   display: none;
+  height: 46px;
+  // On glass, the pill needs its own edge to read as a control.
+  border: 1px solid var(--ws-border-hairline);
 
   @media (min-width: $bp-sm) { display: flex; }
+
+  &:focus-within {
+    border-color: var(--ws-brand-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ws-brand-primary) 18%, transparent);
+  }
 }
 
 .ws-topbar__actions {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: var(--ws-space-2);
+
+  // Signed-in avatar earns a gold ring on hover — the account is a brand moment.
+  .ws-avatar { transition: box-shadow 140ms ease; }
+  .ws-avatar:hover { box-shadow: 0 0 0 2px var(--ws-brand-primary); }
 }
 
 .ws-iconbtn {
@@ -126,10 +146,15 @@ $bp-lg: 1280px;
 }
 
 // Second row: category chips scroll horizontally rather than wrapping, so the
-// bar height never changes as categories load.
+// bar height never changes as categories load. Shares the top row's glass.
 .ws-catbar {
   border-bottom: 1px solid var(--ws-border-hairline);
   background: var(--ws-bg-surface);
+
+  @supports (backdrop-filter: blur(1px)) {
+    background: color-mix(in srgb, var(--ws-bg-page) 78%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+  }
 }
 
 .ws-catbar__scroll {
@@ -138,6 +163,8 @@ $bp-lg: 1280px;
   gap: var(--ws-space-2);
   padding-block: var(--ws-space-3);
   overflow-x: auto;
+  // Overflow fades out at the edges instead of clipping mid-chip.
+  mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
@@ -1018,14 +1045,15 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-home__heading { margin-bottom: var(--ws-space-4); }
 
-// ─── Hero ───────────────────────────────────────────────────────
+// ─── Hero carousel ──────────────────────────────────────────────
+// eBay-style rotating banner. The track slides horizontally; each slide is
+// copy on the left, a composition of product cutouts on the right. Cutouts
+// (PNGs with alpha) get contour drop-shadows and a slow float, which is what
+// separates "objects in space" from "pictures in boxes".
 
 .ws-hero {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 40px;
-  align-items: center;
-  padding: 40px var(--ws-space-6);
+  position: relative;
+  overflow: hidden;
   border-radius: var(--ws-radius-xl);
   border: 1px solid var(--ws-border-hairline);
   // A whisper of gold rising from the bottom edge keeps the brand present
@@ -1033,10 +1061,35 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   background:
     radial-gradient(120% 90% at 85% 110%, color-mix(in srgb, var(--ws-brand-primary) 9%, transparent), transparent 60%),
     var(--ws-bg-surface);
+}
+
+.ws-hero__track {
+  display: flex;
+  transition: transform 560ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+}
+
+.ws-hero__slide {
+  flex: none;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: center;
+  padding: 40px var(--ws-space-6) 72px;
+  min-height: 440px;
+
+  // Off-screen slides drop out of the tab order and AT tree once the track
+  // finishes moving.
+  visibility: hidden;
+  transition: visibility 0s 560ms;
+  &.is-active { visibility: visible; transition: visibility 0s; }
 
   @media (min-width: $bp-md) {
-    grid-template-columns: minmax(0, 1fr) 400px;
-    padding: 56px 48px;
+    grid-template-columns: minmax(0, 1fr) 460px;
+    padding: 64px 56px;
+    min-height: 520px;
   }
 }
 
@@ -1083,61 +1136,95 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin-top: var(--ws-space-4);
 }
 
-// The deck: the three newest photographed listings, fanned like a hand of
-// cards. Live data as the hero image — the page opens with what the
-// marketplace actually holds today.
-.ws-hero__deck {
+// ── Cutout art ──
+// Sizes are height-based so mixed aspect ratios still compose; positions and
+// rotations are per-cutout. `rotate`/`translate` are the individual transform
+// properties, so the float animation (translate) never clobbers the rotation.
+
+.ws-hero__art {
   position: relative;
-  height: 300px;
-  max-width: 400px;
-  width: 100%;
-  margin-inline: auto;
+  height: 240px;
+
+  @media (min-width: $bp-md) { height: 360px; }
+
+  // Warm pool of light behind the objects so they sit IN the scene.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 12% 4%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--ws-brand-primary) 14%, transparent), transparent);
+    filter: blur(24px);
+  }
 }
 
-.ws-hero__card {
+.ws-hero__cut {
   position: absolute;
-  width: 200px;
-  aspect-ratio: 3 / 4;
-  border-radius: var(--ws-radius-xl);
-  overflow: hidden;
+  max-width: none;
+  filter: drop-shadow(0 30px 36px rgba(0, 0, 0, 0.55));
+  animation: ws-float 7s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}
+
+@keyframes ws-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -12px; }
+}
+
+// Electronics jumble. The phone is rose gold; a light desaturate keeps it
+// from fighting the palette.
+.ws-hero__cut--laptop     { height: 74%; right: 4%; bottom: 8%; rotate: 4deg; z-index: 1; animation-delay: 0.9s; }
+.ws-hero__cut--phone      { height: 82%; left: 4%; bottom: 0; rotate: -12deg; z-index: 2; filter: saturate(0.75) drop-shadow(0 30px 36px rgba(0, 0, 0, 0.55)); }
+.ws-hero__cut--headphones { height: 46%; left: 40%; top: 0; rotate: 12deg; z-index: 3; animation-delay: 1.8s; }
+
+// Motors: one hero car, big.
+.ws-hero__cut--car { width: 104%; left: -2%; bottom: 10%; z-index: 1; }
+
+// Lifestyle
+.ws-hero__cut--watch   { height: 72%; left: 6%; bottom: 8%; rotate: -4deg; z-index: 1; }
+.ws-hero__cut--sneaker { height: 48%; right: 0; bottom: 0; rotate: 8deg; z-index: 2; animation-delay: 1.2s; }
+
+// ── Carousel controls ──
+
+.ws-hero__nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--ws-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ws-space-4);
+}
+
+.ws-hero__arrow {
+  width: 34px;
+  height: 34px;
   border: 1px solid var(--ws-border-hairline);
-  background: var(--ws-bg-raised);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
-  transition: transform 200ms ease, border-color 200ms ease;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  &--0 { left: 0; top: 30px; transform: rotate(-8deg); z-index: 1; }
-  &--1 { left: 50%; top: 0; transform: translateX(-50%); z-index: 2; }
-  &--2 { right: 0; top: 34px; transform: rotate(8deg); z-index: 1; }
-
-  // Side cards keep their price chips clear of the centre card's overlap.
-  &--2 .ws-hero__price { left: auto; right: var(--ws-space-2); }
-
-  &:hover {
-    transform: rotate(0) translateY(-8px);
-    border-color: color-mix(in srgb, var(--ws-brand-primary) 40%, var(--ws-border-hairline));
-    z-index: 3;
-  }
-  &--1:hover { transform: translateX(-50%) translateY(-8px); }
+  background: color-mix(in srgb, var(--ws-bg-page) 55%, transparent);
 }
 
-.ws-hero__price {
-  position: absolute;
-  bottom: var(--ws-space-2);
-  left: var(--ws-space-2);
-  padding: 3px 9px;
+.ws-hero__dots {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+}
+
+.ws-hero__dot {
+  width: 7px;
+  height: 7px;
   border-radius: var(--ws-radius-pill);
-  // On photography — theme-independent, same rule as .ws-badge--ink.
-  background: rgba(0, 0, 0, 0.72);
-  color: #FFFFFF;
-  font-size: 12px;
-  font-weight: 700;
+  border: 0;
+  padding: 0;
+  background: var(--ws-text-subtle);
+  cursor: pointer;
+  transition: width 200ms ease, background-color 200ms ease;
+
+  &.is-active {
+    width: 22px;
+    background: var(--ws-brand-primary);
+  }
 }
 
 // ─── Category discs ─────────────────────────────────────────────

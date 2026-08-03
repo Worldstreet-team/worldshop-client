@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, BadgePercent, Car, House, MessageCircle, ShieldCheck, Shirt,
-  ShoppingBag, Smartphone, Store, Tag, Ticket, type LucideIcon,
+  ShoppingBag, Smartphone, Tag, Ticket, type LucideIcon,
 } from 'lucide-react';
 import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { useCategoryStore } from '@/store/categoryStore';
+import HeroCarousel from '@/components/marketplace/HeroCarousel';
 import ListingCard from '@/components/marketplace/ListingCard';
 import SellerCard from '@/components/marketplace/SellerCard';
-import { firstImage, priceLabel } from '@/utils/listingFormat';
 
 /**
  * The landing page. The full marketplace grid lives at /listings; this page's
@@ -118,9 +118,6 @@ export default function Home() {
     return categories.filter((c) => !c.parentId && withChildren.has(c.id));
   }, [categories]);
 
-  // Three most recent listings that actually have a photo carry the hero.
-  const deck = useMemo(() => newest.filter((l) => firstImage(l)).slice(0, 3), [newest]);
-
   const sellers = useMemo(() => {
     const seen = new Map<string, PublicStore>();
     for (const l of [...newest, ...motors, ...deals]) {
@@ -132,51 +129,11 @@ export default function Home() {
   return (
     <div className="ws-wrap">
       <div className="ws-home">
-        {/* ── Hero: what Nigeria is selling, literally ─────────────── */}
-        <section className="ws-hero" aria-label="Welcome">
-          <div>
-            <p className="ws-hero__eyebrow">The WorldStreet marketplace</p>
-            <h1 className="ws-hero__title">
-              Everything Nigeria is <em>selling</em>.
-            </h1>
-            <p className="ws-hero__sub">
-              Phones, cars, fashion, property — new listings from rated stores
-              every day. Chat directly with the seller and agree your own terms.
-            </p>
-            <div className="ws-hero__ctas">
-              <Link to="/listings" className="ws-btn ws-btn--primary">
-                Browse listings
-              </Link>
-              <Link to="/vendor" className="ws-btn ws-btn--secondary">
-                <Store size={16} aria-hidden />
-                Open a store
-              </Link>
-            </div>
-            {total > 0 && (
-              <p className="ws-hero__stat ws-num">
-                {total.toLocaleString('en-NG')} live listings right now
-              </p>
-            )}
-          </div>
-
-          <div className="ws-hero__deck" aria-hidden={deck.length === 0}>
-            {(loading ? [] : deck).map((l, i) => (
-              <Link
-                key={l.id}
-                to={`/listings/${l.slug}`}
-                className={`ws-hero__card ws-hero__card--${i}`}
-                aria-label={`${l.name}, ${priceLabel(l)}`}
-              >
-                <img src={firstImage(l) ?? undefined} alt="" />
-                <span className="ws-hero__price ws-num">{priceLabel(l)}</span>
-              </Link>
-            ))}
-            {loading &&
-              [0, 1, 2].map((i) => (
-                <div key={i} className={`ws-hero__card ws-hero__card--${i} ws-skeleton`} />
-              ))}
-          </div>
-        </section>
+        {/* ── Hero carousel: cutout compositions, eBay-style rotation ── */}
+        <HeroCarousel
+          motorsTo={vehiclesId ? `/listings?categoryId=${vehiclesId}` : '/listings'}
+          stat={total}
+        />
 
         {/* ── Departments ──────────────────────────────────────────── */}
         {departments.length > 0 && (
