@@ -2,10 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Search, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid,
-  Compass, Smartphone, Car, Shirt, House, ShoppingBag, type LucideIcon,
+  Compass, Eye, EyeOff, Smartphone, Car, Shirt, House, ShoppingBag,
+  Wallet as WalletIcon, type LucideIcon,
 } from 'lucide-react';
 import { isLight, toggleTheme } from '@/utils/theme';
 import LocationSelect from '@/components/layout/LocationSelect';
+import { walletService, type Wallet } from '@/services/walletService';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useCategoryStore } from '@/store/categoryStore';
@@ -42,6 +44,10 @@ export default function Header() {
   const [searchBox, setSearchBox] = useState(params.get('search') ?? '');
   const [unread, setUnread] = useState(0);
   const [light, setLight] = useState(isLight);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [balanceHidden, setBalanceHidden] = useState(
+    () => localStorage.getItem('ws:balance-hidden') === '1',
+  );
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
@@ -56,6 +62,35 @@ export default function Header() {
       .catch(() => undefined);
     return () => { cancelled = true; };
   }, [isAuthenticated]);
+
+  // Wallet balance for the navbar pill. Signed-out state is derived at render
+  // (`balance` below) rather than reset here, so nothing stale ever shows.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    walletService.get()
+      // The shape check matters: a backend without /wallet answers with an
+      // empty envelope, and a pill saying "$NaN" is worse than no pill.
+      .then((res) => {
+        if (!cancelled && typeof res.data?.availableMinor === 'number') setWallet(res.data);
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
+
+  const balance = isAuthenticated ? wallet : null;
+
+  const toggleBalance = () => {
+    setBalanceHidden((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem('ws:balance-hidden', next ? '1' : '0');
+      } catch {
+        // Private mode: hidden state lasts for the session only.
+      }
+      return next;
+    });
+  };
 
   // Only top-level categories earn a chip; the rail handles the rest.
   const topCategories = useMemo(() => {
@@ -128,6 +163,37 @@ export default function Header() {
           </form>
 
           <div className="ws-topbar__actions">
+            {/* The shared WorldStreet dollar wallet; funding lives in the
+                wallet app, so the amount links out rather than in. */}
+            {balance && (
+              <div className="ws-balance ws-topbar__balance">
+                <a
+                  href="https://dashboard.worldstreetgold.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="WorldStreet wallet (opens in a new tab)"
+                >
+                  <WalletIcon size={15} aria-hidden />
+                  <span className="ws-num">
+                    {balanceHidden
+                      ? '••••'
+                      : new Intl.NumberFormat('en-US', {
+                          style: 'currency',
+                          currency: balance.currency || 'USD',
+                        }).format(balance.availableMinor / 100)}
+                  </span>
+                </a>
+                <button
+                  type="button"
+                  className="ws-balance__eye"
+                  onClick={toggleBalance}
+                  aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+                >
+                  {balanceHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            )}
+
             <button
               type="button"
               className="ws-iconbtn"

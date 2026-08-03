@@ -147,6 +147,10 @@ GET('/categories/:slug', ({ slug }, q) => {
   return ok({ category, products: { data: slice.map(withStore), pagination } });
 });
 
+// The WorldStreet dollar wallet, as the navbar shows it. Same numbers as the
+// vendor dashboard's embedded wallet so the two never disagree in the mock.
+GET('/wallet', () => ok({ currency: 'USD', availableMinor: 8420, lockedMinor: 0 }));
+
 // --- Public marketplace ---
 
 GET('/listings', (_p, q) => {

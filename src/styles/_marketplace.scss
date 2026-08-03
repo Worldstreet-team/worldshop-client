@@ -106,6 +106,50 @@ $bp-lg: 1280px;
   }
 }
 
+// Wallet balance pill, per the shared ecosystem topbar (Academy shows the
+// same). Amount is a link out to the wallet app; the eye masks it.
+.ws-topbar__balance {
+  display: none;
+  @media (min-width: $bp-md) { display: inline-flex; }
+}
+
+.ws-balance {
+  align-items: center;
+  gap: var(--ws-space-1);
+  height: 40px;
+  padding: 0 var(--ws-space-2) 0 var(--ws-space-3);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  border: 1px solid var(--ws-border-hairline);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ws-space-2);
+    text-decoration: none;
+    color: var(--ws-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+
+    svg { color: var(--ws-brand-gold-text); }
+    &:hover span { color: var(--ws-brand-gold-text); }
+  }
+
+  &__eye {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: var(--ws-radius-pill);
+    background: transparent;
+    color: var(--ws-text-subtle);
+    cursor: pointer;
+
+    &:hover { color: var(--ws-text-primary); background: var(--ws-bg-raised); }
+  }
+}
+
 .ws-topbar__actions {
   display: flex;
   align-items: center;
