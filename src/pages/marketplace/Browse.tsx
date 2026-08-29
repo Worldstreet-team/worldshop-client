@@ -6,6 +6,7 @@ import { categoryService } from '@/services/productService';
 import type { Category, CategoryAttribute } from '@/types/product.types';
 import ListingCard from '@/components/marketplace/ListingCard';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { resolveCategoryIds } from '@/utils/categoryTree';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**
@@ -151,39 +152,82 @@ export default function Browse() {
   useEffect(() => {
     let cancelled = false;
 
-    const query: Record<string, unknown> = { page, limit: PER_PAGE };
-    if (categoryId) query.categoryId = categoryId;
-    if (stateFilter) query.state = stateFilter;
-    if (condition) query.condition = condition;
-    if (search) query.search = search;
-    if (sort) query.sort = sort;
-    if (minPrice) query.minPrice = minPrice;
-    if (maxPrice) query.maxPrice = maxPrice;
-    for (const [name, value] of Object.entries(attrFilters)) query[`attr.${name}`] = value;
+    const baseQuery: Record<string, unknown> = {};
+    if (stateFilter) baseQuery.state = stateFilter;
+    if (condition) baseQuery.condition = condition;
+    if (search) baseQuery.search = search;
+    if (sort) baseQuery.sort = sort;
+    if (minPrice) baseQuery.minPrice = minPrice;
+    if (maxPrice) baseQuery.maxPrice = maxPrice;
+    for (const [name, value] of Object.entries(attrFilters)) baseQuery[`attr.${name}`] = value;
 
-    publicMarketplace
-      .browse(query)
-      .then((res) => {
-        if (cancelled) return;
-        setListings(res.data);
-        setTotal(res.pagination.total);
-        setTotalPages(res.pagination.totalPages);
-        setFailed(false);
-      })
-      // A failed fetch is not an empty marketplace — without this flag the
-      // empty state would tell a user with a dropped connection that nothing
-      // is listed and invite them to open a store.
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadedKey(fetchKey);
-      });
+    const finish = (rows: Array<Listing & { store: PublicStore }>, count: number, pages: number) => {
+      if (cancelled) return;
+      setListings(rows);
+      setTotal(count);
+      setTotalPages(pages);
+      setFailed(false);
+    };
+
+    const categoryIds = categoryId ? resolveCategoryIds(categories, categoryId) : [];
+
+    if (categoryIds.length <= 1) {
+      // No category, or a single leaf subcategory: the backend can filter
+      // and paginate this directly.
+      const query: Record<string, unknown> = { ...baseQuery, page, limit: PER_PAGE };
+      if (categoryIds[0]) query.categoryId = categoryIds[0];
+
+      publicMarketplace
+        .browse(query)
+        .then((res) => finish(res.data, res.pagination.total, res.pagination.totalPages))
+        // A failed fetch is not an empty marketplace — without this flag the
+        // empty state would tell a user with a dropped connection that
+        // nothing is listed and invite them to open a store.
+        .catch(() => {
+          if (!cancelled) setFailed(true);
+        })
+        .finally(() => {
+          if (!cancelled) setLoadedKey(fetchKey);
+        });
+    } else {
+      // A department: fan out across every subcategory id and merge, then
+      // paginate over the merged set client-side — see resolveCategoryIds
+      // for why a single categoryId query can't cover this. Each branch is
+      // capped at 200 to bound the number of requests; a subcategory with
+      // more listings than that will not show its tail in a department-wide
+      // browse (its own subcategory page is unaffected).
+      Promise.all(
+        categoryIds.map((id) =>
+          publicMarketplace
+            .browse({ ...baseQuery, categoryId: id, page: 1, limit: 200 })
+            .then((res) => res.data)
+            .catch(() => [] as Array<Listing & { store: PublicStore }>),
+        ),
+      )
+        .then((groups) => {
+          if (cancelled) return;
+          const merged = new Map<string, Listing & { store: PublicStore }>();
+          for (const group of groups) for (const l of group) merged.set(l.id, l);
+          const rows = [...merged.values()].sort((a, b) => {
+            if (sort === 'price_asc') return (a.basePrice ?? Infinity) - (b.basePrice ?? Infinity);
+            if (sort === 'price_desc') return (b.basePrice ?? -Infinity) - (a.basePrice ?? -Infinity);
+            return (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '');
+          });
+          const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+          finish(rows.slice((page - 1) * PER_PAGE, page * PER_PAGE), rows.length, pages);
+        })
+        .catch(() => {
+          if (!cancelled) setFailed(true);
+        })
+        .finally(() => {
+          if (!cancelled) setLoadedKey(fetchKey);
+        });
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [page, categoryId, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters, retryTick, fetchKey]);
+  }, [page, categoryId, categories, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters, retryTick, fetchKey]);
 
   /**
    * Every applied filter as a removable token. Showing them above the results

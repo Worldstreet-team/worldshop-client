@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { useCategoryStore } from '@/store/categoryStore';
+import { resolveCategoryIds } from '@/utils/categoryTree';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import HeroCarousel from '@/components/marketplace/HeroCarousel';
 import ListingCard from '@/components/marketplace/ListingCard';
@@ -102,18 +103,29 @@ export default function Home() {
     return () => { cancelled = true; };
   }, []);
 
-  // The motors rail waits on the category tree — it browses by parent id, and
-  // ids are backend-assigned, so the slug has to be resolved first.
+  // The motors rail waits on the category tree — "Vehicles" is a department
+  // (parent) id, and listings only ever save under one of its subcategories
+  // (see resolveCategoryIds), so it has to fan out across those rather than
+  // query the department id directly.
   const vehiclesId = categories.find((c) => c.slug === 'vehicles' && !c.parentId)?.id ?? '';
   useEffect(() => {
     if (!vehiclesId) return;
     let cancelled = false;
-    publicMarketplace
-      .browse({ categoryId: vehiclesId, limit: RAIL_SIZE })
-      .then((res) => { if (!cancelled) setMotors(res.data); })
-      .catch(() => undefined);
+    Promise.all(
+      resolveCategoryIds(categories, vehiclesId).map((id) =>
+        publicMarketplace.browse({ categoryId: id, limit: RAIL_SIZE }).then((res) => res.data).catch(() => [] as Row[]),
+      ),
+    ).then((groups) => {
+      if (cancelled) return;
+      const merged = new Map<string, Row>();
+      for (const group of groups) for (const l of group) merged.set(l.id, l);
+      const rows = [...merged.values()]
+        .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))
+        .slice(0, RAIL_SIZE);
+      setMotors(rows);
+    });
     return () => { cancelled = true; };
-  }, [vehiclesId]);
+  }, [vehiclesId, categories]);
 
   // Every top-level category, including a flat one with no subcategories —
   // otherwise it's invisible here even though it's a real, browsable department.
