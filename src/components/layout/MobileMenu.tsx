@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import {
   X, Heart, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus,
-  Smartphone, Car, Shirt, House, ShoppingBag, GraduationCap, Users, Zap,
+  Smartphone, Car, Shirt, House, ShoppingBag, GraduationCap, Users, Zap, LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
@@ -219,6 +219,15 @@ export default function MobileMenu() {
                 <Store size={18} aria-hidden />
                 Sell on WorldStreet
               </Link>
+              {/* The Header's admin link is desktop-only (hidden below the
+                  breakpoint that switches over to this drawer), so this is
+                  the only way an admin on a phone or tablet reaches /admin. */}
+              {user?.role === 'ADMIN' && (
+                <Link to="/admin" className="ws-drawer__link" onClick={closeMobileMenu}>
+                  <LayoutGrid size={18} aria-hidden />
+                  Admin console
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}

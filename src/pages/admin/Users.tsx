@@ -20,14 +20,26 @@ export default function AdminUsers() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [filters, setFilters] = useState<AdminUserFilters>({ page: 1, limit: 20 });
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const addToast = useUIStore((s) => s.addToast);
 
+  // Debounced, not live per keystroke — otherwise a fast typist fires one
+  // request per letter, and an earlier (shorter) query's response can land
+  // after a later, more specific one and overwrite it with stale results.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setFilters((f) => (f.page === 1 ? f : { ...f, page: 1 }));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await adminService.getUsers({ ...filters, search: search || undefined });
+      const result = await adminService.getUsers({ ...filters, search: debouncedSearch || undefined });
       setUsers(result.data);
       setPagination(result.pagination);
     } catch (err: unknown) {
@@ -35,7 +47,7 @@ export default function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  }, [filters, search, addToast]);
+  }, [filters, debouncedSearch, addToast]);
 
   useEffect(() => {
     fetchUsers();

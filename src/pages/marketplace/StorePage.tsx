@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { PackageSearch, ShieldCheck } from 'lucide-react';
+import { PackageSearch, Phone, ShieldCheck } from 'lucide-react';
 import { publicMarketplace, type PublicStore, type Listing } from '@/services/storeService';
 import SellerCard from '@/components/marketplace/SellerCard';
 import ListingCard from '@/components/marketplace/ListingCard';
 import ReportButton from '@/components/marketplace/ReportButton';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { waLink } from '@/utils/listingFormat';
 
 /**
  * Public storefront.
@@ -33,6 +34,9 @@ export default function StorePage() {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== `${slug}|${page}`;
   const [notFound, setNotFound] = useState(false);
+  // Revealed on click rather than rendered outright — same reasoning as
+  // ContactSeller's phone number: keeps it away from casual scrapers.
+  const [showPhone, setShowPhone] = useState(false);
 
   usePageTitle(notFound ? 'Store not available' : store?.name);
 
@@ -211,11 +215,21 @@ export default function StorePage() {
               <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Contact</h2>
               <div className="ws-stack">
                 {store.phone && (
-                  <a href={`tel:${store.phone}`} className="ws-plink ws-num">{store.phone}</a>
+                  showPhone ? (
+                    <a href={`tel:${store.phone}`} className="ws-plink ws-num">
+                      <Phone size={14} aria-hidden />
+                      {store.phone}
+                    </a>
+                  ) : (
+                    <button type="button" className="ws-plink" onClick={() => setShowPhone(true)}>
+                      <Phone size={14} aria-hidden />
+                      Show number
+                    </button>
+                  )
                 )}
                 {store.whatsapp && (
                   <a
-                    href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`}
+                    href={waLink(store.whatsapp)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ws-plink"

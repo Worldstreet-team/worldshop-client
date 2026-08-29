@@ -24,7 +24,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 // ─── Gender Display Map ──────────────────────────────────────
 
 const genderOptions: { value: Gender | ''; label: string }[] = [
-  { value: '', label: 'Prefer not to say' },
+  { value: '', label: 'Not specified' },
   { value: 'MALE', label: 'Male' },
   { value: 'FEMALE', label: 'Female' },
   { value: 'OTHER', label: 'Other' },

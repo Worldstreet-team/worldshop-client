@@ -115,10 +115,12 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [vehiclesId]);
 
-  const departments = useMemo(() => {
-    const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));
-    return categories.filter((c) => !c.parentId && withChildren.has(c.id));
-  }, [categories]);
+  // Every top-level category, including a flat one with no subcategories —
+  // otherwise it's invisible here even though it's a real, browsable department.
+  const departments = useMemo(
+    () => categories.filter((c) => !c.parentId),
+    [categories],
+  );
 
   const sellers = useMemo(() => {
     const seen = new Map<string, PublicStore>();
@@ -159,7 +161,7 @@ export default function Home() {
           </section>
         )}
 
-        <Rail title="Trending now" to="/listings" items={newest} loading={loading} />
+        <Rail title="New arrivals" to="/listings" items={newest} loading={loading} />
 
         <Rail title="Under ₦100,000" to="/listings?maxPrice=100000" items={deals} loading={loading} />
         {vehiclesId && (

@@ -13,6 +13,7 @@ import {
 import { categoryService } from '@/services/productService';
 import type { Category } from '@/types/product.types';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { imageSrc, type ImageRef } from '@/utils/listingFormat';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
 
@@ -76,10 +77,6 @@ function mapServerFieldPath(path: string): { field: string; label: string } {
 // invalid state resolves through the theme's danger token.
 const fieldCls = (bad: boolean) => `ws-field${bad ? ' ws-field--invalid' : ''}`;
 const selectCls = (bad: boolean) => `ws-select${bad ? ' ws-select--invalid' : ''}`;
-
-type ImageRef = Record<string, unknown> & { key?: string; url?: string };
-
-const imageSrc = (img: ImageRef): string => String(img.url || img.key || '');
 
 export default function ListingEdit() {
   const { id } = useParams<{ id: string }>();
@@ -246,9 +243,9 @@ export default function ListingEdit() {
         errors.basePrice = 'A price is required.';
       }
       if (priceType === 'RANGE') {
-        if (basePrice === '' || maxPrice === '') {
-          errors.maxPrice = 'A price range needs both a minimum and a maximum.';
-        } else if (Number(maxPrice) < Number(basePrice)) {
+        if (basePrice === '') errors.basePrice = 'A price range needs a minimum.';
+        if (maxPrice === '') errors.maxPrice = 'A price range needs a maximum.';
+        if (basePrice !== '' && maxPrice !== '' && Number(maxPrice) < Number(basePrice)) {
           errors.maxPrice = 'Maximum price cannot be below the minimum.';
         }
       }
@@ -396,7 +393,12 @@ export default function ListingEdit() {
           </div>
         )}
 
-        <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="ws-stack--lg">
+        <form onSubmit={(e) => { e.preventDefault(); save(false); }}>
+        {/* Removed listings show a "cannot be edited" notice above — the
+            fieldset is what actually enforces it, cascading disabled to
+            every field and button in one place rather than each control
+            individually. */}
+        <fieldset disabled={readOnly} className="ws-stack--lg" style={{ border: 0, padding: 0, margin: 0 }}>
           {/* ── Basics ── */}
           <section className="ws-card ws-stack--lg">
             <h2 className="ws-h2">Basics</h2>
@@ -841,6 +843,7 @@ export default function ListingEdit() {
             </button>
             <span className="ws-caption ws-muted">Drafts are only visible to you.</span>
           </div>
+        </fieldset>
         </form>
       </div>
     </div>

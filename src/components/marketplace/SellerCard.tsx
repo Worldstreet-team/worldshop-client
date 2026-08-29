@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { BadgeCheck, Star, MessageSquare, Clock, Package, CalendarDays } from 'lucide-react';
 import type { PublicStore } from '@/services/storeService';
+import { VERIFICATION_LABEL } from '@/utils/sellerVerification';
 
 /**
  * Seller summary.
@@ -9,16 +10,6 @@ import type { PublicStore } from '@/services/storeService';
  * to judge a seller by — so they are shown together rather than scattered:
  * verification, rating, how often they reply, and how fast.
  */
-
-const VERIFICATION_LABEL: Record<string, string> = {
-  UNVERIFIED: '',
-  EMAIL_VERIFIED: 'Email verified',
-  ID_VERIFIED: 'ID verified',
-  BUSINESS_VERIFIED: 'Business verified',
-  BASIC: 'Basic',
-  VERIFIED: 'Verified',
-  PREMIUM: 'Premium seller',
-};
 
 function responseTime(mins: number | null): string | null {
   if (mins == null) return null;

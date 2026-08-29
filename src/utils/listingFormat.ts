@@ -24,3 +24,10 @@ export function priceLabel(l: Pick<Listing, 'priceType' | 'basePrice' | 'maxPric
   }
   return l.basePrice != null ? fmtNaira(l.basePrice) : 'Contact for price';
 }
+
+/** Nigerian numbers are entered locally; wa.me needs them international. */
+export function waLink(number: string, message?: string): string {
+  const digits = number.replace(/\D/g, '');
+  const intl = digits.startsWith('234') ? digits : `234${digits.replace(/^0/, '')}`;
+  return message ? `https://wa.me/${intl}?text=${encodeURIComponent(message)}` : `https://wa.me/${intl}`;
+}

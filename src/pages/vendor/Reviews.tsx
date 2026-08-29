@@ -64,6 +64,7 @@ export default function VendorReviews() {
   const addToast = useUIStore((s) => s.addToast);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await marketplaceReviewService.mineAsVendor({ page, limit: 10, unrepliedOnly });
       setReviews(res.data);

@@ -74,32 +74,41 @@ export default function Inbox({ side }: { side: InboxSide }) {
   }, [loadList]);
 
   // Opening a thread marks it read, which is also what clears the badge the
-  // dashboard shows.
-  const openThread = useCallback(
-    async (id: string) => {
-      setLoadingThread(true);
-      try {
-        const res = await chatService.get(id, { limit: 100 });
+  // dashboard shows. Keyed on activeId with a cancellation guard — clicking a
+  // second conversation before the first one's fetch resolves must not let
+  // the stale response land on top of it, which would leave the compose box
+  // pointed at one conversation while the screen still shows another's history.
+  useEffect(() => {
+    if (!activeId) return;
+    const id = activeId;
+    let cancelled = false;
+
+    setLoadingThread(true);
+    chatService
+      .get(id, { limit: 100 })
+      .then(async (res) => {
+        if (cancelled) return;
         setThread(res.data);
 
         if ((isVendor ? res.data.vendorUnread : res.data.buyerUnread) > 0) {
           await chatService.markRead(id);
+          if (cancelled) return;
           setConversations((prev) =>
             prev.map((c) => (c.id === id ? { ...c, unread: 0, vendorUnread: 0, buyerUnread: 0 } : c)),
           );
         }
-      } catch (err: unknown) {
-        addToast({ type: 'error', message: errMessage(err, 'Could not open this conversation') });
-      } finally {
-        setLoadingThread(false);
-      }
-    },
-    [isVendor, addToast],
-  );
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) addToast({ type: 'error', message: errMessage(err, 'Could not open this conversation') });
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingThread(false);
+      });
 
-  useEffect(() => {
-    if (activeId) openThread(activeId);
-  }, [activeId, openThread]);
+    return () => {
+      cancelled = true;
+    };
+  }, [activeId, isVendor, addToast]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });

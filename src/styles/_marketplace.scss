@@ -505,7 +505,21 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-.ws-plink { text-decoration: none; color: inherit; display: block; }
+// Also resets the native <button> chrome (border/background/padding/font) so
+// this can style a button — e.g. StorePage's "Show number" reveal — exactly
+// like the <a> siblings it sits next to, not as a stray grey UA button.
+.ws-plink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 
 .ws-pcard {
   background: var(--ws-bg-surface);

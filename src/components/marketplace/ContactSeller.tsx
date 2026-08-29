@@ -6,6 +6,7 @@ import { chatService } from '@/services/chatService';
 import type { PublicListing } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
+import { waLink } from '@/utils/listingFormat';
 
 /**
  * The primary action on the marketplace.
@@ -22,14 +23,6 @@ const errMessage = (err: unknown, fallback: string) => {
   const fieldError = e.errors && Object.values(e.errors)[0];
   return fieldError || e.message;
 };
-
-/** Nigerian numbers are entered locally; wa.me needs them international. */
-function waLink(number: string, listingName: string): string {
-  const digits = number.replace(/\D/g, '');
-  const intl = digits.startsWith('234') ? digits : `234${digits.replace(/^0/, '')}`;
-  const text = encodeURIComponent(`Hi, I saw "${listingName}" on WorldStreet and I'm interested.`);
-  return `https://wa.me/${intl}?text=${text}`;
-}
 
 export default function ContactSeller({ listing }: { listing: PublicListing }) {
   const { isSignedIn } = useAuth();
@@ -131,7 +124,7 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
             {store.whatsapp && (
               <a
                 className="ws-btn ws-btn--sm ws-btn--secondary"
-                href={waLink(store.whatsapp, listing.name)}
+                href={waLink(store.whatsapp, `Hi, I saw "${listing.name}" on WorldStreet and I'm interested.`)}
                 target="_blank"
                 rel="noopener noreferrer"
               >

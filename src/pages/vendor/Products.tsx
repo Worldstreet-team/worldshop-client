@@ -75,7 +75,10 @@ export default function VendorListings() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // A Set, not a single id — otherwise starting an action on one row while
+  // another row's action is still in flight would re-enable that row's
+  // buttons early, letting a second click race the first.
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   /**
    * Why a publish attempt was rejected, per listing. Kept in state rather than
    * left to the toast: the toast auto-dismisses, and the vendor needs the
@@ -139,8 +142,16 @@ export default function VendorListings() {
    * is a checklist of what is missing, so it is surfaced verbatim rather than
    * flattened into "could not publish".
    */
+  const markBusy = (id: string) => setBusyIds((prev) => new Set(prev).add(id));
+  const clearBusy = (id: string) =>
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
   const handlePublish = async (listing: Listing) => {
-    setBusyId(listing.id);
+    markBusy(listing.id);
     try {
       const res = await listingService.publish(listing.id);
       setPublishErrors((prev) => {
@@ -157,12 +168,12 @@ export default function VendorListings() {
       setPublishErrors((prev) => ({ ...prev, [listing.id]: asProblems(message) }));
       addToast({ type: 'error', message });
     } finally {
-      setBusyId(null);
+      clearBusy(listing.id);
     }
   };
 
   const handleUnpublish = async (listing: Listing) => {
-    setBusyId(listing.id);
+    markBusy(listing.id);
     try {
       await listingService.unpublish(listing.id);
       addToast({ type: 'success', message: 'Listing hidden from buyers' });
@@ -170,13 +181,13 @@ export default function VendorListings() {
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Could not hide this listing') });
     } finally {
-      setBusyId(null);
+      clearBusy(listing.id);
     }
   };
 
   const handleDelete = async (listing: Listing) => {
     if (!window.confirm(`Delete "${listing.name}"? This cannot be undone.`)) return;
-    setBusyId(listing.id);
+    markBusy(listing.id);
     try {
       await listingService.remove(listing.id);
       addToast({ type: 'success', message: 'Listing deleted' });
@@ -184,7 +195,7 @@ export default function VendorListings() {
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Could not delete this listing') });
     } finally {
-      setBusyId(null);
+      clearBusy(listing.id);
     }
   };
 
@@ -287,7 +298,7 @@ export default function VendorListings() {
             <tbody>
               {listings.map((l) => {
                 const style = STATUS_STYLE[l.status];
-                const busy = busyId === l.id;
+                const busy = busyIds.has(l.id);
                 // A real rejection wins over the precomputed annotation: it is
                 // both fresher and authoritative, and it covers gates the
                 // annotation does not model.

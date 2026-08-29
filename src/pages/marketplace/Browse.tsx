@@ -72,10 +72,13 @@ export default function Browse() {
     setPriceDraft({ min: minPrice, max: maxPrice });
   }
 
-  const parents = useMemo(() => {
-    const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));
-    return categories.filter((c) => !c.parentId && withChildren.has(c.id));
-  }, [categories]);
+  // Every top-level category, including a flat one with no subcategories —
+  // otherwise it would be unreachable from this dropdown, and if reached by
+  // URL anyway, the dropdown would show no matching option for it.
+  const parents = useMemo(
+    () => categories.filter((c) => !c.parentId),
+    [categories],
+  );
 
   const selected = categories.find((c) => c.id === categoryId);
   // The parent to show children for: the selection itself if it is a parent,
