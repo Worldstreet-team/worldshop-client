@@ -244,7 +244,7 @@ export default function Inbox({ side }: { side: InboxSide }) {
 
             {thread.status === 'BLOCKED' ? (
               <div className="ws-alert" style={{ margin: 'var(--ws-space-3)' }}>
-                <span>This conversation has been closed by WorldStreet.</span>
+                <span>This conversation has been closed by WorldStore.</span>
               </div>
             ) : (
               <form onSubmit={handleSend} className="ws-inbox__compose">

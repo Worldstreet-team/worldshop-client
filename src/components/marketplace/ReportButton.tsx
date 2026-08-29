@@ -179,7 +179,7 @@ export default function ReportButton({
                 />
 
                 <p className="ws-caption ws-subtle">
-                  Reports are not anonymous to WorldStreet, but the seller is not
+                  Reports are not anonymous to WorldStore, but the seller is not
                   told who reported them.
                 </p>
 

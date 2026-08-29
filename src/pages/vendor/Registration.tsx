@@ -154,7 +154,7 @@ export default function VendorRegistration() {
       <div className="ws-page__head">
         <div>
           <h1 className="ws-page__title">Create Your Store</h1>
-          <p className="ws-page__sub">Set up your storefront on the WorldStreet marketplace.</p>
+          <p className="ws-page__sub">Set up your storefront on the WorldStore marketplace.</p>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ export default function VendorRegistration() {
           </strong>
           Creating your store is free. It stays private until you activate the
           subscription from your dashboard, so you can add your products first.
-          Buyers contact you directly — WorldStreet takes no commission on sales.
+          Buyers contact you directly — WorldStore takes no commission on sales.
         </div>
       </div>
 
@@ -261,7 +261,7 @@ export default function VendorRegistration() {
         </div>
 
         <p className="ws-caption ws-muted">
-          Buyers message you on WorldStreet first. Your phone and WhatsApp are
+          Buyers message you on WorldStore first. Your phone and WhatsApp are
           shown on your store page so they can also reach you directly.
         </p>
 

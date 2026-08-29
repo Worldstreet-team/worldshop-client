@@ -156,13 +156,12 @@ export default function Header() {
             <Menu size={20} />
           </button>
 
-          <Link to="/" className="ws-brand" aria-label="WorldStreet Shop home">
+          <Link to="/" className="ws-brand" aria-label="WorldStore home">
             {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
-                "WorldStreet" Poppins SemiBold 15 + gold app eyebrow. */}
+                "WorldStore" Poppins SemiBold 15 + gold app eyebrow. */}
             <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
-              <span className="ws-brand__word">WorldStreet</span>
-              <span className="ws-brand__eyebrow">Shop</span>
+              <span className="ws-brand__word">WorldStore</span>
             </span>
           </Link>
 

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const SITE = 'WorldStreet Shop';
+const SITE = 'WorldStore';
 
 /**
  * Per-route document titles. Every page shares one static <title> otherwise,

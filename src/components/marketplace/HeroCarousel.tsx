@@ -32,7 +32,7 @@ function slides(motorsTo: string): Slide[] {
   return [
     {
       key: 'marketplace',
-      eyebrow: 'The WorldStreet marketplace',
+      eyebrow: 'The WorldStore marketplace',
       title: <>Everything Nigeria is <em>selling</em>.</>,
       sub: 'Phones, cars, fashion, property — new listings from rated stores every day. Chat directly with the seller and agree your own terms.',
       primary: { label: 'Browse listings', to: '/listings' },

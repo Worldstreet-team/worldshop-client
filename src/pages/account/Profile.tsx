@@ -205,7 +205,7 @@ export default function ProfilePage() {
               <div className="ws-alert ws-alert--info" style={{ marginBottom: 'var(--ws-space-4)' }}>
                 <Info size={16} aria-hidden />
                 <span>
-                  <strong>Welcome to WorldStreet Shop.</strong> Fill in your details
+                  <strong>Welcome to WorldStore.</strong> Fill in your details
                   below and hit save to set up your profile.
                 </span>
               </div>
@@ -358,7 +358,7 @@ export default function ProfilePage() {
             <Link to="/vendor" className="ws-listrow ws-listrow--link">
               <Store size={18} aria-hidden />
               <div className="ws-listrow__body">
-                <span className="ws-listrow__title">Sell on WorldStreet</span>
+                <span className="ws-listrow__title">Sell on WorldStore</span>
               </div>
             </Link>
           </div>

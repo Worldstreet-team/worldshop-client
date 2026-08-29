@@ -98,13 +98,12 @@ export default function MobileMenu() {
         inert={!isMobileMenuOpen || undefined}
       >
         <div className="ws-drawer__head">
-          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldStreet Shop home">
+          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldStore home">
             {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
-                "WorldStreet" Poppins SemiBold 15 + gold app eyebrow. */}
+                "WorldStore" Poppins SemiBold 15 + gold app eyebrow. */}
             <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
-              <span className="ws-brand__word">WorldStreet</span>
-              <span className="ws-brand__eyebrow">Shop</span>
+              <span className="ws-brand__word">WorldStore</span>
             </span>
           </Link>
           <button className="ws-iconbtn" onClick={closeMobileMenu} aria-label="Close menu">
@@ -217,7 +216,7 @@ export default function MobileMenu() {
               </Link>
               <Link to="/vendor" className="ws-drawer__link" onClick={closeMobileMenu}>
                 <Store size={18} aria-hidden />
-                Sell on WorldStreet
+                Sell on WorldStore
               </Link>
               {/* The Header's admin link is desktop-only (hidden below the
                   breakpoint that switches over to this drawer), so this is

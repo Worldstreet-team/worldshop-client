@@ -197,7 +197,7 @@ export default function Home() {
             <h2 className="ws-h1">Selling? List it in minutes.</h2>
             <p className="ws-sellband__sub">
               Open a store, post your first listing and talk to buyers directly.
-              What you sell is yours — WorldStreet takes no commission.
+              What you sell is yours — WorldStore takes no commission.
             </p>
             <div className="ws-sellband__actions">
               <Link to="/vendor" className="ws-btn ws-btn--primary ws-sellband__cta">

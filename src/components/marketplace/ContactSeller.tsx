@@ -124,7 +124,7 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
             {store.whatsapp && (
               <a
                 className="ws-btn ws-btn--sm ws-btn--secondary"
-                href={waLink(store.whatsapp, `Hi, I saw "${listing.name}" on WorldStreet and I'm interested.`)}
+                href={waLink(store.whatsapp, `Hi, I saw "${listing.name}" on WorldStore and I'm interested.`)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -138,7 +138,7 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
       <p className="ws-safety">
         <ShieldAlert size={16} aria-hidden />
         <span>
-          WorldStreet does not handle payment or delivery for this item. Meet in
+          WorldStore does not handle payment or delivery for this item. Meet in
           a safe place and check the item before paying.
         </span>
       </p>

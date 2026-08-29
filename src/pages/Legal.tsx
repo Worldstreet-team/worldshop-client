@@ -14,13 +14,13 @@ const DOCS: Record<'terms' | 'privacy' | 'cookies', { title: string; intro: stri
   terms: {
     title: 'Terms of Service',
     intro:
-      'WorldStreet Shop is a marketplace: sellers list, buyers browse, and the two sides deal directly. These terms describe what that means for you.',
+      'WorldStore is a marketplace: sellers list, buyers browse, and the two sides deal directly. These terms describe what that means for you.',
     sections: [
       {
-        heading: 'What WorldStreet Shop is',
+        heading: 'What WorldStore is',
         body: [
           'Shop is a listings and messaging service. We do not sell the items you see, hold stock, process payments or arrange delivery. Every sale is agreed directly between the buyer and the seller, on their own terms.',
-          'Because money never moves through the platform, WorldStreet is not a party to any transaction and cannot refund, escrow or reverse one.',
+          'Because money never moves through the platform, WorldStore is not a party to any transaction and cannot refund, escrow or reverse one.',
         ],
       },
       {

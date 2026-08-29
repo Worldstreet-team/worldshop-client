@@ -49,7 +49,7 @@ const ALERT: Record<DashboardAlert['severity'], { cls: string; Icon: LucideIcon 
 function visibilityLabel(d: VendorDashboard): { text: string; tone: 'good' | 'bad' } {
   if (d.store.publiclyVisible) return { text: 'Visible to buyers', tone: 'good' };
   if (d.store.status === 'SUSPENDED' || d.store.status === 'BANNED') {
-    return { text: 'Hidden by WorldStreet', tone: 'bad' };
+    return { text: 'Hidden by WorldStore', tone: 'bad' };
   }
   if (d.subscription?.status === 'LAPSED') return { text: 'Hidden — subscription lapsed', tone: 'bad' };
   return { text: 'Not visible yet', tone: 'bad' };

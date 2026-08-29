@@ -384,7 +384,7 @@ export default function VendorSettings() {
               <h2 className="ws-h2">Contact</h2>
               <p className="ws-caption ws-muted">
                 Shown on your store page and listings. Buyers message you on
-                WorldStreet first; these let them also reach you directly. Clearing
+                WorldStore first; these let them also reach you directly. Clearing
                 a field removes it from your page.
               </p>
             </div>

@@ -252,7 +252,7 @@ export default function StorePage() {
           <div className="ws-card">
             <div className="ws-safety">
               <ShieldCheck size={16} aria-hidden />
-              <span>WorldStreet does not handle payment or delivery. Check items before paying.</span>
+              <span>WorldStore does not handle payment or delivery. Check items before paying.</span>
             </div>
           </div>
 
