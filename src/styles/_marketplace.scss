@@ -113,6 +113,118 @@ $bp-lg: 1280px;
   &:focus-within { border-color: var(--ws-brand-primary); }
 }
 
+// Floating search overlay for phones — a full-screen takeover rather than
+// inserted inline, so opening it never pushes the category-chip bar down or
+// changes the header's real height. Covers from the very top of the
+// viewport (over the header too) with a blurred scrim, search bar first,
+// suggestions underneath. Dismissed by tapping the scrim, Escape, or
+// submitting.
+.ws-searchpop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ws-z-modal);
+  background: var(--ws-overlay-scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: var(--ws-space-4) var(--ws-space-6);
+  overflow-y: auto;
+
+  @media (min-width: $bp-sm) { display: none; }
+}
+
+.ws-searchpop__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+}
+
+.ws-searchpop__bar {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.ws-searchpop__clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-muted);
+  cursor: pointer;
+
+  &:hover { background: var(--ws-bg-raised); color: var(--ws-text-primary); }
+}
+
+.ws-searchpop__suggestions {
+  list-style: none;
+  margin: var(--ws-space-2) 0 0;
+  padding: 0;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  overflow: hidden;
+}
+
+.ws-searchpop__suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-2) var(--ws-space-3);
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--ws-border-hairline);
+
+  &:hover, &:focus-visible { background: var(--ws-bg-chip); }
+  &:last-child { border-bottom: 0; }
+}
+
+.ws-searchpop__thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ws-radius-sm);
+  object-fit: cover;
+  flex: none;
+  background: var(--ws-bg-sunken);
+
+  &--empty { display: grid; place-items: center; color: var(--ws-text-subtle); }
+}
+
+.ws-searchpop__suggestion-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.ws-searchpop__suggestion-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ws-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-searchpop__suggestion-price {
+  font-size: 12px;
+  color: var(--ws-text-muted);
+}
+
+// Loading placeholder row — same container as real suggestions, so it sits
+// on --ws-bg-surface rather than directly on the scrim, where a muted token
+// wouldn't reliably read.
+.ws-searchpop__suggestion--hint {
+  padding: var(--ws-space-3);
+  font-size: 13px;
+  color: var(--ws-text-subtle);
+}
+
 // Wallet balance pill, per the shared ecosystem topbar (Academy shows the
 // same). Amount is a link out to the wallet app; the eye masks it.
 .ws-topbar__balance {
@@ -225,6 +337,28 @@ $bp-lg: 1280px;
 // chips and rail collapse into the drawer.
 .ws-topbar__menu {
   @media (min-width: $bp-md) { display: none; }
+}
+
+// Below $bp-sm the pill search (.ws-topbar__search above) is display:none —
+// it has no room next to the brand and hamburger — so this toggle opens the
+// floating overlay below instead. Must come after .ws-iconbtn (same
+// specificity, its unconditional display:grid would otherwise win the
+// cascade at $bp-sm+ by appearing later in the file) — same reason
+// .ws-topbar__menu/.ws-topbar__admin sit here too.
+.ws-topbar__searchtoggle {
+  @media (min-width: $bp-sm) { display: none; }
+}
+
+// Sits directly on the blurred scrim rather than a solid surface, so — like
+// .ws-topbar__searchtoggle above — its override of .ws-iconbtn's transparent
+// background must come after .ws-iconbtn to win on equal specificity.
+.ws-searchpop__close {
+  flex: none;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-primary);
+
+  &:hover { background: var(--ws-bg-chip); }
 }
 
 // Cross-app links are desktop-only; the drawer carries them on small screens.

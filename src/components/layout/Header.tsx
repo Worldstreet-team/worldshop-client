@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Search, Heart, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid,
-  Compass, Eye, EyeOff, Smartphone, Car, Shirt, House, ShoppingBag,
+  Compass, Eye, EyeOff, Smartphone, Car, Shirt, House, ShoppingBag, X, ChevronsUp,
   Wallet as WalletIcon, type LucideIcon,
 } from 'lucide-react';
 import { isLight, toggleTheme } from '@/utils/theme';
 import { savedListings } from '@/utils/savedListings';
+import { firstImage, priceLabel } from '@/utils/listingFormat';
 import LocationSelect from '@/components/layout/LocationSelect';
 import { walletService, type Wallet } from '@/services/walletService';
+import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { useCategoryStore } from '@/store/categoryStore';
@@ -52,6 +55,55 @@ export default function Header() {
     setPrevUrlSearch(urlSearch);
     setSearchBox(urlSearch);
   }
+
+  // The pill search only fits inline from $bp-sm up (see _marketplace.scss);
+  // below that it has no room next to the brand and hamburger. A toggle opens
+  // it as a floating overlay rather than an inline row, so it never pushes
+  // the category-chip bar down or desyncs --ws-header-h. Closed on navigation
+  // (derived at render, like searchBox above) so it never stays open over an
+  // unrelated page.
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(location.pathname);
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname);
+    setMobileSearchOpen(false);
+  }
+
+  // Body scroll lock + Escape-to-close, same treatment MobileMenu gives its
+  // drawer — this is the same kind of full-screen overlay, just a takeover
+  // from the top instead of a side sheet.
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMobileSearchOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [mobileSearchOpen]);
+
+  // Live suggestions while the overlay is open — debounced so each keystroke
+  // doesn't fire its own request, and scoped to the overlay (not the desktop
+  // pill, which shares searchBox) so typing elsewhere never triggers it.
+  const [suggestions, setSuggestions] = useState<Array<Listing & { store: PublicStore }>>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  useEffect(() => {
+    const q = searchBox.trim();
+    if (!mobileSearchOpen || q.length < 2) return;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      setSuggestLoading(true);
+      publicMarketplace.browse({ search: q, limit: 5 })
+        .then((res) => { if (!cancelled) setSuggestions(res.data); })
+        .catch(() => { if (!cancelled) setSuggestions([]); })
+        .finally(() => { if (!cancelled) setSuggestLoading(false); });
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [searchBox, mobileSearchOpen]);
 
   const [unreadTotal, setUnreadTotal] = useState(0);
   const [light, setLight] = useState(isLight);
@@ -180,6 +232,19 @@ export default function Header() {
           </form>
 
           <div className="ws-topbar__actions">
+            {/* Below $bp-sm the pill search is hidden entirely (no room next
+                to the brand and hamburger) — this is its only way in there. */}
+            <button
+              type="button"
+              className="ws-iconbtn ws-topbar__searchtoggle"
+              onClick={() => setMobileSearchOpen((v) => !v)}
+              aria-label={mobileSearchOpen ? 'Close search' : 'Search'}
+              aria-expanded={mobileSearchOpen}
+              aria-controls="mobile-search-form"
+            >
+              {mobileSearchOpen ? <ChevronsUp size={20} /> : <Search size={20} />}
+            </button>
+
             {/* The shared WorldStreet dollar wallet; funding lives in the
                 wallet app, so the amount links out rather than in. */}
             {balance && (
@@ -274,6 +339,91 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Portaled so it floats over the page rather than sitting in normal
+          flow — an inline row here would push the category chips down and
+          throw off --ws-header-h, which other sticky elements rely on. */}
+      {mobileSearchOpen && createPortal(
+        <div
+          className="ws-searchpop"
+          onClick={(e) => { if (e.target === e.currentTarget) setMobileSearchOpen(false); }}
+        >
+          <div className="ws-searchpop__row">
+            <form
+              id="mobile-search-form"
+              className="ws-search ws-searchpop__bar"
+              onSubmit={(e) => { submitSearch(e); setMobileSearchOpen(false); }}
+              role="search"
+            >
+              <Search size={18} aria-hidden />
+              <input
+                type="search"
+                value={searchBox}
+                onChange={(e) => setSearchBox(e.target.value)}
+                placeholder="Search phones, cars, furniture…"
+                aria-label="Search the marketplace"
+                autoFocus
+              />
+              {searchBox && (
+                <button
+                  type="button"
+                  className="ws-searchpop__clear"
+                  // Keeps focus on the input instead of the browser moving it
+                  // to this button on click, so typing can resume immediately.
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setSearchBox('')}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </form>
+
+            {/* The header's own toggle still closes this too, but it sits
+                behind the blurred scrim once the popup is open — this is the
+                clearly-visible, on-top way to dismiss it. */}
+            <button
+              type="button"
+              className="ws-iconbtn ws-searchpop__close"
+              onClick={() => setMobileSearchOpen(false)}
+              aria-label="Close search"
+            >
+              <ChevronsUp size={20} />
+            </button>
+          </div>
+
+          {searchBox.trim().length >= 2 && (suggestLoading || suggestions.length > 0) && (
+            <ul className="ws-searchpop__suggestions">
+              {suggestions.length > 0 ? (
+                suggestions.map((l) => (
+                  <li key={l.id}>
+                    <Link
+                      to={`/listings/${l.slug}`}
+                      className="ws-searchpop__suggestion"
+                      onClick={() => setMobileSearchOpen(false)}
+                    >
+                      {firstImage(l) ? (
+                        <img src={firstImage(l)!} alt="" className="ws-searchpop__thumb" />
+                      ) : (
+                        <span className="ws-searchpop__thumb ws-searchpop__thumb--empty" aria-hidden>
+                          <Search size={14} />
+                        </span>
+                      )}
+                      <span className="ws-searchpop__suggestion-text">
+                        <span className="ws-searchpop__suggestion-name">{l.name}</span>
+                        <span className="ws-searchpop__suggestion-price ws-num">{priceLabel(l)}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li className="ws-searchpop__suggestion--hint">Searching…</li>
+              )}
+            </ul>
+          )}
+        </div>,
+        document.body,
+      )}
 
       {/* Category chips. Kept out of the sticky row so the bar stays 64px. */}
       <div className="ws-catbar">
