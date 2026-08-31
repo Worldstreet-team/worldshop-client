@@ -164,9 +164,8 @@ export default function MallRegistration() {
               ? `${formatUsd(plan.amountMinor)} per month covers your mall and all its substores`
               : 'A monthly subscription keeps your mall and all its substores visible'}
           </strong>
-          Creating your mall is free. It stays private until you activate the
-          subscription from your dashboard, so you can set up your substores
-          first.{plan?.substoreLimit ? ` Your plan includes up to ${plan.substoreLimit} substores` : ''}
+          Creating your mall is free, and you can set up your substores before
+          activating anything.{plan?.substoreLimit ? ` Your plan includes up to ${plan.substoreLimit} substores` : ''}
           {plan?.substoreLimit ? ' — none of them needs its own subscription.' : ''}
         </div>
       </div>

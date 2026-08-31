@@ -9,7 +9,7 @@ import { useUIStore } from '@/store/uiStore';
 
 /**
  * Mall owner dashboard: the subscription that keeps the whole mall (and every
- * substore in it) visible, plus a substore overview. One $100/month
+ * substore in it) visible, plus a substore overview. One monthly
  * subscription is the only bill — substores never charge separately, which is
  * the value proposition and worth restating where the money is managed.
  */
@@ -104,11 +104,19 @@ export default function MallDashboard() {
     );
   }
 
-  const badge = STATUS_BADGE[mall.status] ?? STATUS_BADGE.DRAFT;
+  // While the mall paywall is off, the server reports a DRAFT mall as publicly
+  // visible. Trust that answer over the status label rather than duplicating
+  // the flag on the client, where it could drift out of step.
+  const badge =
+    mall.status === 'DRAFT' && mall.isPubliclyVisible
+      ? { cls: 'ws-badge--success', label: 'Visible to buyers' }
+      : STATUS_BADGE[mall.status] ?? STATUS_BADGE.DRAFT;
   const sub = mall.subscription;
   const plan = sub?.plan;
+  // GRACE genuinely needs payment to stay up. PENDING_PAYMENT only warrants a
+  // warning while the mall is actually hidden by it.
   const needsPayment =
-    !mall.isPubliclyVisible || sub?.status === 'GRACE' || sub?.status === 'PENDING_PAYMENT';
+    !mall.isPubliclyVisible || sub?.status === 'GRACE';
 
   return (
     <div className="ws-page">
