@@ -8,6 +8,7 @@ import {
 import { storeService, type VendorDashboard, type DashboardAlert } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
+import MallCallout from '@/components/marketplace/MallCallout';
 
 /**
  * Vendor dashboard for the marketplace model.
@@ -297,6 +298,11 @@ export default function VendorDashboard() {
             </div>
           </div>
         </section>
+
+        {/* A vendor running more than one storefront is the mall product's
+            whole audience, so the offer belongs here rather than only in the
+            directory. Renders as "go to your mall" once they own one. */}
+        <MallCallout variant="card" />
 
         {/* Subscription detail. Credit is spent before the wallet, so it is
             only shown when there is some — otherwise it is noise. */}

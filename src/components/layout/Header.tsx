@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  Search, Heart, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid,
+  Search, Heart, MessageCircle, Menu, Moon, Store, Sun, User, LayoutGrid, Building2,
   Compass, Eye, EyeOff, Smartphone, Car, Shirt, House, ShoppingBag, X, ChevronsUp,
   Wallet as WalletIcon, type LucideIcon,
 } from 'lucide-react';
@@ -313,6 +313,16 @@ export default function Header() {
             >
               <Heart size={18} />
               {savedCount > 0 && <span className="ws-iconbtn__dot" />}
+            </Link>
+
+            <Link
+              to="/malls"
+              className="ws-iconbtn ws-topbar__malls"
+              aria-label="Browse malls"
+              title="Malls"
+            >
+              <Building2 size={18} />
+              <span className="ws-topbar__malls-label">Malls</span>
             </Link>
 
             <Link to="/vendor" className="ws-btn ws-btn--sm ws-btn--primary ws-topbar__sell">

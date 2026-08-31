@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { PackageSearch, Phone, ShieldCheck } from 'lucide-react';
+import { Building2, PackageSearch, Phone, ShieldCheck } from 'lucide-react';
 import { publicMarketplace, type PublicStore, type Listing } from '@/services/storeService';
 import SellerCard from '@/components/marketplace/SellerCard';
 import ListingCard from '@/components/marketplace/ListingCard';
@@ -142,6 +142,17 @@ export default function StorePage() {
               <div style={{ minWidth: 0 }}>
                 <h1 className="ws-h1">{store.name}</h1>
                 {location && <p className="ws-caption ws-muted">{location}</p>}
+                {/* A substore links back to its mall — but only while the mall
+                    itself is visible, so a lapsed mall is not advertised. */}
+                {store.mall && (store.mall.status === 'ACTIVE' || store.mall.status === 'GRACE') && (
+                  <p className="ws-caption" style={{ marginTop: 4 }}>
+                    <Building2 size={12} aria-hidden style={{ verticalAlign: -2, marginRight: 4 }} />
+                    Part of{' '}
+                    <Link to={`/malls/${store.mall.slug}`} style={{ fontWeight: 600 }}>
+                      {store.mall.name}
+                    </Link>
+                  </p>
+                )}
               </div>
             </div>
           </div>

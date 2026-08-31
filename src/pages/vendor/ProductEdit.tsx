@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AlertCircle, Plus, X } from 'lucide-react';
 import {
-  listingService,
   type Listing,
   type ListingPayload,
   type CategoryFormSpec,
@@ -16,6 +15,7 @@ import { NIGERIAN_STATES } from '@/utils/nigerianStates';
 import { imageSrc, type ImageRef } from '@/utils/listingFormat';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
+import { useListingApi } from '@/contexts/ListingApiContext';
 
 /**
  * Listing editor.
@@ -80,6 +80,8 @@ const selectCls = (bad: boolean) => `ws-select${bad ? ' ws-select--invalid' : ''
 
 export default function ListingEdit() {
   const { id } = useParams<{ id: string }>();
+  // Personal store or mall substore — same page, different endpoints.
+  const { api: listingService, productsBasePath } = useListingApi();
   const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
   const isNew = !id || id === 'new';
@@ -179,7 +181,8 @@ export default function ListingEdit() {
     return () => {
       cancelled = true;
     };
-  }, [id, isNew, addToast]);
+    // listingService is context-provided and changes when the substore does.
+  }, [id, isNew, addToast, listingService]);
 
   // Derive the parent select from a loaded listing's category.
   useEffect(() => {
@@ -209,7 +212,7 @@ export default function ListingEdit() {
     return () => {
       cancelled = true;
     };
-  }, [categoryId]);
+  }, [categoryId, listingService]);
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -319,7 +322,7 @@ export default function ListingEdit() {
         } else {
           addToast({ type: 'success', message: isNew ? 'Listing saved as draft' : 'Listing updated' });
         }
-        navigate('/vendor/products');
+        navigate(productsBasePath);
       } catch (err: unknown) {
         // Shown in place, because a toast disappears before the vendor can act
         // on it. Validation rejections carry per-field messages — surface each
@@ -364,7 +367,7 @@ export default function ListingEdit() {
     <div className="ws-page" style={{ maxWidth: 900 }}>
       <div className="ws-page__head">
         <h1 className="ws-page__title">{isNew ? 'Add Listing' : 'Edit Listing'}</h1>
-        <Link to="/vendor/products" className="ws-btn ws-btn--sm ws-btn--secondary">
+        <Link to={productsBasePath} className="ws-btn ws-btn--sm ws-btn--secondary">
           Back to listings
         </Link>
       </div>

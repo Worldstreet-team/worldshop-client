@@ -4,11 +4,14 @@ import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
 import AuthLayout from '@/layouts/AuthLayout';
 import VendorLayout from '@/layouts/VendorLayout';
+import MallLayout from '@/layouts/MallLayout';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { RouteError } from '@/components/common';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import AdminRoute from '@/components/auth/AdminRoute';
 import VendorRoute from '@/components/auth/VendorRoute';
+import MallOwnerRoute from '@/components/auth/MallOwnerRoute';
+import { SubstoreListingApiProvider } from '@/contexts/ListingApiContext';
 
 // Lazy load pages for code splitting
 // Customer Pages
@@ -27,6 +30,8 @@ const HomePage = lazy(() => import('@/pages/marketplace/Home'));
 const BrowsePage = lazy(() => import('@/pages/marketplace/Browse'));
 const ListingDetailPage = lazy(() => import('@/pages/marketplace/ListingDetail'));
 const MarketplaceStorePage = lazy(() => import('@/pages/marketplace/StorePage'));
+const MallsDirectoryPage = lazy(() => import('@/pages/marketplace/MallsDirectory'));
+const MarketplaceMallPage = lazy(() => import('@/pages/marketplace/MallPage'));
 const SavedPage = lazy(() => import('@/pages/marketplace/Saved'));
 const LegalPage = lazy(() => import('@/pages/Legal'));
 
@@ -44,6 +49,12 @@ const VendorSettings = lazy(() => import('@/pages/vendor/Settings'));
 const VendorReviews = lazy(() => import('@/pages/vendor/Reviews'));
 const VendorMessages = lazy(() => import('@/pages/vendor/Messages'));
 
+// Mall Pages
+const MallDashboard = lazy(() => import('@/pages/mall/Dashboard'));
+const MallRegistration = lazy(() => import('@/pages/mall/Registration'));
+const MallSubstores = lazy(() => import('@/pages/mall/Substores'));
+const MallFeatured = lazy(() => import('@/pages/mall/Featured'));
+
 // Error Pages
 const NotFoundPage = lazy(() => import('@/pages/NotFound'));
 
@@ -58,6 +69,21 @@ const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
 function LegacyStoreRedirect() {
   const { slug } = useParams();
   return <Navigate to={`/stores/${slug}`} replace />;
+}
+
+/**
+ * Substore listing pages reuse the vendor product pages, re-pointed at the
+ * substore's endpoints via context. The provider needs the :substoreId param,
+ * which is only available inside the route element.
+ */
+function SubstorePage({ children }: { children: React.ReactNode }) {
+  const { substoreId } = useParams<{ substoreId: string }>();
+  if (!substoreId) return <Navigate to="/mall/substores" replace />;
+  return (
+    <SubstoreListingApiProvider substoreId={substoreId}>
+      {children}
+    </SubstoreListingApiProvider>
+  );
 }
 
 const router = createBrowserRouter([
@@ -84,6 +110,14 @@ const router = createBrowserRouter([
       {
         path: 'stores/:slug',
         element: <SuspenseWrapper><MarketplaceStorePage /></SuspenseWrapper>,
+      },
+      {
+        path: 'malls',
+        element: <SuspenseWrapper><MallsDirectoryPage /></SuspenseWrapper>,
+      },
+      {
+        path: 'malls/:slug',
+        element: <SuspenseWrapper><MarketplaceMallPage /></SuspenseWrapper>,
       },
       // Saved hearts are device-local, so this needs no sign-in.
       {
@@ -176,6 +210,65 @@ const router = createBrowserRouter([
             <SuspenseWrapper><VendorRegistration /></SuspenseWrapper>
           </ProtectedRoute>
         ),
+      },
+    ],
+  },
+  // Mall registration (protected, but NOT mall-gated)
+  {
+    path: '/mall/register',
+    element: (
+      <MainLayout />
+    ),
+    errorElement: <RouteError />,
+    children: [
+      {
+        index: true,
+        element: (
+          <ProtectedRoute>
+            <SuspenseWrapper><MallRegistration /></SuspenseWrapper>
+          </ProtectedRoute>
+        ),
+      },
+    ],
+  },
+  // Mall owner routes (mall layout, mall-gated)
+  {
+    path: '/mall',
+    element: (
+      <MallOwnerRoute>
+        <MallLayout />
+      </MallOwnerRoute>
+    ),
+    errorElement: <RouteError />,
+    children: [
+      {
+        index: true,
+        element: <SuspenseWrapper><MallDashboard /></SuspenseWrapper>,
+      },
+      {
+        path: 'substores',
+        element: <SuspenseWrapper><MallSubstores /></SuspenseWrapper>,
+      },
+      {
+        path: 'featured',
+        element: <SuspenseWrapper><MallFeatured /></SuspenseWrapper>,
+      },
+      // The vendor product pages, re-pointed at a substore's catalogue.
+      {
+        path: 'substores/:substoreId/products',
+        element: <SubstorePage><SuspenseWrapper><VendorProducts /></SuspenseWrapper></SubstorePage>,
+      },
+      {
+        path: 'substores/:substoreId/products/new',
+        element: <SubstorePage><SuspenseWrapper><VendorProductEdit /></SuspenseWrapper></SubstorePage>,
+      },
+      {
+        path: 'substores/:substoreId/products/:id',
+        element: <SubstorePage><SuspenseWrapper><VendorProductEdit /></SuspenseWrapper></SubstorePage>,
+      },
+      {
+        path: '*',
+        element: <Navigate to="/mall" replace />,
       },
     ],
   },
