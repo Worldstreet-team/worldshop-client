@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, FolderTree, Users, Store } from 'lucide-react';
-import { adminReportService, type AdminReportStats } from '@/services/reportService';
+import {
+  adminReportService,
+  ACTIONS_BY_TARGET,
+  type AdminReportStats,
+  type AdminQueueEntry,
+  type ReportAdminAction,
+} from '@/services/reportService';
+import { useUIStore } from '@/store/uiStore';
+import { toApiError } from '@/services/api';
 
 /**
  * Admin dashboard.
@@ -14,29 +22,68 @@ import { adminReportService, type AdminReportStats } from '@/services/reportServ
  */
 
 export default function AdminDashboard() {
+  const addToast = useUIStore((s) => s.addToast);
   const [stats, setStats] = useState<AdminReportStats | null>(null);
+  const [queue, setQueue] = useState<AdminQueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // The queue key of the row whose request is in flight, so one slow action
+  // does not lock every row's buttons.
+  const [acting, setActing] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const [statsRes, queueRes] = await Promise.all([
+        adminReportService.stats(),
+        adminReportService.queue(),
+      ]);
+      setStats(statsRes.data);
+      setQueue(queueRes.data);
+      setError(null);
+    } catch {
+      setError('Could not load moderation stats');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-
-    adminReportService
-      .stats()
-      .then((res) => {
-        if (!cancelled) setStats(res.data);
-      })
-      .catch(() => {
-        if (!cancelled) setError('Could not load moderation stats');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
+    load().then(() => {
+      if (cancelled) return;
+    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [load]);
+
+  const decide = async (
+    entry: AdminQueueEntry,
+    decision: { kind: 'action'; action: ReportAdminAction; label: string } | { kind: 'dismiss' },
+  ) => {
+    const verb = decision.kind === 'dismiss' ? 'Dismiss all reports on' : `${decision.label} —`;
+    if (!confirm(`${verb} "${entry.label}"?`)) return;
+
+    const key = `${entry.targetType}:${entry.targetId}`;
+    setActing(key);
+    try {
+      // Any one report id will do — the server closes every open report on
+      // the target.
+      const reportId = entry.reportIds[0];
+      if (decision.kind === 'dismiss') {
+        await adminReportService.dismiss(reportId);
+        addToast({ type: 'success', message: `Dismissed all reports on "${entry.label}".` });
+      } else {
+        await adminReportService.action(reportId, decision.action);
+        addToast({ type: 'success', message: `${decision.label} applied to "${entry.label}".` });
+      }
+      await load();
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: toApiError(err, 'Could not apply that decision').message });
+    } finally {
+      setActing(null);
+    }
+  };
 
   const open = stats?.byStatus.OPEN ?? 0;
   const reviewing = stats?.byStatus.REVIEWING ?? 0;
@@ -93,39 +140,72 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {stats.mostReported.length > 0 ? (
+            {queue.length > 0 ? (
               <section>
-                <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Most reported</h2>
+                <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Moderation queue</h2>
                 <div className="ws-card ws-card--flush ws-table-wrap">
                   <table className="ws-table">
                     <thead>
                       <tr>
                         <th>Target</th>
                         <th>Type</th>
+                        <th>Reasons</th>
                         <th className="ws-table__num">Reports</th>
+                        <th>Decision</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {stats.mostReported.map((t) => (
-                        <tr key={`${t.targetType}:${t.targetId}`}>
-                          <td>{t.label}</td>
-                          <td className="ws-muted">{t.targetType.toLowerCase()}</td>
-                          <td className="ws-table__num"><strong>{t.reportCount}</strong></td>
-                        </tr>
-                      ))}
+                      {queue.map((entry) => {
+                        const key = `${entry.targetType}:${entry.targetId}`;
+                        const busy = acting !== null;
+                        // A since-deleted target has nothing left to action.
+                        const gone = entry.targetStatus === 'GONE';
+                        return (
+                          <tr key={key}>
+                            <td>
+                              {entry.label}
+                              <span className="ws-caption ws-subtle" style={{ display: 'block' }}>
+                                {entry.targetStatus.toLowerCase()}
+                              </span>
+                            </td>
+                            <td className="ws-muted">{entry.targetType.toLowerCase()}</td>
+                            <td className="ws-muted">{entry.reasons.map((r) => r.toLowerCase()).join(', ')}</td>
+                            <td className="ws-table__num"><strong>{entry.reportCount}</strong></td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap' }}>
+                                {!gone && ACTIONS_BY_TARGET[entry.targetType].map((a) => (
+                                  <button
+                                    key={a.value}
+                                    className="ws-btn ws-btn--sm ws-btn--secondary"
+                                    disabled={busy}
+                                    onClick={() => decide(entry, { kind: 'action', action: a.value, label: a.label })}
+                                  >
+                                    {acting === key ? '…' : a.label}
+                                  </button>
+                                ))}
+                                <button
+                                  className="ws-btn ws-btn--sm ws-btn--ghost"
+                                  disabled={busy}
+                                  onClick={() => decide(entry, { kind: 'dismiss' })}
+                                >
+                                  Dismiss
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
-                {/* The full queue (claim / dismiss / action) has API support but
-                    no page yet — these counts come from the same endpoints. */}
                 <p className="ws-caption ws-subtle" style={{ marginTop: 'var(--ws-space-2)' }}>
-                  Acting on reports is currently done via the moderation API; a
-                  full queue screen is the next admin build.
+                  A decision closes every open report on that target. Suspending
+                  or banning a store or mall also hides its published listings.
                 </p>
               </section>
-            ) : open === 0 ? (
+            ) : (
               <p className="ws-body ws-muted">Nothing in the moderation queue. Quiet is good.</p>
-            ) : null}
+            )}
           </>
         )}
 
