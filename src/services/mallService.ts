@@ -1,4 +1,4 @@
-import { api } from './api';
+import apiClient, { api } from './api';
 import type { ApiResponse } from '@/types/common.types';
 import type {
   Listing,
@@ -7,6 +7,7 @@ import type {
   SubscriptionStatus,
   ChargeResult,
   UpdateStorePayload,
+  UploadedImage,
 } from './storeService';
 
 /**
@@ -118,7 +119,7 @@ export interface PublicMallPage extends PublicMall {
 }
 
 export const mallService = {
-  /** GET /malls/plans — public, so the $100/month is shown before signup. */
+  /** GET /malls/plans — public, so the price is shown before signup. */
   getPlans: () => api.get<ApiResponse<Array<SubscriptionPlan & { substoreLimit: number | null }>>>('/malls/plans'),
 
   /** POST /malls — creates the mall in DRAFT. Nothing is charged here. */
@@ -135,6 +136,19 @@ export const mallService = {
   chargeSubscription: () => api.post<ApiResponse<ChargeResult>>('/malls/me/subscription/charge'),
 
   cancelSubscription: () => api.post<ApiResponse<unknown>>('/malls/me/subscription/cancel'),
+
+  /**
+   * Branding upload for the mall and its substores. Mounted on the mall
+   * rather than a store, because a mall owner need not have a personal store
+   * — the /stores/me rail would 404 for them.
+   */
+  uploadBranding: (file: File) => {
+    const form = new FormData();
+    form.append('images', file);
+    return apiClient
+      .post<ApiResponse<UploadedImage[]>>('/malls/me/upload/images?folder=malls', form)
+      .then((res) => res.data);
+  },
 
   /** PUT /malls/me/featured — up to 12 published listings from substores. */
   setFeatured: (listingIds: string[]) =>
