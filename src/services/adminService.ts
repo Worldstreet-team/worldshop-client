@@ -335,6 +335,14 @@ export interface AdminUser {
     storeName: string | null;
     createdAt: string;
     /**
+     * Where an admin stands with their password. A promoted admin cannot sign
+     * in until they follow their emailed link, so this distinguishes a working
+     * account from a stalled invite. Null for anyone who is not an admin.
+     */
+    adminStatus: 'ACTIVE' | 'AWAITING_SETUP' | 'INVITE_EXPIRED' | null;
+    /** When the outstanding setup link lapses. Only set while awaiting setup. */
+    inviteExpiresAt: string | null;
+    /**
      * Present only on the response to a promotion: whether the new admin's
      * password setup link actually went out. The promotion succeeds either way.
      */
@@ -581,6 +589,14 @@ export const adminService = {
 
     updateUserRole: async (id: string, role: 'CUSTOMER' | 'ADMIN'): Promise<AdminUser> => {
         const res = await api.patch<ApiResponse<AdminUser>>(`/admin/users/${id}/role`, { role });
+        return res.data;
+    },
+
+    /** Fresh setup link for an admin whose invite was lost or has expired. */
+    resendAdminSetup: async (id: string): Promise<{ sent: boolean; expiresAt: string }> => {
+        const res = await api.post<ApiResponse<{ sent: boolean; expiresAt: string }>>(
+            `/admin/users/${id}/resend-setup`,
+        );
         return res.data;
     },
 };

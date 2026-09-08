@@ -2006,3 +2006,51 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-weight: 500;
   @media (min-width: $bp-md) { display: inline; }
 }
+
+// Row action menu (the three-dots in table rows). Same panel spec as
+// .ws-locpick__panel, but positioned `fixed` from JS and portaled to <body>:
+// the admin tables sit in .ws-card--flush.ws-table-wrap, which clips on both
+// axes, so an in-flow panel would be cut off. See components/common/RowMenu.
+.ws-menu {
+  position: fixed;
+  z-index: var(--ws-z-dropdown);
+  padding: var(--ws-space-2);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  box-shadow: var(--ws-shadow-nav);
+  display: grid;
+  gap: 2px;
+}
+
+.ws-menu__item {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-family: var(--ws-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ws-text-primary);
+  padding: var(--ws-space-2) var(--ws-space-3);
+  border-radius: var(--ws-radius-sm);
+  cursor: pointer;
+
+  &:hover { background: var(--ws-bg-raised); }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    color: var(--ws-text-muted);
+    cursor: not-allowed;
+    background: transparent;
+  }
+}
+
+.ws-menu__item--danger {
+  color: var(--ws-status-danger);
+}

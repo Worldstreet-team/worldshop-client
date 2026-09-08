@@ -29,3 +29,6 @@ export { default as VoiceButton } from './VoiceButton';
 
 
 export { default as RouteError } from './RouteError';
+
+export { default as RowMenu } from './RowMenu';
+export type { RowMenuItem } from './RowMenu';

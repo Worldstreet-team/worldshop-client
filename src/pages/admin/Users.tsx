@@ -4,9 +4,27 @@ import { adminService, type AdminUser, type AdminUserFilters } from '@/services/
 import type { Pagination } from '@/types/common.types';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
+import { RowMenu, type RowMenuItem } from '@/components/common';
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+
+/** "in 6h" for an invite deadline. Mirrors the timeAgo in chat/Inbox, other way round. */
+function timeUntil(iso: string): string {
+  const mins = Math.round((new Date(iso).getTime() - Date.now()) / 60000);
+  if (mins <= 0) return 'any moment';
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}
+
+// The system has four badge tones; the three invite states take three of them.
+const ADMIN_STATUS: Record<string, { cls: string; label: string }> = {
+  ACTIVE: { cls: 'ws-badge--success', label: 'Active' },
+  AWAITING_SETUP: { cls: 'ws-badge--warning', label: 'Awaiting setup' },
+  INVITE_EXPIRED: { cls: 'ws-badge--danger', label: 'Invite expired' },
+};
 
 const errMessage = (err: unknown, fallback: string) => {
   const e = toApiError(err, fallback);
@@ -53,10 +71,10 @@ export default function AdminUsers() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const updateRole = async (user: AdminUser, role: 'CUSTOMER' | 'ADMIN') => {
+  const updateRole = async (user: AdminUser, role: 'CUSTOMER' | 'ADMIN', confirmText?: string) => {
     if (user.role === role) return;
     const action = role === 'ADMIN' ? 'promote' : 'demote';
-    if (!confirm(`Are you sure you want to ${action} ${user.email}?`)) return;
+    if (!confirm(confirmText ?? `Are you sure you want to ${action} ${user.email}?`)) return;
 
     setUpdatingId(user.id);
     try {
@@ -78,6 +96,48 @@ export default function AdminUsers() {
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const resendInvite = async (user: AdminUser) => {
+    setUpdatingId(user.id);
+    try {
+      const { expiresAt } = await adminService.resendAdminSetup(user.id);
+      setUsers((current) => current.map((item) => item.id === user.id
+        ? { ...item, adminStatus: 'AWAITING_SETUP', inviteExpiresAt: expiresAt }
+        : item));
+      addToast({ type: 'success', message: `Setup link sent to ${user.email}.` });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Failed to send the setup link') });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  /** What you can do to a row depends on whether the admin ever set a password. */
+  const menuItems = (user: AdminUser): RowMenuItem[] => {
+    if (user.role !== 'ADMIN') {
+      return [{ label: 'Make admin', onSelect: () => updateRole(user, 'ADMIN') }];
+    }
+
+    if (user.adminStatus === 'ACTIVE') {
+      return [{ label: 'Remove admin', danger: true, onSelect: () => updateRole(user, 'CUSTOMER') }];
+    }
+
+    // Still waiting on them. Cancelling undoes the promotion outright, which
+    // also kills the outstanding link — leaving them an admin who cannot sign
+    // in would be a worse state than not being one.
+    return [
+      { label: 'Resend invite', onSelect: () => resendInvite(user) },
+      {
+        label: 'Cancel invite',
+        danger: true,
+        onSelect: () => updateRole(
+          user,
+          'CUSTOMER',
+          `Cancel the admin invite for ${user.email}? Their setup link stops working and they go back to being a customer.`,
+        ),
+      },
+    ];
   };
 
   return (
@@ -128,7 +188,7 @@ export default function AdminUsers() {
             <tr>
               <th>User</th>
               <th>Role</th>
-              <th>Vendor</th>
+              <th>Status</th>
               <th>Joined</th>
               <th />
             </tr>
@@ -159,26 +219,27 @@ export default function AdminUsers() {
                     {user.role}
                   </span>
                 </td>
-                <td>{user.isVendor ? `${user.storeName || 'Vendor'} (${user.vendorStatus || 'N/A'})` : '—'}</td>
+                <td>
+                  {user.adminStatus ? (
+                    <>
+                      <span className={`ws-badge ${ADMIN_STATUS[user.adminStatus]?.cls ?? 'ws-badge--neutral'}`}>
+                        {ADMIN_STATUS[user.adminStatus]?.label ?? user.adminStatus}
+                      </span>
+                      {user.adminStatus === 'AWAITING_SETUP' && user.inviteExpiresAt && (
+                        <div className="ws-caption ws-muted" style={{ marginTop: 2 }}>
+                          link expires in {timeUntil(user.inviteExpiresAt)}
+                        </div>
+                      )}
+                    </>
+                  ) : '—'}
+                </td>
                 <td className="ws-num">{formatDate(user.createdAt)}</td>
                 <td style={{ textAlign: 'right' }}>
-                  {user.role === 'ADMIN' ? (
-                    <button
-                      className="ws-btn ws-btn--sm ws-btn--secondary"
-                      disabled={updatingId === user.id}
-                      onClick={() => updateRole(user, 'CUSTOMER')}
-                    >
-                      Demote
-                    </button>
-                  ) : (
-                    <button
-                      className="ws-btn ws-btn--sm ws-btn--primary"
-                      disabled={updatingId === user.id}
-                      onClick={() => updateRole(user, 'ADMIN')}
-                    >
-                      Promote
-                    </button>
-                  )}
+                  <RowMenu
+                    items={menuItems(user)}
+                    disabled={updatingId === user.id}
+                    label={`Actions for ${user.email}`}
+                  />
                 </td>
               </tr>
             ))}
