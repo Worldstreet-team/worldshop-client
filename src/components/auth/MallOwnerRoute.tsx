@@ -3,26 +3,26 @@ import { useAuth } from '@clerk/clerk-react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { AlertTriangle, SearchX } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { storeService, type StoreStatus } from '@/services/storeService';
+import { mallService, type MallStatus } from '@/services/mallService';
 import { toApiError } from '@/services/api';
 import { GateLoading, GateBlocked } from './RouteGate';
 
-interface VendorRouteProps {
+interface MallOwnerRouteProps {
   children: React.ReactNode;
 }
 
-export default function VendorRoute({ children }: VendorRouteProps) {
+/**
+ * Gate for /mall/* — the mall owner console. Mirrors VendorRoute: owning a
+ * mall is what makes someone a mall operator, so the mall is fetched rather
+ * than read from the session. 404 → registration; BANNED/SUSPENDED render
+ * their own states.
+ */
+export default function MallOwnerRoute({ children }: MallOwnerRouteProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const { isLoading } = useAuthStore();
   const location = useLocation();
 
-  /**
-   * Owning a store is what makes someone a seller now — not the legacy
-   * `isVendor` flag on the identity profile, which is no longer set for
-   * anyone. The store is fetched rather than read from the session because
-   * it can be created mid-session.
-   */
-  const [store, setStore] = useState<{ checked: boolean; status: StoreStatus | null; errored: boolean }>({
+  const [mall, setMall] = useState<{ checked: boolean; status: MallStatus | null; errored: boolean }>({
     checked: false,
     status: null,
     errored: false,
@@ -33,18 +33,17 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     if (!isSignedIn) return;
     let cancelled = false;
 
-    storeService
-      .getMyStore()
+    mallService
+      .getMyMall()
       .then((res) => {
-        if (!cancelled) setStore({ checked: true, status: res.data.status, errored: false });
+        if (!cancelled) setMall({ checked: true, status: res.data.status, errored: false });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        // 404 = no store yet — the common case. Any other failure (a network
-        // blip, a 5xx) is not the same thing, and treating it that way would
-        // silently redirect a real seller away from their own dashboard.
+        // 404 = no mall yet — the common case. Anything else (network blip,
+        // 5xx) must not silently redirect a real owner to registration.
         const is404 = toApiError(err, '').statusCode === 404;
-        setStore({ checked: true, status: null, errored: !is404 });
+        setMall({ checked: true, status: null, errored: !is404 });
       });
 
     return () => {
@@ -52,12 +51,9 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     };
   }, [isSignedIn, retryTick]);
 
-  // Signed-out users never need the lookup, so they are "checked" by definition.
-  const storeChecked = !isSignedIn || store.checked;
-  const storeStatus = store.status;
+  const mallChecked = !isSignedIn || mall.checked;
 
-  // Clerk initializing, the profile syncing, or the store lookup in flight.
-  if (!isLoaded || (isSignedIn && isLoading) || (isSignedIn && !storeChecked)) {
+  if (!isLoaded || (isSignedIn && isLoading) || (isSignedIn && !mallChecked)) {
     return <GateLoading />;
   }
 
@@ -65,24 +61,22 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     const returnUrl = encodeURIComponent(`${location.pathname}${location.search}`);
     return (
       <GateBlocked
-        title="Seller access required"
-        message="Please sign in to access your store dashboard."
+        title="Mall access required"
+        message="Please sign in to access your mall dashboard."
         actionTo={`/auth/login?returnUrl=${returnUrl}`}
         actionLabel="Go to sign in"
       />
     );
   }
 
-  // The lookup itself failed (not a 404) — this is not "no store", so don't
-  // send them to registration. Offer a retry instead of stranding them.
-  if (store.errored) {
+  if (mall.errored) {
     return (
       <div className="ws" style={{ display: 'grid', placeItems: 'center', minHeight: '60vh', padding: 'var(--ws-space-6)' }}>
         <div className="ws-empty">
           <div className="ws-empty__icon"><SearchX size={26} aria-hidden /></div>
-          <h2 className="ws-title">Could not confirm your store</h2>
+          <h2 className="ws-title">Could not confirm your mall</h2>
           <p className="ws-caption ws-muted" style={{ maxWidth: '40ch' }}>
-            Check your connection and try again — this isn't the same as not having a store.
+            Check your connection and try again — this isn't the same as not having a mall.
           </p>
           <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={() => setRetryTick((t) => t + 1)}>
             Try again
@@ -92,26 +86,23 @@ export default function VendorRoute({ children }: VendorRouteProps) {
     );
   }
 
-  // Signed in but has no store — send them to create one.
-  if (!storeStatus) {
-    return <Navigate to="/vendor/register" replace />;
+  if (!mall.status) {
+    return <Navigate to="/mall/register" replace />;
   }
 
-  if (storeStatus === 'BANNED') {
+  if (mall.status === 'BANNED') {
     return (
       <GateBlocked
         tone="danger"
-        title="Store banned"
-        message="Your store has been banned. Please contact support if you think this is a mistake."
+        title="Mall banned"
+        message="Your mall has been banned. Please contact support if you think this is a mistake."
         actionTo="/"
         actionLabel="Back to the marketplace"
       />
     );
   }
 
-  // Suspended sellers keep read-only access, so the dashboard still renders —
-  // the banner is what tells them why nothing saves.
-  if (storeStatus === 'SUSPENDED') {
+  if (mall.status === 'SUSPENDED') {
     return (
       <div className="ws">
         <div
@@ -121,7 +112,7 @@ export default function VendorRoute({ children }: VendorRouteProps) {
         >
           <AlertTriangle size={16} aria-hidden />
           <span>
-            Your store is suspended and hidden from buyers. You have read-only access. Please contact support.
+            Your mall is suspended and hidden from buyers. You have read-only access. Please contact support.
           </span>
         </div>
         {children}

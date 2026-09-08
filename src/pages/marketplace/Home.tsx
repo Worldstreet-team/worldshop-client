@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { publicMarketplace, type Listing, type PublicStore } from '@/services/storeService';
 import { useCategoryStore } from '@/store/categoryStore';
+import { resolveCategoryIds } from '@/utils/categoryTree';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import HeroCarousel from '@/components/marketplace/HeroCarousel';
 import ListingCard from '@/components/marketplace/ListingCard';
@@ -102,23 +103,36 @@ export default function Home() {
     return () => { cancelled = true; };
   }, []);
 
-  // The motors rail waits on the category tree — it browses by parent id, and
-  // ids are backend-assigned, so the slug has to be resolved first.
+  // The motors rail waits on the category tree — "Vehicles" is a department
+  // (parent) id, and listings only ever save under one of its subcategories
+  // (see resolveCategoryIds), so it has to fan out across those rather than
+  // query the department id directly.
   const vehiclesId = categories.find((c) => c.slug === 'vehicles' && !c.parentId)?.id ?? '';
   useEffect(() => {
     if (!vehiclesId) return;
     let cancelled = false;
-    publicMarketplace
-      .browse({ categoryId: vehiclesId, limit: RAIL_SIZE })
-      .then((res) => { if (!cancelled) setMotors(res.data); })
-      .catch(() => undefined);
+    Promise.all(
+      resolveCategoryIds(categories, vehiclesId).map((id) =>
+        publicMarketplace.browse({ categoryId: id, limit: RAIL_SIZE }).then((res) => res.data).catch(() => [] as Row[]),
+      ),
+    ).then((groups) => {
+      if (cancelled) return;
+      const merged = new Map<string, Row>();
+      for (const group of groups) for (const l of group) merged.set(l.id, l);
+      const rows = [...merged.values()]
+        .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))
+        .slice(0, RAIL_SIZE);
+      setMotors(rows);
+    });
     return () => { cancelled = true; };
-  }, [vehiclesId]);
+  }, [vehiclesId, categories]);
 
-  const departments = useMemo(() => {
-    const withChildren = new Set(categories.map((c) => c.parentId).filter(Boolean));
-    return categories.filter((c) => !c.parentId && withChildren.has(c.id));
-  }, [categories]);
+  // Every top-level category, including a flat one with no subcategories —
+  // otherwise it's invisible here even though it's a real, browsable department.
+  const departments = useMemo(
+    () => categories.filter((c) => !c.parentId),
+    [categories],
+  );
 
   const sellers = useMemo(() => {
     const seen = new Map<string, PublicStore>();
@@ -159,7 +173,7 @@ export default function Home() {
           </section>
         )}
 
-        <Rail title="Trending now" to="/listings" items={newest} loading={loading} />
+        <Rail title="New arrivals" to="/listings" items={newest} loading={loading} />
 
         <Rail title="Under ₦100,000" to="/listings?maxPrice=100000" items={deals} loading={loading} />
         {vehiclesId && (
@@ -183,7 +197,7 @@ export default function Home() {
             <h2 className="ws-h1">Selling? List it in minutes.</h2>
             <p className="ws-sellband__sub">
               Open a store, post your first listing and talk to buyers directly.
-              What you sell is yours — WorldStreet takes no commission.
+              What you sell is yours — WorldStore takes no commission.
             </p>
             <div className="ws-sellband__actions">
               <Link to="/vendor" className="ws-btn ws-btn--primary ws-sellband__cta">

@@ -41,7 +41,7 @@ export default function Modal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, closeOnEsc, onClose]);
 
-  // Focus trap and body scroll lock
+  // Initial focus and body scroll lock
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
@@ -55,6 +55,33 @@ export default function Modal({
     return () => {
       document.body.style.overflow = '';
     };
+  }, [isOpen]);
+
+  // Focus trap: Tab/Shift+Tab cycles within the modal instead of walking out
+  // into the page behind it.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !modalRef.current) return;
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    return () => document.removeEventListener('keydown', handleTabKey);
   }, [isOpen]);
 
   if (!isOpen) return null;

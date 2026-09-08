@@ -34,6 +34,10 @@ const errMessage = (err: unknown, fallback: string) => {
 /** "" in a text input means the vendor cleared it — send null, not "". */
 const orNull = (v: string): string | null => (v.trim() === '' ? null : v.trim());
 
+/** Same pattern Registration enforces when a store is first created — kept in
+ * sync so a number rejected there can't be saved unchecked here later. */
+const PHONE_RE = /^\+?[0-9\s-]{7,20}$/;
+
 export default function VendorSettings() {
   const addToast = useUIStore((s) => s.addToast);
 
@@ -146,6 +150,14 @@ export default function VendorSettings() {
     }
     if (!state) {
       setError('Choose the state you operate from — buyers browse by it.');
+      return;
+    }
+    if (phone.trim() && !PHONE_RE.test(phone.trim())) {
+      setError('Enter a valid phone number.');
+      return;
+    }
+    if (whatsapp.trim() && !PHONE_RE.test(whatsapp.trim())) {
+      setError('Enter a valid WhatsApp number.');
       return;
     }
 
@@ -372,7 +384,7 @@ export default function VendorSettings() {
               <h2 className="ws-h2">Contact</h2>
               <p className="ws-caption ws-muted">
                 Shown on your store page and listings. Buyers message you on
-                WorldStreet first; these let them also reach you directly. Clearing
+                WorldStore first; these let them also reach you directly. Clearing
                 a field removes it from your page.
               </p>
             </div>

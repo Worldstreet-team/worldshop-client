@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { AlertCircle, Plus, X } from 'lucide-react';
 import {
-  listingService,
   type Listing,
   type ListingPayload,
   type CategoryFormSpec,
@@ -13,8 +12,10 @@ import {
 import { categoryService } from '@/services/productService';
 import type { Category } from '@/types/product.types';
 import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { imageSrc, type ImageRef } from '@/utils/listingFormat';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
+import { useListingApi } from '@/contexts/ListingApiContext';
 
 /**
  * Listing editor.
@@ -77,12 +78,10 @@ function mapServerFieldPath(path: string): { field: string; label: string } {
 const fieldCls = (bad: boolean) => `ws-field${bad ? ' ws-field--invalid' : ''}`;
 const selectCls = (bad: boolean) => `ws-select${bad ? ' ws-select--invalid' : ''}`;
 
-type ImageRef = Record<string, unknown> & { key?: string; url?: string };
-
-const imageSrc = (img: ImageRef): string => String(img.url || img.key || '');
-
 export default function ListingEdit() {
   const { id } = useParams<{ id: string }>();
+  // Personal store or mall substore — same page, different endpoints.
+  const { api: listingService, productsBasePath } = useListingApi();
   const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
   const isNew = !id || id === 'new';
@@ -182,7 +181,8 @@ export default function ListingEdit() {
     return () => {
       cancelled = true;
     };
-  }, [id, isNew, addToast]);
+    // listingService is context-provided and changes when the substore does.
+  }, [id, isNew, addToast, listingService]);
 
   // Derive the parent select from a loaded listing's category.
   useEffect(() => {
@@ -212,7 +212,7 @@ export default function ListingEdit() {
     return () => {
       cancelled = true;
     };
-  }, [categoryId]);
+  }, [categoryId, listingService]);
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -246,9 +246,9 @@ export default function ListingEdit() {
         errors.basePrice = 'A price is required.';
       }
       if (priceType === 'RANGE') {
-        if (basePrice === '' || maxPrice === '') {
-          errors.maxPrice = 'A price range needs both a minimum and a maximum.';
-        } else if (Number(maxPrice) < Number(basePrice)) {
+        if (basePrice === '') errors.basePrice = 'A price range needs a minimum.';
+        if (maxPrice === '') errors.maxPrice = 'A price range needs a maximum.';
+        if (basePrice !== '' && maxPrice !== '' && Number(maxPrice) < Number(basePrice)) {
           errors.maxPrice = 'Maximum price cannot be below the minimum.';
         }
       }
@@ -322,7 +322,7 @@ export default function ListingEdit() {
         } else {
           addToast({ type: 'success', message: isNew ? 'Listing saved as draft' : 'Listing updated' });
         }
-        navigate('/vendor/products');
+        navigate(productsBasePath);
       } catch (err: unknown) {
         // Shown in place, because a toast disappears before the vendor can act
         // on it. Validation rejections carry per-field messages — surface each
@@ -367,7 +367,7 @@ export default function ListingEdit() {
     <div className="ws-page" style={{ maxWidth: 900 }}>
       <div className="ws-page__head">
         <h1 className="ws-page__title">{isNew ? 'Add Listing' : 'Edit Listing'}</h1>
-        <Link to="/vendor/products" className="ws-btn ws-btn--sm ws-btn--secondary">
+        <Link to={productsBasePath} className="ws-btn ws-btn--sm ws-btn--secondary">
           Back to listings
         </Link>
       </div>
@@ -396,7 +396,12 @@ export default function ListingEdit() {
           </div>
         )}
 
-        <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="ws-stack--lg">
+        <form onSubmit={(e) => { e.preventDefault(); save(false); }}>
+        {/* Removed listings show a "cannot be edited" notice above — the
+            fieldset is what actually enforces it, cascading disabled to
+            every field and button in one place rather than each control
+            individually. */}
+        <fieldset disabled={readOnly} className="ws-stack--lg" style={{ border: 0, padding: 0, margin: 0 }}>
           {/* ── Basics ── */}
           <section className="ws-card ws-stack--lg">
             <h2 className="ws-h2">Basics</h2>
@@ -841,6 +846,7 @@ export default function ListingEdit() {
             </button>
             <span className="ws-caption ws-muted">Drafts are only visible to you.</span>
           </div>
+        </fieldset>
         </form>
       </div>
     </div>

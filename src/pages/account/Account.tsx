@@ -65,7 +65,7 @@ export default function AccountPage() {
         path: '/vendor/register',
         Icon: PlusCircle,
         title: 'Open a Store',
-        description: 'List your products and reach buyers on WorldStreet',
+        description: 'List your products and reach buyers on WorldStore',
       };
 
   return (

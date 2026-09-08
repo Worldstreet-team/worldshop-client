@@ -56,7 +56,7 @@ $bp-lg: 1280px;
 }
 
 // Unified ecosystem brand lockup (05-screens): gold wsa-mark 26px, unboxed +
-// "WorldStreet" Poppins SemiBold 15 + gold uppercase app eyebrow — identical
+// "WorldStore" Poppins SemiBold 15 + gold uppercase app eyebrow — identical
 // structure across Academy / Social / Shop, only the eyebrow text differs.
 .ws-brand {
   display: flex;
@@ -111,6 +111,118 @@ $bp-lg: 1280px;
 
   // SearchField focus is a brand border, not a halo (04-components).
   &:focus-within { border-color: var(--ws-brand-primary); }
+}
+
+// Floating search overlay for phones — a full-screen takeover rather than
+// inserted inline, so opening it never pushes the category-chip bar down or
+// changes the header's real height. Covers from the very top of the
+// viewport (over the header too) with a blurred scrim, search bar first,
+// suggestions underneath. Dismissed by tapping the scrim, Escape, or
+// submitting.
+.ws-searchpop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ws-z-modal);
+  background: var(--ws-overlay-scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: var(--ws-space-4) var(--ws-space-6);
+  overflow-y: auto;
+
+  @media (min-width: $bp-sm) { display: none; }
+}
+
+.ws-searchpop__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+}
+
+.ws-searchpop__bar {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--ws-border-hairline);
+  background: var(--ws-bg-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.ws-searchpop__clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-muted);
+  cursor: pointer;
+
+  &:hover { background: var(--ws-bg-raised); color: var(--ws-text-primary); }
+}
+
+.ws-searchpop__suggestions {
+  list-style: none;
+  margin: var(--ws-space-2) 0 0;
+  padding: 0;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  overflow: hidden;
+}
+
+.ws-searchpop__suggestion {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-2) var(--ws-space-3);
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--ws-border-hairline);
+
+  &:hover, &:focus-visible { background: var(--ws-bg-chip); }
+  &:last-child { border-bottom: 0; }
+}
+
+.ws-searchpop__thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ws-radius-sm);
+  object-fit: cover;
+  flex: none;
+  background: var(--ws-bg-sunken);
+
+  &--empty { display: grid; place-items: center; color: var(--ws-text-subtle); }
+}
+
+.ws-searchpop__suggestion-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.ws-searchpop__suggestion-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ws-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-searchpop__suggestion-price {
+  font-size: 12px;
+  color: var(--ws-text-muted);
+}
+
+// Loading placeholder row — same container as real suggestions, so it sits
+// on --ws-bg-surface rather than directly on the scrim, where a muted token
+// wouldn't reliably read.
+.ws-searchpop__suggestion--hint {
+  padding: var(--ws-space-3);
+  font-size: 13px;
+  color: var(--ws-text-subtle);
 }
 
 // Wallet balance pill, per the shared ecosystem topbar (Academy shows the
@@ -225,6 +337,28 @@ $bp-lg: 1280px;
 // chips and rail collapse into the drawer.
 .ws-topbar__menu {
   @media (min-width: $bp-md) { display: none; }
+}
+
+// Below $bp-sm the pill search (.ws-topbar__search above) is display:none —
+// it has no room next to the brand and hamburger — so this toggle opens the
+// floating overlay below instead. Must come after .ws-iconbtn (same
+// specificity, its unconditional display:grid would otherwise win the
+// cascade at $bp-sm+ by appearing later in the file) — same reason
+// .ws-topbar__menu/.ws-topbar__admin sit here too.
+.ws-topbar__searchtoggle {
+  @media (min-width: $bp-sm) { display: none; }
+}
+
+// Sits directly on the blurred scrim rather than a solid surface, so — like
+// .ws-topbar__searchtoggle above — its override of .ws-iconbtn's transparent
+// background must come after .ws-iconbtn to win on equal specificity.
+.ws-searchpop__close {
+  flex: none;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-primary);
+
+  &:hover { background: var(--ws-bg-chip); }
 }
 
 // Cross-app links are desktop-only; the drawer carries them on small screens.
@@ -505,7 +639,21 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-.ws-plink { text-decoration: none; color: inherit; display: block; }
+// Also resets the native <button> chrome (border/background/padding/font) so
+// this can style a button — e.g. StorePage's "Show number" reveal — exactly
+// like the <a> siblings it sits next to, not as a stray grey UA button.
+.ws-plink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 
 .ws-pcard {
   background: var(--ws-bg-surface);
@@ -1789,4 +1937,72 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   display: flex;
   gap: var(--ws-space-3);
   margin-top: var(--ws-space-3);
+}
+
+// ── Mall CTA ────────────────────────────────────────────────────────────────
+// The entry point into the mall product. It sits above the fold on the mall
+// directory and in the vendor dashboard, so the banner variant is deliberately
+// louder than a plain card — it is the only signpost the feature has.
+.ws-mallcta {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-4) var(--ws-space-5);
+  margin-bottom: var(--ws-space-6);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-bg-surface);
+
+  // Below sm the action would be squeezed to a sliver beside the copy, so the
+  // whole thing stacks and the button goes full width.
+  @media (max-width: $bp-sm) {
+    grid-template-columns: auto 1fr;
+    .ws-mallcta__action {
+      grid-column: 1 / -1;
+      justify-content: center;
+    }
+  }
+}
+
+.ws-mallcta__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-subtle);
+}
+
+.ws-mallcta__title { margin: 0 0 2px; }
+.ws-mallcta__sub { margin: 0; max-width: 60ch; }
+
+// Sidebar/stacked placement: no bottom margin of its own, copy wraps under.
+.ws-mallcta--card {
+  grid-template-columns: auto 1fr;
+  margin-bottom: 0;
+
+  .ws-mallcta__action {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+// The topbar mall link keeps its icon at every width but only earns a text
+// label on desktop, where there is room beside the search field. .ws-iconbtn
+// is a fixed square, so the label needs the width back.
+.ws-topbar__malls {
+  @media (min-width: $bp-md) {
+    width: auto;
+    gap: var(--ws-space-2);
+    padding-inline: var(--ws-space-3);
+  }
+}
+
+.ws-topbar__malls-label {
+  display: none;
+  font-size: var(--ws-text-sm);
+  font-weight: 500;
+  @media (min-width: $bp-md) { display: inline; }
 }

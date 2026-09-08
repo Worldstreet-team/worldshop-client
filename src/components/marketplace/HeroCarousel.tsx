@@ -32,7 +32,7 @@ function slides(motorsTo: string): Slide[] {
   return [
     {
       key: 'marketplace',
-      eyebrow: 'The WorldStreet marketplace',
+      eyebrow: 'The WorldStore marketplace',
       title: <>Everything Nigeria is <em>selling</em>.</>,
       sub: 'Phones, cars, fashion, property — new listings from rated stores every day. Chat directly with the seller and agree your own terms.',
       primary: { label: 'Browse listings', to: '/listings' },
@@ -76,10 +76,18 @@ export default function HeroCarousel({ motorsTo, stat }: { motorsTo: string; sta
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const reducedMotion = useMemo(
+  // A live listener, not a one-time read at mount — so autoplay stops
+  // immediately if the visitor turns the OS setting on mid-session, rather
+  // than only on the next full reload.
+  const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    [],
   );
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     if (paused || reducedMotion) return;

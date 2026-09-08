@@ -8,6 +8,7 @@ import {
 import { storeService, type VendorDashboard, type DashboardAlert } from '@/services/storeService';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
+import MallCallout from '@/components/marketplace/MallCallout';
 
 /**
  * Vendor dashboard for the marketplace model.
@@ -49,7 +50,7 @@ const ALERT: Record<DashboardAlert['severity'], { cls: string; Icon: LucideIcon 
 function visibilityLabel(d: VendorDashboard): { text: string; tone: 'good' | 'bad' } {
   if (d.store.publiclyVisible) return { text: 'Visible to buyers', tone: 'good' };
   if (d.store.status === 'SUSPENDED' || d.store.status === 'BANNED') {
-    return { text: 'Hidden by WorldStreet', tone: 'bad' };
+    return { text: 'Hidden by WorldStore', tone: 'bad' };
   }
   if (d.subscription?.status === 'LAPSED') return { text: 'Hidden — subscription lapsed', tone: 'bad' };
   return { text: 'Not visible yet', tone: 'bad' };
@@ -297,6 +298,11 @@ export default function VendorDashboard() {
             </div>
           </div>
         </section>
+
+        {/* A vendor running more than one storefront is the mall product's
+            whole audience, so the offer belongs here rather than only in the
+            directory. Renders as "go to your mall" once they own one. */}
+        <MallCallout variant="card" />
 
         {/* Subscription detail. Credit is spent before the wallet, so it is
             only shown when there is some — otherwise it is noise. */}

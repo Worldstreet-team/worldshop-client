@@ -2,12 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, EyeOff, Search, Package } from 'lucide-react';
 import {
-  listingService,
-  storeService,
   type Listing,
   type ListingStatus,
   type ListingFilters,
 } from '@/services/storeService';
+import { useListingApi } from '@/contexts/ListingApiContext';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
 import { firstImage, fmtNaira } from '@/utils/listingFormat';
@@ -71,11 +70,17 @@ function priceLabel(l: Listing): string {
 }
 
 export default function VendorListings() {
+  // Which catalogue this page manages — the personal store's by default, or a
+  // mall substore's when rendered inside a SubstoreListingApiProvider.
+  const { api: listingService, productsBasePath, dashboardPath, getVisibility } = useListingApi();
   const [listings, setListings] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  // A Set, not a single id — otherwise starting an action on one row while
+  // another row's action is still in flight would re-enable that row's
+  // buttons early, letting a second click race the first.
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   /**
    * Why a publish attempt was rejected, per listing. Kept in state rather than
    * left to the toast: the toast auto-dismisses, and the vendor needs the
@@ -111,7 +116,10 @@ export default function VendorListings() {
     } finally {
       setLoading(false);
     }
-  }, [page, tab, appliedSearch, addToast]);
+    // listingService comes from context now: navigating between two
+    // substores swaps it WITHOUT remounting this component, so omitting it
+    // here would keep serving the previous substore's catalogue.
+  }, [page, tab, appliedSearch, addToast, listingService]);
 
   useEffect(() => {
     load();
@@ -121,10 +129,9 @@ export default function VendorListings() {
   // subscription, so the answer is fetched once and shown up front.
   useEffect(() => {
     let cancelled = false;
-    storeService
-      .getMyStore()
-      .then((res) => {
-        if (!cancelled) setStoreLive(res.data.isPubliclyVisible);
+    getVisibility()
+      .then((visible) => {
+        if (!cancelled) setStoreLive(visible);
       })
       .catch(() => {
         if (!cancelled) setStoreLive(null);
@@ -132,15 +139,23 @@ export default function VendorListings() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [getVisibility]);
 
   /**
    * Publishing runs the category's listing standards server-side. A rejection
    * is a checklist of what is missing, so it is surfaced verbatim rather than
    * flattened into "could not publish".
    */
+  const markBusy = (id: string) => setBusyIds((prev) => new Set(prev).add(id));
+  const clearBusy = (id: string) =>
+    setBusyIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+
   const handlePublish = async (listing: Listing) => {
-    setBusyId(listing.id);
+    markBusy(listing.id);
     try {
       const res = await listingService.publish(listing.id);
       setPublishErrors((prev) => {
@@ -157,12 +172,12 @@ export default function VendorListings() {
       setPublishErrors((prev) => ({ ...prev, [listing.id]: asProblems(message) }));
       addToast({ type: 'error', message });
     } finally {
-      setBusyId(null);
+      clearBusy(listing.id);
     }
   };
 
   const handleUnpublish = async (listing: Listing) => {
-    setBusyId(listing.id);
+    markBusy(listing.id);
     try {
       await listingService.unpublish(listing.id);
       addToast({ type: 'success', message: 'Listing hidden from buyers' });
@@ -170,13 +185,13 @@ export default function VendorListings() {
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Could not hide this listing') });
     } finally {
-      setBusyId(null);
+      clearBusy(listing.id);
     }
   };
 
   const handleDelete = async (listing: Listing) => {
     if (!window.confirm(`Delete "${listing.name}"? This cannot be undone.`)) return;
-    setBusyId(listing.id);
+    markBusy(listing.id);
     try {
       await listingService.remove(listing.id);
       addToast({ type: 'success', message: 'Listing deleted' });
@@ -184,7 +199,7 @@ export default function VendorListings() {
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Could not delete this listing') });
     } finally {
-      setBusyId(null);
+      clearBusy(listing.id);
     }
   };
 
@@ -192,7 +207,7 @@ export default function VendorListings() {
     <div className="ws-page">
       <div className="ws-page__head">
         <h1 className="ws-page__title">Manage Listings</h1>
-        <Link to="/vendor/products/new" className="ws-btn ws-btn--sm ws-btn--primary">
+        <Link to={`${productsBasePath}/new`} className="ws-btn ws-btn--sm ws-btn--primary">
           <Plus size={14} aria-hidden />
           Add Listing
         </Link>
@@ -206,7 +221,7 @@ export default function VendorListings() {
           <span style={{ flex: 1 }}>
             Your store is not visible to buyers yet, so published listings stay private.
           </span>
-          <Link to="/vendor" style={{ color: 'inherit', fontWeight: 600 }}>Activate</Link>
+          <Link to={dashboardPath} style={{ color: 'inherit', fontWeight: 600 }}>Activate</Link>
         </div>
       )}
 
@@ -263,7 +278,7 @@ export default function VendorListings() {
               : 'You have no listings yet. Add your first product so buyers can find you.'}
           </p>
           {!appliedSearch && tab === 'ALL' && (
-            <Link to="/vendor/products/new" className="ws-btn ws-btn--sm ws-btn--primary">
+            <Link to={`${productsBasePath}/new`} className="ws-btn ws-btn--sm ws-btn--primary">
               <Plus size={14} aria-hidden />
               Add Listing
             </Link>
@@ -287,7 +302,7 @@ export default function VendorListings() {
             <tbody>
               {listings.map((l) => {
                 const style = STATUS_STYLE[l.status];
-                const busy = busyId === l.id;
+                const busy = busyIds.has(l.id);
                 // A real rejection wins over the precomputed annotation: it is
                 // both fresher and authoritative, and it covers gates the
                 // annotation does not model.
@@ -327,7 +342,7 @@ export default function VendorListings() {
                           />
                         )}
                         <div style={{ minWidth: 0 }}>
-                          <Link to={`/vendor/products/${l.id}`} style={{ fontWeight: 600, color: 'var(--ws-text-primary)', textDecoration: 'none' }}>
+                          <Link to={`${productsBasePath}/${l.id}`} style={{ fontWeight: 600, color: 'var(--ws-text-primary)', textDecoration: 'none' }}>
                             {l.name}
                           </Link>
                           {l.city || l.state ? (
@@ -386,7 +401,7 @@ export default function VendorListings() {
                               {busy ? '…' : 'Publish'}
                             </button>
                           )}
-                          <Link to={`/vendor/products/${l.id}`} className="ws-btn ws-btn--sm ws-btn--secondary">
+                          <Link to={`${productsBasePath}/${l.id}`} className="ws-btn ws-btn--sm ws-btn--secondary">
                             Edit
                           </Link>
                           <button

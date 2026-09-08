@@ -279,44 +279,57 @@ export interface UploadedImage {
   cloudflareId?: string;
 }
 
-export const listingService = {
-  list: (filters?: ListingFilters) =>
-    api.get<{ success: boolean; data: Listing[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
-      '/stores/me/listings',
-      filters as Record<string, unknown>,
-    ),
+/**
+ * Listing management against a configurable base path. The same endpoints
+ * exist for a personal store (`/stores/me/listings`) and for each mall
+ * substore (`/malls/me/substores/:id/listings`) — the server resolves both to
+ * the same controllers — so the vendor product pages can manage either
+ * catalogue through this one shape.
+ */
+export function createListingApi(base: string) {
+  return {
+    list: (filters?: ListingFilters) =>
+      api.get<{ success: boolean; data: Listing[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
+        base,
+        filters as Record<string, unknown>,
+      ),
 
-  get: (id: string) => api.get<ApiResponse<Listing>>(`/stores/me/listings/${id}`),
+    get: (id: string) => api.get<ApiResponse<Listing>>(`${base}/${id}`),
 
-  create: (data: ListingPayload) => api.post<ApiResponse<Listing>>('/stores/me/listings', data),
+    create: (data: ListingPayload) => api.post<ApiResponse<Listing>>(base, data),
 
-  update: (id: string, data: Partial<ListingPayload>) =>
-    api.patch<ApiResponse<Listing>>(`/stores/me/listings/${id}`, data),
+    update: (id: string, data: Partial<ListingPayload>) =>
+      api.patch<ApiResponse<Listing>>(`${base}/${id}`, data),
 
-  remove: (id: string) => api.delete<ApiResponse<null>>(`/stores/me/listings/${id}`),
+    remove: (id: string) => api.delete<ApiResponse<null>>(`${base}/${id}`),
 
-  /**
-   * Publishing enforces the category's requirements, so a 400 here is a list
-   * of what is missing rather than a failure to surface as "something broke".
-   */
-  publish: (id: string) => api.post<ApiResponse<PublishResult>>(`/stores/me/listings/${id}/publish`),
+    /**
+     * Publishing enforces the category's requirements, so a 400 here is a list
+     * of what is missing rather than a failure to surface as "something broke".
+     */
+    publish: (id: string) => api.post<ApiResponse<PublishResult>>(`${base}/${id}/publish`),
 
-  unpublish: (id: string) =>
-    api.post<ApiResponse<{ id: string; status: ListingStatus }>>(`/stores/me/listings/${id}/unpublish`),
+    unpublish: (id: string) =>
+      api.post<ApiResponse<{ id: string; status: ListingStatus }>>(`${base}/${id}/unpublish`),
 
-  /** GET form-spec — the attributes this category expects, and their options. */
-  getFormSpec: (categoryId: string) =>
-    api.get<ApiResponse<CategoryFormSpec>>('/stores/me/listings/form-spec', { categoryId }),
+    /** GET form-spec — the attributes this category expects, and their options. */
+    getFormSpec: (categoryId: string) =>
+      api.get<ApiResponse<CategoryFormSpec>>(`${base}/form-spec`, { categoryId }),
 
-  /** Multipart upload; field name is `images`. */
-  uploadImages: (files: File[]) => {
-    const form = new FormData();
-    files.forEach((f) => form.append('images', f));
-    return apiClient
-      .post<ApiResponse<UploadedImage[]>>('/stores/me/listings/upload/images', form)
-      .then((res) => res.data);
-  },
-};
+    /** Multipart upload; field name is `images`. */
+    uploadImages: (files: File[]) => {
+      const form = new FormData();
+      files.forEach((f) => form.append('images', f));
+      return apiClient
+        .post<ApiResponse<UploadedImage[]>>(`${base}/upload/images`, form)
+        .then((res) => res.data);
+    },
+  };
+}
+
+export type ListingApi = ReturnType<typeof createListingApi>;
+
+export const listingService = createListingApi('/stores/me/listings');
 
 export const storeService = {
   /** GET /stores/plans — public, so pricing can be shown before signup. */
@@ -378,6 +391,11 @@ export interface PublicStore {
   /** The trust signals that replace an on-platform transaction record. */
   responseRate: number | null;
   avgResponseMins: number | null;
+  /** Present once the malls feature ships; optional to tolerate deploy skew. */
+  kind?: 'PERSONAL' | 'MALL_SUBSTORE';
+  mallId?: string | null;
+  /** Substores link back to their mall ("Part of <Mall>"). */
+  mall?: { name: string; slug: string; status: string } | null;
   createdAt: string;
 }
 

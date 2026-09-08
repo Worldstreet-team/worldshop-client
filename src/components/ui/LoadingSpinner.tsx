@@ -47,9 +47,8 @@ export default function LoadingSpinner({
         }}
       >
         <div className="ws-loader" aria-hidden>
-          <span className="ws-loader__eyebrow">Worldstreet</span>
           <span className="ws-loader__word">
-            shop<span className="ws-loader__dot">.</span>
+            worldstore<span className="ws-loader__dot">.</span>
           </span>
           <span className="ws-loader__bar" />
         </div>

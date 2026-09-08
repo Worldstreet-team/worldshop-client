@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { PackageSearch, ShieldCheck } from 'lucide-react';
+import { Building2, PackageSearch, Phone, ShieldCheck } from 'lucide-react';
 import { publicMarketplace, type PublicStore, type Listing } from '@/services/storeService';
 import SellerCard from '@/components/marketplace/SellerCard';
 import ListingCard from '@/components/marketplace/ListingCard';
 import ReportButton from '@/components/marketplace/ReportButton';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { waLink } from '@/utils/listingFormat';
 
 /**
  * Public storefront.
@@ -33,6 +34,9 @@ export default function StorePage() {
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const loading = loadedKey !== `${slug}|${page}`;
   const [notFound, setNotFound] = useState(false);
+  // Revealed on click rather than rendered outright — same reasoning as
+  // ContactSeller's phone number: keeps it away from casual scrapers.
+  const [showPhone, setShowPhone] = useState(false);
 
   usePageTitle(notFound ? 'Store not available' : store?.name);
 
@@ -138,6 +142,17 @@ export default function StorePage() {
               <div style={{ minWidth: 0 }}>
                 <h1 className="ws-h1">{store.name}</h1>
                 {location && <p className="ws-caption ws-muted">{location}</p>}
+                {/* A substore links back to its mall — but only while the mall
+                    itself is visible, so a lapsed mall is not advertised. */}
+                {store.mall && (store.mall.status === 'ACTIVE' || store.mall.status === 'GRACE') && (
+                  <p className="ws-caption" style={{ marginTop: 4 }}>
+                    <Building2 size={12} aria-hidden style={{ verticalAlign: -2, marginRight: 4 }} />
+                    Part of{' '}
+                    <Link to={`/malls/${store.mall.slug}`} style={{ fontWeight: 600 }}>
+                      {store.mall.name}
+                    </Link>
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -211,11 +226,21 @@ export default function StorePage() {
               <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Contact</h2>
               <div className="ws-stack">
                 {store.phone && (
-                  <a href={`tel:${store.phone}`} className="ws-plink ws-num">{store.phone}</a>
+                  showPhone ? (
+                    <a href={`tel:${store.phone}`} className="ws-plink ws-num">
+                      <Phone size={14} aria-hidden />
+                      {store.phone}
+                    </a>
+                  ) : (
+                    <button type="button" className="ws-plink" onClick={() => setShowPhone(true)}>
+                      <Phone size={14} aria-hidden />
+                      Show number
+                    </button>
+                  )
                 )}
                 {store.whatsapp && (
                   <a
-                    href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`}
+                    href={waLink(store.whatsapp)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ws-plink"
@@ -238,7 +263,7 @@ export default function StorePage() {
           <div className="ws-card">
             <div className="ws-safety">
               <ShieldCheck size={16} aria-hidden />
-              <span>WorldStreet does not handle payment or delivery. Check items before paying.</span>
+              <span>WorldStore does not handle payment or delivery. Check items before paying.</span>
             </div>
           </div>
 

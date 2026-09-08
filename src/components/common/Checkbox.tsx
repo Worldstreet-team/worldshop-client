@@ -49,8 +49,13 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             id={checkboxId}
             className="ws-check__input"
             aria-invalid={!!error}
+            // Both ids when both are present — the description stays visible
+            // alongside an error (unlike Input/Select, which hide their hint),
+            // so a screen-reader user should hear both too, not just the error.
             aria-describedby={
-              error ? `${checkboxId}-error` : description ? `${checkboxId}-description` : undefined
+              [description ? `${checkboxId}-description` : null, error ? `${checkboxId}-error` : null]
+                .filter(Boolean)
+                .join(' ') || undefined
             }
             {...props}
           />

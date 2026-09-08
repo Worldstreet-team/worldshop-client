@@ -10,7 +10,7 @@ import type { ApiResponse } from '@/types/common.types';
  * deduplicated or held to account.
  */
 
-export type ReportTargetType = 'LISTING' | 'STORE' | 'REVIEW';
+export type ReportTargetType = 'LISTING' | 'STORE' | 'MALL' | 'REVIEW';
 
 export type ReportReason =
   | 'SCAM'
@@ -41,6 +41,13 @@ export const REASONS_BY_TARGET: Record<ReportTargetType, Array<{ value: ReportRe
     { value: 'SCAM', label: 'Looks like a scam seller' },
     { value: 'MISLEADING', label: 'Misrepresenting who they are' },
     { value: 'PROHIBITED', label: 'Selling illegal or prohibited items' },
+    { value: 'OFFENSIVE', label: 'Offensive content' },
+    { value: 'OTHER', label: 'Something else' },
+  ],
+  MALL: [
+    { value: 'SCAM', label: 'Looks like a scam operation' },
+    { value: 'MISLEADING', label: 'Misrepresenting who they are' },
+    { value: 'PROHIBITED', label: 'Hosting illegal or prohibited sellers' },
     { value: 'OFFENSIVE', label: 'Offensive content' },
     { value: 'OTHER', label: 'Something else' },
   ],
@@ -75,8 +82,57 @@ export interface AdminReportStats {
   }>;
 }
 
+/** One row per reported thing, ranked by distinct reporters — the queue an
+ *  admin works from. Mirrors the server's QueueEntry. */
+export interface AdminQueueEntry {
+  targetType: ReportTargetType;
+  targetId: string;
+  label: string;
+  targetStatus: string;
+  reportCount: number;
+  reasons: ReportReason[];
+  firstReportedAt: string;
+  lastReportedAt: string;
+  reportIds: string[];
+}
+
+export type ReportAdminAction =
+  | 'REMOVE_LISTING'
+  | 'SUSPEND_STORE'
+  | 'BAN_STORE'
+  | 'SUSPEND_MALL'
+  | 'BAN_MALL'
+  | 'REMOVE_REVIEW';
+
+/** Actions an admin can take per target type; the server enforces the same map. */
+export const ACTIONS_BY_TARGET: Record<ReportTargetType, Array<{ value: ReportAdminAction; label: string }>> = {
+  LISTING: [{ value: 'REMOVE_LISTING', label: 'Remove listing' }],
+  STORE: [
+    { value: 'SUSPEND_STORE', label: 'Suspend store' },
+    { value: 'BAN_STORE', label: 'Ban store' },
+  ],
+  MALL: [
+    { value: 'SUSPEND_MALL', label: 'Suspend mall' },
+    { value: 'BAN_MALL', label: 'Ban mall' },
+  ],
+  REVIEW: [{ value: 'REMOVE_REVIEW', label: 'Remove review' }],
+};
+
 export const adminReportService = {
   stats: () => api.get<ApiResponse<AdminReportStats>>('/admin/reports/stats'),
+
+  queue: (targetType?: ReportTargetType) =>
+    api.get<{ success: boolean; data: AdminQueueEntry[]; meta: { openTargets: number } }>(
+      '/admin/reports/queue',
+      targetType ? { targetType } : undefined,
+    ),
+
+  // Acting on any one report closes every open report on the same target.
+  action: (reportId: string, action: ReportAdminAction, note?: string) =>
+    api.post<ApiResponse<{ reportsClosed: number }>>(`/admin/reports/${reportId}/action`, { action, note }),
+
+  dismiss: (reportId: string, note?: string) =>
+    api.post<ApiResponse<{ dismissed: number }>>(`/admin/reports/${reportId}/dismiss`, { note }),
 };
 
 export const reportService = {

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, Star, Store } from 'lucide-react';
 import type { PublicStore } from '@/services/storeService';
+import { isVerifiedTier } from '@/utils/sellerVerification';
 
 /**
  * Seller spotlight for the home page: banner with an overlapping avatar, one
@@ -36,7 +37,7 @@ export default function StoreCard({ store }: { store: PublicStore }) {
 
         <h3 className="ws-storecard__name">
           {store.name}
-          {store.verificationTier !== 'UNVERIFIED' && (
+          {isVerifiedTier(store.verificationTier) && (
             <BadgeCheck size={15} aria-label="Verified store" />
           )}
         </h3>

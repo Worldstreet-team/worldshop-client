@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import {
-  X, Heart, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus,
-  Smartphone, Car, Shirt, House, ShoppingBag, GraduationCap, Users, Zap,
+  X, Heart, Home, Store, Compass, User, MessageCircle, LogOut, LogIn, UserPlus, Building2,
+  Smartphone, Car, Shirt, House, ShoppingBag, GraduationCap, Users, Zap, LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
 import { useUIStore } from '@/store/uiStore';
@@ -98,13 +98,12 @@ export default function MobileMenu() {
         inert={!isMobileMenuOpen || undefined}
       >
         <div className="ws-drawer__head">
-          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldStreet Shop home">
+          <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldStore home">
             {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
-                "WorldStreet" Poppins SemiBold 15 + gold app eyebrow. */}
+                "WorldStore" Poppins SemiBold 15 + gold app eyebrow. */}
             <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
-              <span className="ws-brand__word">WorldStreet</span>
-              <span className="ws-brand__eyebrow">Shop</span>
+              <span className="ws-brand__word">WorldStore</span>
             </span>
           </Link>
           <button className="ws-iconbtn" onClick={closeMobileMenu} aria-label="Close menu">
@@ -132,6 +131,10 @@ export default function MobileMenu() {
           <Link to="/listings" className="ws-drawer__link" onClick={closeMobileMenu}>
             <ShoppingBag size={18} aria-hidden />
             Browse listings
+          </Link>
+          <Link to="/malls" className="ws-drawer__link" onClick={closeMobileMenu}>
+            <Building2 size={18} aria-hidden />
+            Malls
           </Link>
           <Link to="/saved" className="ws-drawer__link" onClick={closeMobileMenu}>
             <Heart size={18} aria-hidden />
@@ -217,8 +220,23 @@ export default function MobileMenu() {
               </Link>
               <Link to="/vendor" className="ws-drawer__link" onClick={closeMobileMenu}>
                 <Store size={18} aria-hidden />
-                Sell on WorldStreet
+                Sell on WorldStore
               </Link>
+              {/* Sits under Sell because it is the tier above it — the drawer
+                  is the only labelled route into the mall product on mobile. */}
+              <Link to="/mall" className="ws-drawer__link" onClick={closeMobileMenu}>
+                <Building2 size={18} aria-hidden />
+                Open a mall
+              </Link>
+              {/* The Header's admin link is desktop-only (hidden below the
+                  breakpoint that switches over to this drawer), so this is
+                  the only way an admin on a phone or tablet reaches /admin. */}
+              {user?.role === 'ADMIN' && (
+                <Link to="/admin" className="ws-drawer__link" onClick={closeMobileMenu}>
+                  <LayoutGrid size={18} aria-hidden />
+                  Admin console
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}
