@@ -50,7 +50,17 @@ export default function AdminUsers() {
     try {
       const updated = await adminService.updateUserRole(user.id, role);
       setUsers((current) => current.map((item) => item.id === updated.id ? updated : item));
-      addToast({ type: 'success', message: `User role updated to ${role}.` });
+
+      // A new admin can only sign in once they've set a password from the
+      // emailed link, so a failed send is worth flagging rather than burying.
+      if (updated.setupEmailSent === false) {
+        addToast({
+          type: 'error',
+          message: `Promoted, but the password setup email to ${user.email} failed to send. They can request a link from the admin sign-in page.`,
+        });
+      } else {
+        addToast({ type: 'success', message: `User role updated to ${role}.` });
+      }
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Failed to update role') });
     } finally {

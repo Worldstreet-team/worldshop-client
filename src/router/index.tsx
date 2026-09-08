@@ -18,6 +18,7 @@ const LoginPage = lazy(() => import('@/pages/auth/Login'));
 const RegisterPage = lazy(() => import('@/pages/auth/Register'));
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPassword'));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPassword'));
+const SetupPasswordPage = lazy(() => import('@/pages/auth/SetupPassword'));
 
 // Protected Account Pages
 const AccountPage = lazy(() => import('@/pages/account/Account'));
@@ -31,6 +32,7 @@ const SavedPage = lazy(() => import('@/pages/marketplace/Saved'));
 const LegalPage = lazy(() => import('@/pages/Legal'));
 
 // Admin Pages
+const AdminLoginPage = lazy(() => import('@/pages/admin/Login'));
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'));
 const AdminCategories = lazy(() => import('@/pages/admin/Categories'));
 const AdminUsers = lazy(() => import('@/pages/admin/Users'));
@@ -156,6 +158,11 @@ const router = createBrowserRouter([
         path: 'reset-password',
         element: <SuspenseWrapper><ResetPasswordPage /></SuspenseWrapper>,
       },
+      // Where an emailed admin setup link lands.
+      {
+        path: 'setup-password',
+        element: <SuspenseWrapper><SetupPasswordPage /></SuspenseWrapper>,
+      },
       // Without this, /auth/anything-else rendered AuthLayout around an
       // empty Outlet — a blank page.
       { path: '*', element: <Navigate to="/auth/login" replace /> },
@@ -222,6 +229,19 @@ const router = createBrowserRouter([
       {
         path: '*',
         element: <Navigate to="/vendor" replace />,
+      },
+    ],
+  },
+  // Admin sign-in. Declared outside the gated /admin branch, or AdminRoute
+  // would bounce an unauthenticated admin away from the page they need.
+  {
+    path: '/admin/login',
+    element: <AuthLayout />,
+    errorElement: <RouteError />,
+    children: [
+      {
+        index: true,
+        element: <SuspenseWrapper><AdminLoginPage /></SuspenseWrapper>,
       },
     ],
   },

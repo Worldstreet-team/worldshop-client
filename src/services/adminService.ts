@@ -334,6 +334,11 @@ export interface AdminUser {
     vendorStatus: string | null;
     storeName: string | null;
     createdAt: string;
+    /**
+     * Present only on the response to a promotion: whether the new admin's
+     * password setup link actually went out. The promotion succeeds either way.
+     */
+    setupEmailSent?: boolean;
 }
 
 export interface AdminUserFilters {

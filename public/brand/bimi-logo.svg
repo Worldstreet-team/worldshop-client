@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BIMI logo for WorldStore.
+
+  This is NOT a general-purpose logo file. BIMI requires SVG Tiny 1.2 Portable/Secure,
+  which is why it looks stricter than public/images/logo-light.svg that it is drawn from:
+  version and baseProfile must be declared, a <title> is mandatory, the viewBox must be
+  square and start at 0 0, and there can be no scripts, animation, external references,
+  raster images, or embedded fonts. Editing this in a design tool will usually add
+  attributes that break validation, so change the numbers by hand.
+
+  Serve it over HTTPS and reference it from the DNS record:
+    default._bimi.worldstreetgold.com  TXT
+    "v=BIMI1; l=https://shop.worldstreetgold.com/brand/bimi-logo.svg; a="
+  Add the certificate URL to a= once a VMC exists; Gmail needs one, Yahoo and Apple do not.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 100 100">
+  <title>WorldStore</title>
+  <rect x="0" y="0" width="100" height="100" fill="#FED700"/>
+  <polygon points="17,27 40,73 53,30" fill="#111111"/>
+  <polygon points="47,30 60,73 83,27" fill="#111111"/>
+</svg>

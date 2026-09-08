@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { useClerk } from '@clerk/clerk-react';
 import {
   LayoutDashboard, FolderTree, Users, Store, Menu, LogOut,
   ChevronLeft, ChevronRight, type LucideIcon,
 } from 'lucide-react';
-import { useAuthStore } from '@/store/authStore';
+import { useAdminAuthStore } from '@/store/adminAuthStore';
 import ToastContainer from '@/components/ui/ToastContainer';
 
 const navItems: { path: string; label: string; Icon: LucideIcon }[] = [
@@ -20,8 +19,9 @@ const navItems: { path: string; label: string; Icon: LucideIcon }[] = [
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuthStore();
-  const { signOut } = useClerk();
+  // The console has its own session, separate from any Clerk session the same
+  // browser may hold as a shopper — signing out here leaves that one alone.
+  const { admin, logout } = useAdminAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,9 +32,8 @@ export default function AdminLayout() {
   }, [mobileOpen]);
 
   const handleLogout = async () => {
-    await signOut();
-    logout();
-    navigate('/');
+    await logout();
+    navigate('/admin/login', { replace: true });
   };
 
   const close = () => setMobileOpen(false);
@@ -104,7 +103,7 @@ export default function AdminLayout() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
             <span className="ws-caption ws-muted">
-              {user?.firstName} {user?.lastName}
+              {admin?.firstName} {admin?.lastName}
             </span>
             <button onClick={handleLogout} className="ws-btn ws-btn--sm ws-btn--ghost">
               <LogOut size={14} aria-hidden />

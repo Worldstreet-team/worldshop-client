@@ -116,13 +116,40 @@ identity-hub path, still wired but pointing at a suspended service.
 
 Route gates:
 - `ProtectedRoute` — signed in.
-- `AdminRoute` — `user.role === 'ADMIN'` from `authStore`.
+- `AdminRoute` — **not Clerk**. See "Admin console auth" below.
 - `VendorRoute` — **fetches `GET /stores/me`**. Owning a store is what makes someone a
   seller; the legacy `isVendor` profile flag is no longer set for anyone. 404 → redirect to
   `/vendor/register`. `BANNED`/`SUSPENDED` render their own states.
 
-So `/vendor/*` and `/admin/*` need a signed-in Clerk user — they are not reachable
-anonymously even with the mock running.
+So `/vendor/*` needs a signed-in Clerk user — it is not reachable anonymously.
+
+### Admin console auth
+
+`/admin/*` does **not** use Clerk. Admins hold a second, separate credential: an admin
+password, and an httpOnly session cookie issued by the API. Being signed in to Clerk as a
+shopper grants no admin access at all, and signing out of the console leaves the Clerk
+session alone.
+
+- No admin ever starts with a known password. `UserProfile.passwordHash` is null until the
+  person follows a **single-use, expiring link** emailed to them — so there is no shared
+  default to try against a list of admin emails. A promotion (`PATCH /admin/users/:id/role`)
+  mails that link; so does the first sign-in attempt on a passwordless account, and
+  `/auth/forgot-password`, which sends a *setup* link if there is no password and a *reset*
+  link if there is.
+- `AdminRoute` asks the server (`GET /auth/admin/me`) rather than reading a role. The old
+  gate read `user.role` out of `authStore`, which persists to `localStorage` and can be
+  edited; `adminAuthStore` is deliberately **not** persisted.
+- `apiClient` sets `withCredentials: true` so the cookie travels, and skips its Clerk-token
+  401 retry for `/auth/*` — a 401 there is a real answer, not a stale token.
+- Pages: `/admin/login` (declared outside the gated `/admin` branch, or the gate would
+  bounce admins away from it), `/auth/setup-password`, `/auth/reset-password`,
+  `/auth/forgot-password`.
+- **The cookie is `SameSite=Lax`, so client and API must share a registrable domain.**
+  `shop.worldstreetgold.com` → `shop-api.worldstreetgold.com` is fine, and so is
+  `localhost:5173` → `localhost:3000`. Pointing `VITE_API_BASE_URL` at a raw
+  `*.onrender.com` host makes the cookie cross-site and admin login silently fails — so
+  testing admin login locally means running worldshop-server locally, not against the
+  deployed API.
 
 ### API layer
 

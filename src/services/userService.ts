@@ -40,13 +40,29 @@ export const authService = {
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.post<ApiResponse<{ message: string }>>('/auth/change-password', data),
 
-  // Request password reset
+  // Request a password link. One endpoint for both cases: an admin who has
+  // never set a password gets a setup link, one who has gets a reset link.
   requestPasswordReset: (email: string) =>
     api.post<ApiResponse<{ message: string }>>('/auth/forgot-password', { email }),
 
   // Reset password
   resetPassword: (data: { token: string; password: string }) =>
     api.post<ApiResponse<{ message: string }>>('/auth/reset-password', data),
+
+  // ─── Admin console credentials ────────────────────────────────
+  // The console does not use Clerk. These endpoints set and read an httpOnly
+  // session cookie, which is why apiClient sends credentials.
+
+  // Claim a setup link and choose a first password
+  setupPassword: (data: { token: string; password: string }) =>
+    api.post<ApiResponse<{ message: string }>>('/auth/setup-password', data),
+
+  adminLogin: (data: { email: string; password: string }) =>
+    api.post<ApiResponse<{ user: User }>>('/auth/admin/login', data),
+
+  adminMe: () => api.get<ApiResponse<{ user: User }>>('/auth/admin/me'),
+
+  adminLogout: () => api.post<ApiResponse<null>>('/auth/admin/logout'),
 };
 
 export const addressService = {

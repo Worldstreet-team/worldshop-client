@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authService } from '@/services/userService';
 
-const resetPasswordSchema = z.object({
+const setupPasswordSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -14,9 +14,14 @@ const resetPasswordSchema = z.object({
   path: ['confirmPassword'],
 });
 
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type SetupPasswordFormData = z.infer<typeof setupPasswordSchema>;
 
-export default function ResetPasswordPage() {
+/**
+ * Where an emailed admin setup link lands. Same shape as the reset page, but a
+ * different endpoint and different copy: this is a first password, not a
+ * replacement, so nothing is being overwritten.
+ */
+export default function SetupPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
@@ -29,8 +34,8 @@ export default function ResetPasswordPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+  } = useForm<SetupPasswordFormData>({
+    resolver: zodResolver(setupPasswordSchema),
   });
 
   if (!token) {
@@ -40,7 +45,7 @@ export default function ResetPasswordPage() {
           <AlertCircle size={26} aria-hidden />
         </span>
         <h1 className="ws-h2">Invalid link</h1>
-        <p className="ws-body ws-muted">This password reset link is invalid or has expired.</p>
+        <p className="ws-body ws-muted">This password setup link is invalid or has expired.</p>
         <Link to="/auth/forgot-password" className="ws-btn ws-btn--sm ws-btn--primary">
           Request a new link
         </Link>
@@ -48,16 +53,16 @@ export default function ResetPasswordPage() {
     );
   }
 
-  const onSubmit = async (data: ResetPasswordFormData) => {
+  const onSubmit = async (data: SetupPasswordFormData) => {
     setIsLoading(true);
     setError(null);
     try {
-      await authService.resetPassword({ token, password: data.password });
+      await authService.setupPassword({ token, password: data.password });
       navigate('/admin/login', {
-        state: { message: 'Password reset successful. Please sign in.' }
+        state: { message: 'Password created. Please sign in.' },
       });
     } catch (err) {
-      setError((err as { message: string }).message || 'Failed to reset password');
+      setError((err as { message: string }).message || 'Failed to set your password');
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +71,10 @@ export default function ResetPasswordPage() {
   return (
     <div className="ws-stack--lg">
       <div>
-        <h1 className="ws-h2">Reset password</h1>
-        <p className="ws-body ws-muted">Enter your new password below.</p>
+        <h1 className="ws-h2">Create your admin password</h1>
+        <p className="ws-body ws-muted">
+          Choose a password for the admin console. You'll use it to sign in from now on.
+        </p>
       </div>
 
       {error && (
@@ -79,13 +86,14 @@ export default function ResetPasswordPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
         <div className="ws-formfield">
-          <label htmlFor="password" className="ws-formfield__label">New Password</label>
+          <label htmlFor="password" className="ws-formfield__label">Password</label>
           {/* The reveal toggle is a real button inside the group, so it needs
               pointer events that .ws-inputgroup__icon deliberately removes. */}
           <div className="ws-inputgroup">
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               placeholder="At least 8 characters"
               className={`ws-field ${errors.password ? 'ws-field--invalid' : ''}`}
               style={{ paddingRight: 42 }}
@@ -109,6 +117,7 @@ export default function ResetPasswordPage() {
           <input
             id="confirmPassword"
             type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
             placeholder="Confirm your password"
             className={`ws-field ${errors.confirmPassword ? 'ws-field--invalid' : ''}`}
             {...register('confirmPassword')}
@@ -119,12 +128,12 @@ export default function ResetPasswordPage() {
         </div>
 
         <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={isLoading}>
-          {isLoading ? 'Resetting…' : 'Reset password'}
+          {isLoading ? 'Saving…' : 'Create password'}
         </button>
       </form>
 
       <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
-        Remember your password?{' '}
+        Already set one up?{' '}
         <Link to="/admin/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
       </p>
     </div>

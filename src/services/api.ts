@@ -20,6 +20,11 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // The admin console authenticates with an httpOnly session cookie set by the
+  // API, not a Clerk token, so credentialed requests are required for /admin
+  // and /auth to work at all. Harmless elsewhere: the cookie only exists on the
+  // API origin, and the server's CORS allowlist already permits credentials.
+  withCredentials: true,
 });
 
 // Request interceptor - attach Clerk session token
@@ -66,9 +71,15 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    // Admin credential auth is cookie-based and has nothing to do with Clerk, so
+    // a 401 there is a real answer ("not signed in", "session expired"), not a
+    // stale token. Retrying would replace the server's message with a
+    // misleading "Session expired" and hide the reason from the login form.
+    const isAdminAuthRoute = (error.config?.url ?? '').startsWith('/auth/');
+
     // W5 FIX: On 401, attempt one token refresh before giving up
     type RetriableConfig = typeof error.config & { _retried?: boolean };
-    if (error.response?.status === 401 && error.config && !(error.config as RetriableConfig)._retried) {
+    if (!isAdminAuthRoute && error.response?.status === 401 && error.config && !(error.config as RetriableConfig)._retried) {
       (error.config as RetriableConfig)._retried = true;
       if (clerkGetToken) {
         try {
@@ -94,6 +105,10 @@ apiClient.interceptors.response.use(
       message: errorMessage,
       statusCode: error.response?.status,
       errors: (error.response?.data as { errors?: Record<string, string[]> })?.errors,
+      // Set by the admin login route when the account exists but has never had
+      // a password — the server has just mailed a setup link.
+      passwordSetupRequired:
+        (error.response?.data as { passwordSetupRequired?: boolean })?.passwordSetupRequired,
     });
   }
 );
@@ -110,10 +125,17 @@ export type NormalizedApiError = {
   statusCode?: number;
   /** Per-field messages from the server's zod validation, keyed by field path. */
   errors?: Record<string, string>;
+  /** Admin login only: the account has no password yet and a setup link was sent. */
+  passwordSetupRequired?: boolean;
 };
 
 export function toApiError(err: unknown, fallback: string): NormalizedApiError {
-  const e = (err ?? {}) as { message?: unknown; statusCode?: number; errors?: unknown };
+  const e = (err ?? {}) as {
+    message?: unknown;
+    statusCode?: number;
+    errors?: unknown;
+    passwordSetupRequired?: boolean;
+  };
   const errors =
     e.errors && typeof e.errors === 'object' && !Array.isArray(e.errors)
       ? (e.errors as Record<string, string>)
@@ -122,6 +144,7 @@ export function toApiError(err: unknown, fallback: string): NormalizedApiError {
     message: typeof e.message === 'string' && e.message ? e.message : fallback,
     statusCode: e.statusCode,
     errors,
+    passwordSetupRequired: e.passwordSetupRequired === true,
   };
 }
 

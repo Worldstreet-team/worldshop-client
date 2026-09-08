@@ -46,10 +46,10 @@ export default function ForgotPasswordPage() {
         </span>
         <h1 className="ws-h2">Check your email</h1>
         <p className="ws-body ws-muted">
-          We've sent password reset instructions to your email address.
+          If an admin account exists for that address, we've sent it a link.
           Please check your inbox.
         </p>
-        <Link to="/auth/login" className="ws-btn ws-btn--sm ws-btn--primary">
+        <Link to="/admin/login" className="ws-btn ws-btn--sm ws-btn--primary">
           Back to sign in
         </Link>
       </div>
@@ -59,9 +59,10 @@ export default function ForgotPasswordPage() {
   return (
     <div className="ws-stack--lg">
       <div>
-        <h1 className="ws-h2">Forgot password?</h1>
+        <h1 className="ws-h2">Admin password link</h1>
         <p className="ws-body ws-muted">
-          Enter your email address and we'll send you a link to reset your password.
+          Enter your email address and we'll send you a link to set or reset your
+          admin password.
         </p>
       </div>
 
@@ -92,7 +93,7 @@ export default function ForgotPasswordPage() {
 
       <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
         Remember your password?{' '}
-        <Link to="/auth/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
+        <Link to="/admin/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
       </p>
     </div>
   );
