@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Plus, Store, Trash2, X } from 'lucide-react';
+import { Package, Pencil, Plus, Store, Trash2, X } from 'lucide-react';
 import { mallService, type Substore } from '@/services/mallService';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { formatLocation } from '@/utils/locations';
+import CountrySelect from '@/components/location/CountrySelect';
+import StateSelect from '@/components/location/StateSelect';
 import { toApiError } from '@/services/api';
 import { useUIStore } from '@/store/uiStore';
 
 /**
- * Substore management. Creating one is deliberately light — name and an
+ * Store management. Creating one is deliberately light — name and an
  * optional location (it defaults to the mall's) — because the real work
- * happens in each substore's own listings console, linked per row.
+ * happens in each store's own listings console, linked per row.
+ *
+ * "Substore" survives in the types, service methods and API paths; the
+ * product calls these plain stores, so only what a user reads says "store".
  */
 
 const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
-  // DRAFT on a substore means owner-archived (it gave its plan slot back).
+  // DRAFT on a store means owner-archived (it gave its plan slot back).
   DRAFT: { cls: 'ws-badge--neutral', label: 'Archived' },
   ACTIVE: { cls: 'ws-badge--success', label: 'Live' },
   GRACE: { cls: 'ws-badge--warning', label: 'Grace' },
@@ -22,21 +27,39 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
   BANNED: { cls: 'ws-badge--danger', label: 'Banned' },
 };
 
+/**
+ * A store under a mall that has never been paid for is EXPIRED — the same
+ * status a lapsed store carries, because visibility cascades from the mall.
+ * Showing both as a red "Expired" is what made QA read an unpaid mall as a
+ * bug. Before the first payment it is not expired, it is not started yet.
+ */
+const NOT_ACTIVATED = { cls: 'ws-badge--neutral', label: 'Not activated' };
+
 export default function MallSubstores() {
   const [substores, setSubstores] = useState<Substore[]>([]);
+  // Null means "no cap on this plan"; undefined means not loaded yet.
+  const [limit, setLimit] = useState<number | null | undefined>(undefined);
+  const [mallNeverPaid, setMallNeverPaid] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
-  const [form, setForm] = useState({ name: '', description: '', state: '', city: '' });
+  const [form, setForm] = useState({ name: '', description: '', country: '', state: '', city: '' });
   const addToast = useUIStore((s) => s.addToast);
 
   const load = useCallback(async () => {
     try {
-      const res = await mallService.listSubstores();
+      // The mall comes along for the plan's store cap: without it the only
+      // way to discover the limit is to hit the server's 409.
+      const [res, mallRes] = await Promise.all([
+        mallService.listSubstores(),
+        mallService.getMyMall(),
+      ]);
       setSubstores(res.data);
+      setLimit(mallRes.data.subscription?.plan?.substoreLimit ?? null);
+      setMallNeverPaid(mallRes.data.status === 'DRAFT');
     } catch (err: unknown) {
-      addToast({ type: 'error', message: toApiError(err, 'Failed to load substores').message });
+      addToast({ type: 'error', message: toApiError(err, 'Failed to load stores').message });
     } finally {
       setLoading(false);
     }
@@ -49,7 +72,11 @@ export default function MallSubstores() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (form.name.trim().length < 3) {
-      addToast({ type: 'error', message: 'Substore name must be at least 3 characters' });
+      addToast({ type: 'error', message: 'Store name must be at least 3 characters' });
+      return;
+    }
+    if (form.country && !form.state.trim()) {
+      addToast({ type: 'error', message: 'Choose a state or region in that country' });
       return;
     }
     setCreating(true);
@@ -57,15 +84,16 @@ export default function MallSubstores() {
       await mallService.createSubstore({
         name: form.name.trim(),
         description: form.description.trim() || undefined,
-        state: form.state || undefined,
+        country: form.country || undefined,
+        state: form.state.trim() || undefined,
         city: form.city.trim() || undefined,
       });
-      addToast({ type: 'success', message: 'Substore created' });
-      setForm({ name: '', description: '', state: '', city: '' });
+      addToast({ type: 'success', message: 'Store created' });
+      setForm({ name: '', description: '', country: '', state: '', city: '' });
       setShowCreate(false);
       await load();
     } catch (err: unknown) {
-      addToast({ type: 'error', message: toApiError(err, 'Could not create the substore').message });
+      addToast({ type: 'error', message: toApiError(err, 'Could not create the store').message });
     } finally {
       setCreating(false);
     }
@@ -75,10 +103,10 @@ export default function MallSubstores() {
     setBusyIds((prev) => new Set(prev).add(s.id));
     try {
       await mallService.restoreSubstore(s.id);
-      addToast({ type: 'success', message: 'Substore restored — republish its listings when ready' });
+      addToast({ type: 'success', message: 'Store restored — republish its listings when ready' });
       await load();
     } catch (err: unknown) {
-      addToast({ type: 'error', message: toApiError(err, 'Could not restore the substore').message });
+      addToast({ type: 'error', message: toApiError(err, 'Could not restore the store').message });
     } finally {
       setBusyIds((prev) => {
         const next = new Set(prev);
@@ -89,7 +117,7 @@ export default function MallSubstores() {
   };
 
   const handleArchive = async (s: Substore) => {
-    if (!window.confirm(`Remove "${s.name}"? An empty substore is deleted; one with history is hidden instead.`)) {
+    if (!window.confirm(`Remove "${s.name}"? An empty store is deleted; one with history is hidden instead.`)) {
       return;
     }
     setBusyIds((prev) => new Set(prev).add(s.id));
@@ -97,11 +125,11 @@ export default function MallSubstores() {
       const res = await mallService.archiveSubstore(s.id);
       addToast({
         type: 'success',
-        message: res.data.deleted ? 'Substore deleted' : 'Substore archived (it had history worth keeping)',
+        message: res.data.deleted ? 'Store deleted' : 'Store archived (it had history worth keeping)',
       });
       await load();
     } catch (err: unknown) {
-      addToast({ type: 'error', message: toApiError(err, 'Could not remove the substore').message });
+      addToast({ type: 'error', message: toApiError(err, 'Could not remove the store').message });
     } finally {
       setBusyIds((prev) => {
         const next = new Set(prev);
@@ -111,24 +139,62 @@ export default function MallSubstores() {
     }
   };
 
+  // Archived stores gave their slot back, so they do not count — the same
+  // rule the server applies via Mall.substoreCount.
+  const usedSlots = substores.filter((s) => s.status !== 'DRAFT').length;
+  const atCap = limit != null && usedSlots >= limit;
+
   return (
     <div className="ws-page">
       <div className="ws-page__head">
         <div>
-          <h1 className="ws-page__title">Substores</h1>
-          <p className="ws-page__sub">The stores inside your mall — all covered by one subscription.</p>
+          <h1 className="ws-page__title">Stores</h1>
+          <p className="ws-page__sub">
+            The stores inside your mall — all covered by one subscription.
+            {limit != null && (
+              <>
+                {' '}
+                <span className="ws-num">{usedSlots} of {limit}</span> used.
+              </>
+            )}
+          </p>
         </div>
-        <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={() => setShowCreate((v) => !v)}>
+        <button
+          className="ws-btn ws-btn--sm ws-btn--primary"
+          onClick={() => setShowCreate((v) => !v)}
+          disabled={atCap && !showCreate}
+          title={atCap ? `Your plan allows up to ${limit} stores` : undefined}
+        >
           {showCreate ? <X size={14} aria-hidden /> : <Plus size={14} aria-hidden />}
-          {showCreate ? 'Close' : 'Add Substore'}
+          {showCreate ? 'Close' : 'Add Store'}
         </button>
       </div>
+
+      {mallNeverPaid && substores.length > 0 && (
+        <div className="ws-alert" role="status" style={{ marginBottom: 'var(--ws-space-4)' }}>
+          <span>
+            None of these stores is visible to buyers yet — your mall
+            subscription has not been activated. Activate it from the{' '}
+            <Link to="/mall" style={{ color: 'inherit', fontWeight: 600 }}>dashboard</Link>{' '}
+            and every store here goes live with it.
+          </span>
+        </div>
+      )}
+
+      {atCap && !showCreate && (
+        <div className="ws-alert" role="status" style={{ marginBottom: 'var(--ws-space-4)' }}>
+          <span>
+            You have used all {limit} stores on your plan. Remove one to free a
+            slot, or archive a store you are not trading from.
+          </span>
+        </div>
+      )}
 
       {showCreate && (
         <form className="ws-card ws-stack--md" style={{ marginBottom: 'var(--ws-space-4)' }} onSubmit={handleCreate}>
           <div className="ws-formgrid">
             <div className="ws-formfield">
-              <label htmlFor="ss-name" className="ws-formfield__label">Substore Name *</label>
+              <label htmlFor="ss-name" className="ws-formfield__label">Store Name *</label>
               <input
                 id="ss-name"
                 type="text"
@@ -139,18 +205,23 @@ export default function MallSubstores() {
               />
             </div>
             <div className="ws-formfield">
-              <label htmlFor="ss-state" className="ws-formfield__label">State</label>
-              <select
+              <label htmlFor="ss-country" className="ws-formfield__label">Country</label>
+              <CountrySelect
+                id="ss-country"
+                value={form.country}
+                placeholder="Same as the mall"
+                onChange={(e) => setForm((f) => ({ ...f, country: e.target.value, state: '' }))}
+              />
+            </div>
+            <div className="ws-formfield">
+              <label htmlFor="ss-state" className="ws-formfield__label">State / Region</label>
+              <StateSelect
                 id="ss-state"
-                className="ws-select"
+                country={form.country}
                 value={form.state}
+                placeholder="Same as the mall"
                 onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-              >
-                <option value="">Same as the mall</option>
-                {NIGERIAN_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              />
             </div>
             <div className="ws-formfield">
               <label htmlFor="ss-city" className="ws-formfield__label">City / Area</label>
@@ -168,7 +239,7 @@ export default function MallSubstores() {
               <textarea
                 id="ss-desc"
                 className="ws-textarea"
-                placeholder="What does this substore sell?"
+                placeholder="What does this store sell?"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />
@@ -176,7 +247,7 @@ export default function MallSubstores() {
           </div>
           <div>
             <button type="submit" className="ws-btn ws-btn--primary" disabled={creating}>
-              {creating ? 'Creating…' : 'Create Substore'}
+              {creating ? 'Creating…' : 'Create Store'}
             </button>
           </div>
         </form>
@@ -187,20 +258,23 @@ export default function MallSubstores() {
       ) : substores.length === 0 ? (
         <div className="ws-empty">
           <div className="ws-empty__icon"><Store size={26} aria-hidden /></div>
-          <h2 className="ws-title">No substores yet</h2>
+          <h2 className="ws-title">No stores yet</h2>
           <p className="ws-caption ws-muted" style={{ maxWidth: '44ch' }}>
-            A substore is a full storefront — its own page, catalogue, reviews
+            A store is a full storefront — its own page, catalogue, reviews
             and messages. Create your first one to start filling your mall.
           </p>
           <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={() => setShowCreate(true)}>
             <Plus size={14} aria-hidden />
-            Add Substore
+            Add Store
           </button>
         </div>
       ) : (
         <div className="ws-stack--sm">
           {substores.map((s) => {
-            const badge = STATUS_BADGE[s.status] ?? STATUS_BADGE.DRAFT;
+            const badge =
+              mallNeverPaid && s.status === 'EXPIRED'
+                ? NOT_ACTIVATED
+                : STATUS_BADGE[s.status] ?? STATUS_BADGE.DRAFT;
             const busy = busyIds.has(s.id);
             return (
               <div
@@ -214,7 +288,7 @@ export default function MallSubstores() {
                 <div style={{ flex: 1, minWidth: 160 }}>
                   <p style={{ fontWeight: 600, margin: 0 }}>{s.name}</p>
                   <p className="ws-caption ws-muted" style={{ margin: 0 }}>
-                    {[s.city, s.state].filter(Boolean).join(', ') || '—'}
+                    {formatLocation([s.city, s.state], s.country) || '—'}
                     {typeof s.listingCount === 'number' && ` · ${s.listingCount} listing${s.listingCount === 1 ? '' : 's'}`}
                   </p>
                 </div>
@@ -232,9 +306,16 @@ export default function MallSubstores() {
                     </button>
                   ) : (
                     <>
-                      <Link to={`/mall/substores/${s.id}/products`} className="ws-btn ws-btn--sm ws-btn--secondary">
+                      <Link to={`/mall/stores/${s.id}/products`} className="ws-btn ws-btn--sm ws-btn--secondary">
                         <Package size={14} aria-hidden />
                         Listings
+                      </Link>
+                      <Link
+                        to={`/mall/stores/${s.id}/edit`}
+                        className="ws-btn ws-btn--sm ws-btn--secondary"
+                      >
+                        <Pencil size={14} aria-hidden />
+                        Edit
                       </Link>
                       <Link to={`/stores/${s.slug}`} className="ws-btn ws-btn--sm ws-btn--ghost">
                         View

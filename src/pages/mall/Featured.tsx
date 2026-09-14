@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { mallService } from '@/services/mallService';
 import { type Listing } from '@/services/storeService';
@@ -12,7 +12,18 @@ const MAX_FEATURED = 12;
 /**
  * Featured products picker: up to 12 published listings from any of the
  * mall's substores, shown as the hero rail of the public mall page.
+ *
+ * Selections autosave. They used to sit behind a Save button in the page
+ * header, far from the grid, while clicking a card stamped it "Featured"
+ * immediately — so the page looked saved when it was not, and leaving threw
+ * the selection away. QA reported that as "featured products are not stored
+ * in the database"; the write was fine, nobody had pressed the button.
  */
+
+/** Order-independent identity for a selection, for "has this been saved?". */
+const keyOf = (ids: Iterable<string>) => [...ids].sort().join(',');
+
+type SaveState = 'clean' | 'pending' | 'saving' | 'error';
 
 interface PoolItem extends Listing {
   substoreName: string;
@@ -22,8 +33,15 @@ export default function MallFeatured() {
   const [pool, setPool] = useState<PoolItem[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<SaveState>('clean');
   const addToast = useUIStore((s) => s.addToast);
+
+  // What the server currently holds, and the live selection — both as refs so
+  // the unmount flush below reads the latest values rather than the ones
+  // captured when the effect was created.
+  const savedKeyRef = useRef('');
+  const selectedRef = useRef<Set<string>>(new Set());
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -39,7 +57,15 @@ export default function MallFeatured() {
       // invisible here, and keeping it selected would make every Save fail
       // the server's published-only validation with no way to un-tick it.
       const poolIds = new Set(items.map((l) => l.id));
-      setSelected(new Set((mallRes.data.featuredListingIds ?? []).filter((id) => poolIds.has(id))));
+      const seed = new Set((mallRes.data.featuredListingIds ?? []).filter((id) => poolIds.has(id)));
+      setSelected(seed);
+      selectedRef.current = seed;
+      // Baseline is the SEED, not the stored ids. They differ whenever a
+      // featured listing has been unpublished since — and baselining on the
+      // stored ids would make the autosave below fire on load and write the
+      // narrowed set back, silently un-featuring a listing the owner had only
+      // temporarily hidden. Nothing is written until the owner actually picks.
+      savedKeyRef.current = keyOf(seed);
     } catch (err: unknown) {
       addToast({ type: 'error', message: toApiError(err, 'Failed to load your listings').message });
     } finally {
@@ -67,17 +93,60 @@ export default function MallFeatured() {
     });
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await mallService.setFeatured([...selected]);
-      addToast({ type: 'success', message: 'Featured products updated' });
-    } catch (err: unknown) {
-      addToast({ type: 'error', message: toApiError(err, 'Could not save your selection').message });
-    } finally {
-      setSaving(false);
-    }
-  };
+  const persist = useCallback(
+    async (ids: string[]) => {
+      setSaveState('saving');
+      try {
+        await mallService.setFeatured(ids);
+        savedKeyRef.current = keyOf(ids);
+        // Only settle to clean if nothing was toggled while the request was
+        // in flight — otherwise the newer selection is still unsaved.
+        setSaveState((prev) =>
+          prev === 'saving' && keyOf(selectedRef.current) === savedKeyRef.current ? 'clean' : prev,
+        );
+      } catch (err: unknown) {
+        setSaveState('error');
+        addToast({ type: 'error', message: toApiError(err, 'Could not save your selection').message });
+      }
+    },
+    [addToast],
+  );
+
+  // Debounced autosave. Ticking several cards in a row sends one request.
+  useEffect(() => {
+    selectedRef.current = selected;
+    if (loading) return;
+    if (keyOf(selected) === savedKeyRef.current) return;
+
+    setSaveState('pending');
+    timerRef.current = setTimeout(() => persist([...selected]), 700);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [selected, loading, persist]);
+
+  // Leaving the page mid-debounce is exactly the case QA hit. React Router
+  // unmounts without unloading the document, so the request still goes out —
+  // fire-and-forget, since there is no longer a component to report to.
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      const ids = [...selectedRef.current];
+      if (keyOf(ids) !== savedKeyRef.current) {
+        mallService.setFeatured(ids).catch(() => {});
+      }
+    },
+    [],
+  );
+
+  // A full page unload (tab close, reload, external link) would kill the
+  // in-flight save, so warn while anything is genuinely unsaved.
+  useEffect(() => {
+    if (saveState !== 'pending' && saveState !== 'saving') return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [saveState]);
 
   const bySubstore = useMemo(() => {
     const groups = new Map<string, PoolItem[]>();
@@ -95,12 +164,35 @@ export default function MallFeatured() {
         <div>
           <h1 className="ws-page__title">Featured Products</h1>
           <p className="ws-page__sub">
-            Pick up to {MAX_FEATURED} published listings to headline your mall page.
+            Pick up to {MAX_FEATURED} published listings to headline your mall
+            page. Your choices save automatically.
           </p>
         </div>
-        <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={handleSave} disabled={saving || loading}>
-          {saving ? 'Saving…' : `Save (${selected.size}/${MAX_FEATURED})`}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
+          <span className="ws-caption ws-muted ws-num">
+            {selected.size}/{MAX_FEATURED} selected
+          </span>
+          {saveState === 'error' ? (
+            <button
+              className="ws-btn ws-btn--sm ws-btn--secondary"
+              onClick={() => persist([...selected])}
+            >
+              Not saved — retry
+            </button>
+          ) : (
+            <span
+              className="ws-caption"
+              role="status"
+              aria-live="polite"
+              style={{
+                color:
+                  saveState === 'clean' ? 'var(--ws-status-success)' : 'var(--ws-text-secondary)',
+              }}
+            >
+              {saveState === 'clean' ? 'All changes saved' : 'Saving…'}
+            </span>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -110,7 +202,7 @@ export default function MallFeatured() {
           <div className="ws-empty__icon"><Sparkles size={26} aria-hidden /></div>
           <h2 className="ws-title">Nothing to feature yet</h2>
           <p className="ws-caption ws-muted" style={{ maxWidth: '44ch' }}>
-            Featured products are chosen from your substores' published
+            Featured products are chosen from your stores' published
             listings. Publish some listings first, then come back here.
           </p>
         </div>

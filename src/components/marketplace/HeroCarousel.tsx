@@ -33,7 +33,7 @@ function slides(motorsTo: string): Slide[] {
     {
       key: 'marketplace',
       eyebrow: 'The WorldStore marketplace',
-      title: <>Everything Nigeria is <em>selling</em>.</>,
+      title: <>Everything the world is <em>selling</em>.</>,
       sub: 'Phones, cars, fashion, property — new listings from rated stores every day. Chat directly with the seller and agree your own terms.',
       primary: { label: 'Browse listings', to: '/listings' },
       secondary: { label: 'Open a store', to: '/vendor', icon: <Store size={16} aria-hidden /> },

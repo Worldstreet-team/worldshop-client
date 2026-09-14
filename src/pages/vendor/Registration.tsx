@@ -5,7 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { storeService, type SubscriptionPlan } from '@/services/storeService';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { DEFAULT_COUNTRY } from '@/utils/locations';
+import CountrySelect from '@/components/location/CountrySelect';
+import StateSelect from '@/components/location/StateSelect';
 import { toast } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
 
@@ -33,7 +35,8 @@ const createStoreSchema = z.object({
     .min(3, 'Store name must be at least 3 characters')
     .max(60, 'Store name must be at most 60 characters'),
   description: optionalText(1000),
-  state: z.string().min(1, 'Select the state you operate from'),
+  country: z.string().length(2, 'Select your country'),
+  state: z.string().trim().min(1, 'Select the state or region you operate from'),
   city: optionalText(60),
   address: optionalText(200),
   phone: z
@@ -65,11 +68,13 @@ export default function VendorRegistration() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateStoreFormData>({
     resolver: zodResolver(createStoreSchema),
     defaultValues: {
-      name: '', description: '', state: '', city: '',
+      name: '', description: '', country: DEFAULT_COUNTRY, state: '', city: '',
       address: '', phone: '', whatsapp: '', website: '',
     },
   });
@@ -120,6 +125,7 @@ export default function VendorRegistration() {
       // email/url/phone formats and an empty string is a value, not an absence.
       await storeService.createStore({
         name: data.name,
+        country: data.country,
         state: data.state,
         description: data.description || undefined,
         city: data.city || undefined,
@@ -199,15 +205,19 @@ export default function VendorRegistration() {
             {errors.description && <p className="ws-formfield__error">{errors.description.message}</p>}
           </div>
 
-          {/* Buyers browse by state, so this one is required. */}
+          {/* Buyers browse by country and state, so both are required. */}
           <div className="ws-formfield">
-            <label htmlFor="state" className="ws-formfield__label">State *</label>
-            <select id="state" className="ws-select" {...register('state')}>
-              <option value="">Select a state</option>
-              {NIGERIAN_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <label htmlFor="country" className="ws-formfield__label">Country *</label>
+            <CountrySelect
+              id="country"
+              {...register('country', { onChange: () => setValue('state', '') })}
+            />
+            {errors.country && <p className="ws-formfield__error">{errors.country.message}</p>}
+          </div>
+
+          <div className="ws-formfield">
+            <label htmlFor="state" className="ws-formfield__label">State / Region *</label>
+            <StateSelect id="state" country={watch('country')} {...register('state')} />
             {errors.state && <p className="ws-formfield__error">{errors.state.message}</p>}
           </div>
 

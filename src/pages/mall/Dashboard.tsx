@@ -57,7 +57,7 @@ export default function MallDashboard() {
         type: 'success',
         message: res.data.alreadyPaid
           ? 'This period is already paid for.'
-          : 'Subscription active — your mall and substores are now visible.',
+          : 'Subscription active — your mall and its stores are now visible.',
       });
       await load();
     } catch (err: unknown) {
@@ -140,8 +140,8 @@ export default function MallDashboard() {
           <AlertCircle size={16} aria-hidden />
           <span style={{ flex: 1 }}>
             {mall.status === 'DRAFT'
-              ? 'Your mall is not visible to buyers yet. Activate the subscription to go live — every substore goes live with it.'
-              : 'Your subscription needs payment to keep the mall and its substores visible.'}
+              ? 'Your mall is not visible to buyers yet. Activate the subscription to go live — every store goes live with it.'
+              : 'Your subscription needs payment to keep the mall and its stores visible.'}
           </span>
         </div>
       )}
@@ -177,7 +177,7 @@ export default function MallDashboard() {
           </dl>
 
           <p className="ws-caption ws-muted">
-            One subscription covers your mall and every substore in it. Charged
+            One subscription covers your mall and every store in it. Charged
             from your WorldStreet dollar wallet.
           </p>
 
@@ -195,10 +195,10 @@ export default function MallDashboard() {
           </div>
         </section>
 
-        {/* Substores */}
+        {/* Stores */}
         <section className="ws-card ws-stack--md">
           <h2 className="ws-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-2)' }}>
-            <Store size={18} aria-hidden /> Substores
+            <Store size={18} aria-hidden /> Stores
           </h2>
 
           <p className="ws-stat__value ws-num" style={{ margin: 0 }}>
@@ -209,13 +209,13 @@ export default function MallDashboard() {
           </p>
 
           <p className="ws-caption ws-muted">
-            Each substore has its own page, catalogue, reviews and messages —
+            Each store has its own page, catalogue, reviews and messages —
             all covered by the mall subscription.
           </p>
 
           <div>
-            <Link to="/mall/substores" className="ws-btn ws-btn--sm ws-btn--secondary">
-              Manage substores
+            <Link to="/mall/stores" className="ws-btn ws-btn--sm ws-btn--secondary">
+              Manage stores
             </Link>
           </div>
         </section>
@@ -232,7 +232,7 @@ export default function MallDashboard() {
           </p>
 
           <p className="ws-caption ws-muted">
-            Hand-picked listings from your substores, shown at the top of your
+            Hand-picked listings from your stores, shown at the top of your
             mall page.
           </p>
 

@@ -56,6 +56,8 @@ const MallDashboard = lazy(() => import('@/pages/mall/Dashboard'));
 const MallRegistration = lazy(() => import('@/pages/mall/Registration'));
 const MallSubstores = lazy(() => import('@/pages/mall/Substores'));
 const MallFeatured = lazy(() => import('@/pages/mall/Featured'));
+const MallSettings = lazy(() => import('@/pages/mall/Settings'));
+const SubstoreEdit = lazy(() => import('@/pages/mall/SubstoreEdit'));
 
 // Error Pages
 const NotFoundPage = lazy(() => import('@/pages/NotFound'));
@@ -80,7 +82,7 @@ function LegacyStoreRedirect() {
  */
 function SubstorePage({ children }: { children: React.ReactNode }) {
   const { substoreId } = useParams<{ substoreId: string }>();
-  if (!substoreId) return <Navigate to="/mall/substores" replace />;
+  if (!substoreId) return <Navigate to="/mall/stores" replace />;
   return (
     <SubstoreListingApiProvider substoreId={substoreId}>
       {children}
@@ -253,24 +255,32 @@ const router = createBrowserRouter([
         element: <SuspenseWrapper><MallDashboard /></SuspenseWrapper>,
       },
       {
-        path: 'substores',
+        path: 'stores',
         element: <SuspenseWrapper><MallSubstores /></SuspenseWrapper>,
       },
       {
         path: 'featured',
         element: <SuspenseWrapper><MallFeatured /></SuspenseWrapper>,
       },
+      {
+        path: 'settings',
+        element: <SuspenseWrapper><MallSettings /></SuspenseWrapper>,
+      },
+      {
+        path: 'stores/:substoreId/edit',
+        element: <SuspenseWrapper><SubstoreEdit /></SuspenseWrapper>,
+      },
       // The vendor product pages, re-pointed at a substore's catalogue.
       {
-        path: 'substores/:substoreId/products',
+        path: 'stores/:substoreId/products',
         element: <SubstorePage><SuspenseWrapper><VendorProducts /></SuspenseWrapper></SubstorePage>,
       },
       {
-        path: 'substores/:substoreId/products/new',
+        path: 'stores/:substoreId/products/new',
         element: <SubstorePage><SuspenseWrapper><VendorProductEdit /></SuspenseWrapper></SubstorePage>,
       },
       {
-        path: 'substores/:substoreId/products/:id',
+        path: 'stores/:substoreId/products/:id',
         element: <SubstorePage><SuspenseWrapper><VendorProductEdit /></SuspenseWrapper></SubstorePage>,
       },
       {

@@ -10,6 +10,7 @@ import ReportButton from '@/components/marketplace/ReportButton';
 import { savedListings } from '@/utils/savedListings';
 import { fmtNaira, imageSrc, priceLabel, type ImageRef } from '@/utils/listingFormat';
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * Public listing page.
@@ -142,7 +143,7 @@ export default function ListingDetail() {
   }
 
   const images = (listing.images as ImageRef[]) ?? [];
-  const location = [listing.city, listing.state].filter(Boolean).join(', ');
+  const location = formatLocation([listing.city, listing.state], listing.country);
   // One table: the split between category attributes and the seller's own
   // fields matters to search, not to the person reading the page.
   const specs = [

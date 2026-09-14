@@ -34,6 +34,7 @@ export interface MyMall {
   whatsapp?: string | null;
   email?: string | null;
   website?: string | null;
+  country?: string;
   state?: string;
   city?: string | null;
   address?: string | null;
@@ -52,6 +53,7 @@ export interface MyMall {
 export interface CreateMallRequest {
   name: string;
   description?: string;
+  country: string;
   state: string;
   city?: string;
   address?: string;
@@ -76,6 +78,7 @@ export interface Substore {
   whatsapp?: string | null;
   email?: string | null;
   website?: string | null;
+  country?: string;
   state?: string;
   city?: string | null;
   address?: string | null;
@@ -86,6 +89,7 @@ export interface CreateSubstoreRequest {
   name: string;
   description?: string;
   /** Defaults to the mall's location when omitted. */
+  country?: string;
   state?: string;
   city?: string;
   address?: string;
@@ -105,6 +109,7 @@ export interface PublicMall {
   phone: string | null;
   whatsapp: string | null;
   website: string | null;
+  country: string;
   state: string;
   city: string | null;
   address: string | null;

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { BadgeCheck, Star, MessageSquare, Clock, Package, CalendarDays } from 'lucide-react';
 import type { PublicStore } from '@/services/storeService';
 import { VERIFICATION_LABEL } from '@/utils/sellerVerification';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * Seller summary.
@@ -35,7 +36,7 @@ export default function SellerCard({ store }: { store: PublicStore }) {
         <span style={{ minWidth: 0 }}>
           <span className="ws-title" style={{ display: 'block' }}>{store.name}</span>
           <span className="ws-caption ws-subtle">
-            {[store.city, store.state].filter(Boolean).join(', ')}
+            {formatLocation([store.city, store.state], store.country)}
           </span>
         </span>
       </Link>

@@ -86,9 +86,9 @@ export default function MallCallout({ variant = 'banner' }: MallCalloutProps) {
         </h2>
         <p className="ws-caption ws-muted ws-mallcta__sub">
           {showOwnerCta
-            ? 'Manage your substores, featured products and subscription.'
+            ? 'Manage your stores, featured products and subscription.'
             : `Run several storefronts under one roof${
-                substoreLimit ? `, up to ${substoreLimit} substores` : ''
+                substoreLimit ? `, up to ${substoreLimit} stores` : ''
               }, all covered by one subscription${price ? ` of ${price}` : ''}.`}
         </p>
       </div>

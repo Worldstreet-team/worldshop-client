@@ -440,6 +440,64 @@ $bp-lg: 1280px;
   gap: 2px;
 }
 
+// Country row at the top of the panel: flips into the country list, and
+// back. Same footprint as an item, visibly a control rather than a choice.
+.ws-locpick__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-2);
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-sm);
+  background: var(--ws-bg-subtle, transparent);
+  font-family: var(--ws-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ws-text-primary);
+  text-align: left;
+  cursor: pointer;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover { border-color: var(--ws-border-strong, var(--ws-border-hairline)); }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+  }
+}
+
+.ws-locpick__search {
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-sm);
+  background: var(--ws-bg-surface);
+  font-family: var(--ws-font-ui);
+  font-size: 13px;
+  color: var(--ws-text-primary);
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+  }
+}
+
+.ws-locpick__empty {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--ws-text-subtle);
+}
+
 .ws-locpick__item {
   display: flex;
   align-items: center;

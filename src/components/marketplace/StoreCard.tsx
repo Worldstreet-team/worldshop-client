@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, Star, Store } from 'lucide-react';
 import type { PublicStore } from '@/services/storeService';
 import { isVerifiedTier } from '@/utils/sellerVerification';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * Seller spotlight for the home page: banner with an overlapping avatar, one
@@ -21,7 +22,7 @@ function replyLine(rate: number | null, mins: number | null): string | null {
 }
 
 export default function StoreCard({ store }: { store: PublicStore }) {
-  const location = [store.city, store.state].filter(Boolean).join(', ');
+  const location = formatLocation([store.city, store.state], store.country);
   const reply = replyLine(store.responseRate, store.avgResponseMins);
 
   return (

@@ -6,6 +6,7 @@ import StoreCard from '@/components/marketplace/StoreCard';
 import ListingCard from '@/components/marketplace/ListingCard';
 import ReportButton from '@/components/marketplace/ReportButton';
 import { waLink } from '@/utils/listingFormat';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * Public mall page: banner and identity, the owner-curated featured rail,
@@ -64,7 +65,7 @@ export default function MallPage() {
     );
   }
 
-  const location = [mall.address, mall.city, mall.state].filter(Boolean).join(', ');
+  const location = formatLocation([mall.address, mall.city, mall.state], mall.country);
 
   return (
     <div className="ws-page">
@@ -151,7 +152,7 @@ export default function MallPage() {
         </section>
       )}
 
-      {/* Substores */}
+      {/* Stores */}
       <section>
         <h2 className="ws-title" style={{ marginBottom: 'var(--ws-space-3)' }}>
           Stores in {mall.name}

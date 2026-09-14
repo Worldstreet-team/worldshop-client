@@ -7,6 +7,7 @@ import ListingCard from '@/components/marketplace/ListingCard';
 import ReportButton from '@/components/marketplace/ReportButton';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { waLink } from '@/utils/listingFormat';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * Public storefront.
@@ -118,7 +119,7 @@ export default function StorePage() {
     );
   }
 
-  const location = [store.city, store.state].filter(Boolean).join(', ');
+  const location = formatLocation([store.city, store.state], store.country);
   const hasContact = store.phone || store.whatsapp || store.website || store.address;
 
   return (

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, Copy } from 'lucide-react';
 import { storeService, type MyStore } from '@/services/storeService';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { DEFAULT_COUNTRY } from '@/utils/locations';
+import CountrySelect from '@/components/location/CountrySelect';
+import StateSelect from '@/components/location/StateSelect';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
 
@@ -64,6 +66,7 @@ export default function VendorSettings() {
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [website, setWebsite] = useState('');
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [state, setState] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
@@ -89,6 +92,7 @@ export default function VendorSettings() {
         setWhatsapp(s.whatsapp ?? '');
         setEmail(s.email ?? '');
         setWebsite(s.website ?? '');
+        setCountry(s.country ?? DEFAULT_COUNTRY);
         setState(s.state ?? '');
         setCity(s.city ?? '');
         setAddress(s.address ?? '');
@@ -148,8 +152,12 @@ export default function VendorSettings() {
       setError('Store name must be at least 3 characters.');
       return;
     }
-    if (!state) {
-      setError('Choose the state you operate from — buyers browse by it.');
+    if (!country) {
+      setError('Choose the country you operate from — buyers browse by it.');
+      return;
+    }
+    if (!state.trim()) {
+      setError('Choose the state or region you operate from — buyers browse by it.');
       return;
     }
     if (phone.trim() && !PHONE_RE.test(phone.trim())) {
@@ -172,7 +180,8 @@ export default function VendorSettings() {
         whatsapp: orNull(whatsapp),
         email: orNull(email),
         website: orNull(website),
-        state,
+        country,
+        state: state.trim(),
         city: orNull(city),
         address: orNull(address),
         // Only meaningful alongside a rename, and disarmed after every save so
@@ -418,11 +427,17 @@ export default function VendorSettings() {
 
             <div className="ws-formgrid">
               <div className="ws-formfield">
-                <label htmlFor="state" className="ws-formfield__label">State *</label>
-                <select id="state" className="ws-select" value={state} onChange={(e) => setState(e.target.value)}>
-                  <option value="">Select a state</option>
-                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <label htmlFor="country" className="ws-formfield__label">Country *</label>
+                <CountrySelect
+                  id="country"
+                  value={country}
+                  onChange={(e) => { setCountry(e.target.value); setState(''); }}
+                />
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="state" className="ws-formfield__label">State / Region *</label>
+                <StateSelect id="state" country={country} value={state} onChange={(e) => setState(e.target.value)} />
               </div>
 
               <div className="ws-formfield">

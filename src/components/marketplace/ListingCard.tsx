@@ -4,6 +4,7 @@ import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Listing, PublicStore } from '@/services/storeService';
 import { firstImage, priceLabel } from '@/utils/listingFormat';
 import { savedListings } from '@/utils/savedListings';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * A listing in a grid. Shared by browse and the storefront so the two never
@@ -30,7 +31,7 @@ const CONDITION_LABEL: Record<string, string> = {
 export type CardListing = Pick<
   Listing,
   'id' | 'slug' | 'name' | 'condition' | 'city' | 'state' | 'images' | 'priceType' | 'basePrice' | 'maxPrice'
->;
+> & { country?: string };
 
 export default function ListingCard({
   listing,
@@ -40,7 +41,7 @@ export default function ListingCard({
   showSeller?: boolean;
 }) {
   const img = firstImage(listing);
-  const location = [listing.city, listing.state].filter(Boolean).join(', ');
+  const location = formatLocation([listing.city, listing.state], listing.country);
   const condition = listing.condition ? CONDITION_LABEL[listing.condition] ?? listing.condition : null;
   // Subscribed, not local state: the same listing can sit in two grids (a rail
   // and /saved), and both hearts must move together.

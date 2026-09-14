@@ -34,6 +34,7 @@ export interface VendorDashboard {
     status: StoreStatus;
     verificationTier: string;
     publiclyVisible: boolean;
+    country: string;
     state: string;
     city: string | null;
   };
@@ -109,6 +110,7 @@ export interface MyStore {
   whatsapp?: string | null;
   email?: string | null;
   website?: string | null;
+  country?: string;
   state?: string;
   city?: string | null;
   address?: string | null;
@@ -124,6 +126,7 @@ export interface UpdateStorePayload {
   whatsapp?: string | null;
   email?: string | null;
   website?: string | null;
+  country?: string;
   state?: string;
   city?: string | null;
   address?: string | null;
@@ -138,6 +141,7 @@ export interface ChargeResult {
 export interface CreateStoreRequest {
   name: string;
   description?: string;
+  country: string;
   state: string;
   city?: string;
   address?: string;
@@ -204,6 +208,7 @@ export interface Listing {
   variants: ListingVariant[];
   status: ListingStatus;
   publishedAt: string | null;
+  country: string;
   state: string | null;
   city: string | null;
   viewCount: number;
@@ -246,6 +251,7 @@ export interface ListingPayload {
   attributes?: Record<string, string>;
   customFields?: CustomField[];
   variants?: ListingVariant[];
+  country?: string;
   state?: string;
   city?: string;
 }
@@ -265,10 +271,14 @@ export interface CategoryFormSpec {
   customFieldsAllowed: boolean;
 }
 
+/**
+ * The publish endpoint's `data`. The human-readable outcome ("Published — it
+ * is live now", or why it is not) rides on the ENVELOPE's `message`, not in
+ * here — read it as `res.message`.
+ */
 export interface PublishResult {
   listing: { id: string; status: ListingStatus; publishedAt: string | null };
   publiclyVisible: boolean;
-  message: string;
 }
 
 export interface UploadedImage {
@@ -380,6 +390,7 @@ export interface PublicStore {
   phone: string | null;
   whatsapp: string | null;
   website: string | null;
+  country: string;
   state: string;
   city: string | null;
   address: string | null;

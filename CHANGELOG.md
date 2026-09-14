@@ -4,6 +4,43 @@ All notable changes to worldshop-client will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.34.0] - 2026-09-14
+
+### Changed — Locations go global
+
+Stores, malls and listings were Nigeria-only: every location field was a
+hard-coded dropdown of the 36 states + FCT, and a seller in Zimbabwe (or
+anywhere else) could not register at all.
+
+- **Country everywhere a state was.** Vendor + mall registration, vendor
+  settings, the store profile form (mall settings and substore edit), the
+  substore create form and the listing editor each gain a country select
+  ahead of the state select. Picking a country resets the state; the state
+  list is that country's subdivisions (Nigeria keeps its existing spellings so
+  saved rows still match). Countries the dataset has no subdivisions for
+  (Gibraltar, Aruba…) fall back to a free-text region field
+- **Browse filters by country then state.** The listings sidebar and the malls
+  directory show a country select ("Anywhere in the world") and, once a
+  country is chosen, its states. URL param `country` joins `state`
+- **Header location picker is two-level**: the panel opens on the chosen
+  country's states under a "change country" row that flips into a searchable
+  country list; picking a country applies "All of <country>" immediately
+- Location strings on cards and pages append the country name when it is not
+  Nigeria ("Harare, Harare Province, Zimbabwe")
+- Site copy no longer says Nigeria where it meant "everywhere"
+
+### Added
+- `utils/locations.ts` — inlined country list (250, ISO alpha-2 + flag),
+  `NIGERIAN_STATES`, `formatLocation()`, and `loadStates()` which lazy-loads
+  the world subdivision dataset from `country-state-city` (≈120 KB gzipped,
+  fetched only when a non-Nigerian country is chosen)
+- `hooks/useLocations.ts` — `useLocations()` and `useStatesOf(country)`
+- `components/location/CountrySelect.tsx`, `StateSelect.tsx` — native selects
+  that work controlled or with a react-hook-form `register()` spread
+
+### Removed
+- `utils/nigerianStates.ts` — folded into `utils/locations.ts`
+
 ## [0.33.0] - 2026-07-27
 
 ### Removed — The ecommerce buyer surface

@@ -5,7 +5,9 @@ import { publicMarketplace, type Listing, type PublicStore } from '@/services/st
 import { categoryService } from '@/services/productService';
 import type { Category, CategoryAttribute } from '@/types/product.types';
 import ListingCard from '@/components/marketplace/ListingCard';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { useLocations } from '@/hooks/useLocations';
+import CountrySelect from '@/components/location/CountrySelect';
+import StateSelect from '@/components/location/StateSelect';
 import { resolveCategoryIds } from '@/utils/categoryTree';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
@@ -45,7 +47,10 @@ export default function Browse() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const categoryId = params.get('categoryId') ?? '';
+  const countryFilter = params.get('country') ?? '';
   const stateFilter = params.get('state') ?? '';
+  const { countryOf } = useLocations();
+  const countryName = countryFilter ? (countryOf(countryFilter)?.name ?? countryFilter) : '';
   const condition = params.get('condition') ?? '';
   const search = params.get('search') ?? '';
   const page = Math.max(1, Number(params.get('page')) || 1);
@@ -144,7 +149,7 @@ export default function Browse() {
   // Loading is derived: the grid is loading whenever the last-completed fetch
   // key lags the requested one — no setState-in-effect needed to reset it.
   const fetchKey = [
-    page, categoryId, stateFilter, condition, search, sort, minPrice, maxPrice,
+    page, categoryId, countryFilter, stateFilter, condition, search, sort, minPrice, maxPrice,
     JSON.stringify(attrFilters), retryTick,
   ].join('|');
   const loading = loadedKey !== fetchKey;
@@ -153,6 +158,7 @@ export default function Browse() {
     let cancelled = false;
 
     const baseQuery: Record<string, unknown> = {};
+    if (countryFilter) baseQuery.country = countryFilter;
     if (stateFilter) baseQuery.state = stateFilter;
     if (condition) baseQuery.condition = condition;
     if (search) baseQuery.search = search;
@@ -227,7 +233,7 @@ export default function Browse() {
     return () => {
       cancelled = true;
     };
-  }, [page, categoryId, categories, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters, retryTick, fetchKey]);
+  }, [page, categoryId, categories, countryFilter, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters, retryTick, fetchKey]);
 
   /**
    * Every applied filter as a removable token. Showing them above the results
@@ -238,6 +244,7 @@ export default function Browse() {
     const out: Array<{ key: string; label: string; clear: () => void }> = [];
     if (search) out.push({ key: 'search', label: `“${search}”`, clear: () => setParam({ search: null }) });
     if (selected) out.push({ key: 'cat', label: selected.name, clear: () => setParam({ categoryId: null }) });
+    if (countryFilter) out.push({ key: 'country', label: countryName, clear: () => setParam({ country: null, state: null }) });
     if (stateFilter) out.push({ key: 'state', label: stateFilter, clear: () => setParam({ state: null }) });
     if (condition) out.push({ key: 'cond', label: titleCase(condition), clear: () => setParam({ condition: null }) });
     if (minPrice || maxPrice) {
@@ -252,7 +259,7 @@ export default function Browse() {
       out.push({ key: `attr.${name}`, label: `${name}: ${value}`, clear: () => setParam({ [`attr.${name}`]: null }) });
     }
     return out;
-  }, [search, selected, stateFilter, condition, minPrice, maxPrice, attrFilters, setParam]);
+  }, [search, selected, countryFilter, countryName, stateFilter, condition, minPrice, maxPrice, attrFilters, setParam]);
 
   const clearAll = () => setParams(new URLSearchParams());
 
@@ -296,15 +303,23 @@ export default function Browse() {
 
       <details className="ws-filters__group" open>
         <summary className="ws-filters__legend">Location</summary>
-        <select
-          className="ws-select"
-          value={stateFilter}
-          onChange={(e) => setParam({ state: e.target.value })}
-          aria-label="Location"
-        >
-          <option value="">Anywhere in Nigeria</option>
-          {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div className="ws-stack" style={{ gap: 'var(--ws-space-2)' }}>
+          <CountrySelect
+            value={countryFilter}
+            placeholder="Anywhere in the world"
+            onChange={(e) => setParam({ country: e.target.value || null, state: null })}
+            aria-label="Country"
+          />
+          {countryFilter && (
+            <StateSelect
+              country={countryFilter}
+              value={stateFilter}
+              placeholder={`All of ${countryName}`}
+              onChange={(e) => setParam({ state: e.target.value || null })}
+              aria-label="State or region"
+            />
+          )}
+        </div>
       </details>
 
       <details className="ws-filters__group" open>
@@ -396,7 +411,7 @@ export default function Browse() {
                 {loading
                   ? 'Searching…'
                   : `${total.toLocaleString('en-NG')} ${total === 1 ? 'listing' : 'listings'}`}
-                {stateFilter && !loading && ` in ${stateFilter}`}
+                {!loading && (stateFilter || countryName) && ` in ${stateFilter || countryName}`}
               </p>
             </div>
 

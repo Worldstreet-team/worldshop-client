@@ -11,7 +11,8 @@ import {
 } from '@/services/storeService';
 import { categoryService } from '@/services/productService';
 import type { Category } from '@/types/product.types';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import CountrySelect from '@/components/location/CountrySelect';
+import StateSelect from '@/components/location/StateSelect';
 import { imageSrc, type ImageRef } from '@/utils/listingFormat';
 import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
@@ -107,6 +108,7 @@ export default function ListingEdit() {
   const [maxPrice, setMaxPrice] = useState('');
   const [isNegotiable, setIsNegotiable] = useState(true);
   const [condition, setCondition] = useState('');
+  const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [city, setCity] = useState('');
   const [tags, setTags] = useState('');
@@ -163,6 +165,7 @@ export default function ListingEdit() {
         setMaxPrice(l.maxPrice != null ? String(l.maxPrice) : '');
         setIsNegotiable(l.isNegotiable);
         setCondition(l.condition ?? '');
+        setCountry(l.country ?? '');
         setState(l.state ?? '');
         setCity(l.city ?? '');
         setTags(l.tags.join(', '));
@@ -299,6 +302,7 @@ export default function ListingEdit() {
         maxPrice: maxPrice === '' ? undefined : Number(maxPrice),
         isNegotiable,
         condition: condition || undefined,
+        country: country || undefined,
         state: state || undefined,
         city: city || undefined,
         tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -318,7 +322,7 @@ export default function ListingEdit() {
 
         if (thenPublish) {
           const res = await listingService.publish(saved.data.id);
-          addToast({ type: 'success', message: res.data.message });
+          addToast({ type: 'success', message: res.message ?? 'Listing published' });
         } else {
           addToast({ type: 'success', message: isNew ? 'Listing saved as draft' : 'Listing updated' });
         }
@@ -348,7 +352,7 @@ export default function ListingEdit() {
       }
     },
     [name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, condition,
-      state, city, tags, images, attributes, customFields, variants, isNew, id, addToast,
+      country, state, city, tags, images, attributes, customFields, variants, isNew, id, addToast,
       navigate, validateForm],
   );
 
@@ -807,11 +811,24 @@ export default function ListingEdit() {
 
               {/* Defaults to the store's location server-side when left blank. */}
               <div className="ws-formfield">
-                <label htmlFor="state" className="ws-formfield__label">State</label>
-                <select id="state" className="ws-select" value={state} onChange={(e) => setState(e.target.value)}>
-                  <option value="">Same as my store</option>
-                  {NIGERIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <label htmlFor="country" className="ws-formfield__label">Country</label>
+                <CountrySelect
+                  id="country"
+                  value={country}
+                  placeholder="Same as my store"
+                  onChange={(e) => { setCountry(e.target.value); setState(''); }}
+                />
+              </div>
+
+              <div className="ws-formfield">
+                <label htmlFor="state" className="ws-formfield__label">State / Region</label>
+                <StateSelect
+                  id="state"
+                  country={country}
+                  value={state}
+                  placeholder="Same as my store"
+                  onChange={(e) => setState(e.target.value)}
+                />
               </div>
 
               <div className="ws-formfield">

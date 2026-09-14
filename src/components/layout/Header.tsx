@@ -170,6 +170,7 @@ export default function Header() {
     const selected = categories.find((c) => c.id === selectedId);
     return selected?.parentId ?? selectedId;
   }, [categories, selectedId]);
+  const activeCountry = params.get('country') ?? '';
   const activeState = params.get('state') ?? '';
   const onBrowse = location.pathname === '/' || location.pathname.startsWith('/listings');
 
@@ -179,9 +180,10 @@ export default function Header() {
     navigate(q ? `/listings?search=${encodeURIComponent(q)}` : '/listings');
   };
 
-  const setLocation = (value: string) => {
+  const setLocation = (country: string, state: string) => {
     const next = new URLSearchParams(onBrowse ? params : undefined);
-    if (value) next.set('state', value); else next.delete('state');
+    if (country) next.set('country', country); else next.delete('country');
+    if (state) next.set('state', state); else next.delete('state');
     next.delete('page');
     navigate(`/listings?${next.toString()}`);
   };
@@ -191,6 +193,7 @@ export default function Header() {
     // Switching department drops attribute facets — they belong to the old one.
     const search = params.get('search');
     if (search) next.set('search', search);
+    if (activeCountry) next.set('country', activeCountry);
     if (activeState) next.set('state', activeState);
     if (id) next.set('categoryId', id);
     navigate(`/listings?${next.toString()}`);
@@ -227,7 +230,7 @@ export default function Header() {
               aria-label="Search the marketplace"
             />
             <div className="ws-topbar__location">
-              <LocationSelect value={activeState} onChange={setLocation} />
+              <LocationSelect country={activeCountry} state={activeState} onChange={setLocation} />
             </div>
           </form>
 

@@ -6,7 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { mallService } from '@/services/mallService';
 import type { SubscriptionPlan } from '@/services/storeService';
-import { NIGERIAN_STATES } from '@/utils/nigerianStates';
+import { DEFAULT_COUNTRY } from '@/utils/locations';
+import CountrySelect from '@/components/location/CountrySelect';
+import StateSelect from '@/components/location/StateSelect';
 import { toast } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
 
@@ -30,7 +32,8 @@ const createMallSchema = z.object({
     .min(3, 'Mall name must be at least 3 characters')
     .max(60, 'Mall name must be at most 60 characters'),
   description: optionalText(1000),
-  state: z.string().min(1, 'Select the state you operate from'),
+  country: z.string().length(2, 'Select your country'),
+  state: z.string().trim().min(1, 'Select the state or region you operate from'),
   city: optionalText(60),
   address: optionalText(200),
   phone: z
@@ -62,11 +65,13 @@ export default function MallRegistration() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<CreateMallFormData>({
     resolver: zodResolver(createMallSchema),
     defaultValues: {
-      name: '', description: '', state: '', city: '',
+      name: '', description: '', country: DEFAULT_COUNTRY, state: '', city: '',
       address: '', phone: '', whatsapp: '', website: '',
     },
   });
@@ -115,6 +120,7 @@ export default function MallRegistration() {
     try {
       await mallService.createMall({
         name: data.name,
+        country: data.country,
         state: data.state,
         description: data.description || undefined,
         city: data.city || undefined,
@@ -124,7 +130,7 @@ export default function MallRegistration() {
         website: data.website || undefined,
       });
 
-      toast.success('Mall created. Add your substores, then activate to go live.');
+      toast.success('Mall created. Add your stores, then activate to go live.');
       navigate('/mall');
     } catch (err: unknown) {
       const e = toApiError(err, 'Could not create your mall. Please try again.');
@@ -161,11 +167,11 @@ export default function MallRegistration() {
         <div>
           <strong style={{ display: 'block', color: 'var(--ws-text-primary)', marginBottom: 2 }}>
             {plan
-              ? `${formatUsd(plan.amountMinor)} per month covers your mall and all its substores`
-              : 'A monthly subscription keeps your mall and all its substores visible'}
+              ? `${formatUsd(plan.amountMinor)} per month covers your mall and all its stores`
+              : 'A monthly subscription keeps your mall and all its stores visible'}
           </strong>
-          Creating your mall is free, and you can set up your substores before
-          activating anything.{plan?.substoreLimit ? ` Your plan includes up to ${plan.substoreLimit} substores` : ''}
+          Creating your mall is free, and you can set up your stores before
+          activating anything.{plan?.substoreLimit ? ` Your plan includes up to ${plan.substoreLimit} stores` : ''}
           {plan?.substoreLimit ? ' — none of them needs its own subscription.' : ''}
         </div>
       </div>
@@ -196,15 +202,19 @@ export default function MallRegistration() {
             {errors.description && <p className="ws-formfield__error">{errors.description.message}</p>}
           </div>
 
-          {/* Buyers browse by state, so this one is required. */}
+          {/* Buyers browse by country and state, so both are required. */}
           <div className="ws-formfield">
-            <label htmlFor="state" className="ws-formfield__label">State *</label>
-            <select id="state" className="ws-select" {...register('state')}>
-              <option value="">Select a state</option>
-              {NIGERIAN_STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <label htmlFor="country" className="ws-formfield__label">Country *</label>
+            <CountrySelect
+              id="country"
+              {...register('country', { onChange: () => setValue('state', '') })}
+            />
+            {errors.country && <p className="ws-formfield__error">{errors.country.message}</p>}
+          </div>
+
+          <div className="ws-formfield">
+            <label htmlFor="state" className="ws-formfield__label">State / Region *</label>
+            <StateSelect id="state" country={watch('country')} {...register('state')} />
             {errors.state && <p className="ws-formfield__error">{errors.state.message}</p>}
           </div>
 

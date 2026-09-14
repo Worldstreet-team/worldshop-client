@@ -32,7 +32,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="ws-caption ws-muted ws-footer__blurb">
-              Buy and sell directly with sellers across Nigeria. Browse listings,
+              Buy and sell directly with sellers anywhere in the world. Browse listings,
               message the store, and agree your own terms.
             </p>
             <p className="ws-caption ws-muted ws-footer__blurb">

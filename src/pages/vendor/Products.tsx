@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, EyeOff, Search, Package } from 'lucide-react';
+import { Plus, EyeOff, Search, Package, ArrowLeft } from 'lucide-react';
 import {
   type Listing,
   type ListingStatus,
@@ -11,6 +11,7 @@ import { useUIStore } from '@/store/uiStore';
 import { toApiError } from '@/services/api';
 import { firstImage, fmtNaira } from '@/utils/listingFormat';
 import { imageFallback, PRODUCT_PLACEHOLDER } from '@/utils/imageFallback';
+import { formatLocation } from '@/utils/locations';
 
 /**
  * Manage Listings.
@@ -72,7 +73,7 @@ function priceLabel(l: Listing): string {
 export default function VendorListings() {
   // Which catalogue this page manages — the personal store's by default, or a
   // mall substore's when rendered inside a SubstoreListingApiProvider.
-  const { api: listingService, productsBasePath, dashboardPath, getVisibility } = useListingApi();
+  const { api: listingService, productsBasePath, dashboardPath, parent, getVisibility } = useListingApi();
   const [listings, setListings] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -164,7 +165,7 @@ export default function VendorListings() {
         delete next[listing.id];
         return next;
       });
-      addToast({ type: 'success', message: res.data.message });
+      addToast({ type: 'success', message: res.message ?? 'Listing published' });
       await load();
     } catch (err: unknown) {
       const message = errMessage(err, 'Could not publish this listing');
@@ -206,7 +207,21 @@ export default function VendorListings() {
   return (
     <div className="ws-page">
       <div className="ws-page__head">
-        <h1 className="ws-page__title">Manage Listings</h1>
+        <div>
+          {/* Only a substore has one: its listings are reached THROUGH the
+              substore list, and nothing in the sidebar leads back there. */}
+          {parent && (
+            <Link
+              to={parent.to}
+              className="ws-btn ws-btn--sm ws-btn--ghost"
+              style={{ marginBottom: 'var(--ws-space-2)', marginLeft: -8 }}
+            >
+              <ArrowLeft size={14} aria-hidden />
+              {parent.label}
+            </Link>
+          )}
+          <h1 className="ws-page__title">Manage Listings</h1>
+        </div>
         <Link to={`${productsBasePath}/new`} className="ws-btn ws-btn--sm ws-btn--primary">
           <Plus size={14} aria-hidden />
           Add Listing
@@ -347,7 +362,7 @@ export default function VendorListings() {
                           </Link>
                           {l.city || l.state ? (
                             <div className="ws-caption ws-muted">
-                              {[l.city, l.state].filter(Boolean).join(', ')}
+                              {formatLocation([l.city, l.state], l.country)}
                             </div>
                           ) : null}
                           {/* Why this listing cannot go live, stated before the

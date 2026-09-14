@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 import {
-  LayoutDashboard, Store, Sparkles, Menu, LogOut, ChevronLeft, ChevronRight,
+  LayoutDashboard, Store, Sparkles, Settings, Menu, LogOut, ChevronLeft, ChevronRight,
   Compass, GraduationCap, Users, Zap, TrendingUp, Building2, type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -10,8 +10,9 @@ import ToastContainer from '@/components/ui/ToastContainer';
 
 const navItems: { path: string; label: string; Icon: LucideIcon }[] = [
   { path: '/mall', label: 'Dashboard', Icon: LayoutDashboard },
-  { path: '/mall/substores', label: 'Substores', Icon: Store },
+  { path: '/mall/stores', label: 'Stores', Icon: Store },
   { path: '/mall/featured', label: 'Featured', Icon: Sparkles },
+  { path: '/mall/settings', label: 'Settings', Icon: Settings },
 ];
 
 const ecosystemLinks: { href: string; label: string; Icon: LucideIcon }[] = [
