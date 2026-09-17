@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import AppRouter from '@/router';
-import ClerkTokenProvider from '@/components/auth/ClerkTokenProvider';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { useAuthStore } from '@/store/authStore';
+import AppRouter from '@/app/router';
+import ClerkTokenProvider from '@/app/providers/ClerkTokenProvider';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import '@/styles/main.scss';
 
 function App() {

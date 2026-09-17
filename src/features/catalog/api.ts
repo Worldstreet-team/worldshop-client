@@ -1,0 +1,141 @@
+import { api } from '@/shared/lib/api';
+import type {
+  Product,
+  Category,
+  CategoryAttribute,
+  Review,
+  ProductFilters,
+  StoreInfo
+} from '@/features/catalog/types';
+import type { ApiResponse, PaginatedResponse } from '@/shared/types/common.types';
+
+const normalizeProduct = (product: Product): Product => ({
+  ...product,
+  tags: Array.isArray(product.tags) ? product.tags : [],
+  images: Array.isArray(product.images) ? product.images : [],
+  variants: Array.isArray(product.variants) ? product.variants : [],
+  digitalAssets: Array.isArray(product.digitalAssets) ? product.digitalAssets : [],
+});
+
+const normalizeProducts = (products: Product[] | undefined): Product[] =>
+  Array.isArray(products) ? products.map(normalizeProduct) : [];
+
+// No field mapping needed — frontend types match backend Prisma fields directly.
+
+// ─── Product Service ────────────────────────────────────────────
+
+export const productService = {
+  // Get paginated products with filters
+  getProducts: async (filters?: ProductFilters): Promise<PaginatedResponse<Product>> => {
+    const res = await api.get<{ success: boolean; data: Product[]; pagination: PaginatedResponse<Product>['pagination'] }>(
+      '/products',
+      filters as Record<string, unknown>,
+    );
+    return { data: normalizeProducts(res.data), pagination: res.pagination };
+  },
+
+  // Get single product by slug
+  getProductBySlug: async (slug: string): Promise<Product | null> => {
+    const res = await api.get<ApiResponse<Product>>(`/products/${slug}`);
+    return res.data ? normalizeProduct(res.data) : null;
+  },
+
+  // Get single product by ID
+  getProductById: async (id: string): Promise<Product | null> => {
+    const res = await api.get<ApiResponse<Product>>(`/products/id/${id}`);
+    return res.data ? normalizeProduct(res.data) : null;
+  },
+
+  // Get featured products
+  getFeaturedProducts: async (limit = 8): Promise<Product[]> => {
+    const res = await api.get<ApiResponse<Product[]>>('/products/featured', { limit });
+    return normalizeProducts(res.data);
+  },
+
+  // Get related products
+  getRelatedProducts: async (productId: string, limit = 8): Promise<Product[]> => {
+    const res = await api.get<ApiResponse<Product[]>>(`/products/${productId}/related`, { limit });
+    return normalizeProducts(res.data);
+  },
+
+  // Search products
+  searchProducts: async (query: string, limit = 10): Promise<Product[]> => {
+    const res = await api.get<ApiResponse<Product[]>>('/products/search', { q: query, limit });
+    return normalizeProducts(res.data);
+  },
+
+  // Get price range for filter UI
+  getPriceRange: async (): Promise<{ min: number; max: number }> => {
+    const res = await api.get<ApiResponse<{ min: number; max: number }>>('/products/price-range');
+    return res.data;
+  },
+
+  // Get all brands for filter UI
+  getBrands: async (): Promise<string[]> => {
+    const res = await api.get<ApiResponse<string[]>>('/products/brands');
+    return res.data;
+  },
+
+  // Get product reviews
+  getProductReviews: (productId: string, page = 1, limit = 10) =>
+    api.get<PaginatedResponse<Review>>(`/products/${productId}/reviews`, { page, limit }),
+
+  // Add product review (requires auth)
+  addProductReview: (productId: string, data: { rating: number; title?: string; comment: string }) =>
+    api.post<ApiResponse<Review>>(`/products/${productId}/reviews`, data),
+};
+
+// ─── Store Service ──────────────────────────────────────────────
+
+export const storeService = {
+  getStoreBySlug: async (slug: string, filters?: ProductFilters): Promise<{ store: StoreInfo; products: PaginatedResponse<Product> } | null> => {
+    try {
+      const res = await api.get<{ success: boolean; store: StoreInfo; data: Product[]; pagination: PaginatedResponse<Product>['pagination'] }>(
+        `/store/${slug}`,
+        filters as Record<string, unknown>,
+      );
+      return { store: res.store, products: { data: res.data, pagination: res.pagination } };
+    } catch {
+      return null;
+    }
+  },
+};
+
+// ─── Category Service ───────────────────────────────────────────
+
+export const categoryService = {
+  // Get all categories (flat list with product count)
+  getCategories: async (): Promise<Category[]> => {
+    const res = await api.get<ApiResponse<Category[]>>('/categories');
+    return res.data;
+  },
+
+  // Listing-standard attributes for a category (drives the vendor form)
+  getCategoryAttributes: async (categoryId: string): Promise<CategoryAttribute[]> => {
+    const res = await api.get<ApiResponse<CategoryAttribute[]>>(
+      `/categories/id/${categoryId}/attributes`,
+    );
+    return res.data;
+  },
+
+  // Get featured categories for homepage (same as getCategories but limited)
+  getFeaturedCategories: async (limit = 4): Promise<Category[]> => {
+    const res = await api.get<ApiResponse<Category[]>>('/categories/featured', { limit });
+    return res.data;
+  },
+
+  // Get single category by slug with products
+  getCategoryBySlug: async (slug: string, filters?: ProductFilters) => {
+    const res = await api.get<ApiResponse<{ category: Category; products: PaginatedResponse<Product> }>>(
+      `/categories/${slug}`,
+      filters as Record<string, unknown>,
+    );
+    return res.data;
+  },
+
+  // Get category by ID
+  getCategoryById: async (id: string): Promise<Category | null> => {
+    const res = await api.get<ApiResponse<Category>>(`/categories/id/${id}`);
+    return res.data ?? null;
+  },
+};
