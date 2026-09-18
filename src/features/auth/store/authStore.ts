@@ -2,9 +2,17 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '@/features/auth/types';
 
-const LOGIN_URL = 'https://www.worldstreetgold.com/login';
-const REGISTER_URL = 'https://www.worldstreetgold.com/register';
+const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || 'https://www.worldstreetgold.com/login';
+const REGISTER_URL = import.meta.env.VITE_REGISTER_URL || 'https://www.worldstreetgold.com/register';
+const RETURN_PARAM = import.meta.env.VITE_AUTH_RETURN_PARAM || 'redirect';
 const PROFILE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+function withReturn(base: string, returnUrl?: string) {
+  if (!returnUrl) return base;
+  const url = new URL(base);
+  url.searchParams.set(RETURN_PARAM, returnUrl);
+  return url.toString();
+}
 
 interface AuthState {
   user: User | null;
@@ -43,12 +51,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     (set, get) => ({
       ...initialState,
 
-      /**
-       * Sync user data from our API after Clerk authenticates.
-       * The API call goes through the Clerk-authenticated axios interceptor,
-       * which attaches the Clerk session token.
-       * The server's /profile endpoint auto-creates a UserProfile if needed.
-       */
       syncClerkUser: async (force = false) => {
         if (get().isLoading) return;
 
@@ -61,11 +63,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true, error: null });
 
         try {
-          // Dynamic import to avoid circular dependency with api.ts
           const { default: apiClient } = await import('@/shared/lib/api');
           const response = await apiClient.get('/profile');
-
-          // Extract profile from response (handle both wrapper structures)
           const profile = response.data?.data || response.data;
 
           const user: User = {
@@ -76,7 +75,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             phone: profile.phone || undefined,
             avatar: profile.avatar || undefined,
             role: profile.role || 'CUSTOMER',
-            isVerified: true, // Clerk handles verification
+            isVerified: true,
             isVendor: profile.isVendor || false,
             vendorStatus: profile.vendorStatus || null,
             storeName: profile.storeName || null,
@@ -120,22 +119,15 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       clearError: () => set({ error: null }),
 
       redirectToLogin: (returnUrl?: string) => {
-        const url = returnUrl
-          ? `${LOGIN_URL}?redirect=${encodeURIComponent(returnUrl)}`
-          : LOGIN_URL;
-        window.location.href = url;
+        window.location.href = withReturn(LOGIN_URL, returnUrl);
       },
 
       redirectToRegister: (returnUrl?: string) => {
-        const url = returnUrl
-          ? `${REGISTER_URL}?redirect=${encodeURIComponent(returnUrl)}`
-          : REGISTER_URL;
-        window.location.href = url;
+        window.location.href = withReturn(REGISTER_URL, returnUrl);
       },
 
       logout: () => {
-        // The actual Clerk signOut is called from the component.
-        // This just cleans up local state.
+  
         set({ ...initialState });
         localStorage.setItem('sessionId', crypto.randomUUID());
       },
