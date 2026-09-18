@@ -13,6 +13,24 @@ $bp-sm: 640px;
 $bp-md: 1024px;
 $bp-lg: 1280px;
 
+// App-level extensions of the generated token scale. _tokens.scss stops at
+// --ws-space-8 (32px) and is regenerated from the design system, so page-level
+// rhythm, measure and elevation live here instead.
+:root {
+  --ws-space-5: 20px;
+  --ws-space-10: 40px;
+  --ws-space-12: 48px;
+  --ws-space-16: 64px;
+  --ws-space-20: 80px;
+  --ws-space-24: 96px;
+
+  --ws-measure: 62ch;
+  --ws-measure-tight: 46ch;
+
+  --ws-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24), 0 10px 24px -18px rgba(0, 0, 0, 0.55);
+  --ws-shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.28), 0 20px 44px -24px rgba(0, 0, 0, 0.6);
+}
+
 .ws-shell {
   // The sticky header is the 64px bar (TopNav spec) + the category-chip row
   // (12 + 36 + 12 + 1px border = 61) + the topbar's own bottom hairline.
@@ -203,7 +221,7 @@ $bp-lg: 1280px;
 }
 
 .ws-searchpop__suggestion-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ws-text-primary);
   overflow: hidden;
@@ -614,7 +632,7 @@ $bp-lg: 1280px;
 }
 
 .ws-filters__group {
-  padding-block: var(--ws-space-4);
+  padding-block: var(--ws-space-5);
   border-bottom: 1px solid var(--ws-border-hairline);
 
   &:first-child { padding-top: 0; }
@@ -695,6 +713,17 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+}
+
+// While a new page or filter is in flight the previous results stay on screen
+// (React Query's placeholder data) and recede instead of flashing to skeletons.
+.ws-busy {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity var(--ws-motion-base) var(--ws-ease);
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
 }
 
 // Also resets the native <button> chrome (border/background/padding/font) so
@@ -721,16 +750,32 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: border-color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease), transform var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    border-color var(--ws-motion-fast) var(--ws-ease),
+    background-color var(--ws-motion-fast) var(--ws-ease),
+    box-shadow var(--ws-motion-fast) var(--ws-ease),
+    transform var(--ws-motion-fast) var(--ws-ease);
 
   // Hover lifts 2px (translate, never scale) onto the raised step with a
-  // faint brand tint on the border.
+  // faint brand tint on the border, and takes the card elevation.
   .ws-plink:hover & {
     background: var(--ws-bg-raised);
     border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, var(--ws-border-hairline));
     transform: translateY(-2px);
+    box-shadow: var(--ws-shadow-lift);
+  }
+
+  // The press returns it to the page; the ring follows the card's own radius,
+  // which a ring on the wrapping link cannot do.
+  .ws-plink:active & { transform: translateY(0); box-shadow: var(--ws-shadow-card); }
+
+  .ws-plink:focus-visible & {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: 2px;
   }
 }
+
+.ws-plink:focus-visible { outline: none; }
 
 // Save-heart: revealed on hover (always visible once saved, and on touch
 // devices where hover doesn't exist).
@@ -779,6 +824,22 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   }
 }
 
+// Second photo, revealed on hover where the listing has one: the cheapest way
+// to answer "what else does it look like?" without leaving the grid.
+.ws-pcard__alt {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--ws-motion-base) var(--ws-ease);
+
+  .ws-plink:hover &,
+  .ws-plink:focus-visible & { opacity: 1; }
+
+  @media (hover: none) { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+}
+
 .ws-pcard__badges {
   position: absolute;
   top: var(--ws-space-2);
@@ -796,6 +857,14 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-1);
   @include ws-caption;
 }
+
+// Skeleton bars mirror the loaded card's lines — price, title, meta, seller —
+// so the grid does not reflow when results arrive.
+.ws-pcard--skeleton .ws-pcard__body { gap: var(--ws-space-2); }
+.ws-pcard__skel-price { height: 17px; width: 52%; }
+.ws-pcard__skel-title { height: 14px; width: 86%; }
+.ws-pcard__skel-meta { height: 12px; width: 46%; margin-top: var(--ws-space-1); }
+.ws-pcard__skel-seller { height: 12px; width: 64%; }
 
 .ws-pcard__body {
   padding: var(--ws-space-3);
@@ -878,9 +947,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-empty {
   display: grid;
   justify-items: center;
-  gap: var(--ws-space-3);
+  gap: var(--ws-space-4);
   text-align: center;
-  padding: 72px var(--ws-space-6);
+  padding: var(--ws-space-16) var(--ws-space-6);
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
   background: var(--ws-bg-surface);
@@ -894,6 +963,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-radius: var(--ws-radius-lg);
   background: var(--ws-bg-chip);
   color: var(--ws-text-subtle);
+}
+
+.ws-empty p {
+  max-width: var(--ws-measure-tight);
+  margin-inline: auto;
 }
 
 // ─── Pagination ─────────────────────────────────────────────────
@@ -940,6 +1014,60 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   background: var(--ws-bg-sunken);
 
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  // The photo strip is keyboard-operable (arrow keys), so it has to show focus.
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+  }
+}
+
+// Arrows sit on the photo, so their colours are theme-independent — the same
+// rule .ws-badge--ink and the save heart follow.
+.ws-gallery__nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
+
+  &.is-prev { left: var(--ws-space-3); rotate: 180deg; }
+  &.is-next { right: var(--ws-space-3); }
+
+  &:hover { background: rgba(0, 0, 0, 0.75); }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px solid #FFFFFF;
+    outline-offset: 2px;
+  }
+
+  .ws-gallery:hover &,
+  .ws-gallery__main:focus-within & { opacity: 1; }
+
+  @media (hover: none) { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+}
+
+.ws-gallery__count {
+  position: absolute;
+  right: var(--ws-space-3);
+  bottom: var(--ws-space-3);
+  padding: 2px var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+  @include ws-caption;
 }
 
 .ws-gallery__thumbs {
@@ -1071,14 +1199,62 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 }
 
 .ws-contact__direct {
-  margin-top: var(--ws-space-4);
-  padding-top: var(--ws-space-4);
+  margin-top: var(--ws-space-5);
+  padding-top: var(--ws-space-5);
   border-top: 1px solid var(--ws-border-hairline);
+}
+
+// Phones only: the contact panel sits below a long page, so the one action the
+// page exists for rides along at the bottom. On desktop the panel is sticky
+// already and this would be noise.
+.ws-actionbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-3) var(--ws-space-4);
+  padding-bottom: calc(var(--ws-space-3) + env(safe-area-inset-bottom));
+  background: var(--ws-bg-surface);
+  border-top: 1px solid var(--ws-border-hairline);
+  box-shadow: var(--ws-shadow-nav);
+
+  @media (min-width: $bp-md) { display: none; }
+}
+
+// Keeps the end of the page (and the footer under it) clear of the fixed bar.
+.ws-actionbar__spacer {
+  height: 84px;
+
+  @media (min-width: $bp-md) { display: none; }
+}
+
+.ws-actionbar__price {
+  display: grid;
+  min-width: 0;
+}
+
+.ws-actionbar__loc {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-aside__report {
+  display: flex;
+  justify-content: flex-start;
+  padding-inline: var(--ws-space-1);
 }
 
 .ws-contact__row {
   display: flex;
-  gap: var(--ws-space-2);
+  gap: var(--ws-space-3);
   flex-wrap: wrap;
   margin-top: var(--ws-space-2);
 }
@@ -1270,7 +1446,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     inset: 0;
     // Black, not a theme ink: this sits on arbitrary banner photography, which
     // does not change with the theme, so the scrim must not either.
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.45), transparent 60%);
+    background: rgba(0, 0, 0, 0.32);
   }
 
   @media (min-width: $bp-sm) { height: 200px; }
@@ -1401,11 +1577,16 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-home {
   display: flex;
   flex-direction: column;
-  gap: 56px;
-  padding-block: var(--ws-space-6) 72px;
+  gap: var(--ws-space-12);
+  padding-block: var(--ws-space-6) var(--ws-space-16);
+
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-20);
+    padding-block: var(--ws-space-8) var(--ws-space-24);
+  }
 }
 
-.ws-home__heading { margin-bottom: var(--ws-space-4); }
+.ws-home__heading { margin-bottom: var(--ws-space-5); }
 
 // ─── Hero carousel ──────────────────────────────────────────────
 // eBay-style rotating banner. The track slides horizontally; each slide is
@@ -1441,10 +1622,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   width: 100%;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 32px;
-  align-items: center;
-  padding: 40px var(--ws-space-6) 72px;
-  min-height: 440px;
+  gap: var(--ws-space-6);
+  align-items: start;
+  padding: var(--ws-space-8) var(--ws-space-6) var(--ws-space-16);
+  min-height: 0;
 
   // Off-screen slides drop out of the tab order and AT tree once the track
   // finishes moving.
@@ -1454,8 +1635,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
   @media (min-width: $bp-md) {
     grid-template-columns: minmax(0, 1fr) 460px;
-    padding: 64px 56px;
-    min-height: 520px;
+    align-items: center;
+    gap: var(--ws-space-12);
+    padding: var(--ws-space-16) var(--ws-space-12) var(--ws-space-12);
+    min-height: 480px;
   }
 }
 
@@ -1468,13 +1651,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-hero__title {
   font-family: var(--ws-font-display);
   font-weight: 700;
-  font-size: 34px;
-  letter-spacing: -1px;
-  line-height: 1.08;
-  margin-bottom: var(--ws-space-4);
+  font-size: clamp(34px, 3.4vw + 12px, 46px);
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+  margin-bottom: var(--ws-space-5);
   text-wrap: balance;
-
-  @media (min-width: $bp-md) { font-size: 46px; }
 
   em {
     font-style: normal;
@@ -1486,8 +1667,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-size: 15px;
   line-height: 1.6;
   color: var(--ws-text-muted);
-  max-width: 46ch;
+  max-width: var(--ws-measure-tight);
   margin-bottom: var(--ws-space-6);
+  text-wrap: pretty;
 }
 
 .ws-hero__ctas {
@@ -1508,7 +1690,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-hero__art {
   position: relative;
-  height: 240px;
+  height: 200px;
 
   @media (min-width: $bp-md) { height: 360px; }
 }
@@ -1538,13 +1720,19 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-hero__nav {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: var(--ws-space-4);
+  left: var(--ws-space-6);
+  right: var(--ws-space-6);
+  bottom: var(--ws-space-6);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--ws-space-4);
+
+  @media (min-width: $bp-md) {
+    left: var(--ws-space-12);
+    right: auto;
+    justify-content: flex-start;
+  }
 }
 
 .ws-hero__arrow {
@@ -1583,6 +1771,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-6);
   overflow-x: auto;
   padding-block: var(--ws-space-1);
+  padding-inline-end: var(--ws-space-4);
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
@@ -1593,7 +1782,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   flex-direction: column;
   align-items: center;
   gap: var(--ws-space-3);
-  width: 96px;
+  width: 104px;
   text-decoration: none;
   color: var(--ws-text-primary);
 }
@@ -1607,16 +1796,36 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   background: var(--ws-bg-surface);
   border: 1px solid var(--ws-border-hairline);
   color: var(--ws-text-muted);
-  transition: border-color var(--ws-motion-fast) var(--ws-ease), color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    border-color var(--ws-motion-fast) var(--ws-ease),
+    color var(--ws-motion-fast) var(--ws-ease),
+    background-color var(--ws-motion-fast) var(--ws-ease),
+    transform var(--ws-motion-fast) var(--ws-ease),
+    box-shadow var(--ws-motion-fast) var(--ws-ease);
 }
 
 .ws-cat:hover .ws-cat__disc {
+  transform: translateY(-2px);
+  box-shadow: var(--ws-shadow-card);
   background: color-mix(in srgb, var(--ws-brand-primary) 8%, var(--ws-bg-surface));
   border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, transparent);
   color: var(--ws-brand-gold-text);
 }
 
+.ws-cat:active .ws-cat__disc { transform: translateY(0); }
+
+.ws-cat:focus-visible .ws-cat__disc {
+  outline: 2px solid var(--ws-brand-primary);
+  outline-offset: 3px;
+}
+
 .ws-cat__label {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(2 * 1.3em);
+  line-height: 1.3;
   font-size: 13px;
   font-weight: 500;
   text-align: center;
@@ -1629,7 +1838,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   align-items: baseline;
   justify-content: space-between;
   gap: var(--ws-space-4);
-  margin-bottom: var(--ws-space-4);
+  margin-bottom: var(--ws-space-5);
 }
 
 .ws-rail__more {
@@ -1843,7 +2052,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--ws-radius-full);
+  border-radius: var(--ws-radius-pill);
   font-size: 14px;
   font-weight: 600;
   color: var(--ws-brand-gold-text);
@@ -2052,6 +2261,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // is a fixed square, so the label needs the width back.
 .ws-topbar__malls {
   @media (min-width: $bp-md) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: auto;
     gap: var(--ws-space-2);
     padding-inline: var(--ws-space-3);
@@ -2060,8 +2272,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-topbar__malls-label {
   display: none;
-  font-size: var(--ws-text-sm);
+  font-size: 13px;
   font-weight: 500;
+  line-height: 1;
   @media (min-width: $bp-md) { display: inline; }
 }
 

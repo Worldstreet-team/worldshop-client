@@ -1,41 +1,36 @@
 import { useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import AppRouter from '@/router';
-import ClerkTokenProvider from '@/components/auth/ClerkTokenProvider';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { useAuthStore } from '@/store/authStore';
+import AppRouter from '@/app/router';
+import ClerkTokenProvider from '@/app/providers/ClerkTokenProvider';
+import QueryProvider from '@/app/providers/QueryProvider';
+import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import '@/styles/main.scss';
 
 function App() {
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { syncClerkUser, clearUser } = useAuthStore();
 
-  useEffect(() => {
-  }, []);
-
-  // Sync auth state when Clerk loads
-  useEffect(() => {
+   useEffect(() => {
     if (!isLoaded) return;
 
     if (isSignedIn && userId) {
-      // Always sync to get fresh profile data (including role changes)
-      syncClerkUser();
+           syncClerkUser();
     } else {
       clearUser();
     }
-    // syncClerkUser/clearUser are stable store actions; depending on them
-    // re-triggers the sync loop.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+          // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isSignedIn, userId]);
 
-  // Show the branded boot loader while Clerk is loading.
-  if (!isLoaded) {
+   if (!isLoaded) {
     return <LoadingSpinner fullScreen />;
   }
 
   return (
     <ClerkTokenProvider>
-      <AppRouter />
+      <QueryProvider>
+        <AppRouter />
+      </QueryProvider>
     </ClerkTokenProvider>
   );
 }
