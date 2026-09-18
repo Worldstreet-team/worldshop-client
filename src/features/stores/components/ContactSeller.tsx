@@ -1,22 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { CheckCircle2, Phone, ShieldAlert, MessageCircle } from 'lucide-react';
 import { chatService } from '@/features/chat/api';
 import type { PublicListing } from '@/features/stores/api';
 import { useUIStore } from '@/shared/store/uiStore';
+import { queryKeys } from '@/shared/lib/queryKeys';
 import { toApiError } from '@/shared/lib/api';
 import { waLink } from '@/features/listings/model';
-
-/**
- * The primary action on the marketplace.
- *
- * Nothing is bought here — the whole product is putting a buyer in touch with
- * a seller. The in-platform message is the default because it is what feeds
- * the seller's response rate, verifies reviews, and gives the buyer a record.
- * Phone and WhatsApp are offered underneath rather than instead: hiding them
- * would just push people to ask for a number in the first message.
- */
 
 const errMessage = (err: unknown, fallback: string) => {
   const e = toApiError(err, fallback);
@@ -28,34 +20,35 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
   const { isSignedIn } = useAuth();
   const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
+  const client = useQueryClient();
 
   const [message, setMessage] = useState(
     `Hi, is "${listing.name}" still available?`,
   );
-  const [sending, setSending] = useState(false);
   const [sentId, setSentId] = useState<string | null>(null);
   const [showPhone, setShowPhone] = useState(false);
 
   const store = listing.store;
 
-  const handleSend = async () => {
+  const sendMutation = useMutation({
+    mutationFn: (body: string) => chatService.start({ listingId: listing.id, message: body }),
+    onSuccess: (res) => {
+      setSentId(res.data.id);
+      addToast({ type: 'success', message: 'Message sent. The seller will be notified.' });
+      client.invalidateQueries({ queryKey: queryKeys.listingReviewEligibility(listing.id) });
+      client.invalidateQueries({ queryKey: queryKeys.unreadCount() });
+    },
+    onError: (err) => addToast({ type: 'error', message: errMessage(err, 'Could not send your message') }),
+  });
+
+  const handleSend = () => {
     if (!isSignedIn) {
       navigate(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     const body = message.trim();
     if (body.length < 2) return;
-
-    setSending(true);
-    try {
-      const res = await chatService.start({ listingId: listing.id, message: body });
-      setSentId(res.data.id);
-      addToast({ type: 'success', message: 'Message sent. The seller will be notified.' });
-    } catch (err: unknown) {
-      addToast({ type: 'error', message: errMessage(err, 'Could not send your message') });
-    } finally {
-      setSending(false);
-    }
+    sendMutation.mutate(body);
   };
 
   if (sentId) {
@@ -93,10 +86,10 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
       <button
         className="ws-btn ws-btn--primary ws-btn--block"
         onClick={handleSend}
-        disabled={sending}
+        disabled={sendMutation.isPending}
       >
         <MessageCircle size={18} aria-hidden />
-        {sending ? 'Sending…' : isSignedIn ? 'Send message' : 'Sign in to message'}
+        {sendMutation.isPending ? 'Sending…' : isSignedIn ? 'Send message' : 'Sign in to message'}
       </button>
 
       {(store.phone || store.whatsapp) && (
@@ -111,9 +104,6 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
                   {store.phone}
                 </a>
               ) : (
-                // Revealed on click rather than rendered outright — it keeps
-                // the number away from casual scrapers and lets the platform
-                // see that contact was made.
                 <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => setShowPhone(true)}>
                   <Phone size={14} aria-hidden />
                   Show number

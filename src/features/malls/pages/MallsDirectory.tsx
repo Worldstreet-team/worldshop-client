@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ArrowRight, Building2, MapPin, Store } from 'lucide-react';
 import { publicMalls, type PublicMall } from '@/features/malls/api';
 import { formatLocation } from '@/shared/utils/locations';
@@ -7,12 +8,10 @@ import { useLocations } from '@/shared/hooks/useLocations';
 import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import MallCallout from '@/features/malls/components/MallCallout';
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { MINUTE } from '@/app/providers/QueryProvider';
 
-/**
- * Public mall directory. Mirrors the store directory's shape: location filter,
- * card grid, pagination. A mall card sells the destination — banner, name,
- * location, how many stores are inside.
- */
+const NO_MALLS: PublicMall[] = [];
 
 function MallCard({ mall }: { mall: PublicMall }) {
   const location = formatLocation([mall.city, mall.state], mall.country);
@@ -51,37 +50,25 @@ function MallCard({ mall }: { mall: PublicMall }) {
 }
 
 export default function MallsDirectory() {
-  const [malls, setMalls] = useState<PublicMall[]>([]);
-  const [loading, setLoading] = useState(true);
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [page, setPage] = useState(1);
   const { countryOf } = useLocations();
   const countryName = country ? (countryOf(country)?.name ?? country) : '';
-  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
+  const filters = { page, limit: 24, ...(country ? { country } : {}), ...(state ? { state } : {}) };
 
-    publicMalls
-      .browse({ page, limit: 24, ...(country ? { country } : {}), ...(state ? { state } : {}) })
-      .then((res) => {
-        if (cancelled) return;
-        setMalls(res.data);
-        setTotalPages(res.pagination.totalPages);
-      })
-      .catch(() => {
-        if (!cancelled) setMalls([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+  const query = useQuery({
+    queryKey: queryKeys.malls(filters),
+    queryFn: () => publicMalls.browse(filters),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * MINUTE,
+  });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [page, country, state]);
+  const malls = query.isError ? NO_MALLS : (query.data?.data ?? NO_MALLS);
+  const totalPages = query.data?.pagination.totalPages ?? 1;
+  const loading = query.isPending;
+  const refreshing = query.isFetching && !query.isPending;
 
   return (
     <div className="ws-page">
@@ -150,6 +137,8 @@ export default function MallsDirectory() {
       ) : (
         <>
           <div
+            className={refreshing ? 'ws-busy' : undefined}
+            aria-busy={refreshing || undefined}
             style={{
               display: 'grid', gap: 'var(--ws-space-4)',
               gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',

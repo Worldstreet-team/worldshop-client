@@ -12,7 +12,7 @@ import { firstImage, priceLabel } from '@/features/listings/model';
 import LocationSelect from '@/app/layouts/components/LocationSelect';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useUIStore } from '@/shared/store/uiStore';
-import { useCategoryStore } from '@/features/catalog/store/categoryStore';
+import { useCategories } from '@/features/catalog/hooks/useCategories';
 import { useUnreadCount } from '@/features/chat/hooks/useUnreadCount';
 import { useSearchSuggestions } from '@/features/listings/hooks/useSearchSuggestions';
 import { useWalletBalance } from '@/features/wallet/hooks/useWalletBalance';
@@ -30,7 +30,7 @@ export default function Header() {
   const [params] = useSearchParams();
   const { isAuthenticated, user } = useAuthStore();
   const { toggleMobileMenu } = useUIStore();
-  const { categories, fetchCategories } = useCategoryStore();
+  const { categories } = useCategories();
 
   const urlSearch = params.get('search') ?? '';
   const [searchBox, setSearchBox] = useState(urlSearch);
@@ -62,7 +62,6 @@ export default function Header() {
   const savedCount = useSyncExternalStore(savedListings.subscribe, savedListings.count);
   const { suggestions, suggestLoading } = useSearchSuggestions(searchBox, mobileSearchOpen);
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const unread = useUnreadCount(isAuthenticated);
   const { balance, balanceHidden, toggleBalance } = useWalletBalance(isAuthenticated);

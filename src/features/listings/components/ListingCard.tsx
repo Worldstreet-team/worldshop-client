@@ -2,21 +2,10 @@ import { useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ImageOff, MapPin, Star } from 'lucide-react';
 import type { Listing, PublicStore } from '@/features/stores/api';
-import { firstImage, priceLabel } from '@/features/listings/model';
+import { firstImage, imageSrc, priceLabel, type ImageRef } from '@/features/listings/model';
 import { savedListings } from '@/features/listings/savedListings';
+import { useListingPrefetch } from '@/features/listings/hooks/useListingPrefetch';
 import { formatLocation } from '@/shared/utils/locations';
-
-/**
- * A listing in a grid. Shared by browse and the storefront so the two never
- * drift apart on price formatting or what counts as a missing photo.
- *
- * Follows the Shop product-card spec: radius 13, 300×210 media, condition badge
- * overlaid top-left, title Medium 14, price display-face Bold 16, location
- * caption 11 in `text/subtle`.
- *
- * The seller line is optional: on a store page every card has the same seller,
- * so repeating it is noise.
- */
 
 const CONDITION_LABEL: Record<string, string> = {
   NEW: 'New',
@@ -24,10 +13,6 @@ const CONDITION_LABEL: Record<string, string> = {
   REFURBISHED: 'Refurbished',
 };
 
-/**
- * The fields a card actually renders. Narrower than Listing so /saved can
- * feed cards from localStorage snapshots instead of a fetch-by-id endpoint.
- */
 export type CardListing = Pick<
   Listing,
   'id' | 'slug' | 'name' | 'condition' | 'city' | 'state' | 'images' | 'priceType' | 'basePrice' | 'maxPrice'
@@ -41,18 +26,31 @@ export default function ListingCard({
   showSeller?: boolean;
 }) {
   const img = firstImage(listing);
+  const images = (listing.images as ImageRef[]) ?? [];
+  const hoverImg = images.length > 1 ? imageSrc(images[1]) : '';
   const location = formatLocation([listing.city, listing.state], listing.country);
   const condition = listing.condition ? CONDITION_LABEL[listing.condition] ?? listing.condition : null;
-  // Subscribed, not local state: the same listing can sit in two grids (a rail
-  // and /saved), and both hearts must move together.
   const saved = useSyncExternalStore(savedListings.subscribe, () => savedListings.has(listing.id));
+  const prefetch = useListingPrefetch();
+  const warm = () => prefetch(listing.slug || listing.id);
 
   return (
-    <Link to={`/listings/${listing.slug}`} className="ws-plink">
+    <Link
+      to={`/listings/${listing.slug}`}
+      className="ws-plink"
+      onMouseEnter={warm}
+      onFocus={warm}
+      onTouchStart={warm}
+    >
       <article className="ws-pcard">
         <div className="ws-pcard__media">
           {img ? (
-            <img src={img} alt={listing.name} loading="lazy" />
+            <>
+              <img src={img} alt={listing.name} loading="lazy" />
+              {hoverImg && (
+                <img src={hoverImg} alt="" aria-hidden loading="lazy" className="ws-pcard__alt" />
+              )}
+            </>
           ) : (
             <div className="ws-pcard__noimg">
               <ImageOff size={20} aria-hidden />
@@ -60,15 +58,12 @@ export default function ListingCard({
             </div>
           )}
 
-          {/* Condition only. "Negotiable" is true of almost every listing, so a
-              badge for it labels nothing — it belongs on the detail page. */}
           {condition && (
             <div className="ws-pcard__badges">
               <span className="ws-badge ws-badge--ink">{condition}</span>
             </div>
           )}
 
-          {/* Inside a <Link>, so the heart must suppress navigation itself. */}
           <button
             type="button"
             className={`ws-pcard__save${saved ? ' is-saved' : ''}`}
@@ -98,8 +93,7 @@ export default function ListingCard({
           {showSeller && listing.store && (
             <p className="ws-pcard__seller">
               <b>{listing.store.name}</b>
-              {/* The rating is the seller's, not the item's — nothing was
-                  bought here to rate. */}
+
               {listing.store.reviewCount > 0 && (
                 <span className="ws-rating" aria-label={`Seller rated ${listing.store.avgRating.toFixed(1)} out of 5`}>
                   <Star size={12} aria-hidden />

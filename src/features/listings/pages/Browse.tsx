@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SearchX, X, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import ListingCard from '@/features/listings/components/ListingCard';
+import ListingCardSkeleton from '@/features/listings/components/ListingCardSkeleton';
 import { useBrowseFilters } from '@/features/listings/hooks/useBrowseFilters';
 import { useBrowseCategories } from '@/features/listings/hooks/useBrowseCategories';
 import { useBrowseListings } from '@/features/listings/hooks/useBrowseListings';
@@ -30,7 +31,8 @@ export default function Browse() {
 
   usePageTitle(search ? `“${search}”` : selected ? selected.name : 'Browse listings');
 
-  const { listings, total, totalPages, loading, failed, retry } = useBrowseListings(browseFilters, categories);
+  const { listings, total, totalPages, loading, refreshing, failed, retry, prefetchPage } =
+    useBrowseListings(browseFilters, categories);
   const activeTokens = useBrowseTokens(browseFilters, selected, countryName);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -173,10 +175,10 @@ export default function Browse() {
             <div>
               <h1 className="ws-h1">{selected ? selected.name : 'Marketplace'}</h1>
               <p className="ws-caption ws-muted ws-num" aria-live="polite">
-                {loading
+                {loading || refreshing
                   ? 'Searching…'
                   : `${total.toLocaleString('en-NG')} ${total === 1 ? 'listing' : 'listings'}`}
-                {!loading && (stateFilter || countryName) && ` in ${stateFilter || countryName}`}
+                {!loading && !refreshing && (stateFilter || countryName) && ` in ${stateFilter || countryName}`}
               </p>
             </div>
 
@@ -229,16 +231,9 @@ export default function Browse() {
           )}
 
           {loading ? (
-                                  <div className="ws-grid" aria-hidden>
+            <div className="ws-grid" aria-hidden>
               {Array.from({ length: 8 }, (_, i) => (
-                <div className="ws-pcard" key={i}>
-                  <div className="ws-skeleton ws-pcard__media" />
-                  <div className="ws-pcard__body">
-                    <div className="ws-skeleton" style={{ height: 14, width: '90%' }} />
-                    <div className="ws-skeleton" style={{ height: 14, width: '55%' }} />
-                    <div className="ws-skeleton" style={{ height: 11, width: '40%', marginTop: 4 }} />
-                  </div>
-                </div>
+                <ListingCardSkeleton key={i} showSeller />
               ))}
             </div>
           ) : failed ? (
@@ -277,7 +272,7 @@ export default function Browse() {
               )}
             </div>
           ) : (
-            <div className="ws-grid">
+            <div className={`ws-grid${refreshing ? ' ws-busy' : ''}`} aria-busy={refreshing || undefined}>
               {listings.map((l) => <ListingCard key={l.id} listing={l} showSeller />)}
             </div>
           )}
@@ -288,6 +283,8 @@ export default function Browse() {
                 className="ws-btn ws-btn--sm ws-btn--secondary"
                 disabled={page <= 1}
                 onClick={() => setParam({ page: String(page - 1) }, { keepPage: true })}
+                onMouseEnter={() => prefetchPage(page - 1)}
+                onFocus={() => prefetchPage(page - 1)}
               >
                 <ChevronLeft size={16} aria-hidden />
                 Previous
@@ -297,6 +294,8 @@ export default function Browse() {
                 className="ws-btn ws-btn--sm ws-btn--secondary"
                 disabled={page >= totalPages}
                 onClick={() => setParam({ page: String(page + 1) }, { keepPage: true })}
+                onMouseEnter={() => page < totalPages && prefetchPage(page + 1)}
+                onFocus={() => page < totalPages && prefetchPage(page + 1)}
               >
                 Next
                 <ChevronRight size={16} aria-hidden />

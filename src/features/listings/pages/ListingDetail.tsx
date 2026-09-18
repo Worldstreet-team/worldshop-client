@@ -1,31 +1,17 @@
-import { useState, useEffect, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowRight, Check, ChevronRight, Clock, Eye, Heart, ImageOff, MapPin, Share2 } from 'lucide-react';
-import { publicMarketplace, type Listing, type PublicListing, type PublicStore } from '@/features/stores/api';
 import ContactSeller from '@/features/stores/components/ContactSeller';
 import SellerCard from '@/features/stores/components/SellerCard';
 import ListingCard from '@/features/listings/components/ListingCard';
 import ListingReviews from '@/features/reviews/components/ListingReviews';
 import ReportButton from '@/features/reports/components/ReportButton';
 import { savedListings } from '@/features/listings/savedListings';
+import { useListingDetail } from '@/features/listings/hooks/useListingDetail';
 import { fmtNaira, imageSrc, priceLabel, type ImageRef } from '@/features/listings/model';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { formatLocation } from '@/shared/utils/locations';
 
-/**
- * Public listing page.
- *
- * This replaces the ecommerce product page. There is no cart and no checkout —
- * the page exists to give a buyer enough detail to decide whether to make
- * contact, and then to make contact easy.
- *
- * Detail is shown in the two layers it was captured in: the category's
- * attributes (which buyers can also filter by) and the seller's own custom
- * fields. They are presented as one spec table because a buyer does not care
- * about the distinction — only search does.
- */
-
-/** "Listed 3 days ago" — coarse on purpose; freshness, not a timestamp. */
 function listedAgo(iso: string): string | null {
   const ms = Date.now() - new Date(iso).getTime();
   if (!Number.isFinite(ms) || ms < 0) return null;
@@ -39,18 +25,9 @@ function listedAgo(iso: string): string | null {
 
 export default function ListingDetail() {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
-  const [listing, setListing] = useState<PublicListing | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const { listing, loading, notFound, similar } = useListingDetail(idOrSlug);
   const [activeImage, setActiveImage] = useState(0);
   const [copied, setCopied] = useState(false);
-  // Keyed by the listing they were fetched for, so navigating to another
-  // listing never flashes the previous one's rail — same pattern as Browse's
-  // facetSource, and it avoids a reset-setState inside the effect.
-  const [similarSource, setSimilarSource] = useState<{
-    key: string;
-    items: Array<Listing & { store: PublicStore }>;
-  }>({ key: '', items: [] });
 
   usePageTitle(notFound ? 'Listing not available' : listing?.name);
   const saved = useSyncExternalStore(
@@ -58,57 +35,11 @@ export default function ListingDetail() {
     () => (listing ? savedListings.has(listing.id) : false),
   );
 
-  // The gallery resets per listing during render, not in an effect — the
-  // reconciliation pattern the repo already uses for Browse's price drafts.
   const [imageSeed, setImageSeed] = useState(idOrSlug);
   if (imageSeed !== idOrSlug) {
     setImageSeed(idOrSlug);
     setActiveImage(0);
   }
-
-  useEffect(() => {
-    if (!idOrSlug) return;
-    let cancelled = false;
-
-    publicMarketplace
-      .getListing(idOrSlug)
-      .then((res) => {
-        if (!cancelled) setListing(res.data);
-      })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [idOrSlug]);
-
-  // Same-category rail so the page is not a dead end. Fetched after the
-  // listing because the category id comes from it.
-  const categoryId = listing?.category?.id ?? '';
-  const listingId = listing?.id ?? '';
-  const similarKey = `${categoryId}|${listingId}`;
-  useEffect(() => {
-    if (!categoryId) return;
-    let cancelled = false;
-    publicMarketplace
-      .browse({ categoryId, limit: 5 })
-      .then((res) => {
-        if (!cancelled) {
-          setSimilarSource({
-            key: `${categoryId}|${listingId}`,
-            items: res.data.filter((l) => l.id !== listingId).slice(0, 4),
-          });
-        }
-      })
-      .catch(() => undefined);
-    return () => { cancelled = true; };
-  }, [categoryId, listingId]);
-  const similar = similarSource.key === similarKey ? similarSource.items : [];
 
   if (loading) {
     return (
@@ -144,8 +75,10 @@ export default function ListingDetail() {
 
   const images = (listing.images as ImageRef[]) ?? [];
   const location = formatLocation([listing.city, listing.state], listing.country);
-  // One table: the split between category attributes and the seller's own
-  // fields matters to search, not to the person reading the page.
+  const stepImage = (delta: number) => {
+    if (images.length < 2) return;
+    setActiveImage((i) => (i + delta + images.length) % images.length);
+  };
   const specs = [
     ...(listing.condition ? [{ label: 'Condition', value: listing.condition.charAt(0) + listing.condition.slice(1).toLowerCase() }] : []),
     ...Object.entries(listing.attributes ?? {}).map(([label, value]) => ({ label, value: String(value) })),
@@ -167,7 +100,17 @@ export default function ListingDetail() {
       <div className="ws-detail">
         <div>
           <div className="ws-gallery">
-            <div className="ws-gallery__main">
+            <div
+              className="ws-gallery__main"
+              role="group"
+              aria-roledescription="carousel"
+              aria-label={`Photos of ${listing.name}`}
+              tabIndex={images.length > 1 ? 0 : -1}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight') { e.preventDefault(); stepImage(1); }
+                if (e.key === 'ArrowLeft') { e.preventDefault(); stepImage(-1); }
+              }}
+            >
               {images.length > 0 ? (
                 <img src={imageSrc(images[activeImage])} alt={listing.name} />
               ) : (
@@ -175,6 +118,30 @@ export default function ListingDetail() {
                   <ImageOff size={24} aria-hidden />
                   No photos
                 </div>
+              )}
+
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="ws-gallery__nav is-prev"
+                    onClick={() => stepImage(-1)}
+                    aria-label="Previous photo"
+                  >
+                    <ChevronRight size={18} aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-gallery__nav is-next"
+                    onClick={() => stepImage(1)}
+                    aria-label="Next photo"
+                  >
+                    <ChevronRight size={18} aria-hidden />
+                  </button>
+                  <span className="ws-gallery__count ws-num" aria-live="polite">
+                    {activeImage + 1} / {images.length}
+                  </span>
+                </>
               )}
             </div>
 
@@ -215,16 +182,16 @@ export default function ListingDetail() {
                 title={copied ? 'Link copied' : 'Share'}
                 onClick={async () => {
                   const url = window.location.href;
+                  if (navigator.share) {
+                    await navigator.share({ title: listing.name, url }).catch(() => undefined);
+                    return;
+                  }
                   try {
-                    if (navigator.share) {
-                      await navigator.share({ title: listing.name, url });
-                    } else {
-                      await navigator.clipboard.writeText(url);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }
+                    await navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
                   } catch {
-                    // Share sheet dismissed — nothing to do.
+                    setCopied(false);
                   }
                 }}
               >
@@ -308,9 +275,6 @@ export default function ListingDetail() {
 
           <ListingReviews listingId={listing.id} />
 
-          {/* Understated and at the end: a prominent report control invites idle
-              clicking, and the moderation queue is ranked by distinct reporters,
-              so noise directly degrades the signal. */}
           <div style={{ marginTop: 'var(--ws-space-8)', textAlign: 'right' }}>
             <ReportButton
               targetType="LISTING"
@@ -321,14 +285,32 @@ export default function ListingDetail() {
           </div>
         </div>
 
-        {/* Contact rail — the point of the page. */}
-        <div className="ws-aside">
+        <div className="ws-aside" id="contact-panel">
           <ContactSeller listing={listing} />
           <SellerCard store={listing.store} />
         </div>
       </div>
 
-      {/* So the page is not a dead end once the buyer has read everything. */}
+      <div className="ws-actionbar">
+        <div className="ws-actionbar__price">
+          <span className="ws-price">{priceLabel(listing)}</span>
+          {location && <span className="ws-actionbar__loc">{location}</span>}
+        </div>
+        <button
+          type="button"
+          className="ws-btn ws-btn--primary"
+          onClick={() => {
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            document.getElementById('contact-panel')
+              ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+            document.getElementById('contact-message')?.focus({ preventScroll: true });
+          }}
+        >
+          Message seller
+        </button>
+      </div>
+      <div className="ws-actionbar__spacer" aria-hidden />
+
       {similar.length > 0 && listing.category && (
         <section className="ws-rail" aria-label="Similar listings" style={{ marginBlock: 'var(--ws-space-10)' }}>
           <div className="ws-rail__head">

@@ -1,19 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { chatService } from '@/features/chat/api';
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { MINUTE } from '@/app/providers/QueryProvider';
 
 export function useUnreadCount(isAuthenticated: boolean) {
-  const [unreadTotal, setUnreadTotal] = useState(0);
+  const query = useQuery({
+    queryKey: queryKeys.unreadCount(),
+    queryFn: () => chatService.unread().then((res) => res.data.total),
+    enabled: isAuthenticated,
+    staleTime: MINUTE,
+    refetchOnWindowFocus: true,
+  });
 
-    useEffect(() => {
-    if (!isAuthenticated) return;
-    let cancelled = false;
-    chatService.unread()
-      .then((res) => { if (!cancelled) setUnreadTotal(res.data.total); })
-      .catch(() => undefined);
-    return () => { cancelled = true; };
-  }, [isAuthenticated]);
-
-  const unread = isAuthenticated ? unreadTotal : 0;
-
-  return unread;
+  return isAuthenticated ? (query.data ?? 0) : 0;
 }

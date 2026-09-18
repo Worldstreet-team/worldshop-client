@@ -1,42 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Building2, PackageSearch, Phone, ShieldCheck } from 'lucide-react';
-import { publicMarketplace, type PublicStore, type Listing } from '@/features/stores/api';
 import SellerCard from '@/features/stores/components/SellerCard';
 import ListingCard from '@/features/listings/components/ListingCard';
 import ReportButton from '@/features/reports/components/ReportButton';
+import { useStorePage } from '@/features/stores/hooks/useStorePage';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { waLink } from '@/features/listings/model';
 import { formatLocation } from '@/shared/utils/locations';
 
-/**
- * Public storefront.
- *
- * A store page is a seller's shopfront and their reputation in one: the
- * catalogue answers "do they have what I want", the seller card answers "can I
- * trust them and will they reply". Both are needed before someone will make
- * contact, so neither is behind a tab.
- */
-
 export default function StorePage() {
   const { slug } = useParams<{ slug: string }>();
-  // Page lives in the URL so page 2 is shareable and the back button steps
-  // through pages — same rule Browse follows.
   const [params, setParams] = useSearchParams();
   const page = Math.max(1, Number(params.get('page')) || 1);
-  const [store, setStore] = useState<PublicStore | null>(null);
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  // Loading is derived: the grid is loading whenever the fetched key lags the
-  // requested one. That is what puts skeletons up on every page change — the
-  // old version only ever set loading once, so page 2 showed page 1's grid
-  // frozen until the response landed.
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const loading = loadedKey !== `${slug}|${page}`;
-  const [notFound, setNotFound] = useState(false);
-  // Revealed on click rather than rendered outright — same reasoning as
-  // ContactSeller's phone number: keeps it away from casual scrapers.
+  const {
+    store, notFound, listings, total, totalPages, loading, refreshing, prefetchPage,
+  } = useStorePage(slug, page);
   const [showPhone, setShowPhone] = useState(false);
 
   usePageTitle(notFound ? 'Store not available' : store?.name);
@@ -47,46 +26,6 @@ export default function StorePage() {
     else nextParams.set('page', String(next));
     setParams(nextParams);
   };
-
-  useEffect(() => {
-    if (!slug) return;
-    let cancelled = false;
-
-    publicMarketplace
-      .getStore(slug)
-      .then((res) => {
-        if (!cancelled) setStore(res.data);
-      })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
-
-  useEffect(() => {
-    if (!slug) return;
-    let cancelled = false;
-
-    publicMarketplace
-      .getStoreListings(slug, { page, limit: 24 })
-      .then((res) => {
-        if (cancelled) return;
-        setListings(res.data);
-        setTotal(res.pagination.total);
-        setTotalPages(res.pagination.totalPages);
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) setLoadedKey(`${slug}|${page}`);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [slug, page]);
 
   if (notFound) {
     return (
@@ -126,8 +65,7 @@ export default function StorePage() {
     <div className="ws-wrap">
       <div className="ws-detail">
         <div>
-          {/* Banner + logo read as one masthead, so they share a card rather
-              than stacking as separate blocks. */}
+
           <div className="ws-storehead">
             {store.banner && (
               <div className="ws-storehead__banner">
@@ -143,8 +81,7 @@ export default function StorePage() {
               <div style={{ minWidth: 0 }}>
                 <h1 className="ws-h1">{store.name}</h1>
                 {location && <p className="ws-caption ws-muted">{location}</p>}
-                {/* A substore links back to its mall — but only while the mall
-                    itself is visible, so a lapsed mall is not advertised. */}
+
                 {store.mall && (store.mall.status === 'ACTIVE' || store.mall.status === 'GRACE') && (
                   <p className="ws-caption" style={{ marginTop: 4 }}>
                     <Building2 size={12} aria-hidden style={{ verticalAlign: -2, marginRight: 4 }} />
@@ -159,7 +96,7 @@ export default function StorePage() {
           </div>
 
           {store.description && (
-            <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap' }}>
+            <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap', maxWidth: 'var(--ws-measure)' }}>
               {store.description}
             </p>
           )}
@@ -192,7 +129,11 @@ export default function StorePage() {
                 </Link>
               </div>
             ) : (
-              <div className="ws-grid" style={{ marginTop: 'var(--ws-space-4)' }}>
+              <div
+                className={`ws-grid${refreshing ? ' ws-busy' : ''}`}
+                style={{ marginTop: 'var(--ws-space-4)' }}
+                aria-busy={refreshing || undefined}
+              >
                 {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
               </div>
             )}
@@ -203,6 +144,8 @@ export default function StorePage() {
                   className="ws-btn ws-btn--sm ws-btn--secondary"
                   disabled={page <= 1}
                   onClick={() => setPage(page - 1)}
+                  onMouseEnter={() => prefetchPage(page - 1)}
+                  onFocus={() => prefetchPage(page - 1)}
                 >
                   Previous
                 </button>
@@ -211,6 +154,8 @@ export default function StorePage() {
                   className="ws-btn ws-btn--sm ws-btn--secondary"
                   disabled={page >= totalPages}
                   onClick={() => setPage(page + 1)}
+                  onMouseEnter={() => page < totalPages && prefetchPage(page + 1)}
+                  onFocus={() => page < totalPages && prefetchPage(page + 1)}
                 >
                   Next
                 </button>
@@ -225,15 +170,19 @@ export default function StorePage() {
           {hasContact && (
             <div className="ws-card">
               <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Contact</h2>
-              <div className="ws-stack">
+              <div className="ws-contact__row">
                 {store.phone && (
                   showPhone ? (
-                    <a href={`tel:${store.phone}`} className="ws-plink ws-num">
+                    <a href={`tel:${store.phone}`} className="ws-btn ws-btn--sm ws-btn--secondary ws-num">
                       <Phone size={14} aria-hidden />
                       {store.phone}
                     </a>
                   ) : (
-                    <button type="button" className="ws-plink" onClick={() => setShowPhone(true)}>
+                    <button
+                      type="button"
+                      className="ws-btn ws-btn--sm ws-btn--secondary"
+                      onClick={() => setShowPhone(true)}
+                    >
                       <Phone size={14} aria-hidden />
                       Show number
                     </button>
@@ -244,23 +193,30 @@ export default function StorePage() {
                     href={waLink(store.whatsapp)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ws-plink"
+                    className="ws-btn ws-btn--sm ws-btn--secondary"
                   >
                     WhatsApp
                   </a>
                 )}
                 {store.website && (
-                  <a href={store.website} target="_blank" rel="noopener noreferrer" className="ws-plink">
+                  <a
+                    href={store.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ws-btn ws-btn--sm ws-btn--secondary"
+                  >
                     Website
                   </a>
                 )}
-                {store.address && <p className="ws-caption ws-muted">{store.address}</p>}
               </div>
+              {store.address && (
+                <p className="ws-caption ws-muted" style={{ marginTop: 'var(--ws-space-3)' }}>
+                  {store.address}
+                </p>
+              )}
             </div>
           )}
 
-          {/* Always visible — the safety warning must not depend on whether
-              the store filled in its contact details. */}
           <div className="ws-card">
             <div className="ws-safety">
               <ShieldCheck size={16} aria-hidden />
@@ -268,7 +224,7 @@ export default function StorePage() {
             </div>
           </div>
 
-          <div style={{ textAlign: 'right' }}>
+          <div className="ws-aside__report">
             <ReportButton
               targetType="STORE"
               targetId={store.id}

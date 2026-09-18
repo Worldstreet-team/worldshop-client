@@ -1,49 +1,29 @@
-import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Building2, Globe, MapPin, Phone, Sparkles } from 'lucide-react';
-import { publicMalls, type PublicMallPage } from '@/features/malls/api';
+import { publicMalls } from '@/features/malls/api';
 import StoreCard from '@/features/stores/components/StoreCard';
 import ListingCard from '@/features/listings/components/ListingCard';
 import ReportButton from '@/features/reports/components/ReportButton';
 import { waLink } from '@/features/listings/model';
 import { formatLocation } from '@/shared/utils/locations';
-
-/**
- * Public mall page: banner and identity, the owner-curated featured rail,
- * then the substore grid. Everything arrives in one call — the server bundles
- * substores and still-valid featured listings with the mall itself.
- */
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { MINUTE } from '@/app/providers/QueryProvider';
 
 export default function MallPage() {
   const { slug } = useParams<{ slug: string }>();
-  const [mall, setMall] = useState<PublicMallPage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
 
-  useEffect(() => {
-    if (!slug) return;
-    let cancelled = false;
-    setLoading(true);
-    setNotFound(false);
+  const mallQuery = useQuery({
+    queryKey: queryKeys.mall(slug ?? ''),
+    queryFn: () => publicMalls.getMall(slug as string).then((res) => res.data),
+    enabled: Boolean(slug),
+    staleTime: 5 * MINUTE,
+  });
 
-    publicMalls
-      .getMall(slug)
-      .then((res) => {
-        if (!cancelled) setMall(res.data);
-      })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+  const mall = mallQuery.data ?? null;
+  const notFound = mallQuery.isError;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
-
-  if (loading) {
+  if (mallQuery.isPending) {
     return (
       <div className="ws-page">
         <div className="ws-skeleton" style={{ height: 220, borderRadius: 'var(--ws-radius-xl)', marginBottom: 'var(--ws-space-4)' }} />
@@ -69,7 +49,6 @@ export default function MallPage() {
 
   return (
     <div className="ws-page">
-      {/* Identity */}
       <section className="ws-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 'var(--ws-space-6)' }}>
         <div
           aria-hidden
@@ -130,7 +109,6 @@ export default function MallPage() {
         </div>
       </section>
 
-      {/* Featured rail */}
       {mall.featuredListings.length > 0 && (
         <section style={{ marginBottom: 'var(--ws-space-6)' }}>
           <h2 className="ws-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-2)', marginBottom: 'var(--ws-space-3)' }}>
@@ -143,16 +121,13 @@ export default function MallPage() {
               gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
             }}
           >
-            {mall.featuredListings.map(({ store: _store, ...listing }) => (
-              // The card's optional seller line wants a full PublicStore; the
-              // rail's slimmed store object is dropped since showSeller is off.
-              <ListingCard key={listing.id} listing={listing} />
+            {mall.featuredListings.map((item) => (
+              <ListingCard key={item.id} listing={{ ...item, store: undefined }} />
             ))}
           </div>
         </section>
       )}
 
-      {/* Stores */}
       <section>
         <h2 className="ws-title" style={{ marginBottom: 'var(--ws-space-3)' }}>
           Stores in {mall.name}

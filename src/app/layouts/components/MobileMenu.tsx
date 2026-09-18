@@ -8,15 +8,8 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/shared/store/uiStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { useCategoryStore } from '@/features/catalog/store/categoryStore';
+import { useCategories } from '@/features/catalog/hooks/useCategories';
 
-/**
- * The drawer is the Header's nav on small screens, so it mirrors the same
- * destinations. Pre-pivot entries (Sale, Featured, "Browse All Products") went
- * with the buying flows — Browse has no query params for them.
- */
-
-// Same department→icon map the Header uses; the API carries no icon field.
 const CATEGORY_ICON: Record<string, LucideIcon> = {
   electronics: Smartphone,
   vehicles: Car,
@@ -27,20 +20,12 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
 export default function MobileMenu() {
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const { isAuthenticated, user, logout } = useAuthStore();
-  const { categories, fetchCategories } = useCategoryStore();
+  const { categories } = useCategories();
   const { signOut } = useClerk();
   const drawerRef = useRef<HTMLElement>(null);
   const [signingOut, setSigningOut] = useState(false);
 
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      fetchCategories();
-    }
-  }, [isMobileMenuOpen, fetchCategories]);
-
-  // Keyboard users: focus moves into the drawer on open and back to the
-  // hamburger on close — Escape alone closed it but left focus stranded.
-  useEffect(() => {
+    useEffect(() => {
     if (isMobileMenuOpen) {
       drawerRef.current?.querySelector<HTMLElement>('a, button')?.focus();
       return () => {
@@ -49,9 +34,7 @@ export default function MobileMenu() {
     }
   }, [isMobileMenuOpen]);
 
-  // Letting the body scroll behind an open sheet makes the page drift under it
-  // on touch, so it is locked while the drawer is up.
-  useEffect(() => {
+    useEffect(() => {
     if (!isMobileMenuOpen) return;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -76,8 +59,7 @@ export default function MobileMenu() {
     }
   };
 
-  // Only top-level departments get a row, matching the Header's chip rail.
-  const topCategories = categories.filter((c) => !c.parentId);
+   const topCategories = categories.filter((c) => !c.parentId);
 
   return (
     <div className="ws">
@@ -93,14 +75,11 @@ export default function MobileMenu() {
         role="dialog"
         aria-modal="true"
         aria-label="Menu"
-        // Off-screen but still in the DOM, so its links stay tabbable without
-        // this — inert takes them out of the tab order while closed.
-        inert={!isMobileMenuOpen || undefined}
+                      inert={!isMobileMenuOpen || undefined}
       >
         <div className="ws-drawer__head">
           <Link to="/" onClick={closeMobileMenu} className="ws-brand" aria-label="WorldStore home">
-            {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
-                "WorldStore" Poppins SemiBold 15 + gold app eyebrow. */}
+
             <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
               <span className="ws-brand__word">WorldStore</span>
@@ -140,7 +119,7 @@ export default function MobileMenu() {
             <Heart size={18} aria-hidden />
             Saved listings
           </Link>
-          {/* Cross-app link set per the DS TopNav spec (Shop is this app). */}
+
           <div className="ws-drawer__section">Ecosystem</div>
           <a
             href="https://dashboard.worldstreetgold.com"
@@ -222,15 +201,12 @@ export default function MobileMenu() {
                 <Store size={18} aria-hidden />
                 Sell on WorldStore
               </Link>
-              {/* Sits under Sell because it is the tier above it — the drawer
-                  is the only labelled route into the mall product on mobile. */}
+
               <Link to="/mall" className="ws-drawer__link" onClick={closeMobileMenu}>
                 <Building2 size={18} aria-hidden />
                 Open a mall
               </Link>
-              {/* The Header's admin link is desktop-only (hidden below the
-                  breakpoint that switches over to this drawer), so this is
-                  the only way an admin on a phone or tablet reaches /admin. */}
+
               {user?.role === 'ADMIN' && (
                 <Link to="/admin" className="ws-drawer__link" onClick={closeMobileMenu}>
                   <LayoutGrid size={18} aria-hidden />

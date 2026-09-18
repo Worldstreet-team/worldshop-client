@@ -1,25 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { walletService, type Wallet } from '@/features/wallet/api';
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { MINUTE } from '@/app/providers/QueryProvider';
 import { writeLocal } from '@/shared/utils/storage';
 
 export function useWalletBalance(isAuthenticated: boolean) {
-  const [wallet, setWallet] = useState<Wallet | null>(null);
   const [balanceHidden, setBalanceHidden] = useState(
     () => localStorage.getItem('ws:balance-hidden') === '1',
   );
 
-    useEffect(() => {
-    if (!isAuthenticated) return;
-    let cancelled = false;
-    walletService.get()
-                .then((res) => {
-        if (!cancelled && typeof res.data?.availableMinor === 'number') setWallet(res.data);
-      })
-      .catch(() => undefined);
-    return () => { cancelled = true; };
-  }, [isAuthenticated]);
-
-  const balance = isAuthenticated ? wallet : null;
+  const query = useQuery({
+    queryKey: queryKeys.wallet(),
+    queryFn: () => walletService.get().then((res) => res.data),
+    enabled: isAuthenticated,
+    staleTime: 2 * MINUTE,
+    select: (data: Wallet | null) =>
+      typeof data?.availableMinor === 'number' ? data : null,
+  });
 
   const toggleBalance = () => {
     setBalanceHidden((v) => {
@@ -29,5 +27,9 @@ export function useWalletBalance(isAuthenticated: boolean) {
     });
   };
 
-  return { balance, balanceHidden, toggleBalance };
+  return {
+    balance: isAuthenticated ? (query.data ?? null) : null,
+    balanceHidden,
+    toggleBalance,
+  };
 }

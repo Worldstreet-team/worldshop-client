@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   chatService,
   type ConversationSummary,
@@ -7,20 +8,8 @@ import {
   type InboxSide,
 } from '@/features/chat/api';
 import { useUIStore } from '@/shared/store/uiStore';
+import { queryKeys } from '@/shared/lib/queryKeys';
 import { toApiError } from '@/shared/lib/api';
-
-/**
- * Message inbox, shared by both sides.
- *
- * The same component serves buyers and vendors because the thread is
- * symmetrical — only the labelling differs. What is NOT shared is the list: a
- * user can be both, and mixing "things I asked about" with "customers asking
- * about my stock" makes both unreadable. The side is explicit, never inferred.
- *
- * For a vendor this is the most consequential screen on the platform. Replying
- * is what produces their response rate, which buyers see, and an unanswered
- * thread counts against them.
- */
 
 const errMessage = (err: unknown, fallback: string) => {
   const e = toApiError(err, fallback);
@@ -53,6 +42,7 @@ export default function Inbox({ side }: { side: InboxSide }) {
   const [sending, setSending] = useState(false);
   const addToast = useUIStore((s) => s.addToast);
   const endRef = useRef<HTMLDivElement>(null);
+  const client = useQueryClient();
 
   const isVendor = side === 'selling';
 
@@ -60,7 +50,6 @@ export default function Inbox({ side }: { side: InboxSide }) {
     try {
       const res = await chatService.list({ side, limit: 50 });
       setConversations(res.data);
-      // Open the newest thread on a wide screen so the pane is never blank.
       setActiveId((current) => current ?? res.data[0]?.id ?? null);
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Could not load messages') });
@@ -73,11 +62,6 @@ export default function Inbox({ side }: { side: InboxSide }) {
     loadList();
   }, [loadList]);
 
-  // Opening a thread marks it read, which is also what clears the badge the
-  // dashboard shows. Keyed on activeId with a cancellation guard — clicking a
-  // second conversation before the first one's fetch resolves must not let
-  // the stale response land on top of it, which would leave the compose box
-  // pointed at one conversation while the screen still shows another's history.
   useEffect(() => {
     if (!activeId) return;
     const id = activeId;
@@ -96,6 +80,7 @@ export default function Inbox({ side }: { side: InboxSide }) {
           setConversations((prev) =>
             prev.map((c) => (c.id === id ? { ...c, unread: 0, vendorUnread: 0, buyerUnread: 0 } : c)),
           );
+          client.invalidateQueries({ queryKey: queryKeys.unreadCount() });
         }
       })
       .catch((err: unknown) => {
@@ -108,7 +93,7 @@ export default function Inbox({ side }: { side: InboxSide }) {
     return () => {
       cancelled = true;
     };
-  }, [activeId, isVendor, addToast]);
+  }, [activeId, isVendor, addToast, client]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
@@ -122,9 +107,7 @@ export default function Inbox({ side }: { side: InboxSide }) {
     setSending(true);
     try {
       const res = await chatService.send(activeId, body);
-      // Appended locally rather than refetching — the reply should appear the
-      // instant it is accepted.
-      setThread((t) => (t ? { ...t, messages: [...t.messages, res.data] } : t));
+                setThread((t) => (t ? { ...t, messages: [...t.messages, res.data] } : t));
       setDraft('');
       await loadList();
     } catch (err: unknown) {
@@ -134,16 +117,12 @@ export default function Inbox({ side }: { side: InboxSide }) {
     }
   };
 
-  // The vendor's counterpart is the buyer, not the listing — two buyers asking
-  // about the same product must be distinguishable rows. `buyer` is absent on
-  // servers deployed behind this client, so the listing name stays as a
-  // fallback rather than showing an empty title.
-  const counterpartName = (c: ConversationSummary) =>
+      const counterpartName = (c: ConversationSummary) =>
     isVendor ? (c.buyer?.name ?? c.listing?.name ?? 'a listing') : c.store.name;
 
   return (
     <div className="ws-inbox">
-      {/* ── Conversation list ── */}
+
       <aside className="ws-inbox__list">
         <div className="ws-inbox__head">
           {isVendor ? 'Customer messages' : 'My conversations'}
@@ -176,8 +155,6 @@ export default function Inbox({ side }: { side: InboxSide }) {
                     {c.unread > 0 && <span className="ws-inbox__count">{c.unread}</span>}
                   </div>
 
-                  {/* What the buyer is asking about — only meaningful on the
-                      vendor side, and only once the title is the buyer. */}
                   {isVendor && c.buyer && (
                     <div className="ws-inbox__sub">{c.listing?.name ?? 'Listing removed'}</div>
                   )}
@@ -194,7 +171,6 @@ export default function Inbox({ side }: { side: InboxSide }) {
         )}
       </aside>
 
-      {/* ── Thread ── */}
       <section className="ws-inbox__thread">
         {!activeId || !thread ? (
           <p className="ws-body ws-muted" style={{ margin: 'auto', padding: 'var(--ws-space-8)', textAlign: 'center' }}>
@@ -210,10 +186,8 @@ export default function Inbox({ side }: { side: InboxSide }) {
               </div>
               <div className="ws-caption ws-muted">
                 {isVendor ? (
-                  // The listing may be gone; the conversation outlives it.
                   thread.listing ? (
                     <>
-                      {/* Repeated here because the title is now the buyer. */}
                       {thread.buyer ? `About: ${thread.listing.name} · ` : null}
                       <Link to={`/vendor/products/${thread.listing.id}`}>View listing</Link>
                     </>

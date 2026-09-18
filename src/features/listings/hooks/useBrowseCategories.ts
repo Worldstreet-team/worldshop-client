@@ -1,54 +1,41 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { categoryService } from '@/features/catalog/api';
-import type { Category, CategoryAttribute } from '@/features/catalog/types';
+import { useCategories } from '@/features/catalog/hooks/useCategories';
+import type { CategoryAttribute } from '@/features/catalog/types';
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { MINUTE } from '@/app/providers/QueryProvider';
+
+const NO_FACETS: CategoryAttribute[] = [];
 
 export function useBrowseCategories(categoryId: string) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [facetSource, setFacetSource] = useState<{ categoryId: string; attributes: CategoryAttribute[] }>({
-    categoryId: '',
-    attributes: [],
-  });
+  const { categories } = useCategories();
 
-  const parents = useMemo(
-    () => categories.filter((c) => !c.parentId),
-    [categories],
-  );
+  const parents = useMemo(() => categories.filter((c) => !c.parentId), [categories]);
 
   const selected = categories.find((c) => c.id === categoryId);
-    const openParentId = selected ? (selected.parentId ?? selected.id) : '';
+  const openParentId = selected ? (selected.parentId ?? selected.id) : '';
   const siblings = useMemo(
     () => categories.filter((c) => c.parentId === openParentId),
     [categories, openParentId],
   );
   const isLeaf = Boolean(selected?.parentId);
 
-  useEffect(() => {
-    categoryService.getCategories().then(setCategories).catch(() => undefined);
-  }, []);
+  const facetQuery = useQuery({
+    queryKey: queryKeys.categoryAttributes(categoryId),
+    queryFn: () => categoryService.getCategoryAttributes(categoryId),
+    enabled: Boolean(categoryId) && isLeaf,
+    staleTime: 30 * MINUTE,
+    select: (attrs: CategoryAttribute[]) => attrs.filter((a) => a.isFilterable && a.type === 'SELECT'),
+  });
 
-    const facets = facetSource.categoryId === categoryId ? facetSource.attributes : [];
-
-  useEffect(() => {
-    if (!categoryId || !isLeaf) return;
-    let cancelled = false;
-
-    categoryService
-      .getCategoryAttributes(categoryId)
-      .then((attrs) => {
-        if (cancelled) return;
-        setFacetSource({
-          categoryId,
-          attributes: attrs.filter((a) => a.isFilterable && a.type === 'SELECT'),
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setFacetSource({ categoryId, attributes: [] });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [categoryId, isLeaf]);
-
-  return { categories, parents, selected, openParentId, siblings, isLeaf, facets };
+  return {
+    categories,
+    parents,
+    selected,
+    openParentId,
+    siblings,
+    isLeaf,
+    facets: facetQuery.data ?? NO_FACETS,
+  };
 }

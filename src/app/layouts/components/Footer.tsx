@@ -1,18 +1,12 @@
 import { Link } from 'react-router-dom';
 import { ArrowUp } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { useCategoryStore } from '@/features/catalog/store/categoryStore';
-
-/**
- * Footer. Marketplace + category + account columns — no shipping, returns or
- * payment pages because nothing is bought on-platform. Categories come from
- * the same store the header fills, so no extra fetch happens here.
- */
+import { useCategories } from '@/features/catalog/hooks/useCategories';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { isAuthenticated } = useAuthStore();
-  const { categories } = useCategoryStore();
+  const { categories } = useCategories();
 
   const departments = categories.filter(
     (c) => !c.parentId && categories.some((child) => child.parentId === c.id),
@@ -24,8 +18,7 @@ export default function Footer() {
         <div className="ws-footer__grid">
           <div>
             <Link to="/" className="ws-brand" aria-label="WorldStore home">
-              {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
-                  "WorldStore" Poppins SemiBold 15 + gold app eyebrow. */}
+
               <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
               <span className="ws-brand__stack">
                 <span className="ws-brand__word">WorldStore</span>
@@ -80,9 +73,6 @@ export default function Footer() {
             </ul>
           </nav>
 
-          {/* Cross-app link set per the DS TopNav spec (Dashboard · Academy ·
-              Xstream · Social — Shop is this app). Same subdomain family the
-              vendor console already links to. */}
           <nav aria-label="WorldStreet ecosystem">
             <h2 className="ws-label ws-footer__head">Ecosystem</h2>
             <ul className="ws-footer__links">

@@ -1,37 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import { Star, Info } from 'lucide-react';
-import {
-  marketplaceReviewService,
-  type MarketplaceReview,
-  type ReviewSummary,
-  type ReviewEligibility,
-} from '@/features/reviews/api';
-import { useUIStore } from '@/shared/store/uiStore';
+import { useListingReviews } from '@/features/reviews/hooks/useListingReviews';
 import ReportButton from '@/features/reports/components/ReportButton';
-import { toApiError } from '@/shared/lib/api';
 
-/**
- * Reviews on a listing.
- *
- * Two things this has to communicate that an ecommerce review list does not:
- *
- *  1. What "verified" means here. There are no purchases to verify against, so
- *     the badge means the seller actually replied to this person. Saying
- *     "Verified purchase" would be a lie; saying nothing wastes the signal.
- *  2. Why someone cannot review yet. The gate is having messaged the seller, so
- *     the reason is shown up front rather than after they have written 300 words.
- */
-
-const errMessage = (err: unknown, fallback: string) => {
-  const e = toApiError(err, fallback);
-  const fieldError = e.errors && Object.values(e.errors)[0];
-  return fieldError || e.message;
-};
-
-// Stars are the one theme-independent color in the system (always orange,
-// filled). Unfilled ones drop to the track color so they read as "empty" in
-// both a light and a dark ladder.
 const Stars = ({ value, size = 14 }: { value: number; size?: number }) => {
   const filled = Math.round(value);
   return (
@@ -74,121 +44,12 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 export default function ListingReviews({ listingId }: { listingId: string }) {
-  const { isSignedIn } = useAuth();
-  const addToast = useUIStore((s) => s.addToast);
-
-  const [reviews, setReviews] = useState<MarketplaceReview[]>([]);
-  const [summary, setSummary] = useState<ReviewSummary | null>(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [page, setPage] = useState(1);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
-  const [mine, setMine] = useState<MarketplaceReview | null>(null);
-
-  const [writing, setWriting] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [title, setTitle] = useState('');
-  const [comment, setComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await marketplaceReviewService.forListing(listingId, { page, limit: 10, verifiedOnly });
-      setReviews(res.data);
-      setSummary(res.meta);
-      setTotalPages(res.pagination.totalPages);
-    } catch {
-      // A failed review list should not take the listing page down with it.
-    } finally {
-      setLoading(false);
-    }
-  }, [listingId, page, verifiedOnly]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Only signed-in users have an eligibility answer worth asking for.
-  useEffect(() => {
-    if (!isSignedIn) return;
-    let cancelled = false;
-
-    Promise.all([
-      marketplaceReviewService.eligibility(listingId).then((r) => r.data).catch(() => null),
-      marketplaceReviewService.mine(listingId).then((r) => r.data).catch(() => null),
-    ]).then(([elig, own]) => {
-      if (cancelled) return;
-      setEligibility(elig);
-      setMine(own);
-      if (own) {
-        setRating(own.rating);
-        setTitle(own.title ?? '');
-        setComment(own.comment);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isSignedIn, listingId]);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-
-    if (comment.trim().length < 10) {
-      setFormError('Write at least a sentence so the review is useful to other buyers.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      if (mine) {
-        const res = await marketplaceReviewService.update(mine.id, {
-          rating, title: title || null, comment: comment.trim(),
-        });
-        setMine(res.data);
-        addToast({ type: 'success', message: 'Review updated' });
-      } else {
-        const res = await marketplaceReviewService.create(listingId, {
-          rating, title: title || undefined, comment: comment.trim(),
-        });
-        setMine(res.data);
-        addToast({
-          type: 'success',
-          message: res.data.isVerified
-            ? 'Review posted.'
-            : 'Review posted. It shows as verified once the seller replies to your message.',
-        });
-      }
-      setWriting(false);
-      setPage(1);
-      await load();
-    } catch (err: unknown) {
-      setFormError(errMessage(err, 'Could not post your review'));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const removeMine = async () => {
-    if (!mine || !window.confirm('Delete your review?')) return;
-    try {
-      await marketplaceReviewService.remove(mine.id);
-      setMine(null);
-      setComment('');
-      setTitle('');
-      addToast({ type: 'success', message: 'Review deleted' });
-      await load();
-    } catch (err: unknown) {
-      addToast({ type: 'error', message: errMessage(err, 'Could not delete your review') });
-    }
-  };
-
-  const count = summary?.reviewCount ?? 0;
+  const {
+    isSignedIn, reviews, summary, count, loading, totalPages, page, setPage,
+    verifiedOnly, setVerifiedOnly, eligibility, mine, writing, setWriting,
+    rating, setRating, title, setTitle, comment, setComment,
+    formError, submitting, submit, removeMine,
+  } = useListingReviews(listingId);
 
   return (
     <section className="ws-detail__section">
@@ -196,7 +57,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
         Reviews {count > 0 && <span className="ws-muted ws-num" style={{ fontWeight: 400 }}>({count})</span>}
       </h2>
 
-      {/* ── Summary ── */}
       {count > 0 && summary && (
         <div className="ws-reviews__summary">
           <div>
@@ -226,7 +86,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
         </div>
       )}
 
-      {/* ── Write / edit ── */}
       {isSignedIn && (
         <div style={{ marginBottom: 'var(--ws-space-6)' }}>
           {mine && !writing ? (
@@ -297,7 +156,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
               Write a review
             </button>
           ) : eligibility?.reason ? (
-            // The gate, stated before any effort is spent on writing.
             <div className="ws-alert ws-alert--info">
               <Info size={16} aria-hidden />
               <span>{eligibility.reason}</span>
@@ -306,7 +164,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
         </div>
       )}
 
-      {/* ── List ── */}
       {loading ? (
         <div className="ws-stack">
           {[0, 1, 2].map((i) => (
@@ -340,7 +197,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
                   <Stars value={r.rating} size={13} />
                   <strong style={{ fontSize: 14 }}>{r.userName}</strong>
 
-                  {/* Not "verified purchase" — nothing was purchased here. */}
                   {r.isVerified && (
                     <span
                       className="ws-badge ws-badge--success"
@@ -362,8 +218,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
                   {r.comment}
                 </p>
 
-                {/* Shown on other people's reviews only — reporting your own is
-                    meaningless, and it is the seller who usually spots a fake. */}
                 {!(mine && mine.id === r.id) && (
                   <div style={{ marginTop: 'var(--ws-space-2)' }}>
                     <ReportButton
@@ -375,8 +229,6 @@ export default function ListingReviews({ listingId }: { listingId: string }) {
                   </div>
                 )}
 
-                {/* The seller's answer. They have no refund or resolution lever
-                    in this model, so a public reply is their only defence. */}
                 {r.vendorReply && (
                   <div className="ws-review__reply">
                     <div className="ws-caption" style={{ fontWeight: 600 }}>
