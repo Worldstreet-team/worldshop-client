@@ -1,75 +1,25 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ArrowRight, Building2, MapPin, Store } from 'lucide-react';
-import { publicMalls, type PublicMall } from '@/features/malls/api';
-import { formatLocation } from '@/shared/utils/locations';
-import { sinceLabel } from '@/features/stores/model';
+import { ArrowRight, Store } from 'lucide-react';
+import { publicMarketplace, type PublicStore } from '@/features/stores/api';
 import { useLocations } from '@/shared/hooks/useLocations';
 import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
-import MallCallout from '@/features/malls/components/MallCallout';
+import StoreCard from '@/features/stores/components/StoreCard';
 import StoreCardSkeleton from '@/features/stores/components/StoreCardSkeleton';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
 
-const NO_MALLS: PublicMall[] = [];
+const NO_STORES: PublicStore[] = [];
 
-function MallCard({ mall }: { mall: PublicMall }) {
-  const location = formatLocation([mall.city, mall.state], mall.country);
-  const since = sinceLabel(mall.createdAt);
+const GRID = {
+  display: 'grid',
+  gap: 'var(--ws-space-4)',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+} as const;
 
-  return (
-    <Link to={`/malls/${mall.slug}`} className="ws-storecard">
-      <div className="ws-storecard__banner" aria-hidden>
-        {mall.banner && <img src={mall.banner} alt="" loading="lazy" />}
-      </div>
-
-      <div className="ws-storecard__body">
-        <div className="ws-storecard__head">
-          <span className="ws-storecard__logo" aria-hidden>
-            {mall.logo ? <img src={mall.logo} alt="" loading="lazy" /> : <Building2 size={22} />}
-          </span>
-        </div>
-
-        <h3 className="ws-storecard__name">{mall.name}</h3>
-        {location && (
-          <p className="ws-storecard__loc">
-            <span className="ws-storecard__place">
-              <MapPin size={12} aria-hidden />
-              <span>{location}</span>
-            </span>
-          </p>
-        )}
-
-        <p className="ws-storecard__desc">{mall.description}</p>
-
-        <dl className="ws-storecard__stats ws-storecard__stats--2">
-          <div>
-            <dt>{mall.substoreCount === 1 ? 'Store' : 'Stores'}</dt>
-            <dd className="ws-num">
-              <Store size={12} aria-hidden className="ws-storecard__glyph" />
-              {mall.substoreCount.toLocaleString()}
-            </dd>
-          </div>
-          <div>
-            <dt>Opened</dt>
-            <dd className={since ? undefined : 'ws-storecard__muted'}>{since ?? '—'}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div className="ws-storecard__foot">
-        <span className="ws-storecard__cta">
-          Visit mall
-          <ArrowRight size={14} aria-hidden />
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-export default function MallsDirectory() {
+export default function StoresDirectory() {
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
   const [page, setPage] = useState(1);
@@ -79,13 +29,13 @@ export default function MallsDirectory() {
   const filters = { page, limit: 24, ...(country ? { country } : {}), ...(state ? { state } : {}) };
 
   const query = useQuery({
-    queryKey: queryKeys.malls(filters),
-    queryFn: () => publicMalls.browse(filters),
+    queryKey: queryKeys.stores(filters),
+    queryFn: () => publicMarketplace.browseStores(filters),
     placeholderData: keepPreviousData,
     staleTime: 5 * MINUTE,
   });
 
-  const malls = query.isError ? NO_MALLS : (query.data?.data ?? NO_MALLS);
+  const stores = query.isError ? NO_STORES : (query.data?.data ?? NO_STORES);
   const totalPages = query.data?.pagination.totalPages ?? 1;
   const loading = query.isPending;
   const refreshing = query.isFetching && !query.isPending;
@@ -94,8 +44,8 @@ export default function MallsDirectory() {
     <div className="ws-page">
       <div className="ws-page__head">
         <div>
-          <h1 className="ws-page__title">Malls</h1>
-          <p className="ws-page__sub">Shopping destinations with multiple stores under one roof.</p>
+          <h1 className="ws-page__title">Stores</h1>
+          <p className="ws-page__sub">Independent sellers on the marketplace — visit one to see everything they list.</p>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--ws-space-2)' }}>
           <CountrySelect
@@ -107,7 +57,7 @@ export default function MallsDirectory() {
               setCountry(e.target.value);
               setState('');
             }}
-            aria-label="Filter malls by country"
+            aria-label="Filter stores by country"
           />
           {country && (
             <StateSelect
@@ -119,37 +69,30 @@ export default function MallsDirectory() {
                 setPage(1);
                 setState(e.target.value);
               }}
-              aria-label="Filter malls by state or region"
+              aria-label="Filter stores by state or region"
             />
           )}
         </div>
       </div>
 
-      <MallCallout />
-
       {loading ? (
-        <div
-          style={{
-            display: 'grid', gap: 'var(--ws-space-4)',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          }}
-        >
+        <div style={GRID}>
           {Array.from({ length: 6 }, (_, i) => (
             <StoreCardSkeleton key={i} />
           ))}
         </div>
-      ) : malls.length === 0 ? (
+      ) : stores.length === 0 ? (
         <div className="ws-empty">
-          <div className="ws-empty__icon"><Building2 size={26} aria-hidden /></div>
-          <h2 className="ws-title">No malls yet</h2>
+          <div className="ws-empty__icon"><Store size={26} aria-hidden /></div>
+          <h2 className="ws-title">No stores yet</h2>
           <p className="ws-caption ws-muted" style={{ maxWidth: '44ch' }}>
             {state || country
-              ? `No malls in ${state || countryName} yet — try another location.`
-              : 'Be the first — a mall gives your storefronts a shared home here.'}
+              ? `No stores in ${state || countryName} yet — try another location.`
+              : 'Be the first — open a store and start listing today.'}
           </p>
           {!state && !country && (
-            <Link to="/mall/register" className="ws-btn ws-btn--sm ws-btn--primary">
-              Create your mall
+            <Link to="/vendor/register" className="ws-btn ws-btn--sm ws-btn--primary">
+              Open a store
               <ArrowRight size={14} aria-hidden />
             </Link>
           )}
@@ -159,13 +102,10 @@ export default function MallsDirectory() {
           <div
             className={refreshing ? 'ws-busy' : undefined}
             aria-busy={refreshing || undefined}
-            style={{
-              display: 'grid', gap: 'var(--ws-space-4)',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            }}
+            style={GRID}
           >
-            {malls.map((m) => (
-              <MallCard key={m.id} mall={m} />
+            {stores.map((s) => (
+              <StoreCard key={s.id} store={s} />
             ))}
           </div>
 

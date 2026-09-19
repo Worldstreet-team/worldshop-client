@@ -1,63 +1,92 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BadgeCheck, Star, Store } from 'lucide-react';
+import { ArrowRight, BadgeCheck, MapPin, Star } from 'lucide-react';
 import type { PublicStore } from '@/features/stores/api';
-import { isVerifiedTier } from '@/features/stores/model';
+import { isVerifiedTier, sinceLabel, VERIFICATION_LABEL } from '@/features/stores/model';
 import { formatLocation } from '@/shared/utils/locations';
 
-/**
- * Seller spotlight for the home page: banner with an overlapping avatar, one
- * stat line, one reply line. SellerCard (the label-heavy trust panel on the
- * listing detail page) stays as it is — this is a poster, not a fact sheet.
- */
-
-function replyLine(rate: number | null, mins: number | null): string | null {
-  if (rate == null) return null;
-  const speed =
-    mins == null ? null
-    : mins < 60 ? `~${mins} min`
-    : mins < 60 * 24 ? `~${Math.round(mins / 60)} hr`
-    : `~${Math.round(mins / (60 * 24))} days`;
-  // responseRate is a 0–1 fraction (see SellerCard), not a percentage.
-  return `Replies to ${Math.round(rate * 100)}% of messages${speed ? ` · ${speed}` : ''}`;
+function replyTime(mins: number): string {
+  if (mins < 60) return `~${Math.max(1, Math.round(mins))} min`;
+  if (mins < 60 * 24) return `~${Math.round(mins / 60)} hr`;
+  const days = Math.round(mins / (60 * 24));
+  return `~${days} day${days === 1 ? '' : 's'}`;
 }
 
 export default function StoreCard({ store }: { store: PublicStore }) {
   const location = formatLocation([store.city, store.state], store.country);
-  const reply = replyLine(store.responseRate, store.avgResponseMins);
+  const verified = isVerifiedTier(store.verificationTier);
+  const since = sinceLabel(store.createdAt);
+  const reply =
+    store.avgResponseMins != null
+      ? { label: 'Replies in', value: replyTime(store.avgResponseMins) }
+      : store.responseRate != null
+        ? { label: 'Reply rate', value: `${Math.round(store.responseRate * 100)}%` }
+        : { label: 'Replies in', value: '—' };
 
   return (
     <Link to={`/stores/${store.slug}`} className="ws-storecard">
       <div className="ws-storecard__banner" aria-hidden>
-        {store.banner ? <img src={store.banner} alt="" loading="lazy" /> : <Store size={22} />}
+        {store.banner && <img src={store.banner} alt="" loading="lazy" />}
       </div>
 
       <div className="ws-storecard__body">
-        <span className="ws-avatar ws-avatar--l ws-storecard__logo" aria-hidden>
-          {store.logo ? <img src={store.logo} alt="" /> : store.name.charAt(0).toUpperCase()}
-        </span>
-
-        <h3 className="ws-storecard__name">
-          {store.name}
-          {isVerifiedTier(store.verificationTier) && (
-            <BadgeCheck size={15} aria-label="Verified store" />
+        <div className="ws-storecard__head">
+          <span className="ws-storecard__logo" aria-hidden>
+            {store.logo ? <img src={store.logo} alt="" loading="lazy" /> : store.name.charAt(0).toUpperCase()}
+          </span>
+          {verified && (
+            <span className="ws-storecard__tier">
+              <BadgeCheck size={13} aria-hidden />
+              {VERIFICATION_LABEL[store.verificationTier]}
+            </span>
           )}
-        </h3>
-        {location && <p className="ws-storecard__loc">{location}</p>}
+        </div>
 
-        <p className="ws-storecard__stats ws-num">
-          {store.reviewCount > 0 && (
-            <>
-              {/* Rating-star orange, per the DS convention. */}
-              <Star size={13} aria-hidden />
-              {store.avgRating.toFixed(1)}
-              <span className="ws-storecard__dim">({store.reviewCount})</span>
-              <span aria-hidden>·</span>
-            </>
-          )}
-          {store.listingCount} listing{store.listingCount === 1 ? '' : 's'}
-        </p>
-        {reply && <p className="ws-storecard__reply">{reply}</p>}
+        <h3 className="ws-storecard__name">{store.name}</h3>
+        {(location || store.mall) && (
+          <p className="ws-storecard__loc">
+            {location && (
+              <span className="ws-storecard__place">
+                <MapPin size={12} aria-hidden />
+                <span>{location}</span>
+              </span>
+            )}
+            {store.mall && <span className="ws-storecard__mall">Part of {store.mall.name}</span>}
+          </p>
+        )}
+        <p className="ws-storecard__desc">{store.description}</p>
 
+        <dl className="ws-storecard__stats">
+          <div>
+            {store.reviewCount > 0 ? (
+              <>
+                <dt>
+                  {store.reviewCount.toLocaleString()} review{store.reviewCount === 1 ? '' : 's'}
+                </dt>
+                <dd className="ws-num" aria-label={`Rated ${store.avgRating.toFixed(1)} out of 5`}>
+                  <Star size={12} aria-hidden className="ws-storecard__star" />
+                  {store.avgRating.toFixed(1)}
+                </dd>
+              </>
+            ) : (
+              <>
+                <dt>No reviews</dt>
+                <dd className="ws-storecard__muted">New</dd>
+              </>
+            )}
+          </div>
+          <div>
+            <dt>{store.listingCount === 1 ? 'Listing' : 'Listings'}</dt>
+            <dd className="ws-num">{store.listingCount.toLocaleString()}</dd>
+          </div>
+          <div>
+            <dt>{reply.label}</dt>
+            <dd className={`ws-num${reply.value === '—' ? ' ws-storecard__muted' : ''}`}>{reply.value}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="ws-storecard__foot">
+        {since && <span>Since {since}</span>}
         <span className="ws-storecard__cta">
           Visit store
           <ArrowRight size={14} aria-hidden />

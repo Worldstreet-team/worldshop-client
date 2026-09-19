@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { publicMarketplace, type Listing, type PublicStore } from '@/features/stores/api';
 import { useCategories } from '@/features/catalog/hooks/useCategories';
 import { resolveCategoryIds } from '@/features/catalog/model';
@@ -7,10 +7,13 @@ import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
 
 export const RAIL_SIZE = 8;
+export const DEALS_MAX = 100_000;
+const SELLERS_SHOWN = 3;
 
 type Row = Listing & { store: PublicStore };
 
 const NO_ROWS: Row[] = [];
+const NO_STORES: PublicStore[] = [];
 const RAIL_STALE = 5 * MINUTE;
 
 export function useHomeRails() {
@@ -29,8 +32,8 @@ export function useHomeRails() {
   });
 
   const deals = useQuery({
-    queryKey: queryKeys.listings({ maxPrice: 100000, limit: RAIL_SIZE }),
-    queryFn: () => publicMarketplace.browse({ maxPrice: 100000, limit: RAIL_SIZE }),
+    queryKey: queryKeys.listings({ maxPrice: DEALS_MAX, limit: RAIL_SIZE }),
+    queryFn: () => publicMarketplace.browse({ maxPrice: DEALS_MAX, limit: RAIL_SIZE }),
     staleTime: RAIL_STALE,
   });
 
@@ -56,16 +59,33 @@ export function useHomeRails() {
   });
 
   const newestRows = newest.data?.data ?? NO_ROWS;
-  const dealRows = deals.data?.data ?? NO_ROWS;
   const motorRows = motors.data ?? NO_ROWS;
 
-  const sellers = useMemo(() => {
-    const seen = new Map<string, PublicStore>();
+  const dealRows = useMemo(
+    () => (deals.data?.data ?? NO_ROWS).filter((l) => (l.basePrice ?? Infinity) <= DEALS_MAX),
+    [deals.data],
+  );
+
+  const sellerSlugs = useMemo(() => {
+    const seen = new Set<string>();
     for (const l of [...newestRows, ...motorRows, ...dealRows]) {
-      if (l.store && !seen.has(l.store.id)) seen.set(l.store.id, l.store);
+      if (l.store?.slug) seen.add(l.store.slug);
     }
-    return [...seen.values()].slice(0, 4);
+    return [...seen].slice(0, SELLERS_SHOWN);
   }, [newestRows, motorRows, dealRows]);
+
+  const sellerQueries = useQueries({
+    queries: sellerSlugs.map((slug) => ({
+      queryKey: queryKeys.store(slug),
+      queryFn: () => publicMarketplace.getStore(slug).then((res) => res.data),
+      staleTime: RAIL_STALE,
+    })),
+  });
+
+  const sellers = useMemo(
+    () => sellerQueries.map((q) => q.data).filter((s): s is PublicStore => Boolean(s)),
+    [sellerQueries],
+  );
 
   return {
     departments: useMemo(() => categories.filter((c) => !c.parentId), [categories]),
@@ -74,8 +94,9 @@ export function useHomeRails() {
     newest: newestRows,
     deals: dealRows,
     motors: motorRows,
-    sellers,
+    sellers: sellers.length > 0 ? sellers : NO_STORES,
     loading: newest.isPending || deals.isPending,
     motorsLoading: vehicleIds.length === 0 || motors.isPending,
+    sellersLoading: sellerSlugs.length === 0 || sellerQueries.some((q) => q.isPending),
   };
 }

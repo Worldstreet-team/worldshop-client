@@ -109,7 +109,11 @@ export default function MobileMenu() {
           </Link>
           <Link to="/listings" className="ws-drawer__link" onClick={closeMobileMenu}>
             <ShoppingBag size={18} aria-hidden />
-            Browse listings
+            Marketplace
+          </Link>
+          <Link to="/stores" className="ws-drawer__link" onClick={closeMobileMenu}>
+            <Store size={18} aria-hidden />
+            Stores
           </Link>
           <Link to="/malls" className="ws-drawer__link" onClick={closeMobileMenu}>
             <Building2 size={18} aria-hidden />

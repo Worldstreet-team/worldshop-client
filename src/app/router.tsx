@@ -31,6 +31,7 @@ const HomePage = lazy(() => import('@/features/listings/pages/Home'));
 const BrowsePage = lazy(() => import('@/features/listings/pages/Browse'));
 const ListingDetailPage = lazy(() => import('@/features/listings/pages/ListingDetail'));
 const MarketplaceStorePage = lazy(() => import('@/features/stores/pages/StorePage'));
+const StoresDirectoryPage = lazy(() => import('@/features/stores/pages/StoresDirectory'));
 const MallsDirectoryPage = lazy(() => import('@/features/malls/pages/MallsDirectory'));
 const MarketplaceMallPage = lazy(() => import('@/features/malls/pages/MallPage'));
 const SavedPage = lazy(() => import('@/features/listings/pages/Saved'));
@@ -110,6 +111,10 @@ const router = createBrowserRouter([
       {
         path: 'listings/:idOrSlug',
         element: <SuspenseWrapper><ListingDetailPage /></SuspenseWrapper>,
+      },
+      {
+        path: 'stores',
+        element: <SuspenseWrapper><StoresDirectoryPage /></SuspenseWrapper>,
       },
       {
         path: 'stores/:slug',

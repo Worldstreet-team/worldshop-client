@@ -213,6 +213,10 @@ export interface Listing {
   city: string | null;
   viewCount: number;
   inquiryCount: number;
+  /** The listing's own review aggregate (not the store's); null until reviewed. */
+  avgRating?: number | null;
+  reviewCount?: number | null;
+  isFeatured?: boolean;
   updatedAt: string;
   /**
    * Present on vendor-scoped responses only. `problems` is every gate that
@@ -426,6 +430,13 @@ export const publicMarketplace = {
 
   /** GET /listings/:idOrSlug — accepts either, so links can be readable. */
   getListing: (idOrSlug: string) => api.get<ApiResponse<PublicListing>>(`/listings/${idOrSlug}`),
+
+  browseStores: (params?: Record<string, unknown>) =>
+    api.get<{
+      success: boolean;
+      data: PublicStore[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>('/stores', params),
 
   getStore: (slug: string) => api.get<ApiResponse<PublicStore>>(`/stores/${slug}`),
 

@@ -16,3 +16,10 @@ export const VERIFICATION_LABEL: Record<string, string> = {
 
 export const isVerifiedTier = (tier: string): boolean =>
   Boolean(VERIFICATION_LABEL[tier]) && tier !== 'BASIC';
+
+export function sinceLabel(iso: string): string | null {
+  const at = new Date(iso);
+  return Number.isNaN(at.getTime())
+    ? null
+    : at.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+}

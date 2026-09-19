@@ -75,10 +75,6 @@ export default function HeroCarousel({ motorsTo, stat }: { motorsTo: string; sta
   const SLIDES = useMemo(() => slides(motorsTo), [motorsTo]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-
-  // A live listener, not a one-time read at mount — so autoplay stops
-  // immediately if the visitor turns the OS setting on mid-session, rather
-  // than only on the next full reload.
   const [reducedMotion, setReducedMotion] = useState(
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
@@ -117,75 +113,79 @@ export default function HeroCarousel({ motorsTo, stat }: { motorsTo: string; sta
             className={`ws-hero__slide${i === index ? ' is-active' : ''}`}
             aria-hidden={i !== index}
           >
-            <div className="ws-hero__copy">
-              <p className="ws-hero__eyebrow">{s.eyebrow}</p>
-              <h2 className="ws-hero__title">{s.title}</h2>
-              <p className="ws-hero__sub">{s.sub}</p>
-              <div className="ws-hero__ctas">
-                <Link to={s.primary.to} className="ws-btn ws-btn--primary" tabIndex={i === index ? 0 : -1}>
-                  {s.primary.icon}
-                  {s.primary.label}
-                </Link>
-                {s.secondary && (
-                  <Link to={s.secondary.to} className="ws-btn ws-btn--secondary" tabIndex={i === index ? 0 : -1}>
-                    {s.secondary.icon}
-                    {s.secondary.label}
+            <div className="ws-wrap ws-hero__inner">
+              <div className="ws-hero__copy">
+                <p className="ws-hero__eyebrow">{s.eyebrow}</p>
+                <h2 className="ws-hero__title">{s.title}</h2>
+                <p className="ws-hero__sub">{s.sub}</p>
+                <div className="ws-hero__ctas">
+                  <Link to={s.primary.to} className="ws-btn ws-btn--primary" tabIndex={i === index ? 0 : -1}>
+                    {s.primary.icon}
+                    {s.primary.label}
                   </Link>
+                  {s.secondary && (
+                    <Link to={s.secondary.to} className="ws-btn ws-btn--secondary" tabIndex={i === index ? 0 : -1}>
+                      {s.secondary.icon}
+                      {s.secondary.label}
+                    </Link>
+                  )}
+                </div>
+                {i === 0 && stat > 0 && (
+                  <p className="ws-hero__stat ws-num">
+                    {stat.toLocaleString('en-NG')} live listings right now
+                  </p>
                 )}
               </div>
-              {i === 0 && stat > 0 && (
-                <p className="ws-hero__stat ws-num">
-                  {stat.toLocaleString('en-NG')} live listings right now
-                </p>
-              )}
-            </div>
 
-            <div className={`ws-hero__art ws-hero__art--${s.art}`} aria-hidden>
-              {s.cuts.map((c) => (
-                <img
-                  key={c.mod}
-                  src={c.src}
-                  alt=""
-                  className={`ws-hero__cut ws-hero__cut--${c.mod}`}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                />
-              ))}
+              <div className={`ws-hero__art ws-hero__art--${s.art}`} aria-hidden>
+                {s.cuts.map((c) => (
+                  <img
+                    key={c.mod}
+                    src={c.src}
+                    alt=""
+                    className={`ws-hero__cut ws-hero__cut--${c.mod}`}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="ws-hero__nav">
-        <button
-          type="button"
-          className="ws-iconbtn ws-hero__arrow"
-          onClick={() => go(index - 1)}
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <div className="ws-hero__dots" role="tablist" aria-label="Slides">
-          {SLIDES.map((s, i) => (
-            <button
-              key={s.key}
-              type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Slide ${i + 1}: ${s.eyebrow}`}
-              className={`ws-hero__dot${i === index ? ' is-active' : ''}`}
-              onClick={() => go(i)}
-            />
-          ))}
+      <div className="ws-wrap ws-hero__navwrap">
+        <div className="ws-hero__nav">
+          <button
+            type="button"
+            className="ws-iconbtn ws-hero__arrow"
+            onClick={() => go(index - 1)}
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="ws-hero__dots" role="tablist" aria-label="Slides">
+            {SLIDES.map((s, i) => (
+              <button
+                key={s.key}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Slide ${i + 1}: ${s.eyebrow}`}
+                className={`ws-hero__dot${i === index ? ' is-active' : ''}`}
+                onClick={() => go(i)}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="ws-iconbtn ws-hero__arrow"
+            onClick={() => go(index + 1)}
+            aria-label="Next slide"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
-        <button
-          type="button"
-          className="ws-iconbtn ws-hero__arrow"
-          onClick={() => go(index + 1)}
-          aria-label="Next slide"
-        >
-          <ChevronRight size={18} />
-        </button>
       </div>
     </section>
   );
