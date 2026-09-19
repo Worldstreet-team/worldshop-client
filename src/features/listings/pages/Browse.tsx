@@ -11,6 +11,7 @@ import { useLocations } from '@/shared/hooks/useLocations';
 import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
+import MarketplaceSearch from '@/features/listings/components/MarketplaceSearch';
 
 const CONDITIONS = ['NEW', 'USED', 'REFURBISHED'] as const;
 
@@ -162,6 +163,8 @@ export default function Browse() {
 
   return (
     <div className="ws-wrap">
+      <MarketplaceSearch className="ws-marketsearch--browse" />
+
       <div className="ws-browse">
         <aside
           className={`ws-filters${filtersOpen ? ' is-open' : ''}`}

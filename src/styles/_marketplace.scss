@@ -32,11 +32,10 @@ $bp-lg: 1280px;
 }
 
 .ws-shell {
-  // The sticky header is the 64px bar (TopNav spec) + the category-chip row
-  // (12 + 36 + 12 + 1px border = 61) + the topbar's own bottom hairline.
+  // The sticky header is the 64px bar (TopNav spec) plus its bottom hairline.
   // Sticky offsets below derive from this rather than hardcoding and sliding
   // under.
-  --ws-header-h: 126px;
+  --ws-header-h: 65px;
 
   min-height: 100vh;
   display: flex;
@@ -71,6 +70,22 @@ $bp-lg: 1280px;
   align-items: center;
   gap: var(--ws-space-4);
   height: 64px;
+  // The search pill used to be the flexing middle child. Without it the brand
+  // holds the left and the action groups are pushed right by their own
+  // margin-left: auto, so the row stays balanced at every width.
+  justify-content: space-between;
+
+  // Desktop: brand | nav | actions on a 1fr auto 1fr grid, so the nav sits on
+  // the true centre of the bar however wide the two sides are. (The hamburger
+  // is display: none here, so it takes no track.)
+  @media (min-width: $bp-md) {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+
+    // Grid items stretch by default, which would make the whole left third
+    // of the bar a home link.
+    > .ws-brand { justify-self: start; }
+  }
 }
 
 // Unified ecosystem brand lockup (05-screens): gold wsa-mark 26px, unboxed +
@@ -115,20 +130,57 @@ $bp-lg: 1280px;
   }
 }
 
-.ws-topbar__search {
-  flex: 1;
-  min-width: 0;
-  max-width: 600px;
-  margin-inline: auto;
+// Primary nav: the public places to go, as words centred in the bar. Below the
+// desktop breakpoint the drawer carries the same links.
+.ws-topbar__nav {
   display: none;
-  height: 46px;
-  // Sitting on the surface bar, the pill needs its own edge to read as a control.
-  border: 1px solid var(--ws-border-hairline);
+  align-self: stretch;
+  gap: var(--ws-space-2);
 
-  @media (min-width: $bp-sm) { display: flex; }
+  @media (min-width: $bp-md) { display: flex; }
+}
 
-  // SearchField focus is a brand border, not a halo (04-components).
-  &:focus-within { border-color: var(--ws-brand-primary); }
+.ws-topbar__navlink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-inline: var(--ws-space-3);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ws-text-muted);
+  text-decoration: none;
+  transition: color var(--ws-motion-fast) var(--ws-ease);
+
+  &:hover { color: var(--ws-text-primary); }
+
+  // Underline sits on the bar's bottom hairline, so the current page reads as
+  // a tab of the header rather than a floating badge.
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline: var(--ws-space-3);
+    bottom: 13px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--ws-brand-primary);
+    transform: scaleX(0);
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
+  }
+
+  &.active {
+    color: var(--ws-text-primary);
+    &::after { transform: scaleX(1); }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+    border-radius: var(--ws-radius-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::after { transition: none; }
+  }
 }
 
 // Floating search overlay for phones — a full-screen takeover rather than
@@ -287,15 +339,41 @@ $bp-lg: 1280px;
   }
 }
 
+// Two clusters, not one flat row of ten controls: utilities on the left of the
+// group, the account and the one primary action on the right, separated by a
+// hairline. Grouping is what tells you which of these matter.
 .ws-topbar__actions {
   display: flex;
   align-items: center;
-  gap: var(--ws-space-2);
+  gap: var(--ws-space-3);
+  margin-left: auto;
 
   // Hover is the standard one-step surface lighten; the gold ring stays
   // reserved for keyboard focus.
   .ws-avatar { transition: background-color var(--ws-motion-fast) var(--ws-ease); }
   .ws-avatar:hover { background: var(--ws-bg-raised); }
+}
+
+.ws-topbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+}
+
+.ws-topbar__group--account {
+  gap: var(--ws-space-2);
+
+  @media (min-width: $bp-md) {
+    padding-left: var(--ws-space-3);
+    border-left: 1px solid var(--ws-border-hairline);
+    margin-left: var(--ws-space-1);
+  }
+}
+
+// Utilities are a desktop affordance; the drawer carries them on small screens.
+.ws-topbar__group--utility {
+  display: none;
+  @media (min-width: $bp-md) { display: flex; }
 }
 
 .ws-iconbtn {
@@ -327,25 +405,6 @@ $bp-lg: 1280px;
   border: 1.5px solid var(--ws-bg-surface);
 }
 
-// Second row: category chips scroll horizontally rather than wrapping, so the
-// bar height never changes as categories load. Shares the top row's surface.
-.ws-catbar {
-  border-bottom: 1px solid var(--ws-border-hairline);
-  background: var(--ws-bg-surface);
-}
-
-.ws-catbar__scroll {
-  display: flex;
-  align-items: center;
-  gap: var(--ws-space-2);
-  padding-block: var(--ws-space-3);
-  overflow-x: auto;
-  // Overflow fades out at the edges instead of clipping mid-chip.
-  mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent);
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
-}
-
 .ws-topbar__sell {
   display: none;
   @media (min-width: $bp-md) { display: inline-flex; }
@@ -357,15 +416,9 @@ $bp-lg: 1280px;
   @media (min-width: $bp-md) { display: none; }
 }
 
-// Below $bp-sm the pill search (.ws-topbar__search above) is display:none —
-// it has no room next to the brand and hamburger — so this toggle opens the
-// floating overlay below instead. Must come after .ws-iconbtn (same
-// specificity, its unconditional display:grid would otherwise win the
-// cascade at $bp-sm+ by appearing later in the file) — same reason
-// .ws-topbar__menu/.ws-topbar__admin sit here too.
-.ws-topbar__searchtoggle {
-  @media (min-width: $bp-sm) { display: none; }
-}
+// With the search moved onto the product pages, this is the chrome's only way
+// into search — so it shows at every width and opens the same overlay.
+.ws-topbar__searchtoggle { display: grid; }
 
 // Sits directly on the blurred scrim rather than a solid surface, so — like
 // .ws-topbar__searchtoggle above — its override of .ws-iconbtn's transparent
@@ -383,18 +436,6 @@ $bp-lg: 1280px;
 .ws-topbar__admin {
   display: none;
   @media (min-width: $bp-md) { display: grid; }
-}
-
-// The location scope lives inside the search pill (marketplace convention:
-// one field answers "what, where"). A hairline separates it from the query.
-.ws-topbar__location {
-  display: none;
-  align-items: center;
-  flex: none;
-  padding-left: var(--ws-space-2);
-  border-left: 1px solid var(--ws-border-hairline);
-
-  @media (min-width: $bp-md) { display: inline-flex; }
 }
 
 // Custom location dropdown — a native <select> popup can't be styled and
@@ -707,13 +748,13 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-grid {
   display: grid;
-  gap: var(--ws-space-6);
+  // Tight on phones: at two-up, every pixel of gutter comes out of the cards.
+  gap: var(--ws-space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (min-width: $bp-sm) { gap: var(--ws-space-5); }
+  @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ws-space-6); }
   @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
 }
 
 // While a new page or filter is in flight the previous results stay on screen
@@ -742,40 +783,157 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   cursor: pointer;
 }
 
+// ─── Listing card ───────────────────────────────────────────────
+// Reading order is photo → name → price → the rest. Everything above the price
+// has a fixed height, so in a grid every price starts on the same line and the
+// eye can run along a row comparing them. Category, condition, rating and
+// location sit between them at caption weight so they never outrank either.
+//
+// The card is a size container: the same component is ~150px wide in a
+// two-up phone grid and ~320px in a desktop rail, and only its own width —
+// not the viewport's — can tell those apart.
 .ws-pcard {
+  container: pcard / inline-size;
+  position: relative;
   background: var(--ws-bg-surface);
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
+  box-shadow: var(--ws-shadow-card);
   overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: column;
   transition:
     border-color var(--ws-motion-fast) var(--ws-ease),
-    background-color var(--ws-motion-fast) var(--ws-ease),
-    box-shadow var(--ws-motion-fast) var(--ws-ease),
-    transform var(--ws-motion-fast) var(--ws-ease);
+    box-shadow var(--ws-motion-base) var(--ws-ease),
+    transform var(--ws-motion-base) var(--ws-ease);
 
-  // Hover lifts 2px (translate, never scale) onto the raised step with a
-  // faint brand tint on the border, and takes the card elevation.
+  // Hover lifts 2px (translate, never scale) with a faint brand tint on the
+  // border and the deeper elevation.
   .ws-plink:hover & {
-    background: var(--ws-bg-raised);
-    border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, var(--ws-border-hairline));
+    border-color: color-mix(in srgb, var(--ws-brand-primary) 35%, var(--ws-border-hairline));
     transform: translateY(-2px);
     box-shadow: var(--ws-shadow-lift);
   }
 
   // The press returns it to the page; the ring follows the card's own radius,
   // which a ring on the wrapping link cannot do.
-  .ws-plink:active & { transform: translateY(0); box-shadow: var(--ws-shadow-card); }
+  .ws-plink:active & {
+    transform: translateY(0);
+    box-shadow: var(--ws-shadow-card);
+    transition-duration: var(--ws-motion-fast);
+  }
 
   .ws-plink:focus-visible & {
     outline: 2px solid var(--ws-brand-primary);
     outline-offset: 2px;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: border-color var(--ws-motion-fast) var(--ws-ease);
+    .ws-plink:hover & { transform: none; }
+  }
 }
 
 .ws-plink:focus-visible { outline: none; }
+
+// ── Media ──
+
+.ws-pcard__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--ws-bg-sunken);
+  border-bottom: 1px solid var(--ws-border-hairline);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform var(--ws-motion-slow) var(--ws-ease);
+  }
+
+  // A slow, slight push-in on the photo only — the card itself never scales.
+  .ws-plink:hover & img { transform: scale(1.04); }
+
+  @media (prefers-reduced-motion: reduce) {
+    img { transition: none; }
+    .ws-plink:hover & img { transform: none; }
+  }
+}
+
+// Second photo, revealed on hover where the listing has one: the cheapest way
+// to answer "what else does it look like?" without leaving the grid.
+.ws-pcard__alt {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition:
+    opacity var(--ws-motion-base) var(--ws-ease),
+    transform var(--ws-motion-slow) var(--ws-ease);
+
+  .ws-plink:hover &,
+  .ws-plink:focus-visible & { opacity: 1; }
+
+  @media (hover: none) { display: none; }
+
+  @media (prefers-reduced-motion: reduce) { transition: none; }
+}
+
+.ws-pcard__noimg {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--ws-space-2);
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+  background: var(--ws-bg-sunken);
+}
+
+.ws-pcard__noimg-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-raised);
+  border: 1px solid var(--ws-border-hairline);
+}
+
+.ws-pcard__badges {
+  position: absolute;
+  top: var(--ws-space-2);
+  left: var(--ws-space-2);
+  display: flex;
+  gap: var(--ws-space-1);
+}
+
+// The one gold element on the card — reserved for paid placement.
+.ws-pcard__badge--featured {
+  background: var(--ws-brand-primary);
+  color: var(--ws-brand-on-primary);
+}
+
+// Photo count. Sits on photography — theme-independent, same rule as
+// .ws-badge--ink.
+.ws-pcard__count {
+  position: absolute;
+  left: var(--ws-space-2);
+  bottom: var(--ws-space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: rgba(0, 0, 0, 0.6);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+}
 
 // Save-heart: revealed on hover (always visible once saved, and on touch
 // devices where hover doesn't exist).
@@ -794,11 +952,15 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: #FFFFFF;
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    opacity var(--ws-motion-fast) var(--ws-ease),
+    background-color var(--ws-motion-fast) var(--ws-ease),
+    transform var(--ws-motion-fast) var(--ws-ease);
 
   @media (hover: none) { opacity: 1; }
 
   &:hover { background: rgba(0, 0, 0, 0.75); }
+  &:active { transform: scale(0.92); }
 
   &.is-saved {
     opacity: 1;
@@ -810,90 +972,81 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-plink:hover .ws-pcard__save,
 .ws-pcard__save:focus-visible { opacity: 1; }
 
-.ws-pcard__media {
-  position: relative;
-  aspect-ratio: 300 / 210;
-  background: var(--ws-bg-sunken);
-  overflow: hidden;
+// ── Body ──
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+.ws-pcard__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-1);
+  padding: var(--ws-space-4) var(--ws-space-4) var(--ws-space-3);
+
+  @container pcard (max-width: 219px) {
+    padding: var(--ws-space-3) var(--ws-space-3) var(--ws-space-2);
   }
 }
 
-// Second photo, revealed on hover where the listing has one: the cheapest way
-// to answer "what else does it look like?" without leaving the grid.
-.ws-pcard__alt {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity var(--ws-motion-base) var(--ws-ease);
-
-  .ws-plink:hover &,
-  .ws-plink:focus-visible & { opacity: 1; }
-
-  @media (hover: none) { display: none; }
-
-  @media (prefers-reduced-motion: reduce) { transition: none; }
-}
-
-.ws-pcard__badges {
-  position: absolute;
-  top: var(--ws-space-2);
-  left: var(--ws-space-2);
-  display: flex;
-  gap: var(--ws-space-1);
-}
-
-.ws-pcard__noimg {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
+// Category · condition, closing the card at caption weight. It used to open
+// the card in uppercase tracking, which made a 11px label the first thing read
+// after the photo and pushed the price down to fourth.
+.ws-pcard__eyebrow {
+  font-size: 12px;
+  line-height: 1.45;
+  min-height: 1.45em;
   color: var(--ws-text-subtle);
-  gap: var(--ws-space-1);
-  @include ws-caption;
-}
-
-// Skeleton bars mirror the loaded card's lines — price, title, meta, seller —
-// so the grid does not reflow when results arrive.
-.ws-pcard--skeleton .ws-pcard__body { gap: var(--ws-space-2); }
-.ws-pcard__skel-price { height: 17px; width: 52%; }
-.ws-pcard__skel-title { height: 14px; width: 86%; }
-.ws-pcard__skel-meta { height: 12px; width: 46%; margin-top: var(--ws-space-1); }
-.ws-pcard__skel-seller { height: 12px; width: 64%; }
-
-.ws-pcard__body {
-  padding: var(--ws-space-3);
-  display: grid;
-  gap: var(--ws-space-1);
-  align-content: start;
-  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ws-pcard__title {
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 15px;
   line-height: 1.35;
   color: var(--ws-text-primary);
   // Two lines then ellipsis: one line truncates too many real product names.
+  // The reserved height keeps one-line names from pulling the rest of the card
+  // up out of line with its neighbours.
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 2.7em;
+  text-wrap: pretty;
+
+  @container pcard (max-width: 219px) { font-size: 14px; }
 }
 
 .ws-pcard__meta {
   display: flex;
   align-items: center;
-  gap: var(--ws-space-1);
-  font-size: 11px;
-  color: var(--ws-text-subtle);
+  gap: var(--ws-space-3);
+  min-height: 18px;
+  margin-top: var(--ws-space-2);
+  font-size: 12px;
+  color: var(--ws-text-muted);
   min-width: 0;
+
+  .ws-rating { gap: 3px; color: var(--ws-text-primary); font-weight: 500; }
+}
+
+.ws-pcard__dim {
+  color: var(--ws-text-subtle);
+  font-weight: 400;
+
+  // On a narrow card the review count is what gives, so the location keeps
+  // enough room to be read.
+  @container pcard (max-width: 219px) { display: none; }
+}
+
+.ws-pcard__loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  color: var(--ws-text-subtle);
+
+  svg { flex: none; }
 
   span {
     overflow: hidden;
@@ -902,17 +1055,126 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   }
 }
 
-.ws-pcard__seller {
+// Directly under the name: on a marketplace the price is the second thing a
+// buyer reads after the photo, so it sits second, in the display face.
+.ws-pcard__price {
+  padding-top: var(--ws-space-1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--ws-space-2);
+  row-gap: 2px;
+
+  .ws-price {
+    font-size: 19px;
+    line-height: 1.2;
+    text-wrap: balance;
+
+    @container pcard (max-width: 219px) { font-size: 16px; }
+  }
+
+  // "Contact for price" is a real value, not missing data — but it is an
+  // instruction, not a number, so it steps down out of the display face.
+  .ws-price.is-onrequest {
+    font-family: var(--ws-font-ui);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--ws-text-muted);
+  }
+}
+
+// A small outline pill, not a whisper beside the number: "negotiable" is a
+// buying signal and should be seen without being loud.
+.ws-pcard__neg {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  border: 1px solid var(--ws-border-hairline);
+  color: var(--ws-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+// ── Footer ──
+// A hairline, then who is selling on the left and the action on the right.
+
+// The body above takes the spare height (flex: 1), which keeps every footer on
+// its card's bottom edge even when one card's price wrapped.
+.ws-pcard__foot {
   display: flex;
   align-items: center;
-  gap: var(--ws-space-1);
+  gap: var(--ws-space-2);
+  min-height: 44px;
+  margin-inline: var(--ws-space-4);
+  padding-block: var(--ws-space-2);
+  border-top: 1px solid var(--ws-border-hairline);
   font-size: 12px;
-  color: var(--ws-text-muted);
-  margin-top: 2px;
-  min-width: 0;
 
-  b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @container pcard (max-width: 219px) {
+    margin-inline: var(--ws-space-3);
+    min-height: 40px;
+  }
 }
+
+.ws-pcard__seller {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--ws-text-muted);
+
+  svg { flex: none; color: var(--ws-status-success); }
+}
+
+.ws-pcard__sellername {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-pcard__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ws-brand-gold-text);
+
+  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+
+  .ws-plink:hover & svg { transform: translateX(3px); }
+
+  // The arrow is the affordance; the word "View" repeated on every card in a
+  // row was noise on top of it.
+  .ws-pcard__cta-label { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg { transition: none; }
+  }
+}
+
+// ── Skeleton ──
+
+.ws-pcard--skeleton {
+  pointer-events: none;
+
+  .ws-pcard__media { border-bottom: 0; }
+  .ws-pcard__title { display: grid; gap: 6px; align-content: start; }
+}
+
+.ws-pcard__skel-eyebrow { height: 10px; width: 38%; border-radius: 3px; }
+.ws-pcard__skel-line { height: 14px; width: 92%; border-radius: 4px; }
+.ws-pcard__skel-line--short { width: 60%; }
+.ws-pcard__skel-meta { height: 12px; width: 48%; border-radius: 4px; }
+.ws-pcard__skel-price { height: 18px; width: 52%; border-radius: 4px; }
+.ws-pcard__skel-seller { height: 12px; width: 44%; border-radius: 4px; }
+.ws-pcard__skel-cta { height: 12px; width: 40px; border-radius: 4px; margin-left: auto; }
 
 .ws-rating {
   display: inline-flex;
@@ -1481,23 +1743,65 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin-top: auto;
 }
 
+// A brand column plus four equal link columns. The old 2fr/1fr/1fr/1fr held
+// five children, so the fifth wrapped onto its own row and left a dead half
+// of the footer beside it.
 .ws-footer__grid {
   display: grid;
-  gap: var(--ws-space-6);
-  padding-block: 48px var(--ws-space-6);
-  grid-template-columns: 1fr;
+  gap: var(--ws-space-8) var(--ws-space-6);
+  padding-block: var(--ws-space-16) var(--ws-space-10);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  @media (min-width: $bp-sm) { grid-template-columns: 1fr 1fr; gap: 48px; }
-  @media (min-width: $bp-md) { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
+    gap: var(--ws-space-10);
+    padding-block: var(--ws-space-20) var(--ws-space-12);
+  }
 }
 
-.ws-footer__head { margin-bottom: var(--ws-space-3); }
+// The blurb column spans the full width on a phone so the link columns can sit
+// two-up beneath it rather than becoming one long stack.
+.ws-footer__brand {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--ws-space-4);
+  align-content: start;
+
+  @media (min-width: $bp-md) { grid-column: auto; max-width: 34ch; }
+}
+
+.ws-footer__more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  color: var(--ws-brand-gold-text) !important;
+
+  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+  &:hover svg { transform: translateX(2px); }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg { transition: none; }
+  }
+}
+
+.ws-footer__head {
+  margin-bottom: var(--ws-space-4);
+  color: var(--ws-text-subtle);
+}
 
 .ws-footer__blurb {
-  max-width: 42ch;
-  margin-top: var(--ws-space-3);
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  max-width: 38ch;
+  margin: 0;
 
-  a { color: var(--ws-text-muted); &:hover { color: var(--ws-text-primary); } }
+  a {
+    color: var(--ws-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    &:hover { color: var(--ws-text-primary); }
+  }
 }
 
 .ws-footer__legal {
@@ -1524,12 +1828,13 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--ws-space-2);
+  gap: var(--ws-space-3);
 
   a {
     color: var(--ws-text-muted);
     text-decoration: none;
     font-size: 14px;
+    transition: color var(--ws-motion-fast) var(--ws-ease);
     &:hover { color: var(--ws-text-primary); }
   }
 }
@@ -1540,7 +1845,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   justify-content: space-between;
   gap: var(--ws-space-4);
   flex-wrap: wrap;
-  padding-block: var(--ws-space-4);
+  padding-block: var(--ws-space-5);
   border-top: 1px solid var(--ws-border-hairline);
   font-size: 13px;
   color: var(--ws-text-subtle);
@@ -1569,24 +1874,177 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   svg { flex: none; }
 }
 
+// ─── Marketplace search ─────────────────────────────────────────
+// Lives at the head of whichever page lists products rather than in the global
+// chrome, so the query sits with the results it filters. Extends .ws-search
+// (the shared pill) — only the scale and the trailing controls differ.
+
+.ws-marketsearch {
+  width: 100%;
+  height: 52px;
+  padding-inline: var(--ws-space-5);
+  gap: var(--ws-space-3);
+  border-color: var(--ws-border-hairline);
+  background: var(--ws-bg-surface);
+
+  input { font-size: 15px; }
+
+  @media (min-width: $bp-md) {
+    height: 58px;
+    padding-inline: var(--ws-space-6);
+  }
+}
+
+// The location scope keeps the marketplace convention of one field answering
+// "what, where", with a hairline between the two halves.
+.ws-marketsearch__location {
+  display: none;
+  align-items: center;
+  flex: none;
+  padding-left: var(--ws-space-3);
+  border-left: 1px solid var(--ws-border-hairline);
+
+  @media (min-width: $bp-sm) { display: inline-flex; }
+}
+
+// On a phone the pill is the whole control and submitting is the keyboard's
+// job, so the button only appears where there is room for it.
+.ws-marketsearch__go {
+  display: none;
+  flex: none;
+
+  @media (min-width: $bp-sm) { display: inline-flex; }
+}
+
+.ws-marketsearch--home { margin-bottom: calc(var(--ws-space-4) * -1); }
+
+.ws-marketsearch--browse { margin-top: var(--ws-space-6); }
+
 // ─── Home landing ───────────────────────────────────────────────
 // Segmented marketplace home in the eBay/Jumia mold: hero, category discs,
 // horizontal listing rails, sellers, sell band, trust row.
 // Every card in it is live inventory from /listings — nothing hand-picked.
 
 .ws-home {
+  // One rhythm for the whole page: sections never bring their own margins, so
+  // hero → first section, section → section, and last section → footer are
+  // all this one value.
+  --ws-home-gap: var(--ws-space-12);
+
   display: flex;
   flex-direction: column;
-  gap: var(--ws-space-12);
-  padding-block: var(--ws-space-6) var(--ws-space-16);
+  gap: var(--ws-home-gap);
+  padding-block: var(--ws-home-gap);
 
-  @media (min-width: $bp-md) {
-    gap: var(--ws-space-20);
-    padding-block: var(--ws-space-8) var(--ws-space-24);
+  @media (min-width: $bp-md) { --ws-home-gap: var(--ws-space-16); }
+}
+
+// ─── Section head ───────────────────────────────────────────────
+// Every band on the home page introduces itself the same way: an optional
+// eyebrow, a title, an optional one-line subtitle, and an optional action
+// pinned to the right on its own baseline. Having one component for this is
+// what stops the page reading as a pile of unrelated blocks.
+
+.ws-sectionhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ws-space-6);
+  margin-bottom: var(--ws-space-6);
+
+  @media (min-width: $bp-md) { margin-bottom: var(--ws-space-8); }
+}
+
+.ws-sectionhead__eyebrow {
+  @include ws-label;
+  color: var(--ws-text-subtle);
+  display: block;
+  margin-bottom: var(--ws-space-2);
+}
+
+// The missing step in the ramp: between the hero (46px) and a card title
+// (15px) there was nothing, so every section read at the same pitch.
+.ws-sectionhead__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(21px, 1.1vw + 16px, 27px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.ws-sectionhead__sub {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin-top: var(--ws-space-2);
+  max-width: var(--ws-measure);
+}
+
+.ws-sectionhead__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  flex: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ws-brand-gold-text);
+  text-decoration: none;
+  // Sits on the title's baseline rather than floating above it.
+  padding-bottom: 2px;
+  transition: color var(--ws-motion-fast) var(--ws-ease);
+
+  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+
+  &:hover {
+    color: var(--ws-brand-active);
+    svg { transform: translateX(3px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    svg { transition: none; }
   }
 }
 
-.ws-home__heading { margin-bottom: var(--ws-space-5); }
+// ─── Reveal on scroll ───────────────────────────────────────────
+// A gentle rise as a section or card enters the viewport. Gated on the root
+// attribute the hook sets, so without JavaScript nothing is ever hidden; and
+// under reduced motion the hook marks everything shown at once and the
+// transition is dropped, so there is no fade either. Cards stagger by their
+// own index through --reveal-i.
+[data-reveal] {
+  transition:
+    opacity var(--ws-motion-slow) var(--ws-ease),
+    transform var(--ws-motion-slow) var(--ws-ease);
+  transition-delay: calc(var(--reveal-i, 0) * 55ms);
+}
+
+html[data-reveal='ready'] [data-reveal]:not(.is-in) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+// The wrapper a card sits in for the reveal: a grid so the link inside is
+// stretched to the row's height and the card's height: 100% keeps working.
+.ws-reveal { display: grid; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { transition: none; }
+  html[data-reveal='ready'] [data-reveal]:not(.is-in) { opacity: 1; transform: none; }
+}
+
+// ─── Full-bleed band ────────────────────────────────────────────
+// Pulls a section out to the viewport edge while its inner padding puts the
+// content back on the page grid — so a banded section and a plain one share
+// one left edge instead of the two the page used to have.
+.ws-bleed {
+  margin-inline: calc(var(--ws-space-6) * -1);
+  padding-inline: var(--ws-space-6);
+
+  @media (min-width: $bp-md) {
+    margin-inline: -48px;
+    padding-inline: 48px;
+  }
+}
 
 // ─── Hero carousel ──────────────────────────────────────────────
 // eBay-style rotating banner. The track slides horizontally; each slide is
@@ -1595,12 +2053,14 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // separates "objects in space" from "pictures in boxes". Gold stays in the
 // CTA and the <em> title accents — the surface itself is quiet.
 
+// A band, not a floating card: it spans the viewport and an inner .ws-wrap
+// puts the copy back on the page grid, so the hero headline and every section
+// title below it start at exactly the same x.
 .ws-hero {
   position: relative;
   overflow: hidden;
-  border-radius: var(--ws-radius-xl);
-  border: 1px solid var(--ws-border-hairline);
   background: var(--ws-bg-surface);
+  border-bottom: 1px solid var(--ws-border-hairline);
   // The one entrance on the page: an opacity-only reveal of the hero.
   animation: ws-hero-in var(--ws-motion-slow) var(--ws-ease) both;
 }
@@ -1620,25 +2080,28 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-hero__slide {
   flex: none;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--ws-space-6);
-  align-items: start;
-  padding: var(--ws-space-8) var(--ws-space-6) var(--ws-space-16);
-  min-height: 0;
 
   // Off-screen slides drop out of the tab order and AT tree once the track
   // finishes moving.
   visibility: hidden;
   transition: visibility 0s var(--ws-motion-slow);
   &.is-active { visibility: visible; transition: visibility 0s; }
+}
+
+.ws-hero__inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ws-space-8);
+  align-items: start;
+  // Room at the bottom for the nav rail, which is absolutely positioned.
+  padding-block: var(--ws-space-10) var(--ws-space-16);
 
   @media (min-width: $bp-md) {
-    grid-template-columns: minmax(0, 1fr) 460px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
     align-items: center;
     gap: var(--ws-space-12);
-    padding: var(--ws-space-16) var(--ws-space-12) var(--ws-space-12);
-    min-height: 480px;
+    padding-block: var(--ws-space-16) var(--ws-space-16);
+    min-height: 400px;
   }
 }
 
@@ -1718,21 +2181,23 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 // ── Carousel controls ──
 
-.ws-hero__nav {
+// The rail is a .ws-wrap so the controls line up with the hero copy above
+// them rather than floating at an arbitrary offset.
+.ws-hero__navwrap {
   position: absolute;
-  left: var(--ws-space-6);
-  right: var(--ws-space-6);
+  inset-inline: 0;
   bottom: var(--ws-space-6);
+  pointer-events: none;
+
+  @media (min-width: $bp-md) { bottom: var(--ws-space-8); }
+}
+
+.ws-hero__nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--ws-space-4);
-
-  @media (min-width: $bp-md) {
-    left: var(--ws-space-12);
-    right: auto;
-    justify-content: flex-start;
-  }
+  gap: var(--ws-space-3);
+  pointer-events: auto;
+  width: fit-content;
 }
 
 .ws-hero__arrow {
@@ -1766,14 +2231,25 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 // ─── Category discs ─────────────────────────────────────────────
 
+// Scrolls under a soft edge instead of being clipped mid-label at the gutter.
+// .ws-bleed supplies the negative margin and matching padding, so the first
+// disc still starts on the page grid.
 .ws-cats {
   display: flex;
-  gap: var(--ws-space-6);
+  gap: var(--ws-space-4);
   overflow-x: auto;
   padding-block: var(--ws-space-1);
-  padding-inline-end: var(--ws-space-4);
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--ws-space-6);
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
+
+  > * { scroll-snap-align: start; }
+
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-5);
+    scroll-padding-inline: 48px;
+  }
 }
 
 .ws-cat {
@@ -1782,14 +2258,14 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   flex-direction: column;
   align-items: center;
   gap: var(--ws-space-3);
-  width: 104px;
+  width: 100px;
   text-decoration: none;
   color: var(--ws-text-primary);
 }
 
 .ws-cat__disc {
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--ws-radius-pill);
   display: grid;
   place-items: center;
@@ -1855,15 +2331,38 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-rail__track {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 220px;
+  // A fixed track, not minmax(0, …): a zero minimum lets the columns collapse
+  // to share the viewport instead of overflowing, which is how four cards ended
+  // up squeezed into a phone screen rather than scrolling.
+  grid-auto-columns: min(74vw, 300px);
   gap: var(--ws-space-4);
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  padding-bottom: var(--ws-space-2);
+  scroll-padding-inline: var(--ws-space-6);
+  // Room for the card hover lift and focus ring, which overflow-x: auto would
+  // otherwise clip — cancelled by the negative margin so the rail sits on the
+  // same section rhythm as every other band.
+  padding-block: var(--ws-space-2);
+  margin-block: calc(var(--ws-space-2) * -1);
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 
   > * { scroll-snap-align: start; }
+
+  @media (min-width: 480px) { grid-auto-columns: 260px; }
+
+  // On desktop it stops being a scroller and becomes a filling grid: with
+  // only a few listings, fixed-width columns left most of the row empty. It
+  // stays a rail through tablet, where a three-column grid orphaned the
+  // fourth card on a row of its own.
+  @media (min-width: $bp-md) {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--ws-space-6);
+    overflow-x: visible;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
 }
 
 // ─── Sellers row ────────────────────────────────────────────────
@@ -1872,42 +2371,78 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   display: grid;
   gap: var(--ws-space-4);
   grid-template-columns: 1fr;
-  // auto-fit, not fixed columns: three sellers fill the row instead of
-  // leaving a dead fourth track.
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+
+  // Exactly three stores, so three tracks from tablet up: the row always
+  // fills, and two columns would have orphaned the third below the others.
+  // The card's own container query tightens it for the narrower track.
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (min-width: $bp-md) { gap: var(--ws-space-6); }
 }
 
-// Seller spotlight card: banner, overlapping avatar, one stat line.
+// ─── Store card ─────────────────────────────────────────────────
+// Store (and mall) spotlight: banner, a logo sitting on its edge, who and
+// where, a two-line pitch, then a stats strip. The pitch always takes its two
+// lines, so the strip lands on the same line in every card of a row and the
+// numbers can be compared straight across. Same surface, hover and footer
+// language as the listing card, so the two read as one family.
+//
+// A size container, like .ws-pcard: it is a full-width phone card, a third of
+// the home row and a directory tile, and only its own width tells them apart.
 .ws-storecard {
+  container: storecard / inline-size;
+  position: relative;
   display: flex;
   flex-direction: column;
+  height: 100%;
   background: var(--ws-bg-surface);
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
+  box-shadow: var(--ws-shadow-card);
   overflow: hidden;
   text-decoration: none;
   color: var(--ws-text-primary);
-  transition: border-color var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease), transform var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    border-color var(--ws-motion-fast) var(--ws-ease),
+    box-shadow var(--ws-motion-base) var(--ws-ease),
+    transform var(--ws-motion-base) var(--ws-ease);
 
   &:hover {
-    background: var(--ws-bg-raised);
-    border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, var(--ws-border-hairline));
+    border-color: color-mix(in srgb, var(--ws-brand-primary) 35%, var(--ws-border-hairline));
     transform: translateY(-2px);
+    box-shadow: var(--ws-shadow-lift);
+  }
 
-    .ws-storecard__cta svg { transform: translateX(3px); }
+  &:active {
+    transform: translateY(0);
+    box-shadow: var(--ws-shadow-card);
+    transition-duration: var(--ws-motion-fast);
+  }
+
+  // The ring follows the card's radius rather than the global focus style.
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: 2px;
+    border-radius: var(--ws-radius-xl);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: border-color var(--ws-motion-fast) var(--ws-ease);
+    &:hover { transform: none; }
   }
 }
 
+// Most stores have no banner yet, so the empty state is the common case and
+// has to look finished: one flat, faintly brand-tinted surface from tokens —
+// no gradient, no pattern — that the logo can sit on.
 .ws-storecard__banner {
   position: relative;
-  height: 84px;
-  background: var(--ws-bg-sunken);
-  display: grid;
-  place-items: center;
-  color: var(--ws-text-subtle);
+  height: 96px;
+  flex: none;
   overflow: hidden;
+  background: color-mix(in srgb, var(--ws-brand-primary) 9%, var(--ws-bg-sunken));
+  border-bottom: 1px solid var(--ws-border-hairline);
 
-  // Absolutely positioned: with the grid row sized by content, a percentage
+  // Absolutely positioned: with the row sized by content, a percentage
   // height on the img resolves to auto and the photo spills at natural size.
   img {
     position: absolute;
@@ -1915,79 +2450,242 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform var(--ws-motion-slow) var(--ws-ease);
+  }
+
+  .ws-storecard:hover & img { transform: scale(1.04); }
+
+  @container storecard (max-width: 279px) { height: 80px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    img { transition: none; }
+    .ws-storecard:hover & img { transform: none; }
   }
 }
 
 .ws-storecard__body {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  padding: 0 var(--ws-space-4) var(--ws-space-4);
+  padding: 0 var(--ws-space-5) var(--ws-space-4);
+
+  @container storecard (max-width: 279px) { padding-inline: var(--ws-space-4); }
+}
+
+// The logo row: logo pulled up over the banner edge on the left, the
+// verification pill on the right, sitting on the body side of that edge.
+.ws-storecard__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ws-space-2);
+  margin-top: -28px;
+  margin-bottom: var(--ws-space-3);
 }
 
 .ws-storecard__logo {
-  width: 48px;
-  height: 48px;
-  margin-top: -24px;
-  margin-bottom: var(--ws-space-2);
-  // A ring of card surface so the avatar reads as sitting on the banner edge.
-  box-shadow: 0 0 0 3px var(--ws-bg-surface);
+  // Stacked above the banner: without its own stacking context the banner
+  // (positioned, later in paint order) was drawn over it and clipped it.
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--ws-radius-lg);
   overflow: hidden;
+  // A ring of card surface so the logo reads as sitting on the banner edge.
+  box-shadow: 0 0 0 3px var(--ws-bg-surface), var(--ws-shadow-card);
+  // Initial fallback: tinted, in the display face — a monogram, not a blank.
+  background: color-mix(in srgb, var(--ws-brand-primary) 14%, var(--ws-bg-raised));
+  color: var(--ws-brand-gold-text);
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 22px;
 
-  img { width: 100%; height: 100%; object-fit: cover; }
+  img { width: 100%; height: 100%; object-fit: cover; background: var(--ws-bg-raised); }
+}
+
+.ws-storecard__tier {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: color-mix(in srgb, var(--ws-status-success) 12%, transparent);
+  color: var(--ws-status-success);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  svg { flex: none; }
 }
 
 .ws-storecard__name {
-  display: flex;
-  align-items: center;
-  gap: var(--ws-space-1);
-  font-size: 15px;
+  font-family: var(--ws-font-display);
+  font-size: 16px;
   font-weight: 600;
-
-  svg { flex: none; color: var(--ws-status-success); }
+  line-height: 1.3;
+  letter-spacing: -0.1px;
+  // One line: a store name is an identity, and a wrapped one pushed every
+  // line below it out of step with the next card.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ws-storecard__loc {
-  @include ws-caption;
-  color: var(--ws-text-subtle);
-  margin-top: 1px;
-}
-
-.ws-storecard__stats {
   display: flex;
   align-items: center;
-  gap: var(--ws-space-1);
-  font-size: 13px;
-  font-weight: 600;
-  margin-top: var(--ws-space-3);
-
-  // Rating-star orange (#F97316): the one sanctioned literal, via its token.
-  svg { color: var(--ws-accent-star); fill: currentColor; }
+  gap: var(--ws-space-2);
+  min-width: 0;
+  min-height: 18px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ws-text-subtle);
 }
 
-.ws-storecard__dim {
-  color: var(--ws-text-subtle);
+.ws-storecard__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+
+  svg { flex: none; }
+  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.ws-storecard__mall {
+  flex: none;
+  // Held to the line's own 18px so a mall store's stats stay level with a
+  // plain store's beside it.
+  line-height: 18px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-muted);
   font-weight: 500;
 }
 
-.ws-storecard__reply {
+.ws-storecard__desc {
   @include ws-caption;
   color: var(--ws-text-muted);
-  margin-top: 2px;
+  margin-top: var(--ws-space-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(2 * 1.45em);
+}
+
+// Three cells on a sunken strip, value over label. The <dl> keeps "Rating 4.6"
+// in the right order for a screen reader; column-reverse puts the value on
+// top for the eye.
+// A hairline-divided row rather than a boxed strip: the box read as a table
+// dropped into the card and was the heaviest element on it. Divided cells at
+// the card's own surface keep the numbers comparable across a row without the
+// weight.
+.ws-storecard__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: var(--ws-space-4);
+  padding-top: var(--ws-space-3);
+  min-height: 54px;
+  border-top: 1px solid var(--ws-border-hairline);
+
+  > div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    padding: 0 var(--ws-space-3);
+
+    &:first-child { padding-left: 0; }
+    + div { border-left: 1px solid var(--ws-border-hairline); }
+  }
+
+  dt {
+    font-size: 11px;
+    color: var(--ws-text-subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  dd {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ws-text-primary);
+    white-space: nowrap;
+  }
+
+  @container storecard (max-width: 279px) {
+    > div { padding-inline: var(--ws-space-2); }
+    dd { font-size: 14px; }
+  }
+}
+
+.ws-storecard__stats--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+// Rating-star orange (#F97316): the one sanctioned literal, via its token.
+.ws-storecard__star { flex: none; color: var(--ws-accent-star, #F97316); fill: currentColor; }
+.ws-storecard__glyph { flex: none; color: var(--ws-text-subtle); }
+
+// "New" / "—": an honest empty value, quieter than a real number.
+.ws-storecard__muted { color: var(--ws-text-subtle) !important; font-weight: 500 !important; }
+
+.ws-storecard__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  min-height: 44px;
+  margin-inline: var(--ws-space-5);
+  padding-block: var(--ws-space-2);
+  border-top: 1px solid var(--ws-border-hairline);
+  font-size: 12px;
+  color: var(--ws-text-subtle);
+
+  @container storecard (max-width: 279px) { margin-inline: var(--ws-space-4); }
 }
 
 .ws-storecard__cta {
   display: inline-flex;
   align-items: center;
   gap: var(--ws-space-1);
+  flex: none;
+  margin-left: auto;
   font-size: 13px;
   font-weight: 600;
   color: var(--ws-brand-gold-text);
-  margin-top: auto;
-  padding-top: var(--ws-space-4);
 
   svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+
+  .ws-storecard:hover & svg { transform: translateX(3px); }
+
+  @media (prefers-reduced-motion: reduce) { svg { transition: none; } }
 }
+
+// The card's own banner, logo and stats backgrounds are more specific than
+// .ws-skeleton's fill, so the skeleton restates it on each.
+.ws-storecard--skeleton {
+  pointer-events: none;
+
+  .ws-storecard__banner,
+  .ws-storecard__logo { background: var(--ws-bg-raised); }
+
+  .ws-storecard__banner { border-bottom: 0; border-radius: 0; }
+  .ws-storecard__stats { border-top-color: transparent; }
+}
+
+.ws-storecard__skel { display: block; border-radius: 4px; }
 
 // ─── Sell band ──────────────────────────────────────────────────
 
@@ -1998,18 +2696,34 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   grid-template-columns: 1fr;
   gap: var(--ws-space-8);
   align-items: center;
-  padding: 44px 40px;
+  padding: var(--ws-space-8) var(--ws-space-6);
   border-radius: var(--ws-radius-xl);
   background: var(--ws-bg-surface);
   border: 1px solid var(--ws-border-hairline);
 
-  @media (min-width: $bp-md) { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--ws-space-16);
+    padding: var(--ws-space-16) var(--ws-space-12);
+  }
+}
+
+// One step below the hero, one above a section title: the band is the page's
+// second voice, not a third one.
+.ws-sellband__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(25px, 1.8vw + 16px, 33px);
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  text-wrap: balance;
 }
 
 .ws-sellband__eyebrow {
   @include ws-label;
   color: var(--ws-brand-gold-text);
-  margin-bottom: var(--ws-space-2);
+  display: block;
+  margin-bottom: var(--ws-space-3);
 }
 
 .ws-sellband__sub {
@@ -2034,10 +2748,16 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-sellband__steps {
   display: grid;
-  gap: var(--ws-space-4);
+  gap: var(--ws-space-5);
   list-style: none;
   margin: 0;
   padding: 0;
+
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-6);
+    padding-left: var(--ws-space-8);
+    border-left: 1px solid var(--ws-border-hairline);
+  }
 }
 
 .ws-sellband__step {
@@ -2080,43 +2800,45 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-assure {
   display: grid;
   grid-template-columns: 1fr;
-  border-block: 1px solid var(--ws-border-hairline);
+  gap: var(--ws-space-4);
 
-  @media (min-width: $bp-md) { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (min-width: $bp-md) { gap: var(--ws-space-6); }
 }
 
+// Three quiet panels rather than a hairline strip: it now matches the card
+// language the rest of the page speaks, at the lowest emphasis on the page.
 .ws-assure__item {
   display: grid;
-  gap: var(--ws-space-1);
+  gap: var(--ws-space-2);
   align-content: start;
-  padding: var(--ws-space-4) 0;
-  border-top: 1px solid var(--ws-border-hairline);
+  padding: var(--ws-space-6);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-bg-surface);
+}
 
-  &:first-child { border-top: 0; }
-
-  @media (min-width: $bp-md) {
-    border-top: 0;
-    padding: var(--ws-space-4) var(--ws-space-6);
-    border-left: 1px solid var(--ws-border-hairline);
-
-    &:first-child { border-left: 0; padding-left: 0; }
-    &:last-child { padding-right: 0; }
-  }
+.ws-assure__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-sunken);
+  color: var(--ws-text-muted);
+  margin-bottom: var(--ws-space-1);
 }
 
 .ws-assure__title {
-  display: flex;
-  align-items: center;
-  gap: var(--ws-space-2);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-
-  svg { flex: none; color: var(--ws-text-muted); }
+  letter-spacing: -0.01em;
 }
 
 .ws-assure__copy {
   @include ws-caption;
   color: var(--ws-text-muted);
+  max-width: 34ch;
 }
 
 // ─── Legal pages ────────────────────────────────────────────────
@@ -2259,24 +2981,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // The topbar mall link keeps its icon at every width but only earns a text
 // label on desktop, where there is room beside the search field. .ws-iconbtn
 // is a fixed square, so the label needs the width back.
-.ws-topbar__malls {
-  @media (min-width: $bp-md) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    gap: var(--ws-space-2);
-    padding-inline: var(--ws-space-3);
-  }
-}
 
-.ws-topbar__malls-label {
-  display: none;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1;
-  @media (min-width: $bp-md) { display: inline; }
-}
 
 // Row action menu (the three-dots in table rows). Same panel spec as
 // .ws-locpick__panel, but positioned `fixed` from JS and portaled to <body>:

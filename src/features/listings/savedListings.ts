@@ -1,20 +1,11 @@
 import type { Listing } from '@/features/stores/api';
 
-/**
- * Local-only saved listings. There is no backend for saves, so each heart
- * stores a snapshot of the fields a card needs — that is what lets /saved
- * render without a fetch-by-id endpoint. The trade-off is staleness: a saved
- * card shows the price at save time until the visitor reopens the listing.
- *
- * Reads go through a cache so `useSyncExternalStore` gets a stable reference;
- * every write bumps the cache and notifies subscribers (and other tabs via
- * the native `storage` event). A failed read degrades to "nothing saved".
- */
 
 export type SavedListing = Pick<
   Listing,
   'id' | 'slug' | 'name' | 'condition' | 'city' | 'state' | 'images' | 'priceType' | 'basePrice' | 'maxPrice'
-> & { savedAt: number };
+> &
+  Partial<Pick<Listing, 'category' | 'isNegotiable'>> & { savedAt: number };
 
 const KEY = 'ws:saved';
 
@@ -71,8 +62,11 @@ export const savedListings = {
     const current = read();
     const nowSaved = !current.some((s) => s.id === listing.id);
     if (nowSaved) {
-      const { id, slug, name, condition, city, state, images, priceType, basePrice, maxPrice } = listing;
-      write([{ id, slug, name, condition, city, state, images, priceType, basePrice, maxPrice, savedAt: Date.now() }, ...current]);
+      const { id, slug, name, condition, city, state, images, priceType, basePrice, maxPrice, category, isNegotiable } = listing;
+      write([
+        { id, slug, name, condition, city, state, images, priceType, basePrice, maxPrice, category, isNegotiable, savedAt: Date.now() },
+        ...current,
+      ]);
     } else {
       write(current.filter((s) => s.id !== listing.id));
     }

@@ -10,6 +10,7 @@ export const queryKeys = {
   listing: (idOrSlug: string) => ['listing', idOrSlug] as const,
   listingSuggestions: (search: string) => ['listings', 'suggest', search] as const,
 
+  stores: (filters: ListingFilters) => ['stores', filters] as const,
   store: (slug: string) => ['store', slug] as const,
   storeListings: (slug: string, page: number) => ['store', slug, 'listings', page] as const,
 
