@@ -1,16 +1,17 @@
 import { useMemo } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { publicMarketplace, type Listing, type PublicStore } from '@/features/stores/api';
+import { publicMarketplace, type PublicStore } from '@/features/stores/api';
 import { useCategories } from '@/features/catalog/hooks/useCategories';
 import { resolveCategoryIds } from '@/features/catalog/model';
 import { queryKeys } from '@/shared/lib/queryKeys';
+import type { ListingWithStore } from '@/features/listings/model';
 import { MINUTE } from '@/app/providers/QueryProvider';
 
 export const RAIL_SIZE = 8;
 export const DEALS_MAX = 100_000;
 const SELLERS_SHOWN = 3;
 
-type Row = Listing & { store: PublicStore };
+type Row = ListingWithStore;
 
 const NO_ROWS: Row[] = [];
 const NO_STORES: PublicStore[] = [];

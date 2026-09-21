@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { isLight, toggleTheme } from "@/shared/utils/theme";
 import { savedListings } from "@/features/listings/savedListings";
-import { useAuthStore } from "@/features/auth/store/authStore";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
 
@@ -26,7 +26,7 @@ const NAV = [
 export default function Header() {
   const location = useLocation();
   const [params] = useSearchParams();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuth();
   const { toggleMobileMenu } = useUIStore();
   const urlSearch = params.get("search") ?? "";
   const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
@@ -64,14 +64,6 @@ export default function Header() {
     <header className="ws-topbar">
       <div className="ws-wrap">
         <div className="ws-topbar__row">
-          <button
-            className="ws-iconbtn ws-topbar__menu"
-            onClick={toggleMobileMenu}
-            aria-label="Open menu"
-          >
-            <Menu size={20} />
-          </button>
-
           <Link to="/" className="ws-brand" aria-label="WorldStore home">
             <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
@@ -101,19 +93,21 @@ export default function Header() {
                 {light ? <Moon size={18} /> : <Sun size={18} />}
               </button>
 
-              <Link
-                to="/saved"
-                className="ws-iconbtn"
-                aria-label={
-                  savedCount
-                    ? `Saved listings, ${savedCount} saved`
-                    : "Saved listings"
-                }
-                title="Saved listings"
-              >
-                <Heart size={18} />
-                {savedCount > 0 && <span className="ws-iconbtn__dot" />}
-              </Link>
+              {isAuthenticated && (
+                <Link
+                  to="/saved"
+                  className="ws-iconbtn"
+                  aria-label={
+                    savedCount
+                      ? `Saved listings, ${savedCount} saved`
+                      : "Saved listings"
+                  }
+                  title="Saved listings"
+                >
+                  <Heart size={18} />
+                  {savedCount > 0 && <span className="ws-iconbtn__dot" />}
+                </Link>
+              )}
 
               {isAuthenticated && user?.role === "ADMIN" && (
                 <Link
@@ -152,7 +146,7 @@ export default function Header() {
 
               <Link
                 to="/account"
-                className="ws-avatar ws-avatar--m"
+                className="ws-avatar ws-avatar--m ws-topbar__profile"
                 aria-label={isAuthenticated ? "Your account" : "Sign in"}
                 title={isAuthenticated ? "Your account" : "Sign in"}
               >
@@ -164,6 +158,14 @@ export default function Header() {
               </Link>
             </div>
           </div>
+
+          <button
+            className="ws-iconbtn ws-topbar__menu"
+            onClick={toggleMobileMenu}
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
         </div>
       </div>
     </header>

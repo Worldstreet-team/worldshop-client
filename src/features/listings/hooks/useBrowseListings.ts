@@ -125,6 +125,9 @@ export function useBrowseListings(filters: BrowseFilters, categories: Category[]
     totalPages: data.totalPages,
     loading: waitingForCategories || query.isPending,
     refreshing: query.isFetching && !query.isPending,
+    // The filters, sort or page changed and the rows on hand belong to the
+    // previous query — unlike a background refetch of the same one.
+    switching: query.isPlaceholderData,
     failed,
     retry: () => { void query.refetch(); },
     prefetchPage,

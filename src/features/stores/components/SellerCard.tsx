@@ -26,6 +26,7 @@ export default function SellerCard({ store }: { store: PublicStore }) {
 
   return (
     <div className="ws-card">
+      <span className="ws-label ws-sellercard__label">Sold by</span>
       <Link to={`/stores/${store.slug}`} className="ws-sellerrow">
         <span className="ws-avatar ws-avatar--l" style={{ width: 44, height: 44 }}>
           {store.logo

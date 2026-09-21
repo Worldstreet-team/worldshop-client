@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
-import { CheckCircle2, Phone, ShieldAlert, MessageCircle } from 'lucide-react';
+import { CheckCircle2, ShieldAlert, MessageCircle } from 'lucide-react';
 import { chatService } from '@/features/chat/api';
 import type { PublicListing } from '@/features/stores/api';
 import { useUIStore } from '@/shared/store/uiStore';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { toApiError } from '@/shared/lib/api';
-import { waLink } from '@/features/listings/model';
 
 const errMessage = (err: unknown, fallback: string) => {
   const e = toApiError(err, fallback);
@@ -21,13 +20,10 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
   const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
   const client = useQueryClient();
-
   const [message, setMessage] = useState(
     `Hi, is "${listing.name}" still available?`,
   );
   const [sentId, setSentId] = useState<string | null>(null);
-  const [showPhone, setShowPhone] = useState(false);
-
   const store = listing.store;
 
   const sendMutation = useMutation({
@@ -71,7 +67,10 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
 
   return (
     <div className="ws-card ws-contact">
-      <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Contact seller</h2>
+      <h2 className="ws-h2">Contact seller</h2>
+      <p className="ws-contact__intro">
+        Send {store.name} a message to ask questions or agree a price.
+      </p>
 
       <label className="ws-label" htmlFor="contact-message">Your message</label>
       <textarea
@@ -81,7 +80,13 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
         onChange={(e) => setMessage(e.target.value)}
         maxLength={2000}
         className="ws-textarea"
+        aria-describedby="contact-help"
       />
+      <p className="ws-contact__help" id="contact-help">
+        {isSignedIn
+          ? 'Edit the message or send it as it is. Replies arrive in your Messages.'
+          : 'You need a free account so the seller can reply to you. Signing in brings you back here.'}
+      </p>
 
       <button
         className="ws-btn ws-btn--primary ws-btn--block"
@@ -92,44 +97,11 @@ export default function ContactSeller({ listing }: { listing: PublicListing }) {
         {sendMutation.isPending ? 'Sending…' : isSignedIn ? 'Send message' : 'Sign in to message'}
       </button>
 
-      {(store.phone || store.whatsapp) && (
-        <div className="ws-contact__direct">
-          <span className="ws-label">Or reach them directly</span>
-
-          <div className="ws-contact__row">
-            {store.phone && (
-              showPhone ? (
-                <a href={`tel:${store.phone}`} className="ws-btn ws-btn--sm ws-btn--secondary ws-num">
-                  <Phone size={14} aria-hidden />
-                  {store.phone}
-                </a>
-              ) : (
-                <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => setShowPhone(true)}>
-                  <Phone size={14} aria-hidden />
-                  Show number
-                </button>
-              )
-            )}
-
-            {store.whatsapp && (
-              <a
-                className="ws-btn ws-btn--sm ws-btn--secondary"
-                href={waLink(store.whatsapp, `Hi, I saw "${listing.name}" on WorldStore and I'm interested.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                WhatsApp
-              </a>
-            )}
-          </div>
-        </div>
-      )}
-
       <p className="ws-safety">
         <ShieldAlert size={16} aria-hidden />
         <span>
-          WorldStore does not handle payment or delivery for this item. Meet in
-          a safe place and check the item before paying.
+          Never pay before you have seen the item. WorldStore does not handle
+          payment or delivery, so there is no refund if a deal goes wrong.
         </span>
       </p>
     </div>
