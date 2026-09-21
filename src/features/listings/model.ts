@@ -1,4 +1,7 @@
-import type { Listing } from '@/features/stores/api';
+import type { Listing, PublicStore } from '@/features/stores/api';
+
+/** A listing as the public browse endpoints return it — joined to its store. */
+export type ListingWithStore = Listing & { store: PublicStore };
 
 /** Listing prices stay in naira; only the subscription is USD. */
 export const fmtNaira = (n: number) => '₦' + n.toLocaleString('en-NG');

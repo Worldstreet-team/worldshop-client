@@ -898,8 +898,9 @@ select option {
 }
 
 // ─── Drawer (mobile navigation) ─────────────────────────────────
-// A left sheet rather than the Modal's bottom sheet: it is navigation, so it
-// wants the full height and a persistent header.
+// A side sheet rather than the Modal's bottom sheet: it is navigation, so it
+// wants the full height and a persistent header. It opens from the right, the
+// edge its hamburger sits on.
 
 .ws-drawer__scrim {
   position: fixed;
@@ -916,16 +917,16 @@ select option {
 .ws-drawer {
   position: fixed;
   top: 0;
-  left: 0;
+  right: 0;
   bottom: 0;
   width: min(320px, 86vw);
   z-index: calc(var(--ws-z-modal) + 1);
   background: var(--ws-bg-surface);
-  border-right: 1px solid var(--ws-border-hairline);
+  border-left: 1px solid var(--ws-border-hairline);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  transform: translateX(-100%);
+  transform: translateX(100%);
   transition: transform var(--ws-motion-base) var(--ws-ease);
 
   &.is-open { transform: translateX(0); }
@@ -977,6 +978,15 @@ select option {
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: var(--ws-text-subtle);
+}
+
+.ws-drawer__chevron { flex: none; color: var(--ws-text-subtle); }
+
+// An email has no break points, so it would push the chevron off the sheet.
+.ws-drawer .ws-listrow__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ws-drawer__section {

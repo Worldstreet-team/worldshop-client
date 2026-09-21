@@ -128,10 +128,13 @@ const router = createBrowserRouter([
         path: 'malls/:slug',
         element: <SuspenseWrapper><MarketplaceMallPage /></SuspenseWrapper>,
       },
-      // Saved hearts are device-local, so this needs no sign-in.
       {
         path: 'saved',
-        element: <SuspenseWrapper><SavedPage /></SuspenseWrapper>,
+        element: (
+          <ProtectedRoute>
+            <SuspenseWrapper><SavedPage /></SuspenseWrapper>
+          </ProtectedRoute>
+        ),
       },
       { path: 'terms', element: <SuspenseWrapper><LegalPage doc="terms" /></SuspenseWrapper> },
       { path: 'privacy', element: <SuspenseWrapper><LegalPage doc="privacy" /></SuspenseWrapper> },

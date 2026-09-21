@@ -1,5 +1,5 @@
 import { useVoiceAgent } from '@/features/voice/hooks/useVoiceAgent';
-import { useAuthStore } from '@/features/auth/store/authStore';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { VoiceAgentState } from '@/features/voice/voiceAgent';
 import '@/features/voice/components/VoiceButton.scss';
 
@@ -12,7 +12,7 @@ const STATE_LABELS: Record<VoiceAgentState, string> = {
 };
 
 export default function VoiceButton() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   const { agentState, toggleSession, error } = useVoiceAgent();
 
   // Only show for authenticated users

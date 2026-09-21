@@ -432,6 +432,12 @@ $bp-lg: 1280px;
   &:hover { background: var(--ws-bg-chip); }
 }
 
+// The account moves into the drawer's profile row on small screens.
+.ws-topbar__profile {
+  display: none;
+  @media (min-width: $bp-md) { display: grid; }
+}
+
 // Cross-app links are desktop-only; the drawer carries them on small screens.
 .ws-topbar__admin {
   display: none;
@@ -589,18 +595,71 @@ $bp-lg: 1280px;
 
 // ─── Browse ─────────────────────────────────────────────────────
 
-.ws-browse {
+// Page head as a band, built like .ws-hero: surface, bottom hairline, content
+// back on the page grid through an inner .ws-wrap. Browse and Home then share
+// one left edge and one eyebrow → title → sub voice.
+.ws-browsehero {
+  background: var(--ws-bg-surface);
+  border-bottom: 1px solid var(--ws-border-hairline);
+}
+
+.ws-browsehero__inner {
   display: grid;
   gap: var(--ws-space-6);
-  padding-block: var(--ws-space-6) 64px;
-  grid-template-columns: 1fr;
+  padding-block: var(--ws-space-8) var(--ws-space-6);
 
   @media (min-width: $bp-md) {
-    grid-template-columns: 244px minmax(0, 1fr);
-    gap: 40px;
+    padding-block: var(--ws-space-12) var(--ws-space-8);
   }
 }
 
+// A step below the hero title: this band introduces results, it doesn't sell.
+.ws-browsehero__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(28px, 2vw + 16px, 38px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.ws-browsehero__sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ws-text-muted);
+  max-width: var(--ws-measure);
+  margin-top: var(--ws-space-3);
+  text-wrap: pretty;
+}
+
+// Top-level categories as one scrolling row. .ws-bleed lets it run to the
+// viewport edge while the first chip still starts on the page grid.
+.ws-catchips {
+  display: flex;
+  gap: var(--ws-space-2);
+  overflow-x: auto;
+  padding-block: 2px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+
+  > * { flex: none; }
+}
+
+.ws-browse {
+  display: grid;
+  gap: var(--ws-space-6);
+  padding-block: var(--ws-space-6) var(--ws-space-16);
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 40px;
+    padding-block: var(--ws-space-8) var(--ws-space-16);
+  }
+}
+
+// Still used by pages with a plain title row (Saved).
 .ws-browse__head {
   display: flex;
   align-items: flex-end;
@@ -610,47 +669,22 @@ $bp-lg: 1280px;
   margin-bottom: var(--ws-space-4);
 }
 
-// Filters read as one recessed rail, divided by hairlines rather than stacked
-// cards — the design system's list rule.
-.ws-filters {
-  align-self: start;
-  // Below desktop the rail collapses behind the Filters button; the grid needs
-  // the whole width there.
-  display: none;
-
-  &.is-open {
-    display: block;
-    padding: var(--ws-space-4);
-    border: 1px solid var(--ws-border-hairline);
-    border-radius: var(--ws-radius-xl);
-    background: var(--ws-bg-surface);
-  }
-
-  @media (min-width: $bp-md) {
-    display: block;
-    position: sticky;
-    top: calc(var(--ws-header-h) + var(--ws-space-4));
-    max-height: calc(100vh - var(--ws-header-h) - var(--ws-space-8));
-    overflow-y: auto;
-    padding-right: var(--ws-space-2);
-
-    // The desktop rail is never a card — hairlines do the dividing.
-    &.is-open {
-      padding: 0 var(--ws-space-2) 0 0;
-      border: 0;
-      background: none;
-    }
-  }
+.ws-browse__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--ws-space-4);
+  padding-bottom: var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
 }
 
-.ws-filters__hint {
-  @include ws-caption;
-  color: var(--ws-text-subtle);
-  padding-top: var(--ws-space-4);
-}
+.ws-browse__count {
+  font-size: 14px;
+  color: var(--ws-text-muted);
 
-.ws-browse__filtertoggle {
-  @media (min-width: $bp-md) { display: none; }
+  strong { color: var(--ws-text-primary); font-weight: 600; }
 }
 
 .ws-browse__controls {
@@ -659,24 +693,141 @@ $bp-lg: 1280px;
   gap: var(--ws-space-2);
 }
 
-.ws-pricerange {
+.ws-browse__filtertoggle {
+  @media (min-width: $bp-md) { display: none; }
+}
+
+// Active-filter count on the Filters button.
+.ws-browse__badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding-inline: 5px;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-brand-primary);
+  color: var(--ws-brand-on-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+// ── Filters: a right-hand sheet below desktop, a sticky rail above ──
+// The sheet opens from the same edge, with the same motion, as the nav drawer.
+.ws-filters {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 92vw);
+  z-index: calc(var(--ws-z-modal) + 1);
+  display: flex;
+  flex-direction: column;
+  background: var(--ws-bg-surface);
+  border-left: 1px solid var(--ws-border-hairline);
+  transform: translateX(100%);
+  // visibility, not just transform, so a closed sheet leaves the tab order.
+  visibility: hidden;
+  transition:
+    transform var(--ws-motion-base) var(--ws-ease),
+    visibility 0s var(--ws-motion-base);
+
+  &.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--ws-motion-base) var(--ws-ease);
+  }
+
+  @media (min-width: $bp-md) {
+    position: sticky;
+    top: calc(var(--ws-header-h) + var(--ws-space-6));
+    align-self: start;
+    width: auto;
+    max-height: calc(100vh - var(--ws-header-h) - var(--ws-space-10));
+    z-index: auto;
+    display: block;
+    overflow-y: auto;
+    padding-right: var(--ws-space-2);
+    background: none;
+    border: 0;
+    transform: none;
+    visibility: visible;
+    transition: none;
+  }
+}
+
+.ws-filters__scrim {
+  @media (min-width: $bp-md) { display: none; }
+}
+
+.ws-filters__head {
   display: flex;
   align-items: center;
-  gap: var(--ws-space-2);
-  color: var(--ws-text-subtle);
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-3) var(--ws-space-3) var(--ws-space-3) var(--ws-space-5);
+  border-bottom: 1px solid var(--ws-border-hairline);
 
-  input { min-width: 0; }
-  // Spinners fight the compact rail width.
-  input::-webkit-outer-spin-button,
-  input::-webkit-inner-spin-button { appearance: none; margin: 0; }
-  input[type='number'] { -moz-appearance: textfield; }
+  @media (min-width: $bp-md) {
+    padding: 0 0 var(--ws-space-4);
+    min-height: 36px;
+  }
+}
+
+.ws-filters__title {
+  font-family: var(--ws-font-display);
+  font-weight: 600;
+  font-size: 17px;
+  margin-right: auto;
+}
+
+.ws-filters__reset {
+  border: 0;
+  background: none;
+  padding: var(--ws-space-1) var(--ws-space-2);
+  border-radius: var(--ws-radius-sm);
+  font-family: var(--ws-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ws-brand-gold-text);
+  cursor: pointer;
+
+  &:hover { color: var(--ws-brand-active); }
+}
+
+.ws-filters__close {
+  @media (min-width: $bp-md) { display: none; }
+}
+
+.ws-filters__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--ws-space-5);
+  overscroll-behavior: contain;
+
+  @media (min-width: $bp-md) {
+    padding: 0;
+    overflow: visible;
+  }
+}
+
+.ws-filters__foot {
+  padding: var(--ws-space-4) var(--ws-space-5);
+  border-top: 1px solid var(--ws-border-hairline);
+
+  @media (min-width: $bp-md) { display: none; }
+}
+
+.ws-filters__done { width: 100%; justify-content: center; }
+
+.ws-filters__hint {
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+  padding-top: var(--ws-space-3);
 }
 
 .ws-filters__group {
   padding-block: var(--ws-space-5);
   border-bottom: 1px solid var(--ws-border-hairline);
 
-  &:first-child { padding-top: 0; }
   &:last-child { border-bottom: 0; }
 }
 
@@ -703,13 +854,33 @@ $bp-lg: 1280px;
   }
 }
 
+details:not([open]) > .ws-filters__legend { margin-bottom: 0; }
 details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
+
+.ws-chiprow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-2);
+}
+
+.ws-pricerange {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  color: var(--ws-text-subtle);
+
+  input { min-width: 0; }
+  // Spinners fight the compact rail width.
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+  input[type='number'] { -moz-appearance: textfield; }
+}
 
 // Subcategories are one-click links, not a second dropdown: this is the level
 // that unlocks attribute facets.
 .ws-subcats {
   list-style: none;
-  margin: var(--ws-space-3) 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
   gap: var(--ws-space-1);
@@ -731,9 +902,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
 
   &.is-active {
-    color: var(--ws-text-primary);
+    color: var(--ws-brand-gold-text);
     font-weight: 600;
-    background: var(--ws-bg-chip);
+    background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
   }
 }
 
@@ -741,7 +912,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   display: flex;
   flex-wrap: wrap;
   gap: var(--ws-space-2);
-  margin-bottom: var(--ws-space-4);
+  margin-bottom: var(--ws-space-5);
 }
 
 // ─── Product grid ───────────────────────────────────────────────
@@ -1263,19 +1434,245 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   }
 }
 
+// ─── Listing page layout ───
+// Its own grid rather than .ws-detail, which the store, profile and admin
+// pages share. Desktop: photos and the long read on the left, the decision
+// column (summary, contact, seller) on the right, level with the photos.
+// Below desktop both columns dissolve so the blocks interleave in reading
+// order — photos, summary, body, contact — without rendering anything twice.
+.ws-listing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-6);
+  padding-block: var(--ws-space-4) var(--ws-space-12);
+
+  @media (min-width: $bp-md) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 40px;
+    align-items: start;
+    padding-block: var(--ws-space-6) var(--ws-space-16);
+  }
+}
+
+.ws-listing__main,
+.ws-listing__side {
+  display: contents;
+
+  @media (min-width: $bp-md) {
+    display: grid;
+    gap: var(--ws-space-8);
+    align-content: start;
+  }
+}
+
+.ws-listing__side {
+  @media (min-width: $bp-md) { gap: var(--ws-space-4); }
+}
+
+.ws-listing__gallery { order: 1; }
+.ws-listing__summary { order: 2; }
+.ws-listing__body    { order: 3; min-width: 0; }
+.ws-listing__contact {
+  order: 4;
+  display: grid;
+  gap: var(--ws-space-4);
+  // Clears the sticky header when "Message seller" scrolls here.
+  scroll-margin-top: calc(var(--ws-header-h) + var(--ws-space-4));
+}
+
+// Body sections are divided by hairlines, the page's list rule, instead of
+// floating on margins alone.
+.ws-listing__body > .ws-detail__section {
+  margin-top: 0;
+  padding-block: var(--ws-space-8);
+  border-top: 1px solid var(--ws-border-hairline);
+
+  &:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  > h2 { margin-bottom: var(--ws-space-4); }
+}
+
+.ws-listing__desc {
+  white-space: pre-wrap;
+  max-width: var(--ws-measure);
+}
+
+.ws-listing__report {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--ws-space-4);
+  border-top: 1px solid var(--ws-border-hairline);
+}
+
+.ws-listing__skelmedia {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--ws-radius-xl);
+}
+
+// Same bottom rhythm as a home section.
+.ws-listing__more {
+  padding-bottom: var(--ws-space-16);
+  &:empty { display: none; }
+}
+
+// ── Summary card ──
+.ws-summary {
+  display: grid;
+  gap: var(--ws-space-3);
+  padding: var(--ws-space-5);
+
+  .ws-detail__price { margin-top: 0; }
+}
+
+.ws-summary__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ws-space-3);
+
+  .ws-detail__acts { margin-top: 0; }
+}
+
+.ws-summary__eyebrow {
+  margin-bottom: 0;
+  text-decoration: none;
+  &:hover { color: var(--ws-brand-active); }
+}
+
+// The page title, one step under the browse band's.
+.ws-summary__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 1vw + 18px, 30px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.ws-summary__pricehint {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin-top: calc(var(--ws-space-1) * -1);
+}
+
+// Each fact carries its own label: "Used" or "484" alone leaves the buyer to
+// work out what the number is about.
+.ws-summary__facts {
+  margin: var(--ws-space-1) 0 0;
+  padding: var(--ws-space-4) 0 0;
+  border-top: 1px solid var(--ws-border-hairline);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ws-space-4);
+
+  > div { display: grid; gap: 2px; min-width: 0; }
+
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ws-text-subtle);
+
+    svg { flex: none; }
+  }
+
+  dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+.ws-listing__hint {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin: calc(var(--ws-space-2) * -1) 0 var(--ws-space-3);
+}
+
+// ── How buying works ──
+.ws-howbuy {
+  display: grid;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-5);
+}
+
+.ws-howbuy__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ws-space-4);
+}
+
+.ws-howbuy__step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ws-space-3);
+}
+
+.ws-howbuy__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ws-radius-md);
+  background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
+  color: var(--ws-brand-gold-text);
+}
+
+.ws-howbuy__title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ws-text-primary);
+}
+
+.ws-howbuy__copy {
+  display: block;
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin-top: 2px;
+}
+
+.ws-sellercard__label {
+  display: block;
+  color: var(--ws-text-subtle);
+  margin-bottom: var(--ws-space-3);
+}
+
 .ws-gallery {
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
   overflow: hidden;
   background: var(--ws-bg-surface);
+
+  // Phones: the photo runs edge to edge, the way a listing app shows it.
+  @media (max-width: #{$bp-sm - 1px}) {
+    margin-inline: calc(var(--ws-space-6) * -1);
+    border-inline: 0;
+    border-radius: 0;
+  }
 }
 
 .ws-gallery__main {
   position: relative;
   aspect-ratio: 4 / 3;
+  max-height: min(620px, 72vh);
+  width: 100%;
   background: var(--ws-bg-sunken);
 
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  // contain, not cover: a buyer needs to see the whole item, and seller photos
+  // come in every shape.
+  img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
   // The photo strip is keyboard-operable (arrow keys), so it has to show focus.
   &:focus-visible {
@@ -1456,9 +1853,23 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // it sits in a sidebar column.
 .ws-contact .ws-textarea {
   min-height: 84px;
-  margin-block: var(--ws-space-2) var(--ws-space-3);
+  margin-block: var(--ws-space-2) var(--ws-space-1);
   background: var(--ws-bg-sunken);
 }
+
+.ws-contact__intro {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin: var(--ws-space-1) 0 var(--ws-space-4);
+}
+
+.ws-contact__help {
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+  margin-bottom: var(--ws-space-3);
+}
+
+.ws-contact .ws-safety { margin-top: var(--ws-space-4); }
 
 .ws-contact__direct {
   margin-top: var(--ws-space-5);
@@ -1918,7 +2329,6 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
 .ws-marketsearch--home { margin-bottom: calc(var(--ws-space-4) * -1); }
 
-.ws-marketsearch--browse { margin-top: var(--ws-space-6); }
 
 // ─── Home landing ───────────────────────────────────────────────
 // Segmented marketplace home in the eBay/Jumia mold: hero, category discs,

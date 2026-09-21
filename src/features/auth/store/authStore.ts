@@ -23,18 +23,12 @@ interface AuthState {
 }
 
 interface AuthActions {
-  /** Called when Clerk session becomes active — fetches profile from our API */
   syncClerkUser: (force?: boolean) => Promise<void>;
-  /** Called when Clerk session ends */
   clearUser: () => void;
-  /** Update local user state (e.g. after profile edit) */
   updateUser: (user: Partial<User>) => void;
   clearError: () => void;
-  /** Redirect to WorldStreetGold login page */
   redirectToLogin: (returnUrl?: string) => void;
-  /** Redirect to WorldStreetGold register page */
   redirectToRegister: (returnUrl?: string) => void;
-  /** Sign out via Clerk (should be called from component with useClerk) */
   logout: () => void;
 }
 
@@ -60,7 +54,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           return;
         }
 
-        set({ isLoading: true, error: null });
+        // Only called once Clerk reports a session, so the user is signed in
+        // whether or not the profile fetch below succeeds.
+        set({ isAuthenticated: true, isLoading: true, error: null });
 
         try {
           const { default: apiClient } = await import('@/shared/lib/api');
@@ -137,7 +133,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
     }
   )
