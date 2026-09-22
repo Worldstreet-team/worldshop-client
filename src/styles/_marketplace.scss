@@ -2095,55 +2095,494 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-left: 3px solid var(--ws-border-hairline);
 }
 
-// ─── Store page ─────────────────────────────────────────────────
+// ─── Store & mall pages ─────────────────────────────────────────
+// The page is the StoreCard grown up: same banner tint, same logo on the
+// banner edge, same hairline-divided stats. One column, sections spaced like
+// the home page, so the store's listings get the full grid width.
 
-.ws-storehead {
-  border: 1px solid var(--ws-border-hairline);
-  border-radius: var(--ws-radius-xl);
-  overflow: hidden;
-  background: var(--ws-bg-surface);
-  margin-bottom: var(--ws-space-6);
+.ws-profile {
+  --ws-profile-gap: var(--ws-space-10);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-profile-gap);
+  padding-block: var(--ws-space-6) var(--ws-space-16);
+
+  @media (min-width: $bp-md) {
+    --ws-profile-gap: var(--ws-space-16);
+    padding-block: var(--ws-space-8) var(--ws-space-20);
+  }
 }
 
+.ws-storehead {
+  container: storehead / inline-size;
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+  box-shadow: var(--ws-shadow-card);
+  overflow: hidden;
+}
+
+// Same flat brand tint as the card when there is no banner — the common case.
 .ws-storehead__banner {
-  height: 160px;
-  background: var(--ws-bg-sunken);
   position: relative;
+  height: 120px;
+  background: color-mix(in srgb, var(--ws-brand-primary) 9%, var(--ws-bg-sunken));
+  border-bottom: 1px solid var(--ws-border-hairline);
 
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  // A scrim keeps the logo legible over any banner photo.
-  &::after {
-    content: '';
+  img {
     position: absolute;
     inset: 0;
-    // Black, not a theme ink: this sits on arbitrary banner photography, which
-    // does not change with the theme, so the scrim must not either.
-    background: rgba(0, 0, 0, 0.32);
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
-  @media (min-width: $bp-sm) { height: 200px; }
+  @media (min-width: $bp-sm) { height: 180px; }
+  @media (min-width: $bp-md) { height: 220px; }
 }
 
 .ws-storehead__body {
   display: flex;
-  align-items: flex-end;
-  gap: var(--ws-space-4);
-  padding: var(--ws-space-4);
   flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ws-space-4) var(--ws-space-5);
+  // Top padding keeps the name off the banner edge; the logo's pull-up below
+  // cancels it, so the logo still straddles that edge.
+  padding: var(--ws-space-4) var(--ws-space-5) var(--ws-space-5);
+
+  @media (min-width: $bp-md) { padding: var(--ws-space-5) var(--ws-space-8) var(--ws-space-6); }
 }
 
 .ws-storehead__logo {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--ws-radius-lg);
-  border: 2px solid var(--ws-bg-surface);
-  background: var(--ws-bg-chip);
-  overflow: hidden;
-  margin-top: -44px;
+  // Own stacking context, or the positioned banner paints over it.
+  position: relative;
+  z-index: 1;
   flex: none;
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  margin-top: calc(-40px - var(--ws-space-4));
+  border-radius: var(--ws-radius-xl);
+  overflow: hidden;
+  box-shadow: 0 0 0 4px var(--ws-bg-surface), var(--ws-shadow-card);
+  background: color-mix(in srgb, var(--ws-brand-primary) 14%, var(--ws-bg-raised));
+  color: var(--ws-brand-gold-text);
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: 32px;
 
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  img { width: 100%; height: 100%; object-fit: cover; background: var(--ws-bg-raised); }
+
+  @media (min-width: $bp-md) {
+    width: 104px;
+    height: 104px;
+    margin-top: calc(-52px - var(--ws-space-5));
+    font-size: 40px;
+  }
+}
+
+.ws-storehead__id {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.ws-storehead__titlerow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ws-space-2) var(--ws-space-3);
+}
+
+// The browse band's title size: this is the page's h1.
+.ws-storehead__name {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 1.6vw + 16px, 34px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.ws-storehead__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-1) var(--ws-space-4);
+  margin-top: var(--ws-space-2);
+  @include ws-caption;
+  color: var(--ws-text-muted);
+}
+
+.ws-storehead__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  min-width: 0;
+
+  svg { flex: none; color: var(--ws-text-subtle); }
+}
+
+.ws-storehead__link {
+  font-weight: 600;
+  color: var(--ws-text-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--ws-border-hairline);
+  text-underline-offset: 3px;
+
+  &:hover { text-decoration-color: currentColor; }
+}
+
+.ws-storehead__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-2);
+
+  &:empty { display: none; }
+
+  // Full-width buttons on phones: a row of small pills under the name was
+  // easy to miss and hard to hit.
+  @container storehead (max-width: 559px) {
+    flex-basis: 100%;
+    > * { flex: 1 1 0; justify-content: center; }
+  }
+}
+
+// StoreCard's stats strip at page scale: four cells on desktop, two by two
+// on phones.
+.ws-storehead__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--ws-border-hairline);
+
+  > div {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+    min-width: 0;
+    padding: var(--ws-space-4) var(--ws-space-5);
+  }
+
+  // Two-up: the right column and the second row carry the dividers.
+  > div:nth-child(even) { border-left: 1px solid var(--ws-border-hairline); }
+  > div:nth-child(n + 3) { border-top: 1px solid var(--ws-border-hairline); }
+
+  dt {
+    font-size: 12px;
+    color: var(--ws-text-subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  dd {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ws-text-primary);
+    white-space: nowrap;
+  }
+
+  @container storehead (min-width: 720px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    > div { padding-inline: var(--ws-space-8); }
+    > div:nth-child(n) { border-top: 0; }
+    > div + div { border-left: 1px solid var(--ws-border-hairline); }
+    dd { font-size: 20px; }
+  }
+}
+
+.ws-storehead__muted { color: var(--ws-text-subtle) !important; font-weight: 500 !important; }
+
+.ws-profile__about .ws-sectionhead__eyebrow { margin-bottom: var(--ws-space-3); }
+
+.ws-profile__desc {
+  @include ws-body;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ws-text-muted);
+  max-width: var(--ws-measure);
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}
+
+// Tabs pin under the site header, so the panel below can be long without the
+// buyer losing the way back to the other two.
+.ws-profile__tabs { scroll-margin-top: var(--ws-header-h); }
+
+.ws-storetabs {
+  position: sticky;
+  top: var(--ws-header-h);
+  z-index: 5;
+  display: flex;
+  gap: var(--ws-space-6);
+  margin-bottom: var(--ws-space-8);
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--ws-bg-page);
+  border-bottom: 1px solid var(--ws-border-hairline);
+  &::-webkit-scrollbar { display: none; }
+
+  @media (min-width: $bp-md) { gap: var(--ws-space-8); }
+}
+
+.ws-storetabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  flex: none;
+  height: 52px;
+  padding: 0 var(--ws-space-1);
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+  transition: color var(--ws-motion-fast) var(--ws-ease), border-color var(--ws-motion-fast) var(--ws-ease);
+
+  &:hover { color: var(--ws-text-primary); }
+
+  &[aria-selected='true'] {
+    color: var(--ws-text-primary);
+    font-weight: 600;
+    border-bottom-color: var(--ws-brand-primary);
+
+    .ws-storetabs__count {
+      background: color-mix(in srgb, var(--ws-brand-primary) 14%, transparent);
+      color: var(--ws-brand-gold-text);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-brand-primary);
+    outline-offset: -2px;
+    border-radius: var(--ws-radius-md);
+  }
+}
+
+.ws-storetabs__count {
+  padding: 1px 7px;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ws-text-subtle);
+}
+
+.ws-storetabs__panel {
+  animation: ws-tabin var(--ws-motion-base) var(--ws-ease);
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}
+
+@keyframes ws-tabin {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+// ── About tab ──
+.ws-storeabout {
+  display: grid;
+  gap: var(--ws-space-8);
+  align-items: start;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: var(--ws-space-16);
+  }
+}
+
+.ws-storeabout__intro {
+  display: grid;
+  justify-items: start;
+  gap: var(--ws-space-6);
+}
+
+.ws-storeabout__blank { font-style: italic; }
+
+.ws-storeabout__details {
+  padding: var(--ws-space-5) var(--ws-space-6) var(--ws-space-2);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+
+  .ws-sectionhead__eyebrow { margin-bottom: var(--ws-space-1); }
+  .ws-spec__row { padding-inline: 0 !important; }
+  .ws-spec__row:last-child { border-bottom: 0; }
+  dd { min-width: 0; overflow-wrap: anywhere; }
+}
+
+.ws-storetools {
+  display: grid;
+  gap: var(--ws-space-4);
+  margin-bottom: var(--ws-space-6);
+
+  .ws-catchips { flex-wrap: wrap; overflow: visible; }
+}
+
+.ws-storetools__search {
+  max-width: 460px;
+  background: var(--ws-bg-surface);
+  border-color: var(--ws-border-hairline);
+
+  input[type='search']::-webkit-search-cancel-button { display: none; }
+}
+
+.ws-storetools__clear {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: calc(var(--ws-space-2) * -1);
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  background: transparent;
+  color: var(--ws-text-subtle);
+  cursor: pointer;
+
+  &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
+}
+
+.ws-storetools__count { margin-bottom: var(--ws-space-4); }
+
+.ws-chip__count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ws-text-subtle);
+
+  [aria-pressed='true'] > & { color: inherit; opacity: 0.75; }
+}
+
+// ── Store reviews ──
+// Score card on the left, the reviews as cards on the right — on a page about
+// the seller, the reviews are evidence to scan, not a thread to read.
+.ws-storereviews {
+  display: grid;
+  gap: var(--ws-space-6);
+  align-items: start;
+
+  @media (min-width: $bp-md) { grid-template-columns: 300px minmax(0, 1fr); gap: var(--ws-space-10); }
+}
+
+.ws-storereviews__summary {
+  display: grid;
+  justify-items: start;
+  gap: var(--ws-space-2);
+  padding: var(--ws-space-6);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+
+  .ws-reviews__score { font-size: 44px; }
+
+  @media (min-width: $bp-md) {
+    position: sticky;
+    top: calc(var(--ws-header-h) + 72px);
+  }
+}
+
+.ws-storereviews__bars {
+  width: 100%;
+  max-width: none;
+  margin-top: var(--ws-space-3);
+}
+
+.ws-storereviews__list {
+  display: grid;
+  gap: var(--ws-space-4);
+
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.ws-storereviews__none {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-5) var(--ws-space-6);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+
+  .ws-empty__icon { flex: none; }
+  p { margin-top: 2px; }
+}
+
+.ws-storereview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-2);
+  padding: var(--ws-space-5);
+  background: var(--ws-bg-surface);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-xl);
+
+  .ws-review__reply { margin-left: 0; }
+}
+
+.ws-storereview__title { @include ws-title; font-size: 15px; }
+
+.ws-storereview__body {
+  @include ws-caption;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ws-text-muted);
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ws-storereview__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ws-space-1) var(--ws-space-2);
+  margin-top: auto;
+  padding-top: var(--ws-space-3);
+  border-top: 1px solid var(--ws-border-hairline);
+  font-size: 13px;
+
+  strong { font-weight: 600; }
+}
+
+.ws-storereview__verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--ws-status-success);
+}
+
+.ws-storereview__item {
+  flex-basis: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ws-text-subtle);
+  text-decoration: none;
+
+  &:hover { color: var(--ws-text-primary); text-decoration: underline; }
+}
+
+.ws-profile__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ws-space-4);
+  padding-top: var(--ws-space-6);
+  border-top: 1px solid var(--ws-border-hairline);
 }
 
 // ─── Footer ─────────────────────────────────────────────────────
@@ -2789,6 +3228,47 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   @media (min-width: $bp-md) { gap: var(--ws-space-6); }
 }
 
+// ─── Store & mall directories ───────────────────────────────────
+// The Browse band on top, then one full-width grid: a directory has no facets
+// beyond location, so it gets no filter rail.
+
+.ws-directory {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-12);
+  padding-block: var(--ws-space-6) var(--ws-space-16);
+
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-16);
+    padding-block: var(--ws-space-8) var(--ws-space-20);
+  }
+
+  // Inside the results toolbar the chips sit on its line, not below it.
+  .ws-browse__toolbar .ws-activefilters { margin-bottom: 0; }
+}
+
+.ws-dirhero__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ws-space-2);
+
+  > * { flex: 1 1 200px; max-width: 280px; }
+
+  @media (max-width: $bp-sm) { > * { max-width: none; } }
+}
+
+// Store cards need ~260px before their stats strip cramps, so this runs one
+// column fewer than the listing grid at each width.
+.ws-dirgrid {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ws-space-6); }
+  @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 // ─── Store card ─────────────────────────────────────────────────
 // Store (and mall) spotlight: banner, a logo sitting on its edge, who and
 // where, a two-line pitch, then a stats strip. The pitch always takes its two
@@ -2927,6 +3407,24 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   border-radius: var(--ws-radius-pill);
   background: color-mix(in srgb, var(--ws-status-success) 12%, transparent);
   color: var(--ws-status-success);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  svg { flex: none; }
+}
+
+// "Mall" in the tier pill's slot. Neutral, not success-green: it says what
+// the place is, not that anything was verified.
+.ws-storecard__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 var(--ws-space-2);
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-bg-chip);
+  color: var(--ws-text-muted);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;

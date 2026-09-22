@@ -1,5 +1,4 @@
-// Mirrors StoreCard line for line — banner, logo, name, place, two-line pitch,
-// stats strip, footer — so the row does not jump when stores arrive.
+
 export default function StoreCardSkeleton() {
   return (
     <div className="ws-storecard ws-storecard--skeleton" aria-hidden>

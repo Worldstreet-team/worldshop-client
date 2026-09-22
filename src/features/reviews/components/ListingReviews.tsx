@@ -1,22 +1,7 @@
 import { Star, Info } from 'lucide-react';
 import { useListingReviews } from '@/features/reviews/hooks/useListingReviews';
 import ReportButton from '@/features/reports/components/ReportButton';
-
-const Stars = ({ value, size = 14 }: { value: number; size?: number }) => {
-  const filled = Math.round(value);
-  return (
-    <span className="ws-rating" aria-label={`${value} out of 5`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star
-          key={n}
-          size={size}
-          aria-hidden
-          style={n <= filled ? undefined : { color: 'var(--ws-bg-track)', fill: 'var(--ws-bg-track)' }}
-        />
-      ))}
-    </span>
-  );
-};
+import Stars from '@/features/reviews/components/Stars';
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
