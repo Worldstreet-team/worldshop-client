@@ -8,6 +8,7 @@ import StoreListings from '@/features/stores/components/StoreListings';
 import StoreReviews from '@/features/stores/components/StoreReviews';
 import StoreAbout from '@/features/stores/components/StoreAbout';
 import StoreTabs, { type StoreTab } from '@/features/stores/components/StoreTabs';
+import BackLink from '@/shared/components/BackLink';
 import ListingCardSkeleton from '@/features/listings/components/ListingCardSkeleton';
 import ReportButton from '@/features/reports/components/ReportButton';
 import { useStorePage } from '@/features/stores/hooks/useStorePage';
@@ -77,7 +78,6 @@ export default function StorePage() {
   const search = params.get('q') ?? '';
   const categoryId = params.get('category') ?? '';
   const tabParam = params.get('tab') as TabKey | null;
-  // A shared filtered link lands on the listings it filters, not on About.
   const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam)
     ? tabParam
     : search || categoryId ? 'listings' : 'about';
@@ -128,7 +128,9 @@ export default function StorePage() {
   if (notFound) {
     return (
       <div className="ws-wrap">
-        <div className="ws-empty" style={{ marginBlock: 'var(--ws-space-16)' }}>
+        <BackLink fallbackTo="/stores" fallbackLabel="All stores" />
+
+        <div className="ws-empty" style={{ marginBlock: 'var(--ws-space-8) var(--ws-space-16)' }}>
           <span className="ws-empty__icon"><Store size={24} aria-hidden /></span>
           <h1 className="ws-title">Store not available</h1>
           <p className="ws-caption ws-muted">
@@ -156,6 +158,8 @@ export default function StorePage() {
 
   return (
     <div className="ws-wrap">
+      <BackLink fallbackTo="/stores" fallbackLabel="All stores" />
+
       <div className="ws-profile">
         <StoreHead
           name={store.name}
