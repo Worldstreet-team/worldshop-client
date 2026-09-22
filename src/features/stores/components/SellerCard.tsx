@@ -4,13 +4,6 @@ import type { PublicStore } from '@/features/stores/api';
 import { VERIFICATION_LABEL } from '@/features/stores/model';
 import { formatLocation } from '@/shared/utils/locations';
 
-/**
- * Seller summary.
- *
- * With no transaction on the platform, these four signals are all a buyer has
- * to judge a seller by — so they are shown together rather than scattered:
- * verification, rating, how often they reply, and how fast.
- */
 
 function responseTime(mins: number | null): string | null {
   if (mins == null) return null;
@@ -57,7 +50,6 @@ export default function SellerCard({ store }: { store: PublicStore }) {
           </div>
         )}
 
-        {/* The signal a seller cannot fake: unanswered threads count against it. */}
         {store.responseRate != null && (
           <div className="ws-trust__row">
             <dt><MessageSquare size={14} aria-hidden /> Replies to</dt>

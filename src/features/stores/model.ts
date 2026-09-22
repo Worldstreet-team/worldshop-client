@@ -23,3 +23,14 @@ export function sinceLabel(iso: string): string | null {
     ? null
     : at.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 }
+
+/** Average reply time as a buyer reads it: "~5 min", "~2 hr", "~3 days". */
+export function replyTime(mins: number): string {
+  if (mins < 60) return `~${Math.max(1, Math.round(mins))} min`;
+  if (mins < 60 * 24) return `~${Math.round(mins / 60)} hr`;
+  const days = Math.round(mins / (60 * 24));
+  return `~${days} day${days === 1 ? '' : 's'}`;
+}
+
+export const tabId = (prefix: string, key: string) => `${prefix}-tab-${key}`;
+export const panelId = (prefix: string, key: string) => `${prefix}-panel-${key}`;

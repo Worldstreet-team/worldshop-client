@@ -1,15 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, MapPin, Star } from 'lucide-react';
 import type { PublicStore } from '@/features/stores/api';
-import { isVerifiedTier, sinceLabel, VERIFICATION_LABEL } from '@/features/stores/model';
+import { isVerifiedTier, replyTime, sinceLabel, VERIFICATION_LABEL } from '@/features/stores/model';
 import { formatLocation } from '@/shared/utils/locations';
-
-function replyTime(mins: number): string {
-  if (mins < 60) return `~${Math.max(1, Math.round(mins))} min`;
-  if (mins < 60 * 24) return `~${Math.round(mins / 60)} hr`;
-  const days = Math.round(mins / (60 * 24));
-  return `~${days} day${days === 1 ? '' : 's'}`;
-}
 
 export default function StoreCard({ store }: { store: PublicStore }) {
   const location = formatLocation([store.city, store.state], store.country);

@@ -1,14 +1,43 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Building2, Globe, MapPin, Phone, Sparkles } from 'lucide-react';
+import { Building2, Globe, MapPin, MessageCircle, ShieldCheck, Store } from 'lucide-react';
 import { publicMalls } from '@/features/malls/api';
+import StoreHead from '@/features/stores/components/StoreHead';
 import StoreCard from '@/features/stores/components/StoreCard';
+import StoreCardSkeleton from '@/features/stores/components/StoreCardSkeleton';
 import ListingCard from '@/features/listings/components/ListingCard';
 import ReportButton from '@/features/reports/components/ReportButton';
+import Reveal from '@/shared/components/Reveal';
+import Section from '@/shared/components/Section';
+import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { waLink } from '@/features/listings/model';
+import { sinceLabel } from '@/features/stores/model';
 import { formatLocation } from '@/shared/utils/locations';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
+
+function MallSkeleton() {
+  return (
+    <div className="ws-wrap">
+      <div className="ws-profile" aria-busy="true" aria-label="Loading mall">
+        <div className="ws-storehead" aria-hidden>
+          <div className="ws-storehead__banner ws-skeleton" />
+          <div className="ws-storehead__body">
+            <span className="ws-storehead__logo ws-skeleton" />
+            <div className="ws-storehead__id">
+              <span className="ws-skeleton ws-storecard__skel" style={{ height: 26, width: 220 }} />
+              <span className="ws-skeleton ws-storecard__skel" style={{ height: 14, width: 160, marginTop: 10 }} />
+            </div>
+          </div>
+          <div className="ws-storehead__stats ws-skeleton" style={{ height: 64 }} />
+        </div>
+        <div className="ws-dirgrid">
+          {Array.from({ length: 4 }, (_, i) => <StoreCardSkeleton key={i} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MallPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -21,24 +50,17 @@ export default function MallPage() {
   });
 
   const mall = mallQuery.data ?? null;
-  const notFound = mallQuery.isError;
+  usePageTitle(mallQuery.isError ? 'Mall not found' : mall?.name);
 
-  if (mallQuery.isPending) {
-    return (
-      <div className="ws-page">
-        <div className="ws-skeleton" style={{ height: 220, borderRadius: 'var(--ws-radius-xl)', marginBottom: 'var(--ws-space-4)' }} />
-        <div className="ws-skeleton" style={{ height: 320, borderRadius: 'var(--ws-radius-xl)' }} />
-      </div>
-    );
-  }
+  if (mallQuery.isPending) return <MallSkeleton />;
 
-  if (notFound || !mall) {
+  if (mallQuery.isError || !mall) {
     return (
-      <div className="ws-page">
-        <div className="ws-empty">
-          <div className="ws-empty__icon"><Building2 size={26} aria-hidden /></div>
-          <h2 className="ws-title">Mall not found</h2>
-          <p className="ws-caption ws-muted">It may have closed or the link is wrong.</p>
+      <div className="ws-wrap">
+        <div className="ws-empty" style={{ marginBlock: 'var(--ws-space-16)' }}>
+          <span className="ws-empty__icon"><Building2 size={24} aria-hidden /></span>
+          <h1 className="ws-title">Mall not found</h1>
+          <p className="ws-caption ws-muted">It may have closed, or the link is wrong.</p>
           <Link to="/malls" className="ws-btn ws-btn--sm ws-btn--primary">Browse malls</Link>
         </div>
       </div>
@@ -46,111 +68,135 @@ export default function MallPage() {
   }
 
   const location = formatLocation([mall.address, mall.city, mall.state], mall.country);
+  const since = sinceLabel(mall.createdAt);
+  const storeCount = mall.substores.length;
+  const listingCount = mall.substores.reduce((sum, s) => sum + s.listingCount, 0);
 
   return (
-    <div className="ws-page">
-      <section className="ws-card" style={{ padding: 0, overflow: 'hidden', marginBottom: 'var(--ws-space-6)' }}>
-        <div
-          aria-hidden
-          style={{
-            height: 180,
-            background: 'var(--ws-bg-raised)',
-            display: 'grid',
-            placeItems: 'center',
-          }}
-        >
-          {mall.banner ? (
-            <img src={mall.banner} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <Building2 size={40} style={{ color: 'var(--ws-text-muted)' }} />
-          )}
-        </div>
-        <div style={{ padding: 'var(--ws-space-6)', display: 'flex', gap: 'var(--ws-space-4)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          <span className="ws-avatar ws-avatar--l" aria-hidden style={{ width: 64, height: 64, fontSize: 24 }}>
-            {mall.logo ? <img src={mall.logo} alt="" /> : mall.name.charAt(0).toUpperCase()}
-          </span>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <h1 className="ws-page__title" style={{ marginBottom: 4 }}>{mall.name}</h1>
-            {location && (
-              <p className="ws-caption ws-muted" style={{ display: 'flex', alignItems: 'center', gap: 4, margin: 0 }}>
-                <MapPin size={13} aria-hidden />
+    <div className="ws-wrap">
+      <div className="ws-profile">
+        <StoreHead
+          name={mall.name}
+          logo={mall.logo}
+          banner={mall.banner}
+          fallback={<Building2 size={30} />}
+          badge={
+            <span className="ws-storecard__kind">
+              <Building2 size={12} aria-hidden />
+              Mall
+            </span>
+          }
+          meta={
+            location && (
+              <span className="ws-storehead__fact">
+                <MapPin size={14} aria-hidden />
                 {location}
-              </p>
-            )}
-            {mall.description && (
-              <p style={{ marginTop: 'var(--ws-space-3)', maxWidth: '70ch' }}>{mall.description}</p>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap' }}>
-            {mall.whatsapp && (
-              <a
-                href={waLink(mall.whatsapp, `Hi, I found ${mall.name} on WorldStore.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ws-btn ws-btn--sm ws-btn--primary"
-              >
-                <Phone size={14} aria-hidden />
-                WhatsApp
-              </a>
-            )}
-            {mall.website && (
-              <a href={mall.website} target="_blank" rel="noopener noreferrer" className="ws-btn ws-btn--sm ws-btn--secondary">
-                <Globe size={14} aria-hidden />
-                Website
-              </a>
-            )}
-            <ReportButton
-              targetType="MALL"
-              targetId={mall.id}
-              targetName={mall.name}
-              label="Report this mall"
-            />
-          </div>
-        </div>
-      </section>
+              </span>
+            )
+          }
+          stats={[
+            { label: storeCount === 1 ? 'Store' : 'Stores', value: storeCount.toLocaleString() },
+            { label: 'Live listings', value: listingCount.toLocaleString() },
+            {
+              label: 'Featured',
+              value: mall.featuredListings.length || '—',
+              muted: mall.featuredListings.length === 0,
+            },
+            { label: 'Opened', value: since ?? '—', muted: !since },
+          ]}
+          actions={
+            <>
+              {mall.whatsapp && (
+                <a
+                  href={waLink(mall.whatsapp, `Hi, I found ${mall.name} on WorldStore.`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ws-btn ws-btn--sm ws-btn--primary"
+                >
+                  <MessageCircle size={14} aria-hidden />
+                  WhatsApp
+                </a>
+              )}
+              {mall.website && (
+                <a
+                  href={mall.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ws-btn ws-btn--sm ws-btn--secondary"
+                >
+                  <Globe size={14} aria-hidden />
+                  Website
+                </a>
+              )}
+            </>
+          }
+        />
 
-      {mall.featuredListings.length > 0 && (
-        <section style={{ marginBottom: 'var(--ws-space-6)' }}>
-          <h2 className="ws-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-2)', marginBottom: 'var(--ws-space-3)' }}>
-            <Sparkles size={18} aria-hidden />
-            Featured in this mall
-          </h2>
-          <div
-            style={{
-              display: 'grid', gap: 'var(--ws-space-4)',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            }}
-          >
-            {mall.featuredListings.map((item) => (
-              <ListingCard key={item.id} listing={{ ...item, store: undefined }} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 className="ws-title" style={{ marginBottom: 'var(--ws-space-3)' }}>
-          Stores in {mall.name}
-          <span className="ws-caption ws-muted ws-num" style={{ marginLeft: 8 }}>({mall.substores.length})</span>
-        </h2>
-        {mall.substores.length === 0 ? (
-          <div className="ws-empty">
-            <div className="ws-empty__icon"><Building2 size={26} aria-hidden /></div>
-            <h2 className="ws-title">No stores are open here yet</h2>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: 'grid', gap: 'var(--ws-space-4)',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-            }}
-          >
-            {mall.substores.map((s) => (
-              <StoreCard key={s.id} store={s} />
-            ))}
-          </div>
+        {mall.description && (
+          <Reveal as="section" className="ws-profile__about" aria-labelledby="mall-about">
+            <h2 className="ws-sectionhead__eyebrow" id="mall-about">About the mall</h2>
+            <p className="ws-profile__desc">{mall.description}</p>
+          </Reveal>
         )}
-      </section>
+
+        {mall.featuredListings.length > 0 && (
+          <Section
+            id="mall-featured"
+            eyebrow="Featured"
+            title={`Picked by ${mall.name}`}
+            sub="Listings the mall is highlighting from across its stores."
+          >
+            <div className="ws-rail__track ws-bleed">
+              {mall.featuredListings.map((item, i) => (
+                <Reveal className="ws-reveal" index={i} key={item.id}>
+                  {/* The featured rows carry a slim store stub, not a PublicStore. */}
+                  <ListingCard listing={{ ...item, store: undefined }} />
+                </Reveal>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section
+          id="mall-stores"
+          eyebrow="Directory"
+          title={`Stores in ${mall.name}`}
+          sub="Each store runs its own catalogue. Visit one to see everything it lists."
+        >
+          {storeCount === 0 ? (
+            <div className="ws-empty">
+              <span className="ws-empty__icon"><Store size={24} aria-hidden /></span>
+              <h3 className="ws-title">No stores are open here yet</h3>
+              <p className="ws-caption ws-muted">
+                This mall has not opened its storefronts. Browse the rest of the marketplace in the meantime.
+              </p>
+              <Link to="/stores" className="ws-btn ws-btn--sm ws-btn--secondary">Browse all stores</Link>
+            </div>
+          ) : (
+            <div className="ws-dirgrid">
+              {mall.substores.map((s, i) => (
+                <Reveal className="ws-reveal" index={i % 4} key={s.id}>
+                  {/* "Part of <this mall>" on every card is noise on the mall's own page. */}
+                  <StoreCard store={{ ...s, mall: null }} />
+                </Reveal>
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <footer className="ws-profile__foot">
+          <div className="ws-safety">
+            <ShieldCheck size={16} aria-hidden />
+            <span>WorldStore does not handle payment or delivery. Check items before paying.</span>
+          </div>
+          <ReportButton
+            targetType="MALL"
+            targetId={mall.id}
+            targetName={mall.name}
+            label="Report this mall"
+          />
+        </footer>
+      </div>
     </div>
   );
 }

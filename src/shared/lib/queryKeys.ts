@@ -12,7 +12,9 @@ export const queryKeys = {
 
   stores: (filters: ListingFilters) => ['stores', filters] as const,
   store: (slug: string) => ['store', slug] as const,
-  storeListings: (slug: string, page: number) => ['store', slug, 'listings', page] as const,
+  storeListings: (slug: string, params: ListingFilters) => ['store', slug, 'listings', params] as const,
+  storeCatalogue: (slug: string) => ['store', slug, 'catalogue'] as const,
+  storeReviews: (slug: string, params: ListingFilters) => ['store', slug, 'reviews', params] as const,
 
   malls: (filters: ListingFilters) => ['malls', filters] as const,
   mall: (slug: string) => ['mall', slug] as const,

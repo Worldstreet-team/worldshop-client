@@ -1,202 +1,77 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ArrowRight, Building2, MapPin, Store } from 'lucide-react';
+import { ArrowRight, Building2 } from 'lucide-react';
 import { publicMalls, type PublicMall } from '@/features/malls/api';
-import { formatLocation } from '@/shared/utils/locations';
-import { sinceLabel } from '@/features/stores/model';
-import { useLocations } from '@/shared/hooks/useLocations';
-import CountrySelect from '@/shared/components/location/CountrySelect';
-import StateSelect from '@/shared/components/location/StateSelect';
+import { useDirectoryFilters } from '@/shared/hooks/useDirectoryFilters';
+import { usePageTitle } from '@/shared/hooks/usePageTitle';
+import MallCard from '@/features/malls/components/MallCard';
 import MallCallout from '@/features/malls/components/MallCallout';
-import StoreCardSkeleton from '@/features/stores/components/StoreCardSkeleton';
+import DirectoryHero from '@/features/stores/components/directory/DirectoryHero';
+import DirectoryResults from '@/features/stores/components/directory/DirectoryResults';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
 
 const NO_MALLS: PublicMall[] = [];
 
-function MallCard({ mall }: { mall: PublicMall }) {
-  const location = formatLocation([mall.city, mall.state], mall.country);
-  const since = sinceLabel(mall.createdAt);
-
-  return (
-    <Link to={`/malls/${mall.slug}`} className="ws-storecard">
-      <div className="ws-storecard__banner" aria-hidden>
-        {mall.banner && <img src={mall.banner} alt="" loading="lazy" />}
-      </div>
-
-      <div className="ws-storecard__body">
-        <div className="ws-storecard__head">
-          <span className="ws-storecard__logo" aria-hidden>
-            {mall.logo ? <img src={mall.logo} alt="" loading="lazy" /> : <Building2 size={22} />}
-          </span>
-        </div>
-
-        <h3 className="ws-storecard__name">{mall.name}</h3>
-        {location && (
-          <p className="ws-storecard__loc">
-            <span className="ws-storecard__place">
-              <MapPin size={12} aria-hidden />
-              <span>{location}</span>
-            </span>
-          </p>
-        )}
-
-        <p className="ws-storecard__desc">{mall.description}</p>
-
-        <dl className="ws-storecard__stats ws-storecard__stats--2">
-          <div>
-            <dt>{mall.substoreCount === 1 ? 'Store' : 'Stores'}</dt>
-            <dd className="ws-num">
-              <Store size={12} aria-hidden className="ws-storecard__glyph" />
-              {mall.substoreCount.toLocaleString()}
-            </dd>
-          </div>
-          <div>
-            <dt>Opened</dt>
-            <dd className={since ? undefined : 'ws-storecard__muted'}>{since ?? '—'}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div className="ws-storecard__foot">
-        <span className="ws-storecard__cta">
-          Visit mall
-          <ArrowRight size={14} aria-hidden />
-        </span>
-      </div>
-    </Link>
-  );
-}
-
 export default function MallsDirectory() {
-  const [country, setCountry] = useState('');
-  const [state, setState] = useState('');
-  const [page, setPage] = useState(1);
-  const { countryOf } = useLocations();
-  const countryName = country ? (countryOf(country)?.name ?? country) : '';
-
-  const filters = { page, limit: 24, ...(country ? { country } : {}), ...(state ? { state } : {}) };
+  const filters = useDirectoryFilters();
+  usePageTitle(filters.place ? `Malls in ${filters.place}` : 'Malls');
 
   const query = useQuery({
-    queryKey: queryKeys.malls(filters),
-    queryFn: () => publicMalls.browse(filters),
+    queryKey: queryKeys.malls(filters.query),
+    queryFn: () => publicMalls.browse(filters.query),
     placeholderData: keepPreviousData,
     staleTime: 5 * MINUTE,
   });
 
-  const malls = query.isError ? NO_MALLS : (query.data?.data ?? NO_MALLS);
-  const totalPages = query.data?.pagination.totalPages ?? 1;
-  const loading = query.isPending;
-  const refreshing = query.isFetching && !query.isPending;
-
   return (
-    <div className="ws-page">
-      <div className="ws-page__head">
-        <div>
-          <h1 className="ws-page__title">Malls</h1>
-          <p className="ws-page__sub">Shopping destinations with multiple stores under one roof.</p>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--ws-space-2)' }}>
-          <CountrySelect
-            style={{ maxWidth: 220 }}
-            value={country}
-            placeholder="All countries"
-            onChange={(e) => {
-              setPage(1);
-              setCountry(e.target.value);
-              setState('');
-            }}
-            aria-label="Filter malls by country"
-          />
-          {country && (
-            <StateSelect
-              style={{ maxWidth: 220 }}
-              country={country}
-              value={state}
-              placeholder={`All of ${countryName}`}
-              onChange={(e) => {
-                setPage(1);
-                setState(e.target.value);
+    <>
+      <DirectoryHero
+        id="malls-title"
+        eyebrow="Destinations"
+        title="Malls"
+        sub="Several stores under one roof. Browse a mall's storefronts and featured picks in one place."
+        noun="malls"
+        filters={filters}
+      />
+
+      <div className="ws-wrap">
+        <div className="ws-directory">
+          {/* One block with the results, so the callout keeps its own tight
+              spacing above them: it is the mall product's only way in. */}
+          <div>
+            <MallCallout />
+
+            <DirectoryResults
+              noun={['mall', 'malls']}
+              items={query.isError ? NO_MALLS : (query.data?.data ?? NO_MALLS)}
+              total={query.data?.pagination.total ?? 0}
+              totalPages={query.data?.pagination.totalPages ?? 1}
+              page={filters.page}
+              loading={query.isPending}
+              refreshing={query.isFetching && !query.isPending}
+              failed={query.isError}
+              place={filters.place}
+              tokens={filters.tokens}
+              renderItem={(m) => <MallCard mall={m} />}
+              empty={{
+                Icon: Building2,
+                title: 'No malls yet',
+                copy: 'Be the first: a mall gives your storefronts a shared home here.',
+                action: (
+                  <Link to="/mall/register" className="ws-btn ws-btn--sm ws-btn--primary">
+                    Create your mall
+                    <ArrowRight size={14} aria-hidden />
+                  </Link>
+                ),
               }}
-              aria-label="Filter malls by state or region"
+              onRetry={() => query.refetch()}
+              onPage={filters.setPage}
+              onClearAll={filters.clearAll}
             />
-          )}
+          </div>
         </div>
       </div>
-
-      <MallCallout />
-
-      {loading ? (
-        <div
-          style={{
-            display: 'grid', gap: 'var(--ws-space-4)',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          }}
-        >
-          {Array.from({ length: 6 }, (_, i) => (
-            <StoreCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : malls.length === 0 ? (
-        <div className="ws-empty">
-          <div className="ws-empty__icon"><Building2 size={26} aria-hidden /></div>
-          <h2 className="ws-title">No malls yet</h2>
-          <p className="ws-caption ws-muted" style={{ maxWidth: '44ch' }}>
-            {state || country
-              ? `No malls in ${state || countryName} yet — try another location.`
-              : 'Be the first — a mall gives your storefronts a shared home here.'}
-          </p>
-          {!state && !country && (
-            <Link to="/mall/register" className="ws-btn ws-btn--sm ws-btn--primary">
-              Create your mall
-              <ArrowRight size={14} aria-hidden />
-            </Link>
-          )}
-        </div>
-      ) : (
-        <>
-          <div
-            className={refreshing ? 'ws-busy' : undefined}
-            aria-busy={refreshing || undefined}
-            style={{
-              display: 'grid', gap: 'var(--ws-space-4)',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            }}
-          >
-            {malls.map((m) => (
-              <MallCard key={m.id} mall={m} />
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <div
-              style={{
-                display: 'flex', justifyContent: 'center', gap: 'var(--ws-space-2)',
-                marginTop: 'var(--ws-space-6)',
-              }}
-            >
-              <button
-                className="ws-btn ws-btn--sm ws-btn--secondary"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Previous
-              </button>
-              <span className="ws-caption ws-muted ws-num" style={{ alignSelf: 'center' }}>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                className="ws-btn ws-btn--sm ws-btn--secondary"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </>
-      )}
-    </div>
+    </>
   );
 }
