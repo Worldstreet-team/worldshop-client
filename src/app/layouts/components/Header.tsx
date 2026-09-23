@@ -1,13 +1,24 @@
 import { useState, useEffect, useSyncExternalStore } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
+  Bell,
+  Bookmark,
+  Car,
+  Dumbbell,
+  Gem,
+  Home,
+  Baby,
+  Monitor,
+  Plus,
+  Shirt,
+  Building2,
+  Sparkles,
+  Smartphone,
+  Tag,
   ChevronDown,
-  Heart,
   MapPin,
-  MessageCircle,
   Menu,
   Search,
-  Store,
   User,
   LayoutGrid,
 } from "lucide-react";
@@ -21,6 +32,22 @@ import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
  * Radius options as the sandbox lists them. Static for now: the API has no
  * location filter yet, so wiring it would mean inventing an endpoint.
  */
+/** Department name to icon, as the sandbox pairs them. Tag is the fallback. */
+function departmentIcon(name: string) {
+  const n = name.toLowerCase();
+  if (/vehicle|car|auto/.test(n)) return Car;
+  if (/phone|tablet|mobile/.test(n)) return Smartphone;
+  if (/electronic|computer|laptop/.test(n)) return Monitor;
+  if (/fashion|cloth|wear/.test(n)) return Shirt;
+  if (/home|furniture|appliance/.test(n)) return Home;
+  if (/sport|fitness|outdoor/.test(n)) return Dumbbell;
+  if (/beauty|health|personal/.test(n)) return Sparkles;
+  if (/propert|estate|land/.test(n)) return Building2;
+  if (/jewel|watch/.test(n)) return Gem;
+  if (/baby|kid|child/.test(n)) return Baby;
+  return Tag;
+}
+
 const RADIUS = [
   { value: "lagos-5", label: "Lagos · 5 km" },
   { value: "lagos-10", label: "Lagos · 10 km" },
@@ -79,32 +106,31 @@ export default function Header() {
     <header className="ws-topbar">
       <div className="ws-wrap">
         <div className="ws-topbar__row">
-          <Link to="/" className="ws-brand" aria-label="WorldStore home">
-            <img src="/brand/wstore-mark.svg" alt="" className="ws-brand__mark" width={32} height={32} />
-            <span className="ws-brand__stack">
-              <span className="ws-brand__word">WorldStore</span>
-            </span>
+          <Link to="/" className="ws-brandmark" aria-label="WorldStore home">
+            <img src="/brand/wstore-mark.svg" alt="" width={28} height={28} />
+            <span className="ws-brandmark__word">WorldStore</span>
+            <span className="ws-brandmark__chip">Marketplace</span>
           </Link>
 
           <div className="ws-topbar__centre">
-            <label className="ws-field ws-field--location">
+            <label className="ws-hfield ws-hfield--location">
               <MapPin size={16} aria-hidden />
               <span className="ws-sr-only">Location and radius</span>
-              <select className="ws-field__select" defaultValue="lagos-10">
+              <select className="ws-hfield__select" defaultValue="lagos-10">
                 {RADIUS.map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </select>
-              <ChevronDown size={14} aria-hidden className="ws-field__chev" />
+              <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
             </label>
 
-            <Link to="/listings" className="ws-field ws-field--cats">
+            <Link to="/listings" className="ws-hfield ws-hfield--cats">
               <LayoutGrid size={16} aria-hidden />
               All categories
-              <ChevronDown size={14} aria-hidden className="ws-field__chev" />
+              <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
             </Link>
 
-            <form className="ws-field ws-field--search" onSubmit={submitSearch} role="search">
+            <form className="ws-hfield ws-hfield--search" onSubmit={submitSearch} role="search">
               <Search size={18} aria-hidden />
               <input
                 type="search"
@@ -113,80 +139,63 @@ export default function Header() {
                 placeholder="Search listings, sellers, stores…"
                 aria-label="Search listings"
               />
+              <kbd className="ws-kbd">⌘K</kbd>
             </form>
           </div>
 
           <div className="ws-topbar__actions">
-            <div className="ws-topbar__group ws-topbar__group--utility">
-              {/* The light/dark toggle is out while the market theme is the only
-                  palette: it switches to "platform-light", which would drop the
-                  user onto the old paper theme. Restore it, with its Sun/Moon
-                  imports and `light` state, once market has a dark mode. */}
-
-              {isAuthenticated && (
-                <Link
-                  to="/saved"
-                  className="ws-iconbtn"
-                  aria-label={
-                    savedCount
-                      ? `Saved listings, ${savedCount} saved`
-                      : "Saved listings"
-                  }
-                  title="Saved listings"
-                >
-                  <Heart size={18} />
-                  {savedCount > 0 && <span className="ws-iconbtn__dot" />}
-                </Link>
-              )}
-
-              {isAuthenticated && user?.role === "ADMIN" && (
-                <Link
-                  to="/admin"
-                  className="ws-iconbtn ws-topbar__admin"
-                  aria-label="Admin console"
-                  title="Admin console"
-                >
-                  <LayoutGrid size={18} />
-                </Link>
-              )}
-            </div>
-
-            <div className="ws-topbar__group ws-topbar__group--account">
+            {isAuthenticated && (
               <Link
-                to="/vendor"
-                className="ws-btn ws-btn--sm ws-btn--primary ws-topbar__sell"
+                to="/account/messages"
+                className="ws-actionbtn"
+                aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
               >
-                <Store size={16} aria-hidden />
-                {isAuthenticated ? "My store" : "Sell"}
+                <Bell size={18} aria-hidden />
+                {unread > 0 && (
+                  <span className="ws-actionbtn__count">{unread > 99 ? "99+" : unread}</span>
+                )}
               </Link>
+            )}
 
-              {isAuthenticated && (
-                <Link
-                  to="/account/messages"
-                  className="ws-iconbtn"
-                  aria-label={
-                    unread ? `Messages, ${unread} unread` : "Messages"
-                  }
-                  title="Messages"
-                >
-                  <MessageCircle size={20} />
-                  {unread > 0 && <span className="ws-iconbtn__dot" />}
-                </Link>
-              )}
-
+            {isAuthenticated && (
               <Link
-                to="/account"
-                className="ws-avatar ws-avatar--m ws-topbar__profile"
-                aria-label={isAuthenticated ? "Your account" : "Sign in"}
-                title={isAuthenticated ? "Your account" : "Sign in"}
+                to="/saved"
+                className="ws-actionbtn"
+                aria-label={savedCount ? `Saved listings, ${savedCount} saved` : "Saved listings"}
               >
+                <Bookmark size={18} aria-hidden />
+              </Link>
+            )}
+
+            {isAuthenticated && user?.role === "ADMIN" && (
+              <Link to="/admin" className="ws-actionbtn" aria-label="Admin console">
+                <LayoutGrid size={18} aria-hidden />
+              </Link>
+            )}
+
+            <Link to="/vendor/listings/new" className="ws-createbtn">
+              <Plus size={16} aria-hidden />
+              Create listing
+            </Link>
+
+            <Link to="/account" className="ws-acct" aria-label={isAuthenticated ? "Your account" : "Sign in"}>
+              <span className="ws-acct__avatar">
                 {isAuthenticated && user?.firstName ? (
                   user.firstName.charAt(0).toUpperCase()
                 ) : (
                   <User size={16} aria-hidden />
                 )}
-              </Link>
-            </div>
+              </span>
+              <span className="ws-acct__text">
+                <span className="ws-acct__name">
+                  {isAuthenticated && user?.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : "Sign in"}
+                </span>
+                <span className="ws-acct__handle">
+                  {isAuthenticated && user?.email ? `@${user.email.split("@")[0]}` : "to your account"}
+                </span>
+              </span>
+              <ChevronDown size={16} aria-hidden className="ws-acct__chev" />
+            </Link>
           </div>
 
           <button
@@ -209,11 +218,15 @@ export default function Header() {
                 <LayoutGrid size={14} aria-hidden />
                 All categories
               </Link>
-              {departments.map((c) => (
-                <Link key={c.id} to={`/listings?categoryId=${c.id}`} className="ws-pill">
-                  {c.name}
-                </Link>
-              ))}
+              {departments.map((c) => {
+                const Icon = departmentIcon(c.name);
+                return (
+                  <Link key={c.id} to={`/listings?categoryId=${c.id}`} className="ws-pill">
+                    <Icon size={14} aria-hidden />
+                    {c.name}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>

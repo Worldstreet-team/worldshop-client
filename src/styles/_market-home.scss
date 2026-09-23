@@ -181,7 +181,7 @@
 // ─── Trust strip ────────────────────────────────────────────────
 // The 1px gap over a border-coloured background is what draws the dividers,
 // so the cells need no borders of their own and no double lines at the seams.
-.ws-trust {
+.ws-guarantees {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1px;
@@ -224,45 +224,90 @@
 }
 
 @media (min-width: 720px) {
-  .ws-trust { grid-template-columns: repeat(3, 1fr); }
+  .ws-guarantees { grid-template-columns: repeat(3, 1fr); }
 }
 
 // ─── Hero controls ──────────────────────────────────────────────
-.ws-promo__nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
+.ws-promo__viewport { position: relative; }
+
+// 44px olive circles overlaying the image, as the sandbox has them. They stop
+// at the ends rather than wrapping, and are hidden on narrow screens where the
+// track is swiped instead.
+.ws-promo__arrow {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 3;
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-action-primary-default);
+  color: var(--ws-text-on-accent);
+  cursor: pointer;
+  transition: background-color var(--ws-duration-fast, 0.15s) ease;
+
+  &:hover { background: var(--ws-action-primary-hover); }
+
+  &:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  &--prev { left: 16px; }
+  &--next { right: 16px; }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+@container carousel (min-width: 768px) {
+  .ws-promo__arrow { display: grid; }
 }
 
 .ws-promo__dots {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
 }
 
-// A pill rather than a circle when active: the width carries the state, so it
-// still reads for anyone who cannot separate the two tones.
+// Width carries the state as well as colour, so it still reads without it.
+// The inset pseudo-element gives a touch target far larger than the 8px dot.
 .ws-promo__dot {
+  position: relative;
   width: 8px;
   height: 8px;
   padding: 0;
   border: 0;
   border-radius: var(--ws-radius-full);
-  background: var(--ws-border-default);
+  background: var(--ws-border-strong);
   cursor: pointer;
   transition:
-    width var(--ws-duration-fast, 0.15s) ease,
-    background-color var(--ws-duration-fast, 0.15s) ease;
+    width var(--ws-duration-base, 0.22s) var(--ws-ease-standard, ease),
+    background-color var(--ws-duration-base, 0.22s) var(--ws-ease-standard, ease);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+
+  &:hover { background: var(--ws-text-tertiary); }
 
   &.is-active {
-    width: 22px;
-    background: var(--ws-action-primary-default);
+    width: 20px;
+    background: var(--mk-accent);
   }
 
   &:focus-visible {
     outline: 2px solid var(--ws-focus-ring);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 }
 
@@ -279,14 +324,10 @@
     display: flex;
   }
 
-  > * + * { margin-left: 8px; }
-}
-
-.ws-topbar__centre {
   gap: 8px;
 }
 
-.ws-field {
+.ws-hfield {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -411,5 +452,188 @@
     border-color: var(--ws-action-primary-default);
     background: var(--ws-action-primary-tonal);
     color: var(--ws-action-primary-text);
+  }
+}
+
+// ─── Header: brand lockup ───────────────────────────────────────
+.ws-brandmark {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  border-radius: var(--ws-radius-lg);
+
+  img { width: 28px; height: 28px; display: block; }
+
+  &__word {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ws-text-primary);
+  }
+
+  // Names the surface you are in, the way the sandbox labels the domain.
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 10px;
+    border-radius: var(--ws-radius-full);
+    background: var(--mk-tint);
+    color: var(--mk-ink);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
+
+// ─── Header: search shortcut hint ───────────────────────────────
+.ws-kbd {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid var(--ws-border-default);
+  border-radius: var(--ws-radius-sm);
+  background: var(--ws-surface-raised);
+  font-family: var(--ws-font-mono);
+  font-size: 10px;
+  color: var(--ws-text-tertiary);
+}
+
+// ─── Header: actions ────────────────────────────────────────────
+.ws-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.ws-actionbtn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: var(--ws-radius-md);
+  background: transparent;
+  color: var(--ws-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color var(--ws-duration-fast, 0.15s) ease,
+    color var(--ws-duration-fast, 0.15s) ease;
+
+  &:hover {
+    background: var(--ws-surface-base);
+    color: var(--ws-text-primary);
+  }
+
+  // The ring punches the badge away from the icon so the count stays legible
+  // against whatever it overlaps.
+  &__count {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px;
+    min-width: 18px;
+    padding: 0 6px;
+    border-radius: var(--ws-radius-md);
+    background: var(--ws-feedback-danger-fill);
+    color: var(--ws-text-on-feedback);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--ws-surface-base);
+  }
+}
+
+.ws-createbtn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--ws-radius-md);
+  background: var(--ws-action-primary-default);
+  color: var(--ws-text-on-accent);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color var(--ws-duration-fast, 0.15s) ease;
+
+  &:hover { background: var(--ws-action-primary-hover); }
+}
+
+.ws-acct {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ws-radius-lg);
+  text-decoration: none;
+  transition:
+    background-color var(--ws-duration-fast, 0.15s) ease,
+    border-color var(--ws-duration-fast, 0.15s) ease;
+
+  &:hover {
+    border-color: var(--ws-border-default);
+    background: var(--ws-surface-base);
+  }
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-surface-raised);
+    color: var(--ws-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    overflow: hidden;
+  }
+
+  &__text {
+    display: grid;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__handle {
+    font-size: 11.5px;
+    color: var(--ws-text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__chev {
+    flex-shrink: 0;
+    color: var(--ws-text-tertiary);
+  }
+
+  // The name block is the first thing to go when the row tightens.
+  @media (max-width: 1280px) {
+    &__text, &__chev { display: none; }
   }
 }

@@ -104,6 +104,11 @@
   --ws-feedback-danger: #ca0b11;
   --ws-feedback-info: #1d4ed8;
   --ws-text-on-feedback: #fafafa;
+  // Solid fills, for badges that sit on a surface rather than tinting it.
+  --ws-feedback-success-fill: #065f46;
+  --ws-feedback-warning-fill: #a25906;
+  --ws-feedback-danger-fill: #ca0b11;
+  --ws-feedback-info-fill: #1e40af;
 
   --ws-tonal-success-surface: #d9ece2;
   --ws-tonal-success-text: #12693f;

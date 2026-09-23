@@ -12,30 +12,29 @@ export default function Home() {
     useHomeRails();
 
   return (
-    <>
-      <HeroCarousel
-        motorsTo={
-          vehiclesId ? `/listings?categoryId=${vehiclesId}` : "/listings"
-        }
-        stat={total}
-      />
-
-      <div className="ws-wrap">
-        <div className="ws-home">
-          <ListingRail
-            id="home-newest"
-            eyebrow="Just listed"
-            title="New arrivals"
-            sub="The most recent listings across every category."
-            to="/listings"
-            items={newest}
-            loading={loading}
-          />
-          <FeaturedSellers sellers={sellers} loading={sellersLoading} />
-          <SellBand />
-          <Assurances />
-        </div>
+    <div className="ws-wrap">
+      {/* The hero sits inside the same wrap as everything else, so its edges
+          line up with the department pill bar and the rails below it. */}
+      <div className="ws-home">
+        <HeroCarousel
+          motorsTo={
+            vehiclesId ? `/listings?categoryId=${vehiclesId}` : "/listings"
+          }
+          stat={total}
+        />
+        <ListingRail
+          id="home-newest"
+          eyebrow="Just listed"
+          title="New arrivals"
+          sub="The most recent listings across every category."
+          to="/listings"
+          items={newest}
+          loading={loading}
+        />
+        <FeaturedSellers sellers={sellers} loading={sellersLoading} />
+        <SellBand />
+        <Assurances />
       </div>
-    </>
+    </div>
   );
 }

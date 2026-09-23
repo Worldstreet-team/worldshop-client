@@ -8,15 +8,15 @@ import { ASSURANCES } from "@/features/listings/content/home";
  */
 export default function Assurances() {
   return (
-    <Reveal as="ul" className="ws-trust" aria-label="How WorldStore works">
+    <Reveal as="ul" className="ws-guarantees" aria-label="How WorldStore works">
       {ASSURANCES.map(({ Icon, title, copy }) => (
-        <li className="ws-trust__item" key={title}>
-          <span className="ws-trust__icon" aria-hidden>
+        <li className="ws-guarantees__item" key={title}>
+          <span className="ws-guarantees__icon" aria-hidden>
             <Icon size={18} />
           </span>
-          <div className="ws-trust__text">
-            <p className="ws-trust__title">{title}</p>
-            <p className="ws-trust__copy">{copy}</p>
+          <div className="ws-guarantees__text">
+            <p className="ws-guarantees__title">{title}</p>
+            <p className="ws-guarantees__copy">{copy}</p>
           </div>
         </li>
       ))}

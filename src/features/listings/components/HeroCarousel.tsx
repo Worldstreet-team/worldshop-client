@@ -98,7 +98,9 @@ export default function HeroCarousel({ motorsTo }: { motorsTo: string; stat?: nu
   useEffect(() => {
     if (paused) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setInterval(() => goTo(index + 1), ADVANCE_MS);
+    // Autoplay wraps even though the arrows stop at the ends: a rotating promo
+    // that halts on the last slide reads as broken.
+    const t = setInterval(() => goTo((index + 1) % items.length), ADVANCE_MS);
     return () => clearInterval(t);
   }, [index, paused]);
 
@@ -112,61 +114,69 @@ export default function HeroCarousel({ motorsTo }: { motorsTo: string; stat?: nu
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      <div className="ws-carousel__track" ref={trackRef} tabIndex={-1}>
-        {items.map((s, i) => (
-          <div
-            key={s.key}
-            className="ws-carousel__item"
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} of ${items.length}`}
-          >
-            <article className="ws-promo__slide">
-              <img className="ws-promo__art" src={s.art} alt={s.alt} />
-              <div className="ws-promo__scrim" aria-hidden />
-              <div className="ws-promo__body">
-                <p className="ws-promo__eyebrow">{s.eyebrow}</p>
-                <h2 className="ws-promo__title">{s.title}</h2>
-                <p className="ws-promo__sub">{s.sub}</p>
-                <Link className="ws-btn ws-btn--primary ws-promo__cta" to={s.cta.to}>
-                  {s.cta.label}
-                  <ArrowRight size={18} aria-hidden />
-                </Link>
-              </div>
-            </article>
-          </div>
-        ))}
-      </div>
-
-      <div className="ws-promo__nav">
-        <button
-          type="button"
-          className="ws-iconbtn"
-          onClick={() => goTo(index - 1)}
-          aria-label="Previous promotion"
-        >
-          <ChevronLeft size={18} aria-hidden />
-        </button>
-        <div className="ws-promo__dots">
+      {/* The viewport is the positioning context: the arrows overlay the image
+          rather than sitting under it, as they do in the sandbox. */}
+      <div className="ws-promo__viewport">
+        <div className="ws-carousel__track" ref={trackRef} tabIndex={-1}>
           {items.map((s, i) => (
-            <button
+            <div
               key={s.key}
-              type="button"
-              className={`ws-promo__dot${i === index ? " is-active" : ""}`}
-              onClick={() => goTo(i)}
-              aria-label={`Go to ${s.title}`}
-              aria-current={i === index}
-            />
+              className="ws-carousel__item"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} of ${items.length}`}
+            >
+              <article className="ws-promo__slide">
+                <img className="ws-promo__art" src={s.art} alt={s.alt} />
+                <div className="ws-promo__scrim" aria-hidden />
+                <div className="ws-promo__body">
+                  <p className="ws-promo__eyebrow">{s.eyebrow}</p>
+                  <h2 className="ws-promo__title">{s.title}</h2>
+                  <p className="ws-promo__sub">{s.sub}</p>
+                  <Link className="ws-btn ws-btn--primary ws-promo__cta" to={s.cta.to}>
+                    {s.cta.label}
+                    <ArrowRight size={18} aria-hidden />
+                  </Link>
+                </div>
+              </article>
+            </div>
           ))}
         </div>
+
+        {/* Disabled at the ends rather than wrapping, matching the sandbox.
+            Hidden on narrow screens, where the track is swiped instead. */}
         <button
           type="button"
-          className="ws-iconbtn"
-          onClick={() => goTo(index + 1)}
-          aria-label="Next promotion"
+          className="ws-promo__arrow ws-promo__arrow--prev"
+          onClick={() => goTo(index - 1)}
+          disabled={index === 0}
+          aria-label="Previous slide"
         >
-          <ChevronRight size={18} aria-hidden />
+          <ChevronLeft size={20} aria-hidden />
         </button>
+        <button
+          type="button"
+          className="ws-promo__arrow ws-promo__arrow--next"
+          onClick={() => goTo(index + 1)}
+          disabled={index === items.length - 1}
+          aria-label="Next slide"
+        >
+          <ChevronRight size={20} aria-hidden />
+        </button>
+      </div>
+
+      <div className="ws-promo__dots" role="tablist" aria-label="Carousel pages">
+        {items.map((s, i) => (
+          <button
+            key={s.key}
+            type="button"
+            role="tab"
+            aria-selected={i === index}
+            aria-label={`Page ${i + 1} of ${items.length}`}
+            className={`ws-promo__dot${i === index ? " is-active" : ""}`}
+            onClick={() => goTo(i)}
+          />
+        ))}
       </div>
     </section>
   );
