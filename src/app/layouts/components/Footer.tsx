@@ -53,6 +53,16 @@ export default function Footer() {
               <li>
                 <Link to="/listings">Browse listings</Link>
               </li>
+              {/* Stores and Malls lost their header entry when the nav became
+                  the search cluster. The design sandbox has neither concept, so
+                  it offers no home for them; until it does, the footer is what
+                  keeps them reachable on desktop. */}
+              <li>
+                <Link to="/stores">Stores</Link>
+              </li>
+              <li>
+                <Link to="/malls">Malls</Link>
+              </li>
               {isAuthenticated && (
                 <li>
                   <Link to="/saved">Saved listings</Link>
