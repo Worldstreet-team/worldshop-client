@@ -58,7 +58,10 @@ export default function CategoryRail() {
               <img className="ws-tile__art" src={c.photo} alt="" loading="lazy" />
               <div className="ws-tile__scrim" aria-hidden />
               <span className="ws-tile__name">{c.name}</span>
-              {typeof c.productCount === "number" && (
+              {/* Only when there is something to count. A department whose
+                  count has not been aggregated reads "0 listings", which
+                  advertises an empty shop rather than saying nothing. */}
+              {typeof c.productCount === "number" && c.productCount > 0 && (
                 <span className="ws-tile__count ws-num">
                   {c.productCount.toLocaleString("en-NG")} listings
                 </span>

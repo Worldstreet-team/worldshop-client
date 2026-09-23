@@ -1,13 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BadgeCheck,
-  Camera,
-  Heart,
-  ImageOff,
-  MapPin,
-} from "lucide-react";
+import { BadgeCheck, Camera, Clock, Heart, ImageOff, MapPin, Star } from "lucide-react";
 import type { Listing, PublicStore } from "@/features/stores/api";
 import {
   firstImage,
@@ -51,8 +44,21 @@ export type CardListing = Pick<
       | "avgRating"
       | "reviewCount"
       | "isFeatured"
+      | "shortDesc"
     >
   >;
+
+/** Coarse and past-tense, as the reference writes it: 30m, 5h, 3d, then weeks. */
+function timeAgo(iso: string): string {
+  const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  if (!Number.isFinite(mins) || mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+}
 
 function isFresh(publishedAt?: string | null): boolean {
   if (!publishedAt) return false;
@@ -79,9 +85,6 @@ export default function ListingCard({
   const condition = listing.condition
     ? (CONDITION_LABEL[listing.condition] ?? listing.condition)
     : null;
-  const eyebrow = [listing.category?.name, condition]
-    .filter(Boolean)
-    .join(" · ");
   const onRequest = priceLabel(listing) === "Contact for price";
   // Featured is a plain white chip in the design, not a coloured one: it marks
   // placement, while the coloured fills are reserved for things about the deal.
@@ -161,10 +164,39 @@ export default function ListingCard({
         </div>
 
         <div className="ws-pcard__body">
+          {/* Condition leads, in mono caps. It is the first thing a buyer of a
+              used item checks, and it sets expectations before the price. */}
+          {condition && <p className="ws-pcard__condition">{condition}</p>}
+
           <h3 className="ws-pcard__title">{listing.name}</h3>
+
+          {listing.shortDesc && (
+            <p className="ws-pcard__desc">{listing.shortDesc}</p>
+          )}
+
+          {/* Rating or its absence: "No reviews yet" is worth saying, because a
+              blank row reads as a missing component rather than a new seller. */}
+          {listing.avgRating != null && (listing.reviewCount ?? 0) > 0 ? (
+            <p className="ws-pcard__rating">
+              <Star size={14} aria-hidden className="ws-pcard__star" />
+              <span className="ws-pcard__ratingnum ws-num">
+                {listing.avgRating.toFixed(1)}
+              </span>
+              <span className="ws-pcard__ratingcount ws-num">
+                ({listing.reviewCount?.toLocaleString("en-NG")}{" "}
+                {listing.reviewCount === 1 ? "review" : "reviews"})
+              </span>
+              <span className="ws-sr-only">
+                , rated {listing.avgRating.toFixed(1)} out of 5
+              </span>
+            </p>
+          ) : (
+            <p className="ws-pcard__noreviews">No reviews yet</p>
+          )}
 
           <div className="ws-pcard__price">
             <span className={`ws-price${onRequest ? " is-onrequest" : ""}`}>
+              <span className="ws-sr-only">Price: </span>
               {priceLabel(listing)}
             </span>
             {listing.isNegotiable && !onRequest && (
@@ -172,30 +204,38 @@ export default function ListingCard({
             )}
           </div>
 
-          <p className="ws-pcard__meta">
-            {location && (
-              <span className="ws-pcard__loc">
-                <MapPin size={12} aria-hidden />
-                <span>{location}</span>
-              </span>
-            )}
-          </p>
-          {eyebrow && <p className="ws-pcard__eyebrow">{eyebrow}</p>}
-        </div>
-
-        <div className="ws-pcard__foot">
-          {store && (
-            <span className="ws-pcard__seller">
-              <span className="ws-pcard__sellername">{store.name}</span>
-              {store.verificationTier &&
-                isVerifiedTier(store.verificationTier) && (
-                  <BadgeCheck size={13} aria-label="Verified store" />
+          <div className="ws-pcard__foot">
+            {store && (
+              <p className="ws-pcard__seller">
+                {store.logo ? (
+                  <img className="ws-pcard__sellerpic" src={store.logo} alt="" loading="lazy" />
+                ) : (
+                  <span className="ws-pcard__sellerpic" aria-hidden>
+                    {store.name.charAt(0).toUpperCase()}
+                  </span>
                 )}
-            </span>
-          )}
-          <span className="ws-pcard__cta" aria-hidden>
-            <ArrowRight size={14} />
-          </span>
+                <span className="ws-pcard__sellername">{store.name}</span>
+                {store.verificationTier && isVerifiedTier(store.verificationTier) && (
+                  <BadgeCheck size={14} aria-label="Verified seller" className="ws-pcard__verified" />
+                )}
+              </p>
+            )}
+
+            <p className="ws-pcard__meta">
+              {location && (
+                <span className="ws-pcard__loc">
+                  <MapPin size={12} aria-hidden />
+                  <span className="ws-pcard__locname">{location}</span>
+                </span>
+              )}
+              {listing.publishedAt && (
+                <span className="ws-pcard__age">
+                  <Clock size={12} aria-hidden />
+                  {timeAgo(listing.publishedAt)}
+                </span>
+              )}
+            </p>
+          </div>
         </div>
       </article>
     </Link>

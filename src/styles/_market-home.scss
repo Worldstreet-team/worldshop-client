@@ -1170,3 +1170,148 @@
     &:hover { background: var(--ws-action-primary-hover); }
   }
 }
+
+// ─── Listing card detail rows ───────────────────────────────────
+.ws-pcard__condition {
+  margin: 0;
+  font-family: var(--ws-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ws-text-tertiary);
+}
+
+.ws-pcard__desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ws-text-secondary);
+  // One line: the card is a decision about whether to open it, not the place
+  // to read the listing.
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.ws-pcard__title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.ws-pcard__rating,
+.ws-pcard__noreviews {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ws-text-secondary);
+}
+
+.ws-pcard__noreviews { color: var(--ws-text-tertiary); }
+
+// The star takes the action colour rather than the usual rating orange: on
+// this palette the orange collides with the marketplace domain accent.
+.ws-pcard__star {
+  flex-shrink: 0;
+  color: var(--ws-action-primary-text);
+  fill: currentColor;
+}
+
+.ws-pcard__ratingnum {
+  font-weight: 500;
+  color: var(--ws-text-primary);
+}
+
+.ws-pcard__ratingcount { color: var(--ws-text-tertiary); }
+
+// ─── Listing card footer ────────────────────────────────────────
+// Pushed to the bottom so cards of different copy lengths still line their
+// seller rows up across a row of the grid.
+.ws-pcard__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--ws-border-subtle);
+}
+
+.ws-pcard__seller {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  color: var(--ws-text-secondary);
+}
+
+.ws-pcard__sellerpic {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-surface-raised);
+  color: var(--ws-text-primary);
+  font-size: 8px;
+  font-weight: 600;
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.ws-pcard__sellername {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-pcard__verified {
+  flex-shrink: 0;
+  color: var(--ws-feedback-success);
+}
+
+.ws-pcard__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--ws-text-tertiary);
+}
+
+.ws-pcard__loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ws-pcard__locname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Age sits hard right, so the row reads "where, then when" at a glance.
+.ws-pcard__age {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+// The grid's denser card drops the rule above the seller, as the reference does.
+.ws-grid .ws-pcard__foot,
+.ws-results .ws-pcard__foot {
+  padding-top: 8px;
+  border-top: 0;
+}
