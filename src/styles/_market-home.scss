@@ -828,8 +828,13 @@
   gap: 48px;
 }
 
-// The hero and its trust strip are one unit, 20px apart, not 48.
-.ws-home > .ws-carousel--hero { margin-bottom: -28px; }
+// The promo and its trust strip are one unit, 20px apart, not the 48px that
+// separates sections.
+.ws-home__featured {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 // ─── Brand chip ─────────────────────────────────────────────────
 // Tinted fill, 45% border, full-strength accent text.

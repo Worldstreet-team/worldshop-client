@@ -7,22 +7,23 @@ export default function SellBand() {
   return (
     <Reveal as="section" className="ws-sellband" aria-labelledby="home-sell">
       <div className="ws-sellband__intro">
-        <span className="ws-sellband__eyebrow">Start selling</span>
+        <span className="ws-sellband__eyebrow">Sell on WorldStore</span>
         <h2 className="ws-sellband__title" id="home-sell">
-          Selling? List it in minutes.
+          The shop you keep in your pocket
         </h2>
         <p className="ws-sellband__sub">
-          Open a store, post your first listing and talk to buyers directly.
-          What you sell is yours — WorldStore takes no commission.
+          Listing is free. Buyers pay into escrow, you ship, and the money
+          lands in your wallet the day it is confirmed. Most sellers have their
+          first listing live in under four minutes.
         </p>
         <div className="ws-sellband__actions">
           <Link to="/vendor" className="ws-btn ws-btn--primary ws-sellband__cta">
-            Open a store
-            <ArrowRight size={16} aria-hidden />
+            Start selling
+            <ArrowRight size={18} aria-hidden />
           </Link>
-          <span className="ws-sellband__note">
-            Free · takes about two minutes
-          </span>
+          <Link to="/listings" className="ws-btn ws-btn--secondary">
+            How escrow works
+          </Link>
         </div>
       </div>
 

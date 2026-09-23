@@ -3,27 +3,36 @@ import { usePageTitle } from "@/shared/hooks/usePageTitle";
 import HeroCarousel from "@/features/listings/components/HeroCarousel";
 import ListingRail from "@/features/listings/components/ListingRail";
 import CategoryRail from "@/features/listings/components/home/CategoryRail";
-import FeaturedSellers from "@/features/listings/components/home/FeaturedSellers";
 import SellBand from "@/features/listings/components/home/SellBand";
 import Assurances from "@/features/listings/components/home/Assurances";
 
+/**
+ * Homepage, ordered as the design sandbox orders it: the promo and the trust
+ * strip as one unit, then categories, then the listing rails, then the pitch
+ * to sellers.
+ *
+ * "Stores to know" is gone from here. The reference leads on listings rather
+ * than on sellers, and a rail of stores above the first products pushed the
+ * actual goods below the fold.
+ */
 export default function Home() {
   usePageTitle();
-  const { vehiclesId, total, newest, sellers, loading, sellersLoading } =
-    useHomeRails();
+  const { vehiclesId, deals, newest, loading } = useHomeRails();
 
   return (
     <div className="ws-wrap">
-      {/* The hero sits inside the same wrap as everything else, so its edges
-          line up with the department pill bar and the rails below it. */}
       <div className="ws-home">
-        <HeroCarousel
-          motorsTo={
-            vehiclesId ? `/listings?categoryId=${vehiclesId}` : "/listings"
-          }
-          stat={total}
-        />
+        {/* Promo and trust strip travel together: the strip answers the
+            question the promo provokes, so they sit closer than a section. */}
+        <section className="ws-home__featured" aria-label="Featured">
+          <HeroCarousel
+            motorsTo={vehiclesId ? `/listings?categoryId=${vehiclesId}` : "/listings"}
+          />
+          <Assurances />
+        </section>
+
         <CategoryRail />
+
         <ListingRail
           id="home-newest"
           eyebrow="Just listed"
@@ -33,9 +42,18 @@ export default function Home() {
           items={newest}
           loading={loading}
         />
-        <FeaturedSellers sellers={sellers} loading={sellersLoading} />
+
+        <ListingRail
+          id="home-deals"
+          eyebrow="Deals"
+          title="Deals ending soon"
+          sub="The keenest prices on the marketplace this week."
+          to="/listings?sort=price_asc"
+          items={deals}
+          loading={loading}
+        />
+
         <SellBand />
-        <Assurances />
       </div>
     </div>
   );

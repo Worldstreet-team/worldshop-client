@@ -1,24 +1,32 @@
 import type { LucideIcon } from "lucide-react";
-import { MessageCircle, ShieldCheck, Tag } from "lucide-react";
+import { ShieldCheck, Truck, Wallet } from "lucide-react";
 
 export type Assurance = { Icon: LucideIcon; title: string; copy: string };
 export type SellStep = { title: string; copy: string };
 
+/**
+ * The trust strip under the hero, copied from the design sandbox.
+ *
+ * Each line names a concrete mechanic rather than a virtue: what holds the
+ * money, what you can see while it ships, when the seller is paid. "Deal
+ * direct" and "Meet safely", which these replace, described the old
+ * meet-in-person marketplace and say nothing once escrow exists.
+ */
 export const ASSURANCES: Assurance[] = [
   {
-    Icon: MessageCircle,
-    title: "Deal direct",
-    copy: "Chat with the seller — no middlemen, no markups.",
-  },
-  {
     Icon: ShieldCheck,
-    title: "Know your seller",
-    copy: "Public ratings, reviews and verification on every store.",
+    title: "Escrow on every deal",
+    copy: "We hold the money until you confirm the item arrived as described.",
   },
   {
-    Icon: Tag,
-    title: "Meet safely",
-    copy: "Check the item in person before any money moves.",
+    Icon: Truck,
+    title: "Delivery you can follow",
+    copy: "Dispatch, in transit and delivered, with the rider's number on the order.",
+  },
+  {
+    Icon: Wallet,
+    title: "Paid into your wallet",
+    copy: "Sellers are settled the day a buyer confirms, straight to the WorldStreet balance.",
   },
 ];
 
@@ -29,10 +37,10 @@ export const SELL_STEPS: SellStep[] = [
   },
   {
     title: "Post your listing",
-    copy: "Photos, price, condition — live in minutes.",
+    copy: "Photos, price, condition, live in minutes.",
   },
   {
-    title: "Chat and close",
-    copy: "Buyers message you directly. Agree your own terms.",
+    title: "Get paid",
+    copy: "Buyers pay into escrow. The money lands the day it is confirmed.",
   },
 ];
