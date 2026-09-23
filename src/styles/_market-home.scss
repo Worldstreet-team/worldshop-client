@@ -1579,3 +1579,99 @@
 @media (max-width: 420px) {
   .ws-brandmark__word { font-size: 15px; }
 }
+
+// ─── Module switcher ────────────────────────────────────────────
+// Sits directly above the nav pill, centred on it, so the chevron reads as the
+// handle that opened it rather than a button that summoned a panel elsewhere.
+.ws-modules {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 86px;
+  z-index: 55;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+
+  @media (min-width: 1100px) { display: none; }
+
+  &__panel {
+    width: 100%;
+    max-width: 320px;
+    max-height: min(60vh, 460px);
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid var(--ws-border-subtle);
+    border-radius: var(--ws-radius-sheet);
+    background: var(--ws-surface-overlay);
+    box-shadow: var(--ws-shadow-overlay);
+    pointer-events: auto;
+    outline: none;
+    animation: ws-modules-in var(--ws-duration-base, 0.22s) var(--ws-ease-entrance, ease) both;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: var(--ws-radius-lg);
+    color: var(--ws-text-secondary);
+    text-decoration: none;
+    transition: background-color var(--ws-duration-fast, 0.15s) ease;
+
+    &:hover { background: var(--ws-surface-raised); }
+
+    &:focus-visible {
+      outline: 2px solid var(--ws-action-primary-default);
+      outline-offset: -2px;
+    }
+
+    // Where you already are: outlined in its own accent rather than filled, so
+    // it reads as a marker and not as the recommended destination.
+    &.is-current {
+      border-color: color-mix(in srgb, var(--ws-domain-marketplace-accent) 40%, transparent);
+      color: var(--ws-text-primary);
+    }
+  }
+
+  // Each module keeps its own accent, tinted behind the glyph.
+  &__icon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--ws-radius-md);
+    background: color-mix(in srgb, var(--m) 12%, transparent);
+    color: var(--m);
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  &__badge {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border: 1px solid var(--ws-border-default);
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-surface-base);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ws-text-tertiary);
+  }
+}
+
+@keyframes ws-modules-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-modules__panel { animation: none; }
+}

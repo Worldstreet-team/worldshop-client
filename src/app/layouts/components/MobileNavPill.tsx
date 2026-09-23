@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Bookmark, Home, MessageCircle, Search, Store, ChevronsUpDown } from "lucide-react";
-import { useUIStore } from "@/shared/store/uiStore";
+import ModuleSwitcher from "@/app/layouts/components/ModuleSwitcher";
 
 /**
  * The floating navigation pill, as the design sandbox has it on small screens:
@@ -24,7 +25,7 @@ const ITEMS = [
 ];
 
 export default function MobileNavPill() {
-  const { toggleMobileMenu } = useUIStore();
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const location = useLocation();
 
   // The admin console and the seller dashboards have their own chrome; a
@@ -32,7 +33,9 @@ export default function MobileNavPill() {
   if (/^\/(admin|vendor\/|mall\/)/.test(location.pathname)) return null;
 
   return (
-    <div className="ws-navpill" role="navigation" aria-label="Main">
+    <>
+      {switcherOpen && <ModuleSwitcher onClose={() => setSwitcherOpen(false)} />}
+      <div className="ws-navpill" role="navigation" aria-label="Main">
       <div className="ws-navpill__bar">
         {ITEMS.map(({ to, label, Icon, end }) => (
           <NavLink
@@ -51,14 +54,17 @@ export default function MobileNavPill() {
 
         <button
           type="button"
-          className="ws-navpill__btn"
-          onClick={toggleMobileMenu}
-          title="More"
-          aria-label="More"
+          className={`ws-navpill__btn${switcherOpen ? " is-active" : ""}`}
+          onClick={() => setSwitcherOpen((v) => !v)}
+          aria-haspopup="dialog"
+          aria-expanded={switcherOpen}
+          title="Switch module"
+          aria-label="More, switch module"
         >
           <ChevronsUpDown size={20} aria-hidden />
         </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
