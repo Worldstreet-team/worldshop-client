@@ -62,12 +62,15 @@
   --ws-surface-base: #fcfcfa;
   --ws-surface-raised: #f2f2f0;
   --ws-surface-overlay: #fff;
+  --ws-surface-ticket: var(--ws-prim-neutral-100);
+  --ws-text-on-ticket: var(--ws-prim-neutral-950);
 
   --ws-text-primary: #1a1a1a;
   --ws-text-secondary: #404040;
   --ws-text-tertiary: #727272;
   --ws-text-disabled: #b8b8b5;
   --ws-text-on-accent: #0b0b0b;
+  --ws-text-on-danger: #fafafa;
   --ws-text-on-domain: #fff;
 
   --ws-border-subtle: #e4e4e1;
@@ -86,6 +89,8 @@
 
   --ws-domain-marketplace-accent: #c2410c;
   --ws-domain-social-accent: #2563eb;
+  --ws-domain-vivid-accent: #4338ca;
+  --ws-domain-prediction-accent: #9333ea;
   --ws-domain-academy-accent: #b45309;
   --ws-domain-xstream-accent: #047857;
   --ws-domain-vision-accent: #197a85;
