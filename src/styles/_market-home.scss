@@ -1197,8 +1197,15 @@
 .ws-pcard__foot {
   display: flex;
   flex-direction: column;
+  // The legacy rule was a horizontal row and set align-items:center. Turning it
+  // into a column inherited that, which centred each line on its own width and
+  // left the seller and location ragged against the card's left edge.
+  align-items: stretch;
   gap: 4px;
   margin-top: auto;
+  // It also inset itself by 16px, so the footer did not line up with the copy
+  // above it.
+  margin-inline: 0;
   padding-top: 12px;
   border-top: 1px solid var(--ws-border-subtle);
 }
@@ -1415,4 +1422,38 @@
 .ws-pill__count {
   color: var(--ws-text-tertiary);
   font-variant-numeric: tabular-nums;
+}
+
+// ─── Control shine ──────────────────────────────────────────────
+// What makes the reference's buttons look lit rather than printed: a hairline
+// of white inside the top edge, a dark hairline under the bottom, and a soft
+// drop shadow. It reads as a raised surface catching light from above, which
+// is also what tells you the thing is pressable.
+.ws-btn--primary,
+.ws-createbtn,
+.ws-promo__arrow,
+.ws-sellband__cta {
+  box-shadow: var(--ws-shadow-control);
+
+  // Pressing swaps the lift for an inset, so the button reads as going down
+  // rather than just changing colour.
+  &:active {
+    box-shadow: var(--ws-shadow-control-pressed);
+    transform: translateY(0.5px);
+  }
+}
+
+// Outlined controls get the same lift at lower strength: they sit on the page
+// rather than in it, but should not compete with the filled ones.
+.ws-btn--secondary,
+.ws-hfield,
+.ws-pill {
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--ws-text-primary) 4%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-btn--primary:active,
+  .ws-createbtn:active,
+  .ws-promo__arrow:active,
+  .ws-sellband__cta:active { transform: none; }
 }
