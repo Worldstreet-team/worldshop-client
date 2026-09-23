@@ -83,10 +83,12 @@ export default function ListingCard({
     .filter(Boolean)
     .join(" · ");
   const onRequest = priceLabel(listing) === "Contact for price";
+  // Featured is a plain white chip in the design, not a coloured one: it marks
+  // placement, while the coloured fills are reserved for things about the deal.
   const status = listing.isFeatured
     ? { label: "Featured", className: "ws-pcard__badge--featured" }
     : isFresh(listing.publishedAt)
-      ? { label: "Just listed", className: "ws-badge--ink ws-badge--dot" }
+      ? { label: "New", className: "ws-pcard__badge--new" }
       : null;
   const store = showSeller ? listing.store : undefined;
 

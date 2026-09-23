@@ -40,7 +40,7 @@ export default function CategoryRail() {
   if (tiles.length === 0) return null;
 
   return (
-    <section className="ws-carousel ws-carousel--categories" aria-label="Shop by category">
+    <section className="ws-carousel" aria-label="Shop by category">
       <header className="ws-railhead">
         <div className="ws-railhead__text">
           <h2 className="ws-railhead__title">Shop by category</h2>
@@ -51,7 +51,7 @@ export default function CategoryRail() {
         </div>
       </header>
 
-      <div className="ws-carousel__track">
+      <div className="ws-carousel__track ws-carousel__track--categories">
         {tiles.map((c) => (
           <div className="ws-carousel__item" key={c.id}>
             <Link to={`/listings?categoryId=${c.id}`} className="ws-tile">

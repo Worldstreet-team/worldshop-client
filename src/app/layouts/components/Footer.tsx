@@ -22,7 +22,7 @@ export default function Footer() {
           <div className="ws-footer__brand">
             <Link to="/" className="ws-brand" aria-label="WorldStore home">
               <img
-                src="/brand/wsa-mark.png"
+                src="/brand/wstore-mark.svg"
                 alt=""
                 className="ws-brand__mark"
               />

@@ -36,20 +36,23 @@
   width: calc((100% - (var(--ws-n) - 1) * var(--ws-gap)) / var(--ws-n));
 }
 
-.ws-carousel--hero { --ws-n: 1; }
-.ws-carousel--listings { --ws-n: 1; }
-.ws-carousel--categories { --ws-n: 2.2; }
+// --ws-n lives on the TRACK, not on .ws-carousel. A container query only
+// matches descendants of its container, so a modifier on the container itself
+// can never be resized by one: the tiles stayed at the 2.2 base forever.
+.ws-carousel__track--hero { --ws-n: 1; }
+.ws-carousel__track--listings { --ws-n: 1; }
+.ws-carousel__track--categories { --ws-n: 2.2; }
 
 @container carousel (min-width: 480px) {
-  .ws-carousel--listings { --ws-n: 1.8; }
-  .ws-carousel--categories { --ws-n: 3.2; }
+  .ws-carousel__track--listings { --ws-n: 1.8; }
+  .ws-carousel__track--categories { --ws-n: 3.2; }
 }
 @container carousel (min-width: 768px) {
-  .ws-carousel--listings { --ws-n: 2.75; }
-  .ws-carousel--categories { --ws-n: 5; }
+  .ws-carousel__track--listings { --ws-n: 2.75; }
+  .ws-carousel__track--categories { --ws-n: 5; }
 }
-@container carousel (min-width: 1024px) { .ws-carousel--listings { --ws-n: 4.5; } }
-@container carousel (min-width: 1400px) { .ws-carousel--listings { --ws-n: 5; } }
+@container carousel (min-width: 1024px) { .ws-carousel__track--listings { --ws-n: 4.5; } }
+@container carousel (min-width: 1400px) { .ws-carousel__track--listings { --ws-n: 5; } }
 
 // ─── Section header ─────────────────────────────────────────────
 .ws-railhead {
@@ -857,4 +860,302 @@
   .ws-pcard__media { aspect-ratio: 1 / 1; }
   .ws-pcard__title { font-size: 14px; line-height: 20px; }
   .ws-pcard__price .ws-price { font-size: 18px; line-height: 24px; }
+}
+
+// ─── Section head ───────────────────────────────────────────────
+// Title and sub on the left, actions on the right, baselines aligned.
+.ws-sectionhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  &__eyebrow {
+    display: block;
+    font-family: var(--ws-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ws-text-tertiary);
+    margin-bottom: 4px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 19px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ws-text-primary);
+  }
+
+  &__sub {
+    margin: 2px 0 0;
+    font-size: 13.5px;
+    color: var(--ws-text-secondary);
+  }
+
+  // A quiet flat button rather than a link: it sits beside the rail arrows.
+  &__action {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: var(--ws-radius-md);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--ws-text-secondary);
+    text-decoration: none;
+    transition:
+      background-color var(--ws-duration-fast, 0.15s) ease,
+      color var(--ws-duration-fast, 0.15s) ease;
+
+    &:hover {
+      background: var(--ws-surface-base);
+      color: var(--ws-text-primary);
+    }
+  }
+}
+
+// ─── Sell band ──────────────────────────────────────────────────
+// A tinted panel in the marketplace accent rather than a plain card, so the
+// one section asking for something reads differently from the ones offering it.
+.ws-sellband {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+  padding: 24px 20px;
+  border: 1px solid var(--mk-line);
+  border-radius: var(--ws-radius-xl);
+  background: var(--mk-tint);
+
+  @media (min-width: 720px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px;
+  }
+
+  &__intro { max-width: 52ch; }
+
+  &__eyebrow {
+    display: block;
+    font-family: var(--ws-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mk-tint-ink);
+  }
+
+  &__title {
+    margin: 8px 0 0;
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    color: var(--ws-text-primary);
+
+    @media (min-width: 720px) {
+      font-size: 26px;
+      line-height: 32px;
+    }
+  }
+
+  &__sub {
+    margin: 8px 0 0;
+    font-size: 13.5px;
+    line-height: 1.625;
+    text-wrap: pretty;
+    color: var(--ws-text-secondary);
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__note {
+    font-size: 12.5px;
+    color: var(--ws-text-tertiary);
+  }
+
+  // The numbered steps are ours, not the sandbox's; they keep the panel's
+  // tone rather than sitting on it as separate cards.
+  &__steps {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  &__num {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--ws-radius-full);
+    background: color-mix(in srgb, var(--mk-accent) 14%, transparent);
+    color: var(--mk-tint-ink);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  &__steptitle {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+  }
+
+  &__stepcopy {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ws-text-secondary);
+  }
+}
+
+// ─── Footer ─────────────────────────────────────────────────────
+// Hooks match the existing Footer markup (__grid/__head/__links/__base), not
+// the sandbox's own class names.
+.ws-footer {
+  &__grid {
+    padding: 40px 0;
+    gap: 32px;
+
+    @media (min-width: 1024px) { padding: 48px 0; }
+  }
+
+  // Mono, letterspaced and small: a label for the column rather than a heading
+  // that competes with the links beneath it.
+  &__head {
+    font-family: var(--ws-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__links {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+
+    a {
+      font-size: 13px;
+      color: var(--ws-text-secondary);
+      text-decoration: none;
+      transition: color var(--ws-duration-fast, 0.15s) ease;
+
+      &:hover { color: var(--ws-text-primary); }
+    }
+  }
+
+  &__blurb {
+    font-size: 13px;
+    line-height: 1.625;
+    text-wrap: pretty;
+    color: var(--ws-text-secondary);
+
+    a { color: var(--ws-action-primary-text); }
+  }
+
+  &__base {
+    padding: 24px 0 40px;
+    border-top: 1px solid var(--ws-border-subtle);
+    font-size: 12px;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__legal a {
+    font-size: 12px;
+    color: var(--ws-text-tertiary);
+    text-decoration: none;
+
+    &:hover { color: var(--ws-text-primary); }
+  }
+}
+// ─── Listing badges ─────────────────────────────────────────────
+// One pill shape, four meanings. Featured is a white chip because it marks
+// placement; the solid feedback fills are kept for facts about the deal
+// itself, so a discount never looks like an ad.
+.ws-pcard__badges .ws-badge {
+  height: 22px;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: var(--ws-radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1;
+}
+
+.ws-pcard__badge--featured {
+  background: var(--ws-surface-overlay);
+  color: var(--ws-text-primary);
+}
+
+.ws-pcard__badge--new {
+  background: var(--ws-feedback-info-fill);
+  color: var(--ws-text-on-feedback);
+}
+
+.ws-pcard__badge--deal {
+  background: var(--ws-feedback-danger-fill);
+  color: var(--ws-text-on-feedback);
+}
+
+.ws-pcard__badge--ending {
+  background: var(--ws-feedback-warning-fill);
+  color: var(--ws-text-on-feedback);
+}
+
+.ws-pcard__badge--loved {
+  background: var(--ws-feedback-success-fill);
+  color: var(--ws-text-on-feedback);
+}
+
+// ─── Save heart ─────────────────────────────────────────────────
+// Two states: an outlined chip on the photo, and the solid action colour once
+// saved, so the state survives whatever the photo behind it is doing.
+.ws-pcard__save {
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-surface-base);
+  color: var(--ws-text-primary);
+  box-shadow: var(--ws-shadow-overlay);
+
+  &:hover {
+    border-color: var(--ws-border-strong);
+    background: var(--ws-surface-raised);
+  }
+
+  &.is-saved {
+    border-color: transparent;
+    background: var(--ws-action-primary-default);
+    color: var(--ws-text-on-accent);
+
+    &:hover { background: var(--ws-action-primary-hover); }
+  }
 }

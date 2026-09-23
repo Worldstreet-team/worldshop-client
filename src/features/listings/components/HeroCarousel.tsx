@@ -106,7 +106,7 @@ export default function HeroCarousel({ motorsTo }: { motorsTo: string; stat?: nu
 
   return (
     <section
-      className="ws-carousel ws-carousel--hero"
+      className="ws-carousel"
       aria-roledescription="carousel"
       aria-label="Promotions"
       onMouseEnter={() => setPaused(true)}
@@ -117,7 +117,7 @@ export default function HeroCarousel({ motorsTo }: { motorsTo: string; stat?: nu
       {/* The viewport is the positioning context: the arrows overlay the image
           rather than sitting under it, as they do in the sandbox. */}
       <div className="ws-promo__viewport">
-        <div className="ws-carousel__track" ref={trackRef} tabIndex={-1}>
+        <div className="ws-carousel__track ws-carousel__track--hero" ref={trackRef} tabIndex={-1}>
           {items.map((s, i) => (
             <div
               key={s.key}
