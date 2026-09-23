@@ -4,6 +4,7 @@ import HeroCarousel from "@/features/listings/components/HeroCarousel";
 import ListingRail from "@/features/listings/components/ListingRail";
 import CategoryRail from "@/features/listings/components/home/CategoryRail";
 import SellBand from "@/features/listings/components/home/SellBand";
+import AllListings from "@/features/listings/components/home/AllListings";
 import Assurances from "@/features/listings/components/home/Assurances";
 
 /**
@@ -54,6 +55,8 @@ export default function Home() {
         />
 
         <SellBand />
+
+        <AllListings />
       </div>
     </div>
   );

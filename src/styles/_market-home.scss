@@ -1332,3 +1332,129 @@
     background: color-mix(in srgb, var(--mk-accent) 16%, transparent);
   }
 }
+
+// ─── All listings ───────────────────────────────────────────────
+.ws-all {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  // Clears the sticky header and department bar when linked to by anchor.
+  scroll-margin-top: 128px;
+
+  &__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 16px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 19px;
+    line-height: 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--ws-text-primary);
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+  }
+
+  &__count {
+    margin: 0;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+
+    @media (min-width: 768px) {
+      flex-wrap: wrap;
+      overflow-x: visible;
+    }
+  }
+
+  &__empty {
+    margin: 0;
+    padding: 48px 0;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--ws-text-tertiary);
+  }
+}
+
+// The grid the reference steps 1 → 2 → 3 → 4 → 5 across its breakpoints.
+.ws-results {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (min-width: 480px) { grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 768px) { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: 1080px) { grid-template-columns: repeat(4, 1fr); }
+  @media (min-width: 1400px) { grid-template-columns: repeat(5, 1fr); }
+}
+
+// ─── Segmented control ──────────────────────────────────────────
+// A tinted trough with the active option lifted onto a surface, so the choice
+// reads as a position rather than a colour.
+.ws-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--ws-radius-lg);
+  background: color-mix(in srgb, var(--ws-text-primary) 5%, transparent);
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--ws-radius-md);
+    background: transparent;
+    color: var(--ws-text-tertiary);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition:
+      background-color var(--ws-duration-fast, 0.15s) ease,
+      color var(--ws-duration-fast, 0.15s) ease,
+      box-shadow var(--ws-duration-fast, 0.15s) ease;
+
+    &:hover { color: var(--ws-text-primary); }
+
+    &.is-active {
+      background: var(--ws-surface-base);
+      color: var(--ws-text-primary);
+      font-weight: 500;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--ws-text-primary) 8%, transparent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ws-focus-ring);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.ws-pill__count {
+  color: var(--ws-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
