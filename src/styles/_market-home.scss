@@ -822,10 +822,16 @@
 }
 
 // 48px between sections, which is the sandbox's space-y-12.
+//
+// padding-block is zeroed: .ws-home carried 64px of its own from the previous
+// layout, which stacked on the main's 32px and left a 97px trench between the
+// department bar and the hero. The page rhythm belongs to .ws-shell__main now,
+// in one place.
 .ws-home {
   display: flex;
   flex-direction: column;
   gap: 48px;
+  padding-block: 0;
 }
 
 // The promo and its trust strip are one unit, 20px apart, not the 48px that
