@@ -1,0 +1,180 @@
+// Marketplace theme — the palette from the designer's sandbox
+// (worldstreet-sandbox-8i8m.vercel.app), copied value for value.
+//
+// This is a separate layer rather than an edit to _tokens.scss, which is
+// generated. It is selected with data-ws-theme="market" on <html>, so the whole
+// move is one attribute: set it back to "platform" and the app returns to the
+// dark theme untouched.
+//
+// Two halves:
+//   1. the sandbox's own vocabulary (surface/text/border/action/domain/prim),
+//      which the new marketplace components are written against;
+//   2. a bridge that redefines the legacy names (--ws-bg-*, --ws-brand-*,
+//      --ws-text-muted …) in terms of it, so the ~6k lines of existing ws-*
+//      components render on the new palette instead of losing their colours.
+//
+// Deliberately NOT carried over: the sandbox's --ws-space-* scale. It reuses
+// the same names at different values (space-4 is 12px there, 16px here), so
+// adopting it would silently re-space every existing screen. Spacing stays as
+// it is until the rest of the app moves too.
+
+[data-ws-theme="market"] {
+  // ─── Primitive ramps ──────────────────────────────────────────
+  --ws-prim-neutral-50: #fafafa;
+  --ws-prim-neutral-100: #f5f5f5;
+  --ws-prim-neutral-200: #e6e6e6;
+  --ws-prim-neutral-300: #d3d3d3;
+  --ws-prim-neutral-400: #a3a3a3;
+  --ws-prim-neutral-500: #727272;
+  --ws-prim-neutral-600: #535353;
+  --ws-prim-neutral-700: #404040;
+  --ws-prim-neutral-800: #272727;
+  --ws-prim-neutral-900: #1a1a1a;
+  --ws-prim-neutral-950: #0b0b0b;
+
+  --ws-prim-gold-50: #fafde6;
+  --ws-prim-gold-100: #f3fbc0;
+  --ws-prim-gold-200: #e8f68e;
+  --ws-prim-gold-300: #ddf15b;
+  --ws-prim-gold-400: #d4e745;
+  --ws-prim-gold-500: #b4c923;
+  --ws-prim-gold-600: #8c9d15;
+  --ws-prim-gold-700: #65720c;
+  --ws-prim-gold-800: #404906;
+  --ws-prim-gold-900: #212602;
+  --ws-prim-gold-950: #101300;
+
+  --ws-prim-market-50: #fff7ed;
+  --ws-prim-market-100: #ffedd5;
+  --ws-prim-market-200: #fed7aa;
+  --ws-prim-market-300: #fdba74;
+  --ws-prim-market-400: #fb923c;
+  --ws-prim-market-500: #e05626;
+  --ws-prim-market-600: #c2410c;
+  --ws-prim-market-700: #9a3412;
+  --ws-prim-market-800: #7c2d12;
+  --ws-prim-market-900: #431407;
+  --ws-prim-market-950: #270a03;
+
+  // ─── Surfaces, text, borders ──────────────────────────────────
+  --ws-surface-sunken: #eeeeec;
+  --ws-surface-canvas: #f7f7f5;
+  --ws-surface-base: #fcfcfa;
+  --ws-surface-raised: #f2f2f0;
+  --ws-surface-overlay: #fff;
+
+  --ws-text-primary: #1a1a1a;
+  --ws-text-secondary: #404040;
+  --ws-text-tertiary: #727272;
+  --ws-text-disabled: #b8b8b5;
+  --ws-text-on-accent: #0b0b0b;
+  --ws-text-on-domain: #fff;
+
+  --ws-border-subtle: #e4e4e1;
+  --ws-border-default: #d2d2cf;
+  --ws-border-strong: #92928e;
+
+  // ─── Actions and domain accents ───────────────────────────────
+  // Primary action is the olive gold; the burnt orange is the marketplace
+  // domain accent, used for its own badges and rails rather than for buttons.
+  --ws-action-primary-default: #8c9d15;
+  --ws-action-primary-hover: #65720c;
+  --ws-action-primary-active: #404906;
+  --ws-action-primary-text: #65720c;
+  --ws-action-primary-tonal: #8c9d1529;
+  --ws-action-primary-tonal-hover: #8c9d153d;
+
+  --ws-domain-marketplace-accent: #c2410c;
+  --ws-domain-social-accent: #2563eb;
+  --ws-domain-academy-accent: #b45309;
+  --ws-domain-xstream-accent: #047857;
+  --ws-domain-vision-accent: #197a85;
+
+  // Marketplace shorthand, as the sandbox names them.
+  --mk-accent: var(--ws-domain-marketplace-accent);
+  --mk-on-accent: var(--ws-text-on-domain);
+  --mk-ink: var(--ws-prim-market-700);
+  --mk-tint: color-mix(in srgb, var(--ws-domain-marketplace-accent) 10%, transparent);
+  --mk-tint-ink: var(--ws-prim-market-800);
+  --mk-line: color-mix(in srgb, var(--ws-domain-marketplace-accent) 45%, transparent);
+
+  // ─── Feedback ─────────────────────────────────────────────────
+  --ws-feedback-success: #047857;
+  --ws-feedback-warning: #a25906;
+  --ws-feedback-danger: #ca0b11;
+  --ws-feedback-info: #1d4ed8;
+  --ws-text-on-feedback: #fafafa;
+
+  --ws-tonal-success-surface: #d9ece2;
+  --ws-tonal-success-text: #12693f;
+  --ws-tonal-error-surface: #f7d8d9;
+  --ws-tonal-error-text: #a70d12;
+  --ws-tonal-warning-surface: #f0e4d7;
+  --ws-tonal-warning-text: #86460d;
+  --ws-tonal-info-surface: #d9e4ee;
+  --ws-tonal-info-text: #134a79;
+  --ws-tonal-neutral-surface: #f5f5f5;
+  --ws-tonal-neutral-text: #404040;
+
+  // ─── Elevation ────────────────────────────────────────────────
+  --ws-sheen: #ffffff9e;
+  --ws-shadow-control: inset 0 1px 0 0 #ffffffc7, 0 1px 0 0 #1a1a1a1f, 0 4px 10px -4px #1a1a1a2e;
+  --ws-shadow-control-pressed: inset 0 1px 3px 0 #1a1a1a2e;
+  --ws-shadow-overlay: 0 1px 2px 0 #1a1a1a14, 0 12px 28px -8px #1a1a1a29;
+
+  // ─── Type ─────────────────────────────────────────────────────
+  --ws-font-display: "Instrument Sans", "Poppins", system-ui, sans-serif;
+  --ws-font-ui: "Instrument Sans", "Public Sans", system-ui, sans-serif;
+  --ws-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  // ─── Radii ────────────────────────────────────────────────────
+  // Close to the old values (7/10/13), so adopting them is a nudge rather
+  // than a reshape. --ws-radius-pill is kept: the sandbox calls it -full.
+  --ws-radius-sm: 4px;
+  --ws-radius-md: 8px;
+  --ws-radius-lg: 12px;
+  --ws-radius-xl: 16px;
+  --ws-radius-sheet: 22px;
+  --ws-radius-full: 9999px;
+  --ws-radius-pill: 9999px;
+
+  // ─── Bridge to the legacy vocabulary ──────────────────────────
+  // Everything below exists so the pages that have not been redesigned yet
+  // still read as one app. Remove a line once nothing references it.
+  --ws-bg-page: var(--ws-surface-canvas);
+  --ws-bg-sunken: var(--ws-surface-sunken);
+  --ws-bg-surface: var(--ws-surface-base);
+  --ws-bg-raised: var(--ws-surface-raised);
+  --ws-bg-chip: var(--ws-surface-raised);
+  --ws-bg-track: var(--ws-surface-sunken);
+  --ws-border-hairline: var(--ws-border-subtle);
+
+  --ws-text-muted: var(--ws-text-tertiary);
+  --ws-text-subtle: var(--ws-text-disabled);
+
+  --ws-brand-primary: var(--ws-action-primary-default);
+  --ws-brand-active: var(--ws-action-primary-hover);
+  --ws-brand-dim: var(--ws-prim-gold-500);
+  --ws-brand-on-primary: var(--ws-text-on-accent);
+  // Gold-on-near-black had the contrast to carry text; olive on paper does not
+  // at the same value, so text uses the darker 700 step.
+  --ws-brand-gold-text: var(--ws-action-primary-text);
+
+  --ws-status-success: var(--ws-feedback-success);
+  --ws-status-danger: var(--ws-feedback-danger);
+  --ws-status-warning: var(--ws-feedback-warning);
+  --ws-status-warning-chip: var(--ws-tonal-warning-surface);
+
+  --ws-money-credit: var(--ws-feedback-success);
+  --ws-money-credit-chip: var(--ws-tonal-success-surface);
+  --ws-money-debit: var(--ws-feedback-danger);
+  --ws-money-debit-chip: var(--ws-tonal-error-surface);
+  --ws-money-convert: var(--ws-action-primary-text);
+  --ws-money-convert-chip: var(--ws-action-primary-tonal);
+
+  --ws-overlay-scrim: rgba(11, 11, 11, 0.55);
+  --ws-focus-ring: var(--ws-action-primary-default);
+  --ws-accent-star: #f97316; // ratings, theme-independent by definition
+
+  --ws-shadow-nav: var(--ws-shadow-overlay);
+}

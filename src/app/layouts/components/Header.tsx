@@ -4,13 +4,10 @@ import {
   Heart,
   MessageCircle,
   Menu,
-  Moon,
   Store,
-  Sun,
   User,
   LayoutGrid,
 } from "lucide-react";
-import { isLight, toggleTheme } from "@/shared/utils/theme";
 import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
@@ -52,8 +49,6 @@ export default function Header() {
       document.removeEventListener("keydown", onKey);
     };
   }, [mobileSearchOpen]);
-
-  const [light, setLight] = useState(isLight);
   const savedCount = useSyncExternalStore(
     savedListings.subscribe,
     savedListings.count,
@@ -81,17 +76,10 @@ export default function Header() {
 
           <div className="ws-topbar__actions">
             <div className="ws-topbar__group ws-topbar__group--utility">
-              <button
-                type="button"
-                className="ws-iconbtn"
-                onClick={() => setLight(toggleTheme() === "platform-light")}
-                aria-label={
-                  light ? "Switch to dark mode" : "Switch to light mode"
-                }
-                title={light ? "Dark mode" : "Light mode"}
-              >
-                {light ? <Moon size={18} /> : <Sun size={18} />}
-              </button>
+              {/* The light/dark toggle is out while the market theme is the only
+                  palette: it switches to "platform-light", which would drop the
+                  user onto the old paper theme. Restore it, with its Sun/Moon
+                  imports and `light` state, once market has a dark mode. */}
 
               {isAuthenticated && (
                 <Link
