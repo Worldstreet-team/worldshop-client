@@ -14,6 +14,7 @@ import {
   Building2,
   Sparkles,
   Smartphone,
+  Store,
   Tag,
   ChevronDown,
   MapPin,
@@ -217,6 +218,17 @@ export default function Header() {
               <Link to="/listings" className="ws-pill">
                 <LayoutGrid size={14} aria-hidden />
                 All categories
+              </Link>
+              {/* Stores and Malls lead the bar rather than sitting among the
+                  departments: they are different kinds of destination, and the
+                  bar is the only nav this header has left. */}
+              <Link to="/stores" className="ws-pill ws-pill--place">
+                <Store size={14} aria-hidden />
+                Stores
+              </Link>
+              <Link to="/malls" className="ws-pill ws-pill--place">
+                <Building2 size={14} aria-hidden />
+                Malls
               </Link>
               {departments.map((c) => {
                 const Icon = departmentIcon(c.name);

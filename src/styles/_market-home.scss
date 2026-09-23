@@ -1046,10 +1046,14 @@
 // Hooks match the existing Footer markup (__grid/__head/__links/__base), not
 // the sandbox's own class names.
 .ws-footer {
+  // Two columns on a phone, four from 880px, as the reference splits them.
   &__grid {
-    padding: 40px 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 32px;
+    padding: 40px 0;
 
+    @media (min-width: 880px) { grid-template-columns: repeat(4, 1fr); }
     @media (min-width: 1024px) { padding: 48px 0; }
   }
 
@@ -1314,4 +1318,17 @@
 .ws-results .ws-pcard__foot {
   padding-top: 8px;
   border-top: 0;
+}
+
+// Stores and Malls lead the department bar. Tinted rather than outlined, so
+// they read as a different kind of destination from the categories after them.
+.ws-pill--place {
+  border-color: color-mix(in srgb, var(--mk-accent) 30%, transparent);
+  background: var(--mk-tint);
+  color: var(--mk-ink);
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--mk-accent) 55%, transparent);
+    background: color-mix(in srgb, var(--mk-accent) 16%, transparent);
+  }
 }
