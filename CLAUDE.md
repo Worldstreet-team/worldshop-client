@@ -217,6 +217,38 @@ To refresh tokens after a design-system change:
 cp ../design-tokens/tokens.css src/styles/_tokens.scss   # then re-add the header comment
 ```
 
+### Theme: `market` (current) and how to revert
+
+The app ships on **`data-ws-theme="market"`**, the marketplace palette from the
+designer's sandbox: paper `#F7F7F5` canvas over `#EEEEEC` page, olive gold
+`#8C9D15` for actions, burnt orange `#C2410C` as the domain accent, Instrument
+Sans with IBM Plex Mono for figures. It lives in `src/styles/_market.scss`.
+
+**Reverting is one attribute.** Set `data-ws-theme="platform"` on `<html>` in
+`index.html` and the whole app returns to the dark near-black + `#FFCC29`
+theme. `_tokens.scss` is untouched and still carries `shell`, `platform`,
+`platform-light`, `shop`, `shop-light` and `xstream`. Verified both ways:
+`market` computes page `#EEEEEC` / brand `#8C9D15`, `platform` computes
+`#0B0B0F` / `#FFCC29`, and switching back restores exactly.
+
+Two things to know before reverting:
+
+- The light/dark toggle and the pre-paint script that restored a stored choice
+  are **removed**, because both switch to `platform-light` and would have
+  dropped a returning user onto the old paper theme. Restore them from git
+  alongside the attribute if you go back.
+- `_market.scss` is half palette and half **bridge**: it redefines the legacy
+  names (`--ws-bg-*`, `--ws-brand-*`, the money and status sets) in terms of the
+  new vocabulary, which is why every page came across and not just the ones that
+  were redesigned. New components should be written against the new names
+  (`--ws-surface-base`, `--ws-action-primary-default`, `--ws-text-tertiary`);
+  the bridge exists to carry the un-redesigned screens, not as the target.
+
+Surfaces step in three: the shell sits on `--ws-surface-sunken`, the header and
+footer bands on `--ws-surface-canvas`, and cards on `--ws-surface-base`. Putting
+the page on canvas flattens the whole thing, because it lands within two points
+of the card colour.
+
 ### Design tokens (canonical)
 
 Do **not** invent palettes. Per `../CLAUDE.md`, the source of truth is the workspace token

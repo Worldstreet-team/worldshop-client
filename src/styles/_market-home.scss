@@ -1468,3 +1468,23 @@
     &:active:not(:disabled) { transform: none; }
   }
 }
+
+// A pill-shaped placeholder that occupies exactly what a real pill will, so
+// the bar does not resize when the names arrive.
+.ws-pill--skeleton {
+  border-color: transparent;
+  background: var(--ws-surface-raised);
+  pointer-events: none;
+
+  // Reuses the app's existing shimmer so loading looks the same everywhere.
+  animation: ws-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ws-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-pill--skeleton { animation: none; }
+}

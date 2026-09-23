@@ -49,6 +49,9 @@ function departmentIcon(name: string) {
   return Tag;
 }
 
+/** Placeholder pill widths, roughly the spread of real department names. */
+const SKELETON_PILLS = [104, 86, 122, 94, 138, 110, 80, 126];
+
 const RADIUS = [
   { value: "lagos-5", label: "Lagos · 5 km" },
   { value: "lagos-10", label: "Lagos · 10 km" },
@@ -91,7 +94,7 @@ export default function Header() {
   );
   const unread = useUnreadCount(isAuthenticated);
   const navigate = useNavigate();
-  const { categories } = useCategories();
+  const { categories, isLoading: categoriesLoading } = useCategories();
   const [term, setTerm] = useState(urlSearch);
   // Departments only: the pill row is a shortcut into a section, not the full
   // tree, and the sandbox shows ten before the row starts scrolling.
@@ -211,7 +214,10 @@ export default function Header() {
 
       {/* Department shortcuts, sticky under the header row. A scrolling row
           rather than a wrap, so the bar keeps its height on every screen. */}
-      {departments.length > 0 && (
+      {/* The bar renders while categories load rather than appearing after
+          them: it is 69px tall and sticky, so popping it in reflows everything
+          below and moves the hero out from under the pointer. */}
+      {(categoriesLoading || departments.length > 0) && (
         <div className="ws-catbar">
           <div className="ws-wrap">
             <div className="ws-catbar__row" role="group" aria-label="Browse categories">
@@ -230,15 +236,26 @@ export default function Header() {
                 <Building2 size={14} aria-hidden />
                 Malls
               </Link>
-              {departments.map((c) => {
-                const Icon = departmentIcon(c.name);
-                return (
-                  <Link key={c.id} to={`/listings?categoryId=${c.id}`} className="ws-pill">
-                    <Icon size={14} aria-hidden />
-                    {c.name}
-                  </Link>
-                );
-              })}
+              {categoriesLoading
+                ? // Widths vary so the row reads as words of different lengths
+                  // rather than a progress bar chopped into pieces.
+                  SKELETON_PILLS.map((w, i) => (
+                    <span
+                      key={i}
+                      className="ws-pill ws-pill--skeleton"
+                      style={{ width: w }}
+                      aria-hidden
+                    />
+                  ))
+                : departments.map((c) => {
+                    const Icon = departmentIcon(c.name);
+                    return (
+                      <Link key={c.id} to={`/listings?categoryId=${c.id}`} className="ws-pill">
+                        <Icon size={14} aria-hidden />
+                        {c.name}
+                      </Link>
+                    );
+                  })}
             </div>
           </div>
         </div>
