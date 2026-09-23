@@ -1679,3 +1679,194 @@
 @media (prefers-reduced-motion: reduce) {
   .ws-modules__panel { animation: none; }
 }
+
+// ─── Category mega-menu ─────────────────────────────────────────
+.ws-hfield__wrap { position: relative; flex-shrink: 0; }
+
+// The chevron flips while the menu is open, so the control shows its state
+// without needing a second affordance.
+.ws-hfield--cats.is-open {
+  border-color: var(--ws-action-primary-default);
+
+  .ws-hfield__chev { transform: rotate(180deg); }
+}
+
+.ws-hfield__chev {
+  transition: transform var(--ws-duration-fast, 0.15s) ease;
+}
+
+.ws-megamenu {
+  // Fixed to the content gutters rather than anchored to the button. The panel
+  // is over 1100px wide, and hanging that off a control sitting mid-row pushed
+  // its right edge past the viewport on anything under about 1700px.
+  position: fixed;
+  top: 64px;
+  left: 24px;
+  right: 24px;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+
+  &__panel {
+    display: grid;
+    // Departments, their children, then real listings. The third column is
+    // widest because it holds photographs and prices, not just names.
+    grid-template-columns: 240px 208px minmax(320px, 1fr);
+    width: 100%;
+    max-width: 1160px;
+    max-height: min(70vh, 560px);
+    border: 1px solid var(--ws-border-subtle);
+    border-radius: var(--ws-radius-xl);
+    background: var(--ws-surface-overlay);
+    box-shadow: var(--ws-shadow-overlay);
+    overflow: hidden;
+    animation: ws-modules-in var(--ws-duration-base, 0.22s) var(--ws-ease-entrance, ease) both;
+  }
+
+  &__col {
+    padding: 8px;
+    overflow-y: auto;
+    // Nothing collapses into the scroll edge.
+    scrollbar-gutter: stable;
+
+    &--depts,
+    &--subs { border-right: 1px solid var(--ws-border-subtle); }
+
+    // Same surface as the rest of the panel: on canvas it landed within a
+    // couple of points of the page behind and stopped reading as part of it.
+    // The border alone separates the columns.
+    &--featured {
+      padding: 16px;
+      border-left: 1px solid var(--ws-border-subtle);
+    }
+  }
+
+  // 12px gap and 10/12 padding, matching the reference's row rhythm: the two
+  // lines of a department need the room, and 8px read as cramped against a
+  // 16px icon.
+  &__dept,
+  &__sub {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--ws-radius-lg);
+    color: var(--ws-text-secondary);
+    text-decoration: none;
+
+    &:hover { background: var(--ws-surface-raised); }
+
+    &:focus-visible {
+      outline: 2px solid var(--ws-action-primary-default);
+      outline-offset: -2px;
+    }
+  }
+
+  // The pointed-at department is lifted onto a surface with a border, so the
+  // second column visibly belongs to it.
+  &__dept.is-active {
+    border-color: var(--ws-border-default);
+    background: var(--ws-surface-base);
+    color: var(--ws-text-primary);
+  }
+
+  &__deptbody {
+    display: grid;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__name {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__count {
+    font-size: 11.5px;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__chev { flex-shrink: 0; color: var(--ws-text-tertiary); }
+
+  &__heading {
+    margin: 0 0 12px;
+    font-family: var(--ws-font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__listing {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid var(--ws-border-subtle);
+    border-radius: var(--ws-radius-lg);
+    background: var(--ws-surface-base);
+    text-decoration: none;
+
+    &:hover { border-color: var(--ws-border-strong); }
+
+    &--skeleton { pointer-events: none; }
+  }
+
+  &__thumb {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--ws-radius-md);
+    background: var(--ws-surface-raised);
+    object-fit: cover;
+  }
+
+  &__lines {
+    display: grid;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__ltitle {
+    font-size: 13.5px;
+    color: var(--ws-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__lloc {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__lprice {
+    flex-shrink: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ws-action-primary-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__empty {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ws-text-tertiary);
+  }
+}

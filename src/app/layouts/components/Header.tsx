@@ -24,6 +24,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
+import CategoryMenu from "@/app/layouts/components/CategoryMenu";
 import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
@@ -34,7 +35,7 @@ import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
  * location filter yet, so wiring it would mean inventing an endpoint.
  */
 /** Department name to icon, as the sandbox pairs them. Tag is the fallback. */
-function departmentIcon(name: string) {
+export function departmentIcon(name: string) {
   const n = name.toLowerCase();
   if (/vehicle|car|auto/.test(n)) return Car;
   if (/phone|tablet|mobile/.test(n)) return Smartphone;
@@ -96,6 +97,7 @@ export default function Header() {
   const navigate = useNavigate();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const [term, setTerm] = useState(urlSearch);
+  const [menuOpen, setMenuOpen] = useState(false);
   // Departments only: the pill row is a shortcut into a section, not the full
   // tree, and the sandbox shows ten before the row starts scrolling.
   const departments = categories.filter((c) => !c.parentId).slice(0, 10);
@@ -128,11 +130,22 @@ export default function Header() {
               <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
             </label>
 
-            <Link to="/listings" className="ws-hfield ws-hfield--cats">
-              <LayoutGrid size={16} aria-hidden />
-              All categories
-              <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
-            </Link>
+            {/* A button, not a link: it opens the tree in place. Browsing
+                everything is still one click from the first row inside. */}
+            <div className="ws-hfield__wrap">
+              <button
+                type="button"
+                className={`ws-hfield ws-hfield--cats${menuOpen ? " is-open" : ""}`}
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+              >
+                <LayoutGrid size={16} aria-hidden />
+                All categories
+                <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
+              </button>
+              {menuOpen && <CategoryMenu onClose={() => setMenuOpen(false)} />}
+            </div>
 
             <form className="ws-hfield ws-hfield--search" onSubmit={submitSearch} role="search">
               <Search size={18} aria-hidden />
