@@ -637,3 +637,224 @@
     &__text, &__chev { display: none; }
   }
 }
+
+// ─── Category tile ──────────────────────────────────────────────
+.ws-tile {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  aspect-ratio: 4 / 5;
+  width: 100%;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-surface-raised);
+  text-align: left;
+  text-decoration: none;
+
+  &__art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--ws-duration-slow, 0.32s) var(--ws-ease-entrance, ease);
+  }
+
+  // Shorter than the hero's: the copy is two lines at the bottom, so the top
+  // 40% of the photo stays untouched.
+  &__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--ws-tip-surface) 78%, transparent),
+      transparent 60%
+    );
+  }
+
+  &__name {
+    position: relative;
+    z-index: 2;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ws-tip-text);
+  }
+
+  &__count {
+    position: relative;
+    z-index: 2;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, var(--ws-tip-text) 80%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-action-primary-default);
+    outline-offset: 2px;
+  }
+}
+
+@media (hover: hover) {
+  .ws-tile:hover .ws-tile__art { transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-tile:hover .ws-tile__art { transform: none; }
+}
+
+// ─── Listing card, restyled to the sandbox ──────────────────────
+// Overrides rather than a new component: .ws-pcard is used by the rails, the
+// browse grid and the store pages, and they should all move together.
+.ws-pcard {
+  gap: 16px;
+  padding: 12px;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-surface-base);
+  transition:
+    transform var(--ws-duration-base, 0.22s) var(--ws-ease-entrance, ease),
+    box-shadow var(--ws-duration-base, 0.22s) var(--ws-ease-entrance, ease);
+
+  &__media {
+    border-radius: var(--ws-radius-lg);
+    background: var(--ws-surface-raised);
+    aspect-ratio: 1 / 1;
+  }
+
+  &__body {
+    gap: 6px;
+    padding: 0 6px 6px;
+  }
+
+  &__title {
+    font-size: 16px;
+    line-height: 24px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+  }
+
+  // The price is the one thing a scanning eye should land on, so it takes the
+  // action colour rather than plain ink.
+  &__price .ws-price {
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 600;
+    color: var(--ws-action-primary-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Photo count as an outlined pill on the surface, not a dark chip.
+  &__count {
+    bottom: 8px;
+    right: 8px;
+    top: auto;
+    height: 24px;
+    padding: 0 8px 0 4px;
+    gap: 4px;
+    border: 1px solid var(--ws-border-default);
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-surface-base);
+    color: var(--ws-text-primary);
+    font-size: 10px;
+  }
+
+  &__badges {
+    top: 8px;
+    left: 8px;
+    gap: 4px;
+  }
+}
+
+@media (hover: hover) {
+  .ws-pcard:hover {
+    transform: scale(1.02);
+    box-shadow: var(--ws-shadow-overlay);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-pcard:hover { transform: none; }
+}
+
+// ─── Content container ──────────────────────────────────────────
+// The sandbox runs to 1600px behind 16px gutters, widening to 24px past
+// 1024px. The old wrap stopped at 1440 behind 48px, which left a much heavier
+// margin and a narrower column on a wide screen.
+.ws-wrap {
+  max-width: 1600px;
+  padding-inline: 16px;
+
+  @media (min-width: 1024px) {
+    padding-inline: 24px;
+  }
+}
+
+// ─── Shell bands ────────────────────────────────────────────────
+// Page is sunken; the header and footer sit a step above it on canvas.
+.ws-topbar {
+  background: var(--ws-surface-canvas);
+  border-bottom: 1px solid var(--ws-border-subtle);
+}
+
+.ws-footer {
+  background: var(--ws-surface-canvas);
+  border-top: 1px solid var(--ws-border-subtle);
+}
+
+// ─── Page rhythm ────────────────────────────────────────────────
+// main: pt-6 pb-28, widening to pt-8 pb-16 past 1024. The tall mobile bottom
+// padding clears the floating nav pill.
+.ws-shell__main {
+  padding-top: 24px;
+  padding-bottom: 112px;
+
+  @media (min-width: 1024px) {
+    padding-top: 32px;
+    padding-bottom: 64px;
+  }
+}
+
+// 48px between sections, which is the sandbox's space-y-12.
+.ws-home {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+// The hero and its trust strip are one unit, 20px apart, not 48.
+.ws-home > .ws-carousel--hero { margin-bottom: -28px; }
+
+// ─── Brand chip ─────────────────────────────────────────────────
+// Tinted fill, 45% border, full-strength accent text.
+.ws-brandmark__chip {
+  border: 1px solid color-mix(in srgb, var(--mk-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--mk-accent) 10%, transparent);
+  color: var(--mk-accent);
+}
+
+// ─── Listing card: rail vs grid density ─────────────────────────
+// The sandbox runs two densities off the same component. Rails get the roomier
+// one, since a rail shows fewer cards and can afford the detail.
+.ws-rail__track .ws-pcard {
+  gap: 16px;
+  padding: 12px;
+
+  .ws-pcard__media { aspect-ratio: 4 / 3; }
+  .ws-pcard__title { font-size: 16px; line-height: 24px; }
+  .ws-pcard__price .ws-price { font-size: 22px; line-height: 28px; }
+}
+
+// Grid cards are tighter and squarer, and their seller line drops the rule.
+.ws-grid .ws-pcard,
+.ws-results .ws-pcard {
+  gap: 12px;
+  padding: 8px;
+
+  .ws-pcard__media { aspect-ratio: 1 / 1; }
+  .ws-pcard__title { font-size: 14px; line-height: 20px; }
+  .ws-pcard__price .ws-price { font-size: 18px; line-height: 24px; }
+}

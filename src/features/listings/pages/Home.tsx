@@ -2,6 +2,7 @@ import { useHomeRails } from "@/features/listings/hooks/useHomeRails";
 import { usePageTitle } from "@/shared/hooks/usePageTitle";
 import HeroCarousel from "@/features/listings/components/HeroCarousel";
 import ListingRail from "@/features/listings/components/ListingRail";
+import CategoryRail from "@/features/listings/components/home/CategoryRail";
 import FeaturedSellers from "@/features/listings/components/home/FeaturedSellers";
 import SellBand from "@/features/listings/components/home/SellBand";
 import Assurances from "@/features/listings/components/home/Assurances";
@@ -22,6 +23,7 @@ export default function Home() {
           }
           stat={total}
         />
+        <CategoryRail />
         <ListingRail
           id="home-newest"
           eyebrow="Just listed"

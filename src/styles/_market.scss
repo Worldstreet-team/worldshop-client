@@ -152,7 +152,10 @@
   // ─── Bridge to the legacy vocabulary ──────────────────────────
   // Everything below exists so the pages that have not been redesigned yet
   // still read as one app. Remove a line once nothing references it.
-  --ws-bg-page: var(--ws-surface-canvas);
+  // The shell sits on sunken, header/footer bands on canvas and cards on base.
+  // That three-step separation is what lifts the cards off the page; putting
+  // the page on canvas flattens the whole thing.
+  --ws-bg-page: var(--ws-surface-sunken);
   --ws-bg-sunken: var(--ws-surface-sunken);
   --ws-bg-surface: var(--ws-surface-base);
   --ws-bg-raised: var(--ws-surface-raised);
