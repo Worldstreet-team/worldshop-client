@@ -8,6 +8,7 @@ import { queryKeys } from "@/shared/lib/queryKeys";
 import { MINUTE } from "@/app/providers/QueryProvider";
 import { firstImage, priceLabel } from "@/features/listings/model";
 import { departmentIcon } from "@/app/layouts/components/Header";
+import { departmentsWithStock, childrenWithStock , listingCount } from "@/features/catalog/categoryTree";
 
 /**
  * The "All categories" mega-menu: departments, the subcategories of whichever
@@ -27,15 +28,12 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
   const { categories, isLoading } = useCategories();
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const departments = useMemo(
-    () => categories.filter((c) => !c.parentId),
-    [categories],
-  );
+  const departments = useMemo(() => departmentsWithStock(categories), [categories]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const active = activeId ?? departments[0]?.id ?? null;
 
   const children = useMemo(
-    () => categories.filter((c) => c.parentId === active),
+    () => (active ? childrenWithStock(categories, active) : []),
     [categories, active],
   );
 
@@ -87,11 +85,9 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
               <Icon size={16} aria-hidden className="ws-megamenu__icon" />
               <span className="ws-megamenu__deptbody">
                 <span className="ws-megamenu__name">{d.name}</span>
-                {typeof d.productCount === "number" && d.productCount > 0 && (
-                  <span className="ws-megamenu__count ws-num">
-                    {d.productCount.toLocaleString("en-NG")} listings
-                  </span>
-                )}
+                <span className="ws-megamenu__count ws-num">
+                  {listingCount(d.total)}
+                </span>
               </span>
               <ChevronRight size={14} aria-hidden className="ws-megamenu__chev" />
             </Link>
@@ -109,11 +105,9 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
                 onClick={onClose}
               >
                 <span className="ws-megamenu__name">{c.name}</span>
-                {typeof c.productCount === "number" && c.productCount > 0 && (
-                  <span className="ws-megamenu__count ws-num">
-                    {c.productCount.toLocaleString("en-NG")} listings
-                  </span>
-                )}
+                <span className="ws-megamenu__count ws-num">
+                  {listingCount(c.total)}
+                </span>
               </Link>
             ))
           ) : (

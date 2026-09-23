@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
 import CategoryMenu from "@/app/layouts/components/CategoryMenu";
+import { departmentsWithStock } from "@/features/catalog/categoryTree";
 import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
@@ -98,9 +99,9 @@ export default function Header() {
   const { categories, isLoading: categoriesLoading } = useCategories();
   const [term, setTerm] = useState(urlSearch);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Departments only: the pill row is a shortcut into a section, not the full
-  // tree, and the sandbox shows ten before the row starts scrolling.
-  const departments = categories.filter((c) => !c.parentId).slice(0, 10);
+  // Departments that hold something, biggest first. An empty category in the
+  // nav costs a tap to discover and teaches buyers the bar cannot be trusted.
+  const departments = departmentsWithStock(categories).slice(0, 10);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();

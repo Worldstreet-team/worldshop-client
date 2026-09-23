@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
+import { departmentsWithStock , listingCount } from "@/features/catalog/categoryTree";
 
 /**
  * "Shop by category", ported from the design sandbox: a scrolling row of tall
@@ -31,8 +32,7 @@ function photoFor(name: string): string | undefined {
 export default function CategoryRail() {
   const { categories } = useCategories();
 
-  const tiles = categories
-    .filter((c) => !c.parentId)
+  const tiles = departmentsWithStock(categories)
     .map((c) => ({ ...c, photo: photoFor(c.name) }))
     .filter((c) => c.photo)
     .slice(0, 6);
@@ -61,11 +61,9 @@ export default function CategoryRail() {
               {/* Only when there is something to count. A department whose
                   count has not been aggregated reads "0 listings", which
                   advertises an empty shop rather than saying nothing. */}
-              {typeof c.productCount === "number" && c.productCount > 0 && (
-                <span className="ws-tile__count ws-num">
-                  {c.productCount.toLocaleString("en-NG")} listings
-                </span>
-              )}
+              <span className="ws-tile__count ws-num">
+                {listingCount(c.total)}
+              </span>
             </Link>
           </div>
         ))}

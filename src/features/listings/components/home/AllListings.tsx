@@ -5,6 +5,7 @@ import type { Listing, PublicStore } from "@/features/stores/api";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { MINUTE } from "@/app/providers/QueryProvider";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
+import { departmentsWithStock } from "@/features/catalog/categoryTree";
 import ListingCard from "@/features/listings/components/ListingCard";
 import ListingCardSkeleton from "@/features/listings/components/ListingCardSkeleton";
 
@@ -35,7 +36,7 @@ export default function AllListings() {
   const { categories } = useCategories();
 
   const departments = useMemo(
-    () => categories.filter((c) => !c.parentId).slice(0, 8),
+    () => departmentsWithStock(categories).slice(0, 8),
     [categories],
   );
 
@@ -110,11 +111,9 @@ export default function AllListings() {
               onClick={() => setCategoryId(c.id)}
             >
               {c.name}
-              {typeof c.productCount === "number" && c.productCount > 0 && (
-                <span className="ws-pill__count ws-num">
-                  ({c.productCount.toLocaleString("en-NG")})
-                </span>
-              )}
+              <span className="ws-pill__count ws-num">
+                ({c.total.toLocaleString("en-NG")})
+              </span>
             </button>
           ))}
         </div>
