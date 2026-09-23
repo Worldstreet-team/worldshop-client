@@ -1,0 +1,267 @@
+// Marketplace homepage, ported from the designer's sandbox.
+//
+// The sandbox is Tailwind v4 with container queries; this repo has no Tailwind,
+// so the utility compositions are written out as components here. Values are
+// the sandbox's own: the carousel maths, the scrim gradients and the type sizes
+// are copied from its stylesheet rather than eyeballed.
+
+// ─── Carousel ───────────────────────────────────────────────────
+// One scroll-snap track. --ws-n is how many items are visible, so a fractional
+// value leaves the next card peeking, which is what signals it scrolls.
+.ws-carousel {
+  container-type: inline-size;
+  container-name: carousel;
+  min-width: 0;
+}
+
+.ws-carousel__track {
+  --ws-gap: 16px;
+  display: flex;
+  gap: var(--ws-gap);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  // Breathing room for card hover lift without clipping it, pulled back in
+  // so the track still lines up with the rest of the column.
+  padding-block: 8px 12px;
+  margin-block: -8px -12px;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ws-carousel__item {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  width: calc((100% - (var(--ws-n) - 1) * var(--ws-gap)) / var(--ws-n));
+}
+
+.ws-carousel--hero { --ws-n: 1; }
+.ws-carousel--listings { --ws-n: 1; }
+.ws-carousel--categories { --ws-n: 2.2; }
+
+@container carousel (min-width: 480px) {
+  .ws-carousel--listings { --ws-n: 1.8; }
+  .ws-carousel--categories { --ws-n: 3.2; }
+}
+@container carousel (min-width: 768px) {
+  .ws-carousel--listings { --ws-n: 2.75; }
+  .ws-carousel--categories { --ws-n: 5; }
+}
+@container carousel (min-width: 1024px) { .ws-carousel--listings { --ws-n: 4.5; } }
+@container carousel (min-width: 1400px) { .ws-carousel--listings { --ws-n: 5; } }
+
+// ─── Section header ─────────────────────────────────────────────
+.ws-railhead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  &__text { min-width: 0; }
+
+  &__title {
+    font-family: var(--ws-font-display);
+    font-size: 19px;
+    line-height: 28px;
+    font-weight: 600;
+    color: var(--ws-text-primary);
+    margin: 0;
+  }
+
+  &__sub {
+    margin: 2px 0 0;
+    font-size: 13.5px;
+    color: var(--ws-text-secondary);
+  }
+
+  &__actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+// ─── Hero ───────────────────────────────────────────────────────
+.ws-promo__slide {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  aspect-ratio: 5 / 4;
+  min-height: 260px;
+  overflow: hidden;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-surface-raised);
+}
+
+// Layered with 0/1 rather than the sandbox's negative z-index: a negative
+// index has to out-paint the slide's own background, which it lost here and
+// left near-white copy on a near-white surface.
+.ws-promo__art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Bottom-up on narrow screens where the copy sits under the subject; it turns
+// left-to-right once the slide goes wide and the copy moves beside it.
+.ws-promo__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--ws-tip-surface) 85%, transparent),
+    color-mix(in srgb, var(--ws-tip-surface) 20%, transparent) 70%
+  );
+}
+
+.ws-promo__body {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+  padding: 24px;
+}
+
+.ws-promo__eyebrow {
+  margin: 0;
+  font-family: var(--ws-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ws-tip-text) 80%, transparent);
+}
+
+.ws-promo__title {
+  margin: 8px 0 0;
+  font-family: var(--ws-font-display);
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ws-tip-text);
+}
+
+.ws-promo__sub {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: color-mix(in srgb, var(--ws-tip-text) 85%, transparent);
+}
+
+.ws-promo__cta { margin-top: 20px; }
+
+@container carousel (min-width: 640px) {
+  .ws-promo__slide {
+    aspect-ratio: 5 / 2;
+    align-items: center;
+  }
+  .ws-promo__scrim {
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--ws-tip-surface) 82%, transparent),
+      color-mix(in srgb, var(--ws-tip-surface) 35%, transparent) 55%,
+      transparent
+    );
+  }
+  .ws-promo__body { padding: 40px; }
+  .ws-promo__title { font-size: 31px; line-height: 36px; }
+}
+
+@container carousel (min-width: 768px) {
+  .ws-promo__body { padding-left: 80px; }
+}
+
+// ─── Trust strip ────────────────────────────────────────────────
+// The 1px gap over a border-coloured background is what draws the dividers,
+// so the cells need no borders of their own and no double lines at the seams.
+.ws-trust {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-border-subtle);
+
+  &__item {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: var(--ws-surface-canvas);
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--mk-ink);
+  }
+
+  &__text { min-width: 0; }
+
+  &__title {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+  }
+
+  &__copy {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    line-height: 1.625;
+    text-wrap: pretty;
+    color: var(--ws-text-tertiary);
+  }
+}
+
+@media (min-width: 720px) {
+  .ws-trust { grid-template-columns: repeat(3, 1fr); }
+}
+
+// ─── Hero controls ──────────────────────────────────────────────
+.ws-promo__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.ws-promo__dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+// A pill rather than a circle when active: the width carries the state, so it
+// still reads for anyone who cannot separate the two tones.
+.ws-promo__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-border-default);
+  cursor: pointer;
+  transition:
+    width var(--ws-duration-fast, 0.15s) ease,
+    background-color var(--ws-duration-fast, 0.15s) ease;
+
+  &.is-active {
+    width: 22px;
+    background: var(--ws-action-primary-default);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-focus-ring);
+    outline-offset: 2px;
+  }
+}

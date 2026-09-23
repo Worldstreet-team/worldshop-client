@@ -60,7 +60,7 @@ export default function Header() {
       <div className="ws-wrap">
         <div className="ws-topbar__row">
           <Link to="/" className="ws-brand" aria-label="WorldStore home">
-            <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
+            <img src="/brand/wstore-mark.svg" alt="" className="ws-brand__mark" width={32} height={32} />
             <span className="ws-brand__stack">
               <span className="ws-brand__word">WorldStore</span>
             </span>

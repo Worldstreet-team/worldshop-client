@@ -46,7 +46,7 @@ const reduced = () =>
 
 type Props = HTMLAttributes<HTMLElement> & {
   /** which element to render — a section, a plain wrapper, a list item */
-  as?: 'div' | 'section' | 'li' | 'article';
+  as?: 'div' | 'section' | 'li' | 'article' | 'ul';
   /** position in a group; later items follow earlier ones by a beat */
   index?: number;
   children?: ReactNode;

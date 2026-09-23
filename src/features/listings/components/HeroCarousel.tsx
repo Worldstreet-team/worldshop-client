@@ -1,191 +1,172 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Store } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
- * Rotating hero in the eBay mold: a few tall promo slides, auto-advancing,
- * with arrows and dots. Slides are compositions of product cutouts (PNGs with
- * alpha, in /img/hero/) rather than photo cards — the contour drop-shadows are
- * what make them read as objects instead of pictures.
+ * Promo hero, ported from the design sandbox: full-bleed photography with a
+ * scrim carrying the copy, on a scroll-snap track.
  *
- * Autoplay pauses on hover/focus and never runs under prefers-reduced-motion.
- * A cutout that fails to load hides itself, so a missing file degrades to a
- * sparser composition instead of a broken-image icon.
+ * The track is the source of truth for which slide is showing rather than a
+ * state variable driving a transform — that way a swipe, an arrow and the dots
+ * cannot disagree, and the browser does the easing. Autoplay stops on hover,
+ * focus and under prefers-reduced-motion.
  */
 
 const ADVANCE_MS = 6500;
 
-type Cut = { src: string; mod: string };
-
 type Slide = {
   key: string;
   eyebrow: string;
-  title: ReactNode;
+  title: string;
   sub: string;
-  primary: { label: string; to: string; icon?: ReactNode };
-  secondary?: { label: string; to: string; icon?: ReactNode };
+  cta: { label: string; to: string };
   art: string;
-  cuts: Cut[];
+  alt: string;
 };
 
 function slides(motorsTo: string): Slide[] {
   return [
     {
-      key: 'marketplace',
-      eyebrow: 'The WorldStore marketplace',
-      title: <>Everything the world is <em>selling</em>.</>,
-      sub: 'Phones, cars, fashion, property — new listings from rated stores every day. Chat directly with the seller and agree your own terms.',
-      primary: { label: 'Browse listings', to: '/listings' },
-      secondary: { label: 'Open a store', to: '/vendor', icon: <Store size={16} aria-hidden /> },
-      art: 'electronics',
-      cuts: [
-        { src: '/img/hero/macbook.webp', mod: 'macbook' },
-        { src: '/img/hero/phones.webp', mod: 'phones' },
-        { src: '/img/hero/boombox.webp', mod: 'boombox' },
-      ],
+      key: "fashion",
+      eyebrow: "Fashion week",
+      title: "Up to 50% off fashion",
+      sub: "Verified sellers across Lagos and Abuja. Free delivery on selected pieces.",
+      cta: { label: "Shop fashion", to: "/listings" },
+      art: "/img/hero/bags.jpg",
+      alt: "A shopper in sunglasses carrying several shopping bags",
     },
     {
-      key: 'motors',
-      eyebrow: 'Motors',
-      title: <>Your next ride is <em>listed</em>.</>,
-      sub: 'Foreign used, Nigerian used, brand new — inspect it in person and pay the seller directly.',
-      primary: { label: 'Browse vehicles', to: motorsTo },
-      art: 'motors',
-      cuts: [
-        { src: '/img/hero/gle-black.webp', mod: 'gle-black' },
-        { src: '/img/hero/gle-white.webp', mod: 'gle-white' },
-      ],
+      key: "boutiques",
+      eyebrow: "New this week",
+      title: "Fresh from local boutiques",
+      sub: "Two hundred new listings from shops you can visit in person.",
+      cta: { label: "Browse listings", to: "/listings" },
+      art: "/img/hero/store.jpg",
+      alt: "A clothing boutique with shelves of folded shirts",
     },
     {
-      key: 'sellers',
-      eyebrow: 'For sellers',
-      title: <>Turn your stuff into <em>cash</em>.</>,
-      sub: 'Open a store in minutes and talk to buyers directly — no commission on what you sell.',
-      primary: { label: 'Open a store', to: '/vendor', icon: <Store size={16} aria-hidden /> },
-      art: 'lifestyle',
-      cuts: [
-        { src: '/img/hero/tudor.webp', mod: 'tudor' },
-        { src: '/img/hero/af1.webp', mod: 'af1' },
-      ],
+      key: "motors",
+      eyebrow: "Motors",
+      title: "Your next ride is listed",
+      sub: "Foreign used, Nigerian used and brand new. Inspect it in person and pay the seller directly.",
+      cta: { label: "Browse vehicles", to: motorsTo },
+      art: "/img/hero/shop.jpg",
+      alt: "An illuminated open sign in a shop window",
     },
   ];
 }
 
-export default function HeroCarousel({ motorsTo, stat }: { motorsTo: string; stat: number }) {
-  const SLIDES = useMemo(() => slides(motorsTo), [motorsTo]);
+export default function HeroCarousel({ motorsTo }: { motorsTo: string; stat?: number }) {
+  const items = slides(motorsTo);
+  const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(
-    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
+
+  // Scroll to the slide's own offsetLeft rather than index * width: the track
+  // has a 16px gap, so stepping by width alone drifts one gap per slide.
+  const goTo = (i: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const slide = track.children[(i + items.length) % items.length] as HTMLElement | undefined;
+    if (slide) track.scrollTo({ left: slide.offsetLeft, behavior: "smooth" });
+  };
+
+  // Read the position back off the track so a manual swipe updates the dots.
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onChange = () => setReducedMotion(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
+    const track = trackRef.current;
+    if (!track) return;
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        // Nearest slide by offset, for the same reason goTo uses it.
+        const offsets = [...track.children].map((c) => (c as HTMLElement).offsetLeft);
+        let nearest = 0;
+        offsets.forEach((o, i) => {
+          if (Math.abs(o - track.scrollLeft) < Math.abs(offsets[nearest] - track.scrollLeft)) nearest = i;
+        });
+        setIndex(nearest);
+      });
+    };
+    track.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      track.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
   }, []);
 
   useEffect(() => {
-    if (paused || reducedMotion) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % SLIDES.length), ADVANCE_MS);
+    if (paused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => goTo(index + 1), ADVANCE_MS);
     return () => clearInterval(t);
-  }, [paused, reducedMotion, SLIDES.length]);
-
-  const go = (i: number) => setIndex((i + SLIDES.length) % SLIDES.length);
+  }, [index, paused]);
 
   return (
     <section
-      className="ws-hero"
+      className="ws-carousel ws-carousel--hero"
       aria-roledescription="carousel"
-      aria-label="Marketplace highlights"
+      aria-label="Promotions"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
       onBlurCapture={() => setPaused(false)}
     >
-      <div
-        className="ws-hero__track"
-        style={{ transform: `translateX(-${index * 100}%)` }}
-      >
-        {SLIDES.map((s, i) => (
+      <div className="ws-carousel__track" ref={trackRef} tabIndex={-1}>
+        {items.map((s, i) => (
           <div
             key={s.key}
-            className={`ws-hero__slide${i === index ? ' is-active' : ''}`}
-            aria-hidden={i !== index}
+            className="ws-carousel__item"
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} of ${items.length}`}
           >
-            <div className="ws-wrap ws-hero__inner">
-              <div className="ws-hero__copy">
-                <p className="ws-hero__eyebrow">{s.eyebrow}</p>
-                <h2 className="ws-hero__title">{s.title}</h2>
-                <p className="ws-hero__sub">{s.sub}</p>
-                <div className="ws-hero__ctas">
-                  <Link to={s.primary.to} className="ws-btn ws-btn--primary" tabIndex={i === index ? 0 : -1}>
-                    {s.primary.icon}
-                    {s.primary.label}
-                  </Link>
-                  {s.secondary && (
-                    <Link to={s.secondary.to} className="ws-btn ws-btn--secondary" tabIndex={i === index ? 0 : -1}>
-                      {s.secondary.icon}
-                      {s.secondary.label}
-                    </Link>
-                  )}
-                </div>
-                {i === 0 && stat > 0 && (
-                  <p className="ws-hero__stat ws-num">
-                    {stat.toLocaleString('en-NG')} live listings right now
-                  </p>
-                )}
+            <article className="ws-promo__slide">
+              <img className="ws-promo__art" src={s.art} alt={s.alt} />
+              <div className="ws-promo__scrim" aria-hidden />
+              <div className="ws-promo__body">
+                <p className="ws-promo__eyebrow">{s.eyebrow}</p>
+                <h2 className="ws-promo__title">{s.title}</h2>
+                <p className="ws-promo__sub">{s.sub}</p>
+                <Link className="ws-btn ws-btn--primary ws-promo__cta" to={s.cta.to}>
+                  {s.cta.label}
+                  <ArrowRight size={18} aria-hidden />
+                </Link>
               </div>
-
-              <div className={`ws-hero__art ws-hero__art--${s.art}`} aria-hidden>
-                {s.cuts.map((c) => (
-                  <img
-                    key={c.mod}
-                    src={c.src}
-                    alt=""
-                    className={`ws-hero__cut ws-hero__cut--${c.mod}`}
-                    loading={i === 0 ? 'eager' : 'lazy'}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                ))}
-              </div>
-            </div>
+            </article>
           </div>
         ))}
       </div>
 
-      <div className="ws-wrap ws-hero__navwrap">
-        <div className="ws-hero__nav">
-          <button
-            type="button"
-            className="ws-iconbtn ws-hero__arrow"
-            onClick={() => go(index - 1)}
-            aria-label="Previous slide"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <div className="ws-hero__dots" role="tablist" aria-label="Slides">
-            {SLIDES.map((s, i) => (
-              <button
-                key={s.key}
-                type="button"
-                role="tab"
-                aria-selected={i === index}
-                aria-label={`Slide ${i + 1}: ${s.eyebrow}`}
-                className={`ws-hero__dot${i === index ? ' is-active' : ''}`}
-                onClick={() => go(i)}
-              />
-            ))}
-          </div>
-          <button
-            type="button"
-            className="ws-iconbtn ws-hero__arrow"
-            onClick={() => go(index + 1)}
-            aria-label="Next slide"
-          >
-            <ChevronRight size={18} />
-          </button>
+      <div className="ws-promo__nav">
+        <button
+          type="button"
+          className="ws-iconbtn"
+          onClick={() => goTo(index - 1)}
+          aria-label="Previous promotion"
+        >
+          <ChevronLeft size={18} aria-hidden />
+        </button>
+        <div className="ws-promo__dots">
+          {items.map((s, i) => (
+            <button
+              key={s.key}
+              type="button"
+              className={`ws-promo__dot${i === index ? " is-active" : ""}`}
+              onClick={() => goTo(i)}
+              aria-label={`Go to ${s.title}`}
+              aria-current={i === index}
+            />
+          ))}
         </div>
+        <button
+          type="button"
+          className="ws-iconbtn"
+          onClick={() => goTo(index + 1)}
+          aria-label="Next promotion"
+        >
+          <ChevronRight size={18} aria-hidden />
+        </button>
       </div>
     </section>
   );
