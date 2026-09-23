@@ -1424,36 +1424,47 @@
   font-variant-numeric: tabular-nums;
 }
 
-// ─── Control shine ──────────────────────────────────────────────
-// What makes the reference's buttons look lit rather than printed: a hairline
-// of white inside the top edge, a dark hairline under the bottom, and a soft
-// drop shadow. It reads as a raised surface catching light from above, which
-// is also what tells you the thing is pressable.
+// ─── Control sheen ──────────────────────────────────────────────
+// The reference's buttons are not shadowed at all: they carry a white wash
+// over the top 65% of the fill. That gradient is the gloss, and it is why they
+// read as lit rather than printed. --ws-sheen is #ffffff9e.
+//
+// Pressing removes the gradient entirely and drops the button 1px, so the
+// light goes out as it goes down. That is a better press than dimming the
+// colour, because the shape itself stops catching light.
 .ws-btn--primary,
 .ws-createbtn,
 .ws-promo__arrow,
 .ws-sellband__cta {
-  box-shadow: var(--ws-shadow-control);
+  background-image: linear-gradient(to bottom, var(--ws-sheen), transparent 65%);
+  box-shadow: none;
 
-  // Pressing swaps the lift for an inset, so the button reads as going down
-  // rather than just changing colour.
-  &:active {
-    box-shadow: var(--ws-shadow-control-pressed);
-    transform: translateY(0.5px);
+  &:active:not(:disabled) {
+    background-image: none;
+    transform: translateY(1px);
   }
 }
 
-// Outlined controls get the same lift at lower strength: they sit on the page
-// rather than in it, but should not compete with the filled ones.
+// Flat and outlined controls take the travel but no gloss: they are not raised
+// surfaces, so there is nothing for the light to catch.
 .ws-btn--secondary,
-.ws-hfield,
-.ws-pill {
-  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--ws-text-primary) 4%, transparent);
+.ws-pill,
+.ws-actionbtn,
+.ws-segmented__btn,
+.ws-sectionhead__action {
+  &:active:not(:disabled) { transform: translateY(1px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ws-btn--primary:active,
-  .ws-createbtn:active,
-  .ws-promo__arrow:active,
-  .ws-sellband__cta:active { transform: none; }
+  .ws-btn--primary,
+  .ws-createbtn,
+  .ws-promo__arrow,
+  .ws-sellband__cta,
+  .ws-btn--secondary,
+  .ws-pill,
+  .ws-actionbtn,
+  .ws-segmented__btn,
+  .ws-sectionhead__action {
+    &:active:not(:disabled) { transform: none; }
+  }
 }
