@@ -1,6 +1,7 @@
 import { Outlet, ScrollRestoration } from 'react-router-dom';
 import Header from '@/app/layouts/components/Header';
 import Footer from '@/app/layouts/components/Footer';
+import MobileNavPill from '@/app/layouts/components/MobileNavPill';
 import ToastContainer from '@/shared/components/ui/ToastContainer';
 import MobileMenu from '@/app/layouts/components/MobileMenu';
 import VoiceButton from '@/features/voice/components/VoiceButton';
@@ -20,6 +21,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+      <MobileNavPill />
 
       {/* Back/forward restores scroll; new locations start at the top. */}
       <ScrollRestoration />
