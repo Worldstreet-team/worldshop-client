@@ -1,23 +1,31 @@
 import { useState, useEffect, useSyncExternalStore } from "react";
-import { Link, NavLink, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
+  ChevronDown,
   Heart,
+  MapPin,
   MessageCircle,
   Menu,
+  Search,
   Store,
   User,
   LayoutGrid,
 } from "lucide-react";
+import { useCategories } from "@/features/catalog/hooks/useCategories";
 import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
 
-const NAV = [
-  { to: "/", label: "Home", end: true },
-  { to: "/listings", label: "Marketplace", end: false },
-  { to: "/stores", label: "Stores", end: false },
-  { to: "/malls", label: "Malls", end: false },
+/**
+ * Radius options as the sandbox lists them. Static for now: the API has no
+ * location filter yet, so wiring it would mean inventing an endpoint.
+ */
+const RADIUS = [
+  { value: "lagos-5", label: "Lagos · 5 km" },
+  { value: "lagos-10", label: "Lagos · 10 km" },
+  { value: "lagos-25", label: "Lagos · 25 km" },
+  { value: "ng", label: "Anywhere in Nigeria" },
 ];
 
 export default function Header() {
@@ -54,6 +62,18 @@ export default function Header() {
     savedListings.count,
   );
   const unread = useUnreadCount(isAuthenticated);
+  const navigate = useNavigate();
+  const { categories } = useCategories();
+  const [term, setTerm] = useState(urlSearch);
+  // Departments only: the pill row is a shortcut into a section, not the full
+  // tree, and the sandbox shows ten before the row starts scrolling.
+  const departments = categories.filter((c) => !c.parentId).slice(0, 10);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = term.trim();
+    navigate(q ? `/listings?search=${encodeURIComponent(q)}` : "/listings");
+  };
 
   return (
     <header className="ws-topbar">
@@ -66,13 +86,35 @@ export default function Header() {
             </span>
           </Link>
 
-          <nav className="ws-topbar__nav" aria-label="Main">
-            {NAV.map(({ to, label, end }) => (
-              <NavLink key={to} to={to} end={end} className="ws-topbar__navlink">
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="ws-topbar__centre">
+            <label className="ws-field ws-field--location">
+              <MapPin size={16} aria-hidden />
+              <span className="ws-sr-only">Location and radius</span>
+              <select className="ws-field__select" defaultValue="lagos-10">
+                {RADIUS.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} aria-hidden className="ws-field__chev" />
+            </label>
+
+            <Link to="/listings" className="ws-field ws-field--cats">
+              <LayoutGrid size={16} aria-hidden />
+              All categories
+              <ChevronDown size={14} aria-hidden className="ws-field__chev" />
+            </Link>
+
+            <form className="ws-field ws-field--search" onSubmit={submitSearch} role="search">
+              <Search size={18} aria-hidden />
+              <input
+                type="search"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                placeholder="Search listings, sellers, stores…"
+                aria-label="Search listings"
+              />
+            </form>
+          </div>
 
           <div className="ws-topbar__actions">
             <div className="ws-topbar__group ws-topbar__group--utility">
@@ -156,6 +198,26 @@ export default function Header() {
           </button>
         </div>
       </div>
+
+      {/* Department shortcuts, sticky under the header row. A scrolling row
+          rather than a wrap, so the bar keeps its height on every screen. */}
+      {departments.length > 0 && (
+        <div className="ws-catbar">
+          <div className="ws-wrap">
+            <div className="ws-catbar__row" role="group" aria-label="Browse categories">
+              <Link to="/listings" className="ws-pill">
+                <LayoutGrid size={14} aria-hidden />
+                All categories
+              </Link>
+              {departments.map((c) => (
+                <Link key={c.id} to={`/listings?categoryId=${c.id}`} className="ws-pill">
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

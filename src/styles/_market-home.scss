@@ -265,3 +265,151 @@
     outline-offset: 2px;
   }
 }
+
+// ─── Header: search cluster ─────────────────────────────────────
+// The sandbox centres a 880px cluster of location, categories and search
+// between the brand and the account actions.
+.ws-topbar__centre {
+  display: none;
+  min-width: 0;
+  flex: 1;
+  justify-content: center;
+
+  @media (min-width: 1100px) {
+    display: flex;
+  }
+
+  > * + * { margin-left: 8px; }
+}
+
+.ws-topbar__centre {
+  gap: 8px;
+}
+
+.ws-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0 14px;
+  border: 1px solid var(--ws-border-default);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-surface-base);
+  color: var(--ws-text-primary);
+  font-size: 13.5px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color var(--ws-duration-fast, 0.15s) ease,
+    box-shadow var(--ws-duration-fast, 0.15s) ease;
+
+  &:hover { border-color: var(--ws-border-strong); }
+
+  // The ring is on the wrapper, not the input, so the whole control lights up.
+  &:focus-within {
+    border-color: var(--ws-action-primary-default);
+    box-shadow: 0 0 0 1px var(--ws-action-primary-default);
+  }
+
+  &__select {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    outline: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    padding-right: 4px;
+  }
+
+  &__chev {
+    flex-shrink: 0;
+    color: var(--ws-text-tertiary);
+  }
+
+  &--search {
+    flex: 1;
+    min-width: 0;
+    max-width: 520px;
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font: inherit;
+      color: inherit;
+
+      &::placeholder { color: var(--ws-text-tertiary); }
+      &::-webkit-search-cancel-button { appearance: none; }
+    }
+  }
+}
+
+.ws-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ─── Header: department pill bar ────────────────────────────────
+.ws-catbar {
+  position: sticky;
+  top: 56px;
+  z-index: 40;
+  border-bottom: 1px solid var(--ws-border-subtle);
+  background: color-mix(in srgb, var(--ws-surface-canvas) 92%, transparent);
+  backdrop-filter: blur(4px);
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 16px 0;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+}
+
+.ws-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--ws-border-default);
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-surface-base);
+  color: var(--ws-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--ws-duration-fast, 0.15s) var(--ws-ease-standard, ease),
+    border-color var(--ws-duration-fast, 0.15s) var(--ws-ease-standard, ease);
+
+  &:hover {
+    border-color: var(--ws-border-strong);
+    background: var(--ws-surface-raised);
+  }
+
+  &[aria-current='true'],
+  &.is-active {
+    border-color: var(--ws-action-primary-default);
+    background: var(--ws-action-primary-tonal);
+    color: var(--ws-action-primary-text);
+  }
+}
