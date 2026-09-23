@@ -998,48 +998,6 @@
     color: var(--ws-text-tertiary);
   }
 
-  // The numbered steps are ours, not the sandbox's; they keep the panel's
-  // tone rather than sitting on it as separate cards.
-  &__steps {
-    display: grid;
-    gap: 12px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  &__step {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  &__num {
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    border-radius: var(--ws-radius-full);
-    background: color-mix(in srgb, var(--mk-accent) 14%, transparent);
-    color: var(--mk-tint-ink);
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  &__steptitle {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ws-text-primary);
-  }
-
-  &__stepcopy {
-    margin: 2px 0 0;
-    font-size: 12.5px;
-    line-height: 1.6;
-    color: var(--ws-text-secondary);
-  }
 }
 
 // ─── Footer ─────────────────────────────────────────────────────

@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import { ShieldCheck, Truck, Wallet } from "lucide-react";
 
 export type Assurance = { Icon: LucideIcon; title: string; copy: string };
-export type SellStep = { title: string; copy: string };
 
 /**
  * The trust strip under the hero, copied from the design sandbox.
@@ -30,17 +29,3 @@ export const ASSURANCES: Assurance[] = [
   },
 ];
 
-export const SELL_STEPS: SellStep[] = [
-  {
-    title: "Open your store",
-    copy: "Pick a name, add your location and contact.",
-  },
-  {
-    title: "Post your listing",
-    copy: "Photos, price, condition, live in minutes.",
-  },
-  {
-    title: "Get paid",
-    copy: "Buyers pay into escrow. The money lands the day it is confirmed.",
-  },
-];
