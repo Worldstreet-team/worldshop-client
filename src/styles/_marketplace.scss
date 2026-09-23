@@ -797,6 +797,47 @@ $bp-lg: 1280px;
   }
 }
 
+// ── Category page head ──
+// Trail, title, and a search that refines from here. Short by design: the
+// results are the page, and the band this replaced pushed the first row of
+// products below the fold.
+.ws-browsehead {
+  display: grid;
+  gap: var(--ws-space-3);
+  padding-block: var(--ws-space-4) 0;
+
+  @media (min-width: $bp-md) { padding-block: var(--ws-space-5) 0; }
+}
+
+.ws-browsehead__row {
+  display: grid;
+  gap: var(--ws-space-3);
+  align-items: center;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+    gap: var(--ws-space-8);
+  }
+}
+
+.ws-browsehead__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(24px, 1.6vw + 16px, 32px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.ws-browsehead__search {
+  height: 46px;
+
+  @media (min-width: $bp-md) { height: 48px; }
+}
+
+.ws-crumbs__step { display: contents; }
+
 .ws-browse {
   display: grid;
   gap: var(--ws-space-6);
@@ -823,7 +864,7 @@ $bp-lg: 1280px;
 .ws-browse__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--ws-space-3);
   flex-wrap: wrap;
   margin-bottom: var(--ws-space-4);
@@ -832,6 +873,9 @@ $bp-lg: 1280px;
 }
 
 .ws-browse__count {
+  // Anchored left whatever sits beside it — the row is justified to its end so
+  // the controls hug the right edge, and without this the count follows them.
+  margin-right: auto;
   font-size: 14px;
   color: var(--ws-text-muted);
 
@@ -839,6 +883,15 @@ $bp-lg: 1280px;
     color: var(--ws-text-primary);
     font-weight: 600;
   }
+}
+
+.ws-browse__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  white-space: nowrap;
 }
 
 .ws-browse__controls {
@@ -1067,6 +1120,19 @@ details:not([open]) > .ws-filters__legend::after {
   padding: 0;
   display: grid;
   gap: var(--ws-space-1);
+}
+
+.ws-filters__stack {
+  display: grid;
+  gap: var(--ws-space-2);
+}
+
+// The child rows sit in from their parent, so the list reads as a tree.
+.ws-subcat--child { padding-left: var(--ws-space-4); }
+
+.ws-subcat--up {
+  color: var(--ws-brand-gold-text);
+  font-weight: 500;
 }
 
 .ws-subcat {
@@ -1750,6 +1816,24 @@ details:not([open]) > .ws-filters__legend::after {
 .ws-listing__side {
   @media (min-width: $bp-md) {
     gap: var(--ws-space-4);
+    // Stretched, not start-aligned: a sticky child needs a containing block
+    // taller than itself, and a start-aligned grid item is exactly its own
+    // height — which is why sticking it directly does nothing.
+    align-self: stretch;
+  }
+}
+
+// Follows the long read down: the description and specs are what a buyer
+// wants to ask about, so the ask has to still be on screen.
+.ws-listing__stick {
+  display: contents;
+
+  @media (min-width: $bp-md) {
+    display: grid;
+    gap: var(--ws-space-4);
+    align-content: start;
+    position: sticky;
+    top: calc(var(--ws-header-h) + var(--ws-space-4));
   }
 }
 
@@ -1760,11 +1844,13 @@ details:not([open]) > .ws-filters__legend::after {
   order: 2;
 }
 .ws-listing__body {
-  order: 3;
+  order: 4;
   min-width: 0;
 }
+// Above the long read on a phone: the action is what the page is for, and
+// nobody scrolls past a description to find it.
 .ws-listing__contact {
-  order: 4;
+  order: 3;
   display: grid;
   gap: var(--ws-space-4);
   // Clears the sticky header when "Message seller" scrolls here.
@@ -1903,11 +1989,387 @@ details:not([open]) > .ws-filters__legend::after {
   margin: calc(var(--ws-space-2) * -1) 0 var(--ws-space-3);
 }
 
+// ── Product page ──
+// The arrangement every shopper already knows: photos on the left, the box
+// they act from on the right, the long read in tabs underneath.
+.ws-pdp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ws-space-6);
+  padding-block: var(--ws-space-4) var(--ws-space-8);
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: var(--ws-space-10);
+    align-items: start;
+    padding-block: var(--ws-space-6) var(--ws-space-10);
+  }
+
+  @media (min-width: $bp-lg) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.ws-pdp__media { min-width: 0; }
+
+.ws-pdp__buy {
+  min-width: 0;
+
+  // Follows the photos down, the way a buy box does everywhere else.
+  @media (min-width: $bp-md) {
+    position: sticky;
+    top: calc(var(--ws-header-h) + var(--ws-space-4));
+  }
+}
+
+// ── Buy box ──
+.ws-buybox {
+  display: grid;
+  gap: var(--ws-space-4);
+  align-content: start;
+}
+
+.ws-buybox__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ws-space-3);
+}
+
+.ws-buybox__title {
+  font-family: var(--ws-font-display);
+  font-weight: 700;
+  font-size: clamp(22px, 1.1vw + 16px, 30px);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.ws-buybox__acts {
+  display: flex;
+  gap: var(--ws-space-1);
+  flex: none;
+}
+
+.ws-buybox__rating {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  flex-wrap: wrap;
+  margin-top: calc(var(--ws-space-2) * -1);
+}
+
+// The rating jumps to the reviews tab, as a product page's rating always does.
+.ws-buybox__ratinglink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ws-text-muted);
+  cursor: pointer;
+  text-underline-offset: 3px;
+
+  &:hover { color: var(--ws-text-primary); text-decoration: underline; }
+}
+
+.ws-buybox__noreviews {
+  @include ws-caption;
+  color: var(--ws-text-subtle);
+}
+
+.ws-buybox__price {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  flex-wrap: wrap;
+}
+
+.ws-buybox__hint {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin-top: calc(var(--ws-space-3) * -1);
+}
+
+.ws-buybox__options {
+  display: grid;
+  gap: var(--ws-space-2);
+}
+
+.ws-buybox__chosen { color: var(--ws-text-primary); text-transform: none; letter-spacing: 0; }
+
+// Facts as a boxed block, the slot a product page gives delivery and returns.
+.ws-buybox__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ws-space-4);
+  margin: 0;
+  padding: var(--ws-space-4);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-surface);
+
+  > div { display: grid; gap: 2px; min-width: 0; }
+
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ws-text-subtle);
+
+    svg { flex: none; }
+  }
+
+  dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ws-buybox__cta {
+  display: grid;
+  gap: var(--ws-space-2);
+  scroll-margin-top: calc(var(--ws-header-h) + var(--ws-space-4));
+}
+
+.ws-buybox__assure {
+  display: grid;
+  gap: var(--ws-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--ws-space-2);
+    @include ws-caption;
+    color: var(--ws-text-muted);
+  }
+
+  svg { color: var(--ws-text-subtle); margin-top: 1px; }
+}
+
+.ws-buybox__seller {
+  padding: var(--ws-space-3);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-surface);
+}
+
+.ws-buybox__where {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  @include ws-caption;
+  color: var(--ws-text-muted);
+
+  svg { flex: none; color: var(--ws-text-subtle); }
+}
+
+// ── Tabbed detail ──
+.ws-pdp__tabs {
+  scroll-margin-top: var(--ws-header-h);
+  padding-bottom: var(--ws-space-10);
+}
+
+.ws-pdp__read {
+  max-width: var(--ws-measure);
+  display: grid;
+  gap: var(--ws-space-8);
+}
+
+.ws-pdp__specgroup {
+  display: grid;
+  gap: var(--ws-space-3);
+}
+
+.ws-crumbs__here {
+  color: var(--ws-text-muted);
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ── Action panel ──
+// One card, hairline-divided: the ask, who you are asking, then what happens
+// after. Four separate cards read as four separate offers.
+.ws-actionpanel {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  // Clears the sticky header when the phone action bar scrolls here.
+  scroll-margin-top: calc(var(--ws-header-h) + var(--ws-space-4));
+
+  > * {
+    padding: var(--ws-space-5);
+    border-top: 1px solid var(--ws-border-hairline);
+  }
+
+  > *:first-child { border-top: 0; }
+}
+
+.ws-actionpanel__safety {
+  margin: 0;
+  background: var(--ws-bg-sunken);
+}
+
+// ── The ask ──
+.ws-ask {
+  display: grid;
+  gap: var(--ws-space-3);
+}
+
+.ws-ask__cta {
+  height: 48px;
+  font-size: 15px;
+}
+
+.ws-ask__note {
+  @include ws-caption;
+  color: var(--ws-text-muted);
+  margin: 0;
+  text-align: center;
+}
+
+.ws-ask__row {
+  display: flex;
+  gap: var(--ws-space-2);
+}
+
+.ws-ask__send { flex: 1; justify-content: center; }
+
+// ── Seller line ──
+// The store as one row rather than a panel of statistics: name, how it is
+// rated, how fast it answers. The store page carries the rest.
+.ws-sellerline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ws-space-3);
+  text-decoration: none;
+  color: var(--ws-text-primary);
+  transition: background-color var(--ws-motion-fast) var(--ws-ease);
+
+  &:hover { background: var(--ws-bg-raised); }
+}
+
+.ws-sellerline__avatar {
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.ws-sellerline__id {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ws-sellerline__name {
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-1);
+  min-width: 0;
+  font-weight: 600;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-sellerline__tick { flex: none; color: var(--ws-status-success); }
+
+.ws-sellerline__meta,
+.ws-sellerline__place {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ws-text-muted);
+
+  svg { flex: none; }
+}
+
+.ws-sellerline__place { color: var(--ws-text-subtle); }
+
+.ws-sellerline__go { flex: none; color: var(--ws-text-subtle); }
+
+// ── Option rows ──
+// Full-width rows, one per option: these are prices to compare down a column,
+// not a two-up spec sheet.
+.ws-options {
+  display: grid;
+  margin: 0;
+}
+
+.ws-options__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ws-space-4);
+  padding: var(--ws-space-3) 0;
+  border-bottom: 1px solid var(--ws-border-hairline);
+  font-size: 14px;
+
+  &:first-child { padding-top: 0; }
+
+  dt { color: var(--ws-text-primary); font-weight: 500; }
+  dd { margin: 0; font-weight: 600; white-space: nowrap; }
+}
+
+// ── Facts grid ──
+// Label above value, two per row: a wide row with the value pushed to the far
+// right made the eye travel to pair them up.
+.ws-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ws-space-4) var(--ws-space-6);
+  margin: 0;
+
+  @media (min-width: $bp-lg) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.ws-facts__item {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding-bottom: var(--ws-space-3);
+  border-bottom: 1px solid var(--ws-border-hairline);
+
+  dt {
+    font-size: 12px;
+    color: var(--ws-text-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+}
+
 // ── How buying works ──
 .ws-howbuy {
   display: grid;
   gap: var(--ws-space-4);
-  padding: var(--ws-space-5);
+}
+
+.ws-howbuy__head {
+  @include ws-label;
+  color: var(--ws-text-subtle);
 }
 
 .ws-howbuy__steps {
@@ -1933,6 +2395,31 @@ details:not([open]) > .ws-filters__legend::after {
   border-radius: var(--ws-radius-md);
   background: color-mix(in srgb, var(--ws-brand-primary) 12%, transparent);
   color: var(--ws-brand-gold-text);
+}
+
+.ws-howbuy__num {
+  color: var(--ws-text-subtle);
+  margin-right: var(--ws-space-1);
+}
+
+// The terms the marketplace cannot soften: what it does not do for you.
+.ws-howbuy__terms {
+  display: grid;
+  gap: var(--ws-space-3);
+  list-style: none;
+  margin: 0;
+  padding: var(--ws-space-4) 0 0;
+  border-top: 1px solid var(--ws-border-hairline);
+
+  li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--ws-space-3);
+    @include ws-caption;
+    color: var(--ws-text-muted);
+  }
+
+  svg { color: var(--ws-text-subtle); margin-top: 1px; }
 }
 
 .ws-howbuy__title {
@@ -1961,6 +2448,23 @@ details:not([open]) > .ws-filters__legend::after {
   overflow: hidden;
   background: var(--ws-bg-surface);
 
+  // Strip first in the DOM so it reaches the keyboard before the arrows.
+  // Below it on a phone, beside it above — where each shape expects it.
+  display: flex;
+  flex-direction: column;
+
+  .ws-gallery__thumbs { order: 2; }
+
+  &--strip {
+    @media (min-width: $bp-sm) {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: stretch;
+
+      .ws-gallery__thumbs { order: 0; }
+    }
+  }
+
   // Phones: the photo runs edge to edge, the way a listing app shows it.
   @media (max-width: #{$bp-sm - 1px}) {
     margin-inline: calc(var(--ws-space-6) * -1);
@@ -1971,6 +2475,10 @@ details:not([open]) > .ws-filters__legend::after {
 
 .ws-gallery__main {
   position: relative;
+  // Clips the scaled-up backdrop below. Without this it spills a good 50px
+  // past the frame and covers the thumbnail strip beside it, which ate every
+  // click on a thumbnail.
+  overflow: hidden;
   aspect-ratio: 4 / 3;
   max-height: min(620px, 72vh);
   width: 100%;
@@ -1983,6 +2491,30 @@ details:not([open]) > .ws-filters__legend::after {
     height: 100%;
     object-fit: contain;
     display: block;
+  }
+
+  // Above the blurred backdrop, below the controls: a bare z-index: 1 here put
+  // the photo over the arrows, which swallowed every click on them.
+  .ws-gallery__photo {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ws-gallery__nav,
+  .ws-gallery__count {
+    z-index: 2;
+  }
+
+  // Fills what contain leaves empty. Blurred hard enough that it reads as
+  // ground rather than a second copy of the item, and scaled past the frame so
+  // the blur's soft edge never shows.
+  .ws-gallery__back {
+    position: absolute;
+    inset: 0;
+    object-fit: cover;
+    transform: scale(1.15);
+    filter: blur(36px) saturate(1.1);
+    opacity: 0.4;
   }
 
   // The photo strip is keyboard-operable (arrow keys), so it has to show focus.
@@ -2063,6 +2595,15 @@ details:not([open]) > .ws-filters__legend::after {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  // Beside the photo from tablet up — where a product page always puts it.
+  @media (min-width: $bp-sm) {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+    max-height: 100%;
+    padding: var(--ws-space-3) 0 var(--ws-space-3) var(--ws-space-3);
   }
 }
 

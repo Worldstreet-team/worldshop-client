@@ -3,11 +3,12 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ArrowRight, Store } from 'lucide-react';
 import { publicMarketplace, type PublicStore } from '@/features/stores/api';
 import { useDirectoryFilters } from '@/shared/hooks/useDirectoryFilters';
+import { useFilterDrawer } from '@/shared/hooks/useFilterDrawer';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import StoreCard from '@/features/stores/components/StoreCard';
-import DirectoryHero from '@/features/stores/components/directory/DirectoryHero';
+import DirectoryHeader from '@/features/stores/components/directory/DirectoryHeader';
+import DirectoryFilters from '@/features/stores/components/directory/DirectoryFilters';
 import DirectoryResults from '@/features/stores/components/directory/DirectoryResults';
-import SellBand from '@/features/listings/components/home/SellBand';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
 
@@ -15,6 +16,7 @@ const NO_STORES: PublicStore[] = [];
 
 export default function StoresDirectory() {
   const filters = useDirectoryFilters();
+  const drawer = useFilterDrawer();
   usePageTitle(filters.place ? `Stores in ${filters.place}` : 'Stores');
 
   const query = useQuery({
@@ -25,17 +27,18 @@ export default function StoresDirectory() {
   });
 
   return (
-    <>
-      <DirectoryHero
-        id="stores-title"
-        eyebrow="Sellers"
-        title="Stores"
-        sub="Independent sellers on the marketplace. Visit one to see everything it lists, then message the seller directly."
-        noun="stores"
-        filters={filters}
-      />
+    <div className="ws-wrap">
+      <DirectoryHeader id="stores-title" title="Stores" place={filters.place} />
 
-      <div className="ws-wrap">
+      <div className="ws-browse">
+        <DirectoryFilters
+          filters={filters}
+          noun="stores"
+          total={query.data?.pagination.total ?? 0}
+          open={drawer.open}
+          onClose={() => drawer.setOpen(false)}
+        />
+
         <div className="ws-directory">
           <DirectoryResults
             noun={['store', 'stores']}
@@ -63,11 +66,11 @@ export default function StoresDirectory() {
             onRetry={() => query.refetch()}
             onPage={filters.setPage}
             onClearAll={filters.clearAll}
+            onOpenFilters={() => drawer.setOpen(true)}
+            filtersOpen={drawer.open}
           />
-
-          <SellBand />
         </div>
       </div>
-    </>
+    </div>
   );
 }

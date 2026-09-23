@@ -5,6 +5,8 @@ interface PaginationProps {
   siblingCount?: number;
   showFirstLast?: boolean;
   className?: string;
+  /** Warms a page on hover, so the click lands on rows already fetched. */
+  onPrefetch?: (page: number) => void;
 }
 
 function generatePageNumbers(current: number, total: number, siblings: number): (number | 'ellipsis')[] {
@@ -47,10 +49,15 @@ export default function Pagination({
   siblingCount = 1,
   showFirstLast = true,
   className = '',
+  onPrefetch,
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const pages = generatePageNumbers(currentPage, totalPages, siblingCount);
+  const warm = (page: number) => ({
+    onMouseEnter: () => onPrefetch?.(page),
+    onFocus: () => onPrefetch?.(page),
+  });
 
   const handlePrevious = () => {
     if (currentPage > 1) onPageChange(currentPage - 1);
@@ -78,6 +85,7 @@ export default function Pagination({
       <button
         className="ws-pagination__item"
         onClick={handlePrevious}
+        {...warm(currentPage - 1)}
         disabled={currentPage === 1}
         aria-label="Go to previous page"
       >
@@ -96,6 +104,7 @@ export default function Pagination({
             key={page}
             className={`ws-pagination__item${page === currentPage ? ' is-current' : ''}`}
             onClick={() => onPageChange(page)}
+            {...warm(page)}
             aria-current={page === currentPage ? 'page' : undefined}
             aria-label={`Go to page ${page}`}
           >
@@ -107,6 +116,7 @@ export default function Pagination({
       <button
         className="ws-pagination__item"
         onClick={handleNext}
+        {...warm(currentPage + 1)}
         disabled={currentPage === totalPages}
         aria-label="Go to next page"
       >

@@ -1,16 +1,12 @@
-import { useState } from 'react';
-import { ChevronRight, ImageOff } from 'lucide-react';
-import { imageSrc, type ImageRef } from '@/features/listings/model';
+import { useState } from "react";
+import { ChevronRight, ImageOff } from "lucide-react";
+import { imageSrc, type ImageRef } from "@/features/listings/model";
 
 type ListingGalleryProps = {
   images: ImageRef[];
   name: string;
 };
 
-/**
- * Keyed by the listing at the call site, so moving to another listing starts
- * at its first photo without resetting state by hand.
- */
 export default function ListingGallery({ images, name }: ListingGalleryProps) {
   const [active, setActive] = useState(0);
 
@@ -20,7 +16,27 @@ export default function ListingGallery({ images, name }: ListingGalleryProps) {
   };
 
   return (
-    <div className="ws-gallery">
+    <div
+      className={`ws-gallery${images.length > 1 ? " ws-gallery--strip" : ""}`}
+    >
+      {images.length > 1 && (
+        <div className="ws-gallery__thumbs">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`ws-thumb${i === active ? " is-active" : ""}`}
+              onClick={() => setActive(i)}
+              onMouseEnter={() => setActive(i)}
+              aria-label={`Show photo ${i + 1}`}
+              aria-current={i === active}
+            >
+              <img src={imageSrc(img)} alt="" />
+            </button>
+          ))}
+        </div>
+      )}
+
       <div
         className="ws-gallery__main"
         role="group"
@@ -28,12 +44,30 @@ export default function ListingGallery({ images, name }: ListingGalleryProps) {
         aria-label={`Photos of ${name}`}
         tabIndex={images.length > 1 ? 0 : -1}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
-          if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            step(1);
+          }
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            step(-1);
+          }
         }}
       >
         {images.length > 0 ? (
-          <img src={imageSrc(images[active])} alt={name} />
+          <>
+            <img
+              className="ws-gallery__back"
+              src={imageSrc(images[active])}
+              alt=""
+              aria-hidden
+            />
+            <img
+              className="ws-gallery__photo"
+              src={imageSrc(images[active])}
+              alt={name}
+            />
+          </>
         ) : (
           <div className="ws-pcard__noimg">
             <ImageOff size={24} aria-hidden />
@@ -65,23 +99,6 @@ export default function ListingGallery({ images, name }: ListingGalleryProps) {
           </>
         )}
       </div>
-
-      {images.length > 1 && (
-        <div className="ws-gallery__thumbs">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`ws-thumb${i === active ? ' is-active' : ''}`}
-              onClick={() => setActive(i)}
-              aria-label={`Show photo ${i + 1}`}
-              aria-current={i === active}
-            >
-              <img src={imageSrc(img)} alt="" />
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
