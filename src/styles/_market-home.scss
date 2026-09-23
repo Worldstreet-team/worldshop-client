@@ -755,6 +755,10 @@
     bottom: 8px;
     right: 8px;
     top: auto;
+    // The old rule pinned it left; setting right without clearing left made it
+    // stretch between both edges, so a two-character count rendered 286px wide.
+    left: auto;
+    width: fit-content;
     height: 24px;
     padding: 0 8px 0 4px;
     gap: 4px;
