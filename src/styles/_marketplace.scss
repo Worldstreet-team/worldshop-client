@@ -7,7 +7,7 @@
 //
 // Breakpoints 640 / 1024 / 1280; gutters 48 web, 24 mobile.
 
-@use 'ds' as *;
+@use "ds" as *;
 
 $bp-sm: 640px;
 $bp-md: 1024px;
@@ -27,23 +27,28 @@ $bp-lg: 1280px;
   --ws-measure: 62ch;
   --ws-measure-tight: 46ch;
 
-  --ws-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24), 0 10px 24px -18px rgba(0, 0, 0, 0.55);
-  --ws-shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.28), 0 20px 44px -24px rgba(0, 0, 0, 0.6);
+  // The sticky header: the 64px bar (TopNav spec) plus its bottom hairline.
+  // Lives at the root rather than on .ws-shell so <html> can use it for
+  // scroll-padding — every sticky offset derives from this one number rather
+  // than hardcoding and sliding under the bar.
+  --ws-header-h: 65px;
+
+  --ws-shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.24), 0 10px 24px -18px rgba(0, 0, 0, 0.55);
+  --ws-shadow-lift:
+    0 2px 6px rgba(0, 0, 0, 0.28), 0 20px 44px -24px rgba(0, 0, 0, 0.6);
 }
 
 .ws-shell {
-  // The sticky header is the 64px bar (TopNav spec) plus its bottom hairline.
-  // Sticky offsets below derive from this rather than hardcoding and sliding
-  // under.
-  --ws-header-h: 65px;
-
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--ws-bg-page);
 }
 
-.ws-shell__main { flex: 1; }
+.ws-shell__main {
+  flex: 1;
+}
 
 .ws-wrap {
   width: 100%;
@@ -51,7 +56,9 @@ $bp-lg: 1280px;
   margin-inline: auto;
   padding-inline: var(--ws-space-6);
 
-  @media (min-width: $bp-md) { padding-inline: 48px; }
+  @media (min-width: $bp-md) {
+    padding-inline: 48px;
+  }
 }
 
 // ─── Top bar ────────────────────────────────────────────────────
@@ -63,6 +70,74 @@ $bp-lg: 1280px;
   z-index: var(--ws-z-sticky);
   background: var(--ws-bg-surface);
   border-bottom: 1px solid var(--ws-border-hairline);
+}
+
+// At the very top of the home page the bar has no colour of its own: the hero
+// runs up underneath it (see the pull-up on .ws-hero) and the photo is the
+// bar's background. The theme surface returns on the first scroll — not when
+// the hero ends, because a see-through bar with the hero's headline sliding
+// through it is unreadable.
+//
+// Every value here is the hero's, not the theme's: the ground behind the bar
+// is fixed in both modes, so the text on it has to be too.
+.ws-topbar--hero {
+  --ws-topbar-fg: #fafafa;
+  --ws-topbar-fg-muted: rgba(250, 250, 250, 0.72);
+  --ws-topbar-chip: rgba(255, 255, 255, 0.12);
+  --ws-topbar-chip-hover: rgba(255, 255, 255, 0.2);
+
+  // Transparent, not dark: the hero runs up underneath the bar (see the
+  // pull-up on .ws-hero), so the photo is the bar's background here. The
+  // theme surface returns the moment the hero is out from under it.
+  background: transparent;
+  border-bottom-color: transparent;
+  color: var(--ws-topbar-fg);
+
+  .ws-brand__word {
+    color: var(--ws-topbar-fg);
+  }
+  .ws-brand__eyebrow {
+    color: #ffcc29;
+  }
+
+  .ws-topbar__navlink {
+    color: var(--ws-topbar-fg-muted);
+    &:hover {
+      color: var(--ws-topbar-fg);
+    }
+    &.active {
+      color: var(--ws-topbar-fg);
+    }
+  }
+
+  .ws-iconbtn {
+    color: var(--ws-topbar-fg-muted);
+    &:hover {
+      background: var(--ws-topbar-chip);
+      color: var(--ws-topbar-fg);
+    }
+  }
+
+  // The ring punches through to whatever is behind the badge. Over the hero
+  // that is the photo under its scrim, so a flat colour would show as a
+  // patch — the ring goes dark and translucent instead.
+  .ws-iconbtn__dot {
+    border-color: rgba(8, 8, 11, 0.85);
+  }
+
+  .ws-topbar__group--account {
+    @media (min-width: $bp-md) {
+      border-left-color: var(--ws-topbar-chip);
+    }
+  }
+
+  .ws-avatar {
+    background: var(--ws-topbar-chip);
+    color: var(--ws-topbar-fg);
+  }
+  .ws-topbar__actions .ws-avatar:hover {
+    background: var(--ws-topbar-chip-hover);
+  }
 }
 
 .ws-topbar__row {
@@ -84,7 +159,9 @@ $bp-lg: 1280px;
 
     // Grid items stretch by default, which would make the whole left third
     // of the bar a home link.
-    > .ws-brand { justify-self: start; }
+    > .ws-brand {
+      justify-self: start;
+    }
   }
 }
 
@@ -137,7 +214,9 @@ $bp-lg: 1280px;
   align-self: stretch;
   gap: var(--ws-space-2);
 
-  @media (min-width: $bp-md) { display: flex; }
+  @media (min-width: $bp-md) {
+    display: flex;
+  }
 }
 
 .ws-topbar__navlink {
@@ -151,12 +230,14 @@ $bp-lg: 1280px;
   text-decoration: none;
   transition: color var(--ws-motion-fast) var(--ws-ease);
 
-  &:hover { color: var(--ws-text-primary); }
+  &:hover {
+    color: var(--ws-text-primary);
+  }
 
   // Underline sits on the bar's bottom hairline, so the current page reads as
   // a tab of the header rather than a floating badge.
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     inset-inline: var(--ws-space-3);
     bottom: 13px;
@@ -169,7 +250,9 @@ $bp-lg: 1280px;
 
   &.active {
     color: var(--ws-text-primary);
-    &::after { transform: scaleX(1); }
+    &::after {
+      transform: scaleX(1);
+    }
   }
 
   &:focus-visible {
@@ -179,7 +262,9 @@ $bp-lg: 1280px;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    &::after { transition: none; }
+    &::after {
+      transition: none;
+    }
   }
 }
 
@@ -199,7 +284,9 @@ $bp-lg: 1280px;
   padding: var(--ws-space-4) var(--ws-space-6);
   overflow-y: auto;
 
-  @media (min-width: $bp-sm) { display: none; }
+  @media (min-width: $bp-sm) {
+    display: none;
+  }
 }
 
 .ws-searchpop__row {
@@ -228,7 +315,10 @@ $bp-lg: 1280px;
   color: var(--ws-text-muted);
   cursor: pointer;
 
-  &:hover { background: var(--ws-bg-raised); color: var(--ws-text-primary); }
+  &:hover {
+    background: var(--ws-bg-raised);
+    color: var(--ws-text-primary);
+  }
 }
 
 .ws-searchpop__suggestions {
@@ -250,8 +340,13 @@ $bp-lg: 1280px;
   color: inherit;
   border-bottom: 1px solid var(--ws-border-hairline);
 
-  &:hover, &:focus-visible { background: var(--ws-bg-chip); }
-  &:last-child { border-bottom: 0; }
+  &:hover,
+  &:focus-visible {
+    background: var(--ws-bg-chip);
+  }
+  &:last-child {
+    border-bottom: 0;
+  }
 }
 
 .ws-searchpop__thumb {
@@ -262,7 +357,11 @@ $bp-lg: 1280px;
   flex: none;
   background: var(--ws-bg-sunken);
 
-  &--empty { display: grid; place-items: center; color: var(--ws-text-subtle); }
+  &--empty {
+    display: grid;
+    place-items: center;
+    color: var(--ws-text-subtle);
+  }
 }
 
 .ws-searchpop__suggestion-text {
@@ -299,7 +398,9 @@ $bp-lg: 1280px;
 // same). Amount is a link out to the wallet app; the eye masks it.
 .ws-topbar__balance {
   display: none;
-  @media (min-width: $bp-md) { display: inline-flex; }
+  @media (min-width: $bp-md) {
+    display: inline-flex;
+  }
 }
 
 .ws-balance {
@@ -320,8 +421,12 @@ $bp-lg: 1280px;
     font-size: 13px;
     font-weight: 600;
 
-    svg { color: var(--ws-brand-gold-text); }
-    &:hover span { color: var(--ws-brand-gold-text); }
+    svg {
+      color: var(--ws-brand-gold-text);
+    }
+    &:hover span {
+      color: var(--ws-brand-gold-text);
+    }
   }
 
   &__eye {
@@ -335,7 +440,10 @@ $bp-lg: 1280px;
     color: var(--ws-text-subtle);
     cursor: pointer;
 
-    &:hover { color: var(--ws-text-primary); background: var(--ws-bg-raised); }
+    &:hover {
+      color: var(--ws-text-primary);
+      background: var(--ws-bg-raised);
+    }
   }
 }
 
@@ -345,13 +453,17 @@ $bp-lg: 1280px;
 .ws-topbar__actions {
   display: flex;
   align-items: center;
-  gap: var(--ws-space-3);
+  gap: var(--ws-space-1);
   margin-left: auto;
 
   // Hover is the standard one-step surface lighten; the gold ring stays
   // reserved for keyboard focus.
-  .ws-avatar { transition: background-color var(--ws-motion-fast) var(--ws-ease); }
-  .ws-avatar:hover { background: var(--ws-bg-raised); }
+  .ws-avatar {
+    transition: background-color var(--ws-motion-fast) var(--ws-ease);
+  }
+  .ws-avatar:hover {
+    background: var(--ws-bg-raised);
+  }
 }
 
 .ws-topbar__group {
@@ -370,10 +482,18 @@ $bp-lg: 1280px;
   }
 }
 
-// Utilities are a desktop affordance; the drawer carries them on small screens.
+// The theme switch rides here at every width — it is the only way to change
+// theme, and the drawer does not carry it. The rest of the group is a desktop
+// affordance and hides itself below the breakpoint.
 .ws-topbar__group--utility {
+  display: flex;
+}
+
+.ws-topbar__saved {
   display: none;
-  @media (min-width: $bp-md) { display: flex; }
+  @media (min-width: $bp-md) {
+    display: grid;
+  }
 }
 
 .ws-iconbtn {
@@ -388,9 +508,14 @@ $bp-lg: 1280px;
   cursor: pointer;
   text-decoration: none;
   position: relative;
-  transition: background-color var(--ws-motion-fast) var(--ws-ease), color var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    background-color var(--ws-motion-fast) var(--ws-ease),
+    color var(--ws-motion-fast) var(--ws-ease);
 
-  &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
+  &:hover {
+    background: var(--ws-bg-chip);
+    color: var(--ws-text-primary);
+  }
 }
 
 // Unread dot on the messages icon — count lives in the inbox, not the chrome.
@@ -407,18 +532,24 @@ $bp-lg: 1280px;
 
 .ws-topbar__sell {
   display: none;
-  @media (min-width: $bp-md) { display: inline-flex; }
+  @media (min-width: $bp-md) {
+    display: inline-flex;
+  }
 }
 
 // The hamburger only exists below the desktop breakpoint, where the category
 // chips and rail collapse into the drawer.
 .ws-topbar__menu {
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
 // With the search moved onto the product pages, this is the chrome's only way
 // into search — so it shows at every width and opens the same overlay.
-.ws-topbar__searchtoggle { display: grid; }
+.ws-topbar__searchtoggle {
+  display: grid;
+}
 
 // Sits directly on the blurred scrim rather than a solid surface, so — like
 // .ws-topbar__searchtoggle above — its override of .ws-iconbtn's transparent
@@ -429,19 +560,25 @@ $bp-lg: 1280px;
   border: 1px solid var(--ws-border-hairline);
   color: var(--ws-text-primary);
 
-  &:hover { background: var(--ws-bg-chip); }
+  &:hover {
+    background: var(--ws-bg-chip);
+  }
 }
 
 // The account moves into the drawer's profile row on small screens.
 .ws-topbar__profile {
   display: none;
-  @media (min-width: $bp-md) { display: grid; }
+  @media (min-width: $bp-md) {
+    display: grid;
+  }
 }
 
 // Cross-app links are desktop-only; the drawer carries them on small screens.
 .ws-topbar__admin {
   display: none;
-  @media (min-width: $bp-md) { display: grid; }
+  @media (min-width: $bp-md) {
+    display: grid;
+  }
 }
 
 // Custom location dropdown — a native <select> popup can't be styled and
@@ -464,7 +601,9 @@ $bp-lg: 1280px;
   padding: var(--ws-space-2);
   border-radius: var(--ws-radius-sm);
 
-  svg { color: var(--ws-text-subtle); }
+  svg {
+    color: var(--ws-text-subtle);
+  }
 
   span {
     max-width: 108px;
@@ -474,7 +613,9 @@ $bp-lg: 1280px;
   }
 
   &:hover,
-  &[aria-expanded='true'] { color: var(--ws-text-primary); }
+  &[aria-expanded="true"] {
+    color: var(--ws-text-primary);
+  }
 
   &:focus-visible {
     outline: 2px solid var(--ws-brand-primary);
@@ -484,7 +625,9 @@ $bp-lg: 1280px;
 
 .ws-locpick__chevron {
   transition: transform var(--ws-motion-fast) var(--ws-ease);
-  [aria-expanded='true'] > & { transform: rotate(180deg); }
+  [aria-expanded="true"] > & {
+    transform: rotate(180deg);
+  }
 }
 
 // Menu spec: width 220, radius 10, Shadow/Nav.
@@ -531,7 +674,9 @@ $bp-lg: 1280px;
     white-space: nowrap;
   }
 
-  &:hover { border-color: var(--ws-border-strong, var(--ws-border-hairline)); }
+  &:hover {
+    border-color: var(--ws-border-strong, var(--ws-border-hairline));
+  }
 
   &:focus-visible {
     outline: 2px solid var(--ws-brand-primary);
@@ -580,7 +725,9 @@ $bp-lg: 1280px;
   border-radius: var(--ws-radius-sm);
   cursor: pointer;
 
-  &:hover { background: var(--ws-bg-raised); }
+  &:hover {
+    background: var(--ws-bg-raised);
+  }
 
   &:focus-visible {
     outline: 2px solid var(--ws-brand-primary);
@@ -641,9 +788,13 @@ $bp-lg: 1280px;
   overflow-x: auto;
   padding-block: 2px;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-  > * { flex: none; }
+  > * {
+    flex: none;
+  }
 }
 
 .ws-browse {
@@ -684,7 +835,10 @@ $bp-lg: 1280px;
   font-size: 14px;
   color: var(--ws-text-muted);
 
-  strong { color: var(--ws-text-primary); font-weight: 600; }
+  strong {
+    color: var(--ws-text-primary);
+    font-weight: 600;
+  }
 }
 
 .ws-browse__controls {
@@ -694,7 +848,9 @@ $bp-lg: 1280px;
 }
 
 .ws-browse__filtertoggle {
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
 // Active-filter count on the Filters button.
@@ -756,14 +912,17 @@ $bp-lg: 1280px;
 }
 
 .ws-filters__scrim {
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
 .ws-filters__head {
   display: flex;
   align-items: center;
   gap: var(--ws-space-3);
-  padding: var(--ws-space-3) var(--ws-space-3) var(--ws-space-3) var(--ws-space-5);
+  padding: var(--ws-space-3) var(--ws-space-3) var(--ws-space-3)
+    var(--ws-space-5);
   border-bottom: 1px solid var(--ws-border-hairline);
 
   @media (min-width: $bp-md) {
@@ -790,11 +949,15 @@ $bp-lg: 1280px;
   color: var(--ws-brand-gold-text);
   cursor: pointer;
 
-  &:hover { color: var(--ws-brand-active); }
+  &:hover {
+    color: var(--ws-brand-active);
+  }
 }
 
 .ws-filters__close {
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
 .ws-filters__body {
@@ -813,10 +976,15 @@ $bp-lg: 1280px;
   padding: var(--ws-space-4) var(--ws-space-5);
   border-top: 1px solid var(--ws-border-hairline);
 
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
-.ws-filters__done { width: 100%; justify-content: center; }
+.ws-filters__done {
+  width: 100%;
+  justify-content: center;
+}
 
 .ws-filters__hint {
   @include ws-caption;
@@ -828,7 +996,9 @@ $bp-lg: 1280px;
   padding-block: var(--ws-space-5);
   border-bottom: 1px solid var(--ws-border-hairline);
 
-  &:last-child { border-bottom: 0; }
+  &:last-child {
+    border-bottom: 0;
+  }
 }
 
 .ws-filters__legend {
@@ -840,11 +1010,13 @@ $bp-lg: 1280px;
   justify-content: space-between;
   cursor: pointer;
   list-style: none;
-  &::-webkit-details-marker { display: none; }
+  &::-webkit-details-marker {
+    display: none;
+  }
 
   // Chevron flips when the group is closed.
   &::after {
-    content: '';
+    content: "";
     width: 8px;
     height: 8px;
     border-right: 1.5px solid var(--ws-text-subtle);
@@ -854,8 +1026,12 @@ $bp-lg: 1280px;
   }
 }
 
-details:not([open]) > .ws-filters__legend { margin-bottom: 0; }
-details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
+details:not([open]) > .ws-filters__legend {
+  margin-bottom: 0;
+}
+details:not([open]) > .ws-filters__legend::after {
+  transform: rotate(-45deg);
+}
 
 .ws-chiprow {
   display: flex;
@@ -869,11 +1045,18 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-2);
   color: var(--ws-text-subtle);
 
-  input { min-width: 0; }
+  input {
+    min-width: 0;
+  }
   // Spinners fight the compact rail width.
   input::-webkit-outer-spin-button,
-  input::-webkit-inner-spin-button { appearance: none; margin: 0; }
-  input[type='number'] { -moz-appearance: textfield; }
+  input::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 // Subcategories are one-click links, not a second dropdown: this is the level
@@ -899,7 +1082,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: var(--ws-text-muted);
   cursor: pointer;
 
-  &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
+  &:hover {
+    background: var(--ws-bg-chip);
+    color: var(--ws-text-primary);
+  }
 
   &.is-active {
     color: var(--ws-brand-gold-text);
@@ -923,9 +1109,16 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-3);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  @media (min-width: $bp-sm) { gap: var(--ws-space-5); }
-  @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ws-space-6); }
-  @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (min-width: $bp-sm) {
+    gap: var(--ws-space-5);
+  }
+  @media (min-width: $bp-md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ws-space-6);
+  }
+  @media (min-width: $bp-lg) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 // While a new page or filter is in flight the previous results stay on screen
@@ -935,7 +1128,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   pointer-events: none;
   transition: opacity var(--ws-motion-base) var(--ws-ease);
 
-  @media (prefers-reduced-motion: reduce) { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 // Also resets the native <button> chrome (border/background/padding/font) so
@@ -982,7 +1177,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   // Hover lifts 2px (translate, never scale) with a faint brand tint on the
   // border and the deeper elevation.
   .ws-plink:hover & {
-    border-color: color-mix(in srgb, var(--ws-brand-primary) 35%, var(--ws-border-hairline));
+    border-color: color-mix(
+      in srgb,
+      var(--ws-brand-primary) 35%,
+      var(--ws-border-hairline)
+    );
     transform: translateY(-2px);
     box-shadow: var(--ws-shadow-lift);
   }
@@ -1002,11 +1201,15 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
   @media (prefers-reduced-motion: reduce) {
     transition: border-color var(--ws-motion-fast) var(--ws-ease);
-    .ws-plink:hover & { transform: none; }
+    .ws-plink:hover & {
+      transform: none;
+    }
   }
 }
 
-.ws-plink:focus-visible { outline: none; }
+.ws-plink:focus-visible {
+  outline: none;
+}
 
 // ── Media ──
 
@@ -1026,11 +1229,17 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   }
 
   // A slow, slight push-in on the photo only — the card itself never scales.
-  .ws-plink:hover & img { transform: scale(1.04); }
+  .ws-plink:hover & img {
+    transform: scale(1.04);
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    img { transition: none; }
-    .ws-plink:hover & img { transform: none; }
+    img {
+      transition: none;
+    }
+    .ws-plink:hover & img {
+      transform: none;
+    }
   }
 }
 
@@ -1045,11 +1254,17 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     transform var(--ws-motion-slow) var(--ws-ease);
 
   .ws-plink:hover &,
-  .ws-plink:focus-visible & { opacity: 1; }
+  .ws-plink:focus-visible & {
+    opacity: 1;
+  }
 
-  @media (hover: none) { display: none; }
+  @media (hover: none) {
+    display: none;
+  }
 
-  @media (prefers-reduced-motion: reduce) { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .ws-pcard__noimg {
@@ -1101,7 +1316,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding: 0 var(--ws-space-2);
   border-radius: var(--ws-radius-pill);
   background: rgba(0, 0, 0, 0.6);
-  color: #FFFFFF;
+  color: #ffffff;
   font-size: 11px;
   font-weight: 600;
 }
@@ -1120,7 +1335,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-radius: var(--ws-radius-pill);
   // Sits on photography — theme-independent, same rule as .ws-badge--ink.
   background: rgba(0, 0, 0, 0.55);
-  color: #FFFFFF;
+  color: #ffffff;
   cursor: pointer;
   opacity: 0;
   transition:
@@ -1128,20 +1343,30 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     background-color var(--ws-motion-fast) var(--ws-ease),
     transform var(--ws-motion-fast) var(--ws-ease);
 
-  @media (hover: none) { opacity: 1; }
+  @media (hover: none) {
+    opacity: 1;
+  }
 
-  &:hover { background: rgba(0, 0, 0, 0.75); }
-  &:active { transform: scale(0.92); }
+  &:hover {
+    background: rgba(0, 0, 0, 0.75);
+  }
+  &:active {
+    transform: scale(0.92);
+  }
 
   &.is-saved {
     opacity: 1;
     color: var(--ws-brand-primary);
-    svg { fill: currentColor; }
+    svg {
+      fill: currentColor;
+    }
   }
 }
 
 .ws-plink:hover .ws-pcard__save,
-.ws-pcard__save:focus-visible { opacity: 1; }
+.ws-pcard__save:focus-visible {
+  opacity: 1;
+}
 
 // ── Body ──
 
@@ -1185,7 +1410,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   min-height: 2.7em;
   text-wrap: pretty;
 
-  @container pcard (max-width: 219px) { font-size: 14px; }
+  @container pcard (max-width: 219px) {
+    font-size: 14px;
+  }
 }
 
 .ws-pcard__meta {
@@ -1198,7 +1425,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: var(--ws-text-muted);
   min-width: 0;
 
-  .ws-rating { gap: 3px; color: var(--ws-text-primary); font-weight: 500; }
+  .ws-rating {
+    gap: 3px;
+    color: var(--ws-text-primary);
+    font-weight: 500;
+  }
 }
 
 .ws-pcard__dim {
@@ -1207,7 +1438,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
   // On a narrow card the review count is what gives, so the location keeps
   // enough room to be read.
-  @container pcard (max-width: 219px) { display: none; }
+  @container pcard (max-width: 219px) {
+    display: none;
+  }
 }
 
 .ws-pcard__loc {
@@ -1217,7 +1450,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   min-width: 0;
   color: var(--ws-text-subtle);
 
-  svg { flex: none; }
+  svg {
+    flex: none;
+  }
 
   span {
     overflow: hidden;
@@ -1241,7 +1476,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     line-height: 1.2;
     text-wrap: balance;
 
-    @container pcard (max-width: 219px) { font-size: 16px; }
+    @container pcard (max-width: 219px) {
+      font-size: 16px;
+    }
   }
 
   // "Contact for price" is a real value, not missing data — but it is an
@@ -1298,7 +1535,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   min-width: 0;
   color: var(--ws-text-muted);
 
-  svg { flex: none; color: var(--ws-status-success); }
+  svg {
+    flex: none;
+    color: var(--ws-status-success);
+  }
 }
 
 .ws-pcard__sellername {
@@ -1317,16 +1557,24 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-weight: 600;
   color: var(--ws-brand-gold-text);
 
-  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+  svg {
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
+  }
 
-  .ws-plink:hover & svg { transform: translateX(3px); }
+  .ws-plink:hover & svg {
+    transform: translateX(3px);
+  }
 
   // The arrow is the affordance; the word "View" repeated on every card in a
   // row was noise on top of it.
-  .ws-pcard__cta-label { display: none; }
+  .ws-pcard__cta-label {
+    display: none;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    svg { transition: none; }
+    svg {
+      transition: none;
+    }
   }
 }
 
@@ -1335,17 +1583,50 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-pcard--skeleton {
   pointer-events: none;
 
-  .ws-pcard__media { border-bottom: 0; }
-  .ws-pcard__title { display: grid; gap: 6px; align-content: start; }
+  .ws-pcard__media {
+    border-bottom: 0;
+  }
+  .ws-pcard__title {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
 }
 
-.ws-pcard__skel-eyebrow { height: 10px; width: 38%; border-radius: 3px; }
-.ws-pcard__skel-line { height: 14px; width: 92%; border-radius: 4px; }
-.ws-pcard__skel-line--short { width: 60%; }
-.ws-pcard__skel-meta { height: 12px; width: 48%; border-radius: 4px; }
-.ws-pcard__skel-price { height: 18px; width: 52%; border-radius: 4px; }
-.ws-pcard__skel-seller { height: 12px; width: 44%; border-radius: 4px; }
-.ws-pcard__skel-cta { height: 12px; width: 40px; border-radius: 4px; margin-left: auto; }
+.ws-pcard__skel-eyebrow {
+  height: 10px;
+  width: 38%;
+  border-radius: 3px;
+}
+.ws-pcard__skel-line {
+  height: 14px;
+  width: 92%;
+  border-radius: 4px;
+}
+.ws-pcard__skel-line--short {
+  width: 60%;
+}
+.ws-pcard__skel-meta {
+  height: 12px;
+  width: 48%;
+  border-radius: 4px;
+}
+.ws-pcard__skel-price {
+  height: 18px;
+  width: 52%;
+  border-radius: 4px;
+}
+.ws-pcard__skel-seller {
+  height: 12px;
+  width: 44%;
+  border-radius: 4px;
+}
+.ws-pcard__skel-cta {
+  height: 12px;
+  width: 40px;
+  border-radius: 4px;
+  margin-left: auto;
+}
 
 .ws-rating {
   display: inline-flex;
@@ -1358,8 +1639,8 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   // "Rating stars are always orange #F97316, filled" — theme-independent, and
   // only the platform theme declares the token, hence the literal fallback.
   svg {
-    color: var(--ws-accent-star, #F97316);
-    fill: var(--ws-accent-star, #F97316);
+    color: var(--ws-accent-star, #f97316);
+    fill: var(--ws-accent-star, #f97316);
   }
 }
 
@@ -1467,12 +1748,21 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 }
 
 .ws-listing__side {
-  @media (min-width: $bp-md) { gap: var(--ws-space-4); }
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-4);
+  }
 }
 
-.ws-listing__gallery { order: 1; }
-.ws-listing__summary { order: 2; }
-.ws-listing__body    { order: 3; min-width: 0; }
+.ws-listing__gallery {
+  order: 1;
+}
+.ws-listing__summary {
+  order: 2;
+}
+.ws-listing__body {
+  order: 3;
+  min-width: 0;
+}
 .ws-listing__contact {
   order: 4;
   display: grid;
@@ -1493,7 +1783,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     border-top: 0;
   }
 
-  > h2 { margin-bottom: var(--ws-space-4); }
+  > h2 {
+    margin-bottom: var(--ws-space-4);
+  }
 }
 
 .ws-listing__desc {
@@ -1516,7 +1808,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 // Same bottom rhythm as a home section.
 .ws-listing__more {
   padding-bottom: var(--ws-space-16);
-  &:empty { display: none; }
+  &:empty {
+    display: none;
+  }
 }
 
 // ── Summary card ──
@@ -1525,7 +1819,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-3);
   padding: var(--ws-space-5);
 
-  .ws-detail__price { margin-top: 0; }
+  .ws-detail__price {
+    margin-top: 0;
+  }
 }
 
 .ws-summary__top {
@@ -1534,13 +1830,17 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   justify-content: space-between;
   gap: var(--ws-space-3);
 
-  .ws-detail__acts { margin-top: 0; }
+  .ws-detail__acts {
+    margin-top: 0;
+  }
 }
 
 .ws-summary__eyebrow {
   margin-bottom: 0;
   text-decoration: none;
-  &:hover { color: var(--ws-brand-active); }
+  &:hover {
+    color: var(--ws-brand-active);
+  }
 }
 
 // The page title, one step under the browse band's.
@@ -1570,7 +1870,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ws-space-4);
 
-  > div { display: grid; gap: 2px; min-width: 0; }
+  > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
 
   dt {
     display: flex;
@@ -1579,7 +1883,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     font-size: 12px;
     color: var(--ws-text-subtle);
 
-    svg { flex: none; }
+    svg {
+      flex: none;
+    }
   }
 
   dd {
@@ -1672,7 +1978,12 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 
   // contain, not cover: a buyer needs to see the whole item, and seller photos
   // come in every shape.
-  img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
 
   // The photo strip is keyboard-operable (arrow keys), so it has to show focus.
   &:focus-visible {
@@ -1694,28 +2005,43 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border: 0;
   border-radius: var(--ws-radius-pill);
   background: rgba(0, 0, 0, 0.55);
-  color: #FFFFFF;
+  color: #ffffff;
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--ws-motion-fast) var(--ws-ease), background-color var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    opacity var(--ws-motion-fast) var(--ws-ease),
+    background-color var(--ws-motion-fast) var(--ws-ease);
 
-  &.is-prev { left: var(--ws-space-3); rotate: 180deg; }
-  &.is-next { right: var(--ws-space-3); }
+  &.is-prev {
+    left: var(--ws-space-3);
+    rotate: 180deg;
+  }
+  &.is-next {
+    right: var(--ws-space-3);
+  }
 
-  &:hover { background: rgba(0, 0, 0, 0.75); }
+  &:hover {
+    background: rgba(0, 0, 0, 0.75);
+  }
 
   &:focus-visible {
     opacity: 1;
-    outline: 2px solid #FFFFFF;
+    outline: 2px solid #ffffff;
     outline-offset: 2px;
   }
 
   .ws-gallery:hover &,
-  .ws-gallery__main:focus-within & { opacity: 1; }
+  .ws-gallery__main:focus-within & {
+    opacity: 1;
+  }
 
-  @media (hover: none) { opacity: 1; }
+  @media (hover: none) {
+    opacity: 1;
+  }
 
-  @media (prefers-reduced-motion: reduce) { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 .ws-gallery__count {
@@ -1725,7 +2051,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding: 2px var(--ws-space-2);
   border-radius: var(--ws-radius-pill);
   background: rgba(0, 0, 0, 0.55);
-  color: #FFFFFF;
+  color: #ffffff;
   @include ws-caption;
 }
 
@@ -1735,7 +2061,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding: var(--ws-space-3);
   overflow-x: auto;
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .ws-thumb {
@@ -1749,15 +2077,25 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   cursor: pointer;
   padding: 0;
 
-  img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  &.is-active { border-color: var(--ws-brand-primary); border-width: 1.5px; }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  &.is-active {
+    border-color: var(--ws-brand-primary);
+    border-width: 1.5px;
+  }
 }
 
 .ws-spec {
   display: grid;
   grid-template-columns: 1fr;
 
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 // Spec rows are hairline-divided, not boxed — matches ListRow conventions.
@@ -1770,12 +2108,23 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-bottom: 1px solid var(--ws-border-hairline);
   font-size: 14px;
 
-  dt { color: var(--ws-text-muted); }
-  dd { margin: 0; color: var(--ws-text-primary); font-weight: 500; text-align: right; }
+  dt {
+    color: var(--ws-text-muted);
+  }
+  dd {
+    margin: 0;
+    color: var(--ws-text-primary);
+    font-weight: 500;
+    text-align: right;
+  }
 
   @media (min-width: $bp-sm) {
-    &:nth-child(odd) { padding-right: var(--ws-space-6); }
-    &:nth-child(even) { padding-left: var(--ws-space-6); }
+    &:nth-child(odd) {
+      padding-right: var(--ws-space-6);
+    }
+    &:nth-child(even) {
+      padding-left: var(--ws-space-6);
+    }
   }
 }
 
@@ -1818,7 +2167,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   .ws-iconbtn.is-saved {
     color: var(--ws-brand-gold-text);
     border-color: color-mix(in srgb, var(--ws-brand-primary) 35%, transparent);
-    svg { fill: currentColor; }
+    svg {
+      fill: currentColor;
+    }
   }
 }
 
@@ -1839,13 +2190,18 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   @include ws-caption;
   color: var(--ws-text-muted);
 
-  svg { color: var(--ws-text-subtle); flex: none; }
+  svg {
+    color: var(--ws-text-subtle);
+    flex: none;
+  }
 }
 
 .ws-detail__section {
   margin-top: var(--ws-space-8);
 
-  > h2 { margin-bottom: var(--ws-space-3); }
+  > h2 {
+    margin-bottom: var(--ws-space-3);
+  }
 }
 
 // The .ws-textarea primitive lives in _ds.scss. Inside the contact card it
@@ -1869,7 +2225,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin-bottom: var(--ws-space-3);
 }
 
-.ws-contact .ws-safety { margin-top: var(--ws-space-4); }
+.ws-contact .ws-safety {
+  margin-top: var(--ws-space-4);
+}
 
 .ws-contact__direct {
   margin-top: var(--ws-space-5);
@@ -1896,14 +2254,18 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-top: 1px solid var(--ws-border-hairline);
   box-shadow: var(--ws-shadow-nav);
 
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
 // Keeps the end of the page (and the footer under it) clear of the fixed bar.
 .ws-actionbar__spacer {
   height: 84px;
 
-  @media (min-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) {
+    display: none;
+  }
 }
 
 .ws-actionbar__price {
@@ -1969,7 +2331,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-size: 12px;
   text-decoration: none;
 
-  &:hover { background: var(--ws-bg-track); color: var(--ws-text-primary); }
+  &:hover {
+    background: var(--ws-bg-track);
+    color: var(--ws-text-primary);
+  }
 }
 
 // The safety note is deliberately quiet — informative, not alarming.
@@ -1983,7 +2348,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-size: 12px;
   line-height: 1.5;
 
-  svg { flex: none; margin-top: 1px; color: var(--ws-text-subtle); }
+  svg {
+    flex: none;
+    margin-top: 1px;
+    color: var(--ws-text-subtle);
+  }
 }
 
 .ws-sellerrow {
@@ -2010,8 +2379,17 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-4);
   font-size: 13px;
 
-  dt { color: var(--ws-text-muted); display: flex; align-items: center; gap: 6px; }
-  dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+  dt {
+    color: var(--ws-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  dd {
+    margin: 0;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 // ─── Reviews ────────────────────────────────────────────────────
@@ -2051,7 +2429,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: var(--ws-text-muted);
   font-variant-numeric: tabular-nums;
 
-  span:last-child { text-align: right; }
+  span:last-child {
+    text-align: right;
+  }
 }
 
 .ws-reviews__bartrack {
@@ -2066,7 +2446,7 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-reviews__barfill {
   height: 100%;
   border-radius: var(--ws-radius-pill);
-  background: var(--ws-accent-star, #F97316);
+  background: var(--ws-accent-star, #f97316);
 }
 
 .ws-review {
@@ -2127,7 +2507,11 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-storehead__banner {
   position: relative;
   height: 120px;
-  background: color-mix(in srgb, var(--ws-brand-primary) 9%, var(--ws-bg-sunken));
+  background: color-mix(
+    in srgb,
+    var(--ws-brand-primary) 9%,
+    var(--ws-bg-sunken)
+  );
   border-bottom: 1px solid var(--ws-border-hairline);
 
   img {
@@ -2138,8 +2522,12 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     object-fit: cover;
   }
 
-  @media (min-width: $bp-sm) { height: 180px; }
-  @media (min-width: $bp-md) { height: 220px; }
+  @media (min-width: $bp-sm) {
+    height: 180px;
+  }
+  @media (min-width: $bp-md) {
+    height: 220px;
+  }
 }
 
 .ws-storehead__body {
@@ -2151,7 +2539,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   // cancels it, so the logo still straddles that edge.
   padding: var(--ws-space-4) var(--ws-space-5) var(--ws-space-5);
 
-  @media (min-width: $bp-md) { padding: var(--ws-space-5) var(--ws-space-8) var(--ws-space-6); }
+  @media (min-width: $bp-md) {
+    padding: var(--ws-space-5) var(--ws-space-8) var(--ws-space-6);
+  }
 }
 
 .ws-storehead__logo {
@@ -2166,14 +2556,25 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   margin-top: calc(-40px - var(--ws-space-4));
   border-radius: var(--ws-radius-xl);
   overflow: hidden;
-  box-shadow: 0 0 0 4px var(--ws-bg-surface), var(--ws-shadow-card);
-  background: color-mix(in srgb, var(--ws-brand-primary) 14%, var(--ws-bg-raised));
+  box-shadow:
+    0 0 0 4px var(--ws-bg-surface),
+    var(--ws-shadow-card);
+  background: color-mix(
+    in srgb,
+    var(--ws-brand-primary) 14%,
+    var(--ws-bg-raised)
+  );
   color: var(--ws-brand-gold-text);
   font-family: var(--ws-font-display);
   font-weight: 700;
   font-size: 32px;
 
-  img { width: 100%; height: 100%; object-fit: cover; background: var(--ws-bg-raised); }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--ws-bg-raised);
+  }
 
   @media (min-width: $bp-md) {
     width: 104px;
@@ -2220,7 +2621,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-1);
   min-width: 0;
 
-  svg { flex: none; color: var(--ws-text-subtle); }
+  svg {
+    flex: none;
+    color: var(--ws-text-subtle);
+  }
 }
 
 .ws-storehead__link {
@@ -2230,7 +2634,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   text-decoration-color: var(--ws-border-hairline);
   text-underline-offset: 3px;
 
-  &:hover { text-decoration-color: currentColor; }
+  &:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 .ws-storehead__actions {
@@ -2238,13 +2644,18 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   flex-wrap: wrap;
   gap: var(--ws-space-2);
 
-  &:empty { display: none; }
+  &:empty {
+    display: none;
+  }
 
   // Full-width buttons on phones: a row of small pills under the name was
   // easy to miss and hard to hit.
   @container storehead (max-width: 559px) {
     flex-basis: 100%;
-    > * { flex: 1 1 0; justify-content: center; }
+    > * {
+      flex: 1 1 0;
+      justify-content: center;
+    }
   }
 }
 
@@ -2264,8 +2675,12 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   }
 
   // Two-up: the right column and the second row carry the dividers.
-  > div:nth-child(even) { border-left: 1px solid var(--ws-border-hairline); }
-  > div:nth-child(n + 3) { border-top: 1px solid var(--ws-border-hairline); }
+  > div:nth-child(even) {
+    border-left: 1px solid var(--ws-border-hairline);
+  }
+  > div:nth-child(n + 3) {
+    border-top: 1px solid var(--ws-border-hairline);
+  }
 
   dt {
     font-size: 12px;
@@ -2289,16 +2704,29 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   @container storehead (min-width: 720px) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 
-    > div { padding-inline: var(--ws-space-8); }
-    > div:nth-child(n) { border-top: 0; }
-    > div + div { border-left: 1px solid var(--ws-border-hairline); }
-    dd { font-size: 20px; }
+    > div {
+      padding-inline: var(--ws-space-8);
+    }
+    > div:nth-child(n) {
+      border-top: 0;
+    }
+    > div + div {
+      border-left: 1px solid var(--ws-border-hairline);
+    }
+    dd {
+      font-size: 20px;
+    }
   }
 }
 
-.ws-storehead__muted { color: var(--ws-text-subtle) !important; font-weight: 500 !important; }
+.ws-storehead__muted {
+  color: var(--ws-text-subtle) !important;
+  font-weight: 500 !important;
+}
 
-.ws-profile__about .ws-sectionhead__eyebrow { margin-bottom: var(--ws-space-3); }
+.ws-profile__about .ws-sectionhead__eyebrow {
+  margin-bottom: var(--ws-space-3);
+}
 
 .ws-profile__desc {
   @include ws-body;
@@ -2318,7 +2746,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   flex-wrap: wrap;
   gap: var(--ws-space-1) var(--ws-space-3);
 
-  .ws-crumbs { padding-top: 0; }
+  .ws-crumbs {
+    padding-top: 0;
+  }
 
   // The rule reads as a separator only once both sides are on one line.
   @media (min-width: $bp-sm) {
@@ -2347,22 +2777,32 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   cursor: pointer;
   transition: color var(--ws-motion-fast) var(--ws-ease);
 
-  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+  svg {
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
+  }
 
   &:hover {
     color: var(--ws-text-primary);
-    svg { transform: translateX(-2px); }
+    svg {
+      transform: translateX(-2px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    svg { transition: none; }
-    &:hover svg { transform: none; }
+    svg {
+      transition: none;
+    }
+    &:hover svg {
+      transform: none;
+    }
   }
 }
 
 // Tabs pin under the site header, so the panel below can be long without the
 // buyer losing the way back to the other two.
-.ws-profile__tabs { scroll-margin-top: var(--ws-header-h); }
+.ws-profile__tabs {
+  scroll-margin-top: var(--ws-header-h);
+}
 
 .ws-storetabs {
   position: sticky;
@@ -2375,9 +2815,13 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   scrollbar-width: none;
   background: var(--ws-bg-page);
   border-bottom: 1px solid var(--ws-border-hairline);
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-  @media (min-width: $bp-md) { gap: var(--ws-space-8); }
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-8);
+  }
 }
 
 .ws-storetabs__tab {
@@ -2396,11 +2840,15 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-weight: 500;
   color: var(--ws-text-muted);
   cursor: pointer;
-  transition: color var(--ws-motion-fast) var(--ws-ease), border-color var(--ws-motion-fast) var(--ws-ease);
+  transition:
+    color var(--ws-motion-fast) var(--ws-ease),
+    border-color var(--ws-motion-fast) var(--ws-ease);
 
-  &:hover { color: var(--ws-text-primary); }
+  &:hover {
+    color: var(--ws-text-primary);
+  }
 
-  &[aria-selected='true'] {
+  &[aria-selected="true"] {
     color: var(--ws-text-primary);
     font-weight: 600;
     border-bottom-color: var(--ws-brand-primary);
@@ -2430,12 +2878,20 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
 .ws-storetabs__panel {
   animation: ws-tabin var(--ws-motion-base) var(--ws-ease);
 
-  @media (prefers-reduced-motion: reduce) { animation: none; }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 @keyframes ws-tabin {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 // ── About tab ──
@@ -2456,7 +2912,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-6);
 }
 
-.ws-storeabout__blank { font-style: italic; }
+.ws-storeabout__blank {
+  font-style: italic;
+}
 
 .ws-storeabout__details {
   padding: var(--ws-space-5) var(--ws-space-6) var(--ws-space-2);
@@ -2464,10 +2922,19 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
 
-  .ws-sectionhead__eyebrow { margin-bottom: var(--ws-space-1); }
-  .ws-spec__row { padding-inline: 0 !important; }
-  .ws-spec__row:last-child { border-bottom: 0; }
-  dd { min-width: 0; overflow-wrap: anywhere; }
+  .ws-sectionhead__eyebrow {
+    margin-bottom: var(--ws-space-1);
+  }
+  .ws-spec__row {
+    padding-inline: 0 !important;
+  }
+  .ws-spec__row:last-child {
+    border-bottom: 0;
+  }
+  dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 
 .ws-storetools {
@@ -2475,7 +2942,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-4);
   margin-bottom: var(--ws-space-6);
 
-  .ws-catchips { flex-wrap: wrap; overflow: visible; }
+  .ws-catchips {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
 }
 
 .ws-storetools__search {
@@ -2483,7 +2953,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   background: var(--ws-bg-surface);
   border-color: var(--ws-border-hairline);
 
-  input[type='search']::-webkit-search-cancel-button { display: none; }
+  input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+  }
 }
 
 .ws-storetools__clear {
@@ -2498,17 +2970,25 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: var(--ws-text-subtle);
   cursor: pointer;
 
-  &:hover { background: var(--ws-bg-chip); color: var(--ws-text-primary); }
+  &:hover {
+    background: var(--ws-bg-chip);
+    color: var(--ws-text-primary);
+  }
 }
 
-.ws-storetools__count { margin-bottom: var(--ws-space-4); }
+.ws-storetools__count {
+  margin-bottom: var(--ws-space-4);
+}
 
 .ws-chip__count {
   font-size: 11px;
   font-weight: 500;
   color: var(--ws-text-subtle);
 
-  [aria-pressed='true'] > & { color: inherit; opacity: 0.75; }
+  [aria-pressed="true"] > & {
+    color: inherit;
+    opacity: 0.75;
+  }
 }
 
 // ── Store reviews ──
@@ -2519,7 +2999,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-6);
   align-items: start;
 
-  @media (min-width: $bp-md) { grid-template-columns: 300px minmax(0, 1fr); gap: var(--ws-space-10); }
+  @media (min-width: $bp-md) {
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: var(--ws-space-10);
+  }
 }
 
 .ws-storereviews__summary {
@@ -2531,7 +3014,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
 
-  .ws-reviews__score { font-size: 44px; }
+  .ws-reviews__score {
+    font-size: 44px;
+  }
 
   @media (min-width: $bp-md) {
     position: sticky;
@@ -2549,7 +3034,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   display: grid;
   gap: var(--ws-space-4);
 
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .ws-storereviews__none {
@@ -2561,8 +3048,12 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
 
-  .ws-empty__icon { flex: none; }
-  p { margin-top: 2px; }
+  .ws-empty__icon {
+    flex: none;
+  }
+  p {
+    margin-top: 2px;
+  }
 }
 
 .ws-storereview {
@@ -2574,10 +3065,15 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border: 1px solid var(--ws-border-hairline);
   border-radius: var(--ws-radius-xl);
 
-  .ws-review__reply { margin-left: 0; }
+  .ws-review__reply {
+    margin-left: 0;
+  }
 }
 
-.ws-storereview__title { @include ws-title; font-size: 15px; }
+.ws-storereview__title {
+  @include ws-title;
+  font-size: 15px;
+}
 
 .ws-storereview__body {
   @include ws-caption;
@@ -2601,7 +3097,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-top: 1px solid var(--ws-border-hairline);
   font-size: 13px;
 
-  strong { font-weight: 600; }
+  strong {
+    font-weight: 600;
+  }
 }
 
 .ws-storereview__verified {
@@ -2622,7 +3120,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: var(--ws-text-subtle);
   text-decoration: none;
 
-  &:hover { color: var(--ws-text-primary); text-decoration: underline; }
+  &:hover {
+    color: var(--ws-text-primary);
+    text-decoration: underline;
+  }
 }
 
 .ws-profile__foot {
@@ -2652,7 +3153,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding-block: var(--ws-space-16) var(--ws-space-10);
   grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
   @media (min-width: $bp-md) {
     grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
     gap: var(--ws-space-10);
@@ -2668,7 +3171,10 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-4);
   align-content: start;
 
-  @media (min-width: $bp-md) { grid-column: auto; max-width: 34ch; }
+  @media (min-width: $bp-md) {
+    grid-column: auto;
+    max-width: 34ch;
+  }
 }
 
 .ws-footer__more {
@@ -2677,11 +3183,17 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-space-1);
   color: var(--ws-brand-gold-text) !important;
 
-  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
-  &:hover svg { transform: translateX(2px); }
+  svg {
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
+  }
+  &:hover svg {
+    transform: translateX(2px);
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    svg { transition: none; }
+    svg {
+      transition: none;
+    }
   }
 }
 
@@ -2700,7 +3212,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     color: var(--ws-text-muted);
     text-decoration: underline;
     text-underline-offset: 2px;
-    &:hover { color: var(--ws-text-primary); }
+    &:hover {
+      color: var(--ws-text-primary);
+    }
   }
 }
 
@@ -2720,7 +3234,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   cursor: pointer;
   padding: var(--ws-space-1) 0;
 
-  &:hover { color: var(--ws-text-primary); }
+  &:hover {
+    color: var(--ws-text-primary);
+  }
 }
 
 .ws-footer__links {
@@ -2735,7 +3251,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
     text-decoration: none;
     font-size: 14px;
     transition: color var(--ws-motion-fast) var(--ws-ease);
-    &:hover { color: var(--ws-text-primary); }
+    &:hover {
+      color: var(--ws-text-primary);
+    }
   }
 }
 
@@ -2750,12 +3268,16 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   font-size: 13px;
   color: var(--ws-text-subtle);
 
-  p { margin: 0; }
+  p {
+    margin: 0;
+  }
 
   a {
     color: var(--ws-text-subtle);
     text-decoration: none;
-    &:hover { color: var(--ws-text-primary); }
+    &:hover {
+      color: var(--ws-text-primary);
+    }
   }
 }
 
@@ -2770,8 +3292,16 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   color: var(--ws-text-subtle);
   flex-wrap: wrap;
 
-  a { color: var(--ws-text-muted); text-decoration: none; &:hover { color: var(--ws-text-primary); } }
-  svg { flex: none; }
+  a {
+    color: var(--ws-text-muted);
+    text-decoration: none;
+    &:hover {
+      color: var(--ws-text-primary);
+    }
+  }
+  svg {
+    flex: none;
+  }
 }
 
 // ─── Marketplace search ─────────────────────────────────────────
@@ -2787,7 +3317,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   border-color: var(--ws-border-hairline);
   background: var(--ws-bg-surface);
 
-  input { font-size: 15px; }
+  input {
+    font-size: 15px;
+  }
 
   @media (min-width: $bp-md) {
     height: 58px;
@@ -2804,7 +3336,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   padding-left: var(--ws-space-3);
   border-left: 1px solid var(--ws-border-hairline);
 
-  @media (min-width: $bp-sm) { display: inline-flex; }
+  @media (min-width: $bp-sm) {
+    display: inline-flex;
+  }
 }
 
 // On a phone the pill is the whole control and submitting is the keyboard's
@@ -2813,11 +3347,14 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   display: none;
   flex: none;
 
-  @media (min-width: $bp-sm) { display: inline-flex; }
+  @media (min-width: $bp-sm) {
+    display: inline-flex;
+  }
 }
 
-.ws-marketsearch--home { margin-bottom: calc(var(--ws-space-4) * -1); }
-
+.ws-marketsearch--home {
+  margin-bottom: calc(var(--ws-space-4) * -1);
+}
 
 // ─── Home landing ───────────────────────────────────────────────
 // Segmented marketplace home in the eBay/Jumia mold: hero, category discs,
@@ -2835,7 +3372,9 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   gap: var(--ws-home-gap);
   padding-block: var(--ws-home-gap);
 
-  @media (min-width: $bp-md) { --ws-home-gap: var(--ws-space-16); }
+  @media (min-width: $bp-md) {
+    --ws-home-gap: var(--ws-space-16);
+  }
 }
 
 // ─── Section head ───────────────────────────────────────────────
@@ -2849,9 +3388,16 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--ws-space-6);
+  // A rule across the head. On a 1440 page the action sits a thousand pixels
+  // from the title it belongs to; the line is what carries the eye across
+  // that gap and stops the two reading as unrelated blocks.
+  padding-bottom: var(--ws-space-4);
+  border-bottom: 1px solid var(--ws-border-hairline);
   margin-bottom: var(--ws-space-6);
 
-  @media (min-width: $bp-md) { margin-bottom: var(--ws-space-8); }
+  @media (min-width: $bp-md) {
+    margin-bottom: var(--ws-space-8);
+  }
 }
 
 .ws-sectionhead__eyebrow {
@@ -2879,28 +3425,48 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   max-width: var(--ws-measure);
 }
 
+// A control, not a footnote: as a bare gold link at the far edge it read as
+// decoration. The outline gives it a hit area and says it is the way out of
+// the section — no fill, so the band behind it is untouched.
 .ws-sectionhead__action {
   display: inline-flex;
   align-items: center;
-  gap: var(--ws-space-1);
+  gap: var(--ws-space-2);
   flex: none;
   font-size: 14px;
   font-weight: 500;
   color: var(--ws-brand-gold-text);
   text-decoration: none;
-  // Sits on the title's baseline rather than floating above it.
-  padding-bottom: 2px;
-  transition: color var(--ws-motion-fast) var(--ws-ease);
+  padding: var(--ws-space-2) var(--ws-space-4);
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-pill);
+  transition:
+    color var(--ws-motion-fast) var(--ws-ease),
+    border-color var(--ws-motion-fast) var(--ws-ease);
 
-  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+  &:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--ws-brand-primary) 40%,
+      var(--ws-border-hairline)
+    );
+  }
+
+  svg {
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
+  }
 
   &:hover {
     color: var(--ws-brand-active);
-    svg { transform: translateX(3px); }
+    svg {
+      transform: translateX(3px);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    svg { transition: none; }
+    svg {
+      transition: none;
+    }
   }
 }
 
@@ -2917,18 +3483,25 @@ details:not([open]) > .ws-filters__legend::after { transform: rotate(-45deg); }
   transition-delay: calc(var(--reveal-i, 0) * 55ms);
 }
 
-html[data-reveal='ready'] [data-reveal]:not(.is-in) {
+html[data-reveal="ready"] [data-reveal]:not(.is-in) {
   opacity: 0;
   transform: translateY(14px);
 }
 
 // The wrapper a card sits in for the reveal: a grid so the link inside is
 // stretched to the row's height and the card's height: 100% keeps working.
-.ws-reveal { display: grid; }
+.ws-reveal {
+  display: grid;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] { transition: none; }
-  html[data-reveal='ready'] [data-reveal]:not(.is-in) { opacity: 1; transform: none; }
+  [data-reveal] {
+    transition: none;
+  }
+  html[data-reveal="ready"] [data-reveal]:not(.is-in) {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 // ─── Full-bleed band ────────────────────────────────────────────
@@ -2954,7 +3527,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
 
 // A band, not a floating card: it spans the viewport and an inner .ws-wrap
 // puts the copy back on the page grid, so the hero headline and every section
-// title below it start at exactly the same x.
+// title below it start at exactly the same x. That rule survives the
+// background: the copy's slab bleeds off the left edge rather than insetting
+// the text.
 .ws-hero {
   position: relative;
   overflow: hidden;
@@ -2962,73 +3537,216 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   border-bottom: 1px solid var(--ws-border-hairline);
   // The one entrance on the page: an opacity-only reveal of the hero.
   animation: ws-hero-in var(--ws-motion-slow) var(--ws-ease) both;
+
+  // The photo covers the whole band, so every word now sits on it and the
+  // band has to carry its own foreground rather than the theme's. One dark
+  // treatment serves both modes: the hero is a dark banner on a light page
+  // and on a dark one, and the text is light in both.
+  //
+  // The scrim alpha is measured, not picked. Over the worst case the photo can
+  // present — a pure-white patch — 0.84 puts every tier clear of 4.5:1:
+  // primary 12.7, muted 7.8, accent 8.8, subtle 5.5. Below 0.82 subtle fails.
+  --ws-hero-media-opacity: 1;
+  --ws-hero-media-blur: 7px;
+  --ws-hero-media-scale: 1.6;
+  --ws-hero-scrim: rgba(8, 8, 11, 0.84);
+
+  // Foreground, fixed in both themes because the ground behind it is fixed.
+  --ws-hero-fg: #fafafa;
+  --ws-hero-fg-muted: #c7c7ce;
+  --ws-hero-fg-subtle: #a6a6ae;
+  --ws-hero-accent: #ffcc29;
+  --ws-hero-chip: rgba(255, 255, 255, 0.1);
+  --ws-hero-chip-line: rgba(255, 255, 255, 0.18);
+
+  // A dark base under the photo, so a failed or slow image still leaves a
+  // band the light text reads on rather than a flash of white.
+  background: #0b0b0f;
+  color: var(--ws-hero-fg);
+
+  // The band starts at the very top of the page, behind the sticky bar, and
+  // pads its own content back down past it. That is what lets the bar be
+  // transparent rather than a dark strip sitting on top of the photo.
+  margin-top: calc(var(--ws-header-h, 65px) * -1);
+  padding-top: var(--ws-header-h, 65px);
 }
 
 @keyframes ws-hero-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.ws-hero__track {
-  display: flex;
-  transition: transform var(--ws-motion-slow) var(--ws-ease);
+// ── Background layer ──
+// One layer per slide, crossfading. A slow scale runs alongside the fade so
+// the band drifts rather than sitting still — the only parallax here, and the
+// only thing that moves when nothing is being clicked.
 
-  @media (prefers-reduced-motion: reduce) { transition: none; }
+.ws-hero__bgs {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ws-hero__bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--ws-motion-slow) var(--ws-ease);
+
+  &.is-active {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.ws-hero__bgmedia {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: var(--ws-hero-media-opacity);
+  // Blurred hard enough that no product in the frame is legible as a product:
+  // this is atmosphere, not a second piece of art competing with the cutouts.
+  // Softened, not erased. Blurring a product cutout to nothing leaves a flat
+  // wash; at this radius the shapes still read as objects, which is what
+  // gives the panel depth rather than tint.
+  filter: blur(var(--ws-hero-media-blur)) saturate(1.05);
+  // Scaled well past the frame so the blur's soft edges never show as a seam.
+  transform: scale(var(--ws-hero-media-scale));
+  transform-origin: 55% 45%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-hero__bg.is-active .ws-hero__bgmedia {
+    animation: ws-hero-drift 14s var(--ws-ease) both;
+  }
+  .ws-hero[data-paused] .ws-hero__bg.is-active .ws-hero__bgmedia {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes ws-hero-drift {
+  from {
+    transform: scale(var(--ws-hero-media-scale));
+  }
+  to {
+    transform: scale(calc(var(--ws-hero-media-scale) + 0.12))
+      translate3d(-1.4%, -1%, 0);
+  }
+}
+
+.ws-hero__scrim {
+  position: absolute;
+  inset: 0;
+  // A flat fill, not a gradient — the palette rule holds, and a single alpha
+  // is what makes the worst case calculable.
+  background: var(--ws-hero-scrim);
+}
+
+// ── Slides ──
+// Stacked and crossfaded rather than a track that slides: it lets each slide's
+// copy animate in on its own, and removes the sideways lurch that made the old
+// one feel like a slideshow rather than a hero.
+
+.ws-hero__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
 }
 
 .ws-hero__slide {
-  flex: none;
-  width: 100%;
-
-  // Off-screen slides drop out of the tab order and AT tree once the track
-  // finishes moving.
-  visibility: hidden;
-  transition: visibility 0s var(--ws-motion-slow);
-  &.is-active { visibility: visible; transition: visibility 0s; }
-}
-
-.ws-hero__inner {
+  grid-area: 1 / 1;
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--ws-space-8);
   align-items: start;
   // Room at the bottom for the nav rail, which is absolutely positioned.
-  padding-block: var(--ws-space-10) var(--ws-space-16);
+  padding-block: var(--ws-space-10) var(--ws-space-20);
+
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--ws-motion-base) var(--ws-ease),
+    visibility 0s var(--ws-motion-base);
+
+  &.is-active {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity var(--ws-motion-slow) var(--ws-ease),
+      visibility 0s;
+  }
 
   @media (min-width: $bp-md) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 520px);
     align-items: center;
     gap: var(--ws-space-12);
-    padding-block: var(--ws-space-16) var(--ws-space-16);
-    min-height: 400px;
+    padding-block: var(--ws-space-16) var(--ws-space-20);
+    min-height: 500px;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// ── Copy ──
+
+.ws-hero__copy {
+  position: relative;
+  z-index: 1;
 }
 
 .ws-hero__eyebrow {
   @include ws-label;
-  color: var(--ws-brand-gold-text);
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-3);
+  color: var(--ws-hero-accent);
   margin-bottom: var(--ws-space-3);
+}
+
+// The slide's position, carried in the eyebrow so the hero says how many
+// there are before anyone reaches the rail at the bottom.
+.ws-hero__count {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--ws-space-2);
+  border: 1px solid currentColor;
+  border-radius: var(--ws-radius-pill);
+  font-size: 10px;
+  line-height: 1.6;
+  opacity: 0.85;
 }
 
 .ws-hero__title {
   font-family: var(--ws-font-display);
   font-weight: 700;
-  font-size: clamp(34px, 3.4vw + 12px, 46px);
-  letter-spacing: -0.02em;
-  line-height: 1.06;
+  font-size: clamp(38px, 4.2vw + 12px, 60px);
+  letter-spacing: -0.025em;
+  line-height: 1.02;
   margin-bottom: var(--ws-space-5);
   text-wrap: balance;
 
+  color: var(--ws-hero-fg);
+
   em {
     font-style: normal;
-    color: var(--ws-brand-gold-text);
+    color: var(--ws-hero-accent);
   }
 }
 
 .ws-hero__sub {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
-  color: var(--ws-text-muted);
+  color: var(--ws-hero-fg-muted);
   max-width: var(--ws-measure-tight);
   margin-bottom: var(--ws-space-6);
   text-wrap: pretty;
@@ -3038,12 +3756,89 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ws-space-3);
+
+  // The page's secondary pill is a theme surface — on a dark band in light
+  // mode it is a white slab, and in dark mode it disappears into the scrim.
+  // The band supplies its own instead.
+  .ws-btn--secondary {
+    border-color: var(--ws-hero-chip-line);
+    background: var(--ws-hero-chip);
+    color: var(--ws-hero-fg);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+  }
 }
 
 .ws-hero__stat {
   @include ws-caption;
-  color: var(--ws-text-subtle);
-  margin-top: var(--ws-space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--ws-space-2);
+  color: var(--ws-hero-fg-muted);
+  margin-top: var(--ws-space-5);
+}
+
+// A live marker on a live number. Motion-only: reduced motion keeps the dot
+// and drops the ring.
+.ws-hero__pulse {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-hero-accent);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: inherit;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-hero__pulse::after {
+    animation: ws-hero-pulse 2.6s var(--ws-ease) infinite;
+  }
+}
+
+@keyframes ws-hero-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+// ── Entrance ──
+// Each part of the active slide's copy rises in turn. Keyed off .is-active, so
+// it replays every time the slide comes back round — forwards or backwards.
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-hero__slide [data-rise] {
+    opacity: 0;
+  }
+  .ws-hero__slide.is-active [data-rise] {
+    animation: ws-hero-rise var(--ws-motion-slow) var(--ws-ease) both;
+    animation-delay: calc(var(--i, 0) * 70ms + 90ms);
+  }
+}
+
+@keyframes ws-hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 // ── Cutout art ──
@@ -3052,31 +3847,90 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
 
 .ws-hero__art {
   position: relative;
-  height: 200px;
+  height: 220px;
 
-  @media (min-width: $bp-md) { height: 360px; }
+  @media (min-width: $bp-md) {
+    height: 380px;
+  }
 }
 
 .ws-hero__cut {
   position: absolute;
   max-width: none;
-  // Contour shadow on photography — theme-independent, same rule as the
-  // listing-photo scrim.
+  // Contour shadow: what lifts a cutout off the band instead of leaving it
+  // pasted on. The band is dark in both themes now, so this no longer needs a
+  // light-mode variant — the same weight is right in both.
   filter: drop-shadow(0 30px 36px rgba(0, 0, 0, 0.55));
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .ws-hero__slide.is-active .ws-hero__cut {
+    animation: ws-hero-cut-in var(--ws-motion-slow) var(--ws-ease) both;
+    animation-delay: 140ms;
+  }
+}
+
+@keyframes ws-hero-cut-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 // Electronics jumble
-.ws-hero__cut--macbook { height: 60%; left: 0; top: 0; rotate: -6deg; z-index: 1; }
-.ws-hero__cut--phones  { height: 86%; right: 2%; bottom: 2%; z-index: 2; }
-.ws-hero__cut--boombox { height: 40%; left: 8%; bottom: 0; rotate: 5deg; z-index: 3; }
+.ws-hero__cut--macbook {
+  height: 60%;
+  left: 0;
+  top: 0;
+  rotate: -6deg;
+  z-index: 1;
+}
+.ws-hero__cut--phones {
+  height: 86%;
+  right: 2%;
+  bottom: 2%;
+  z-index: 2;
+}
+.ws-hero__cut--boombox {
+  height: 40%;
+  left: 8%;
+  bottom: 0;
+  rotate: 5deg;
+  z-index: 3;
+}
 
 // Motors: the two GLEs, white leading.
-.ws-hero__cut--gle-black { width: 72%; left: 0; top: 4%; z-index: 1; }
-.ws-hero__cut--gle-white { width: 88%; right: -4%; bottom: 2%; z-index: 2; }
+.ws-hero__cut--gle-black {
+  width: 72%;
+  left: 0;
+  top: 4%;
+  z-index: 1;
+}
+.ws-hero__cut--gle-white {
+  width: 88%;
+  right: -4%;
+  bottom: 2%;
+  z-index: 2;
+}
 
 // Lifestyle
-.ws-hero__cut--tudor { height: 88%; left: 6%; bottom: 2%; rotate: -6deg; z-index: 1; }
-.ws-hero__cut--af1   { height: 60%; right: 0; bottom: 0; z-index: 2; }
+.ws-hero__cut--tudor {
+  height: 88%;
+  left: 6%;
+  bottom: 2%;
+  rotate: -6deg;
+  z-index: 1;
+}
+.ws-hero__cut--af1 {
+  height: 60%;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+}
 
 // ── Carousel controls ──
 
@@ -3086,46 +3940,115 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   position: absolute;
   inset-inline: 0;
   bottom: var(--ws-space-6);
+  z-index: 2;
   pointer-events: none;
 
-  @media (min-width: $bp-md) { bottom: var(--ws-space-8); }
+  @media (min-width: $bp-md) {
+    bottom: var(--ws-space-8);
+  }
 }
 
+// A solid cluster rather than loose controls: on a phone the rail sits over
+// the background art, where a track at 6% white would be invisible. Giving it
+// its own surface makes it legible on anything behind it, in either theme.
 .ws-hero__nav {
   display: flex;
   align-items: center;
   gap: var(--ws-space-3);
   pointer-events: auto;
   width: fit-content;
+  padding: var(--ws-space-2);
+  border: 1px solid var(--ws-hero-chip-line);
+  border-radius: var(--ws-radius-pill);
+  background: rgba(8, 8, 11, 0.55);
+  backdrop-filter: blur(10px);
 }
 
 .ws-hero__arrow {
   width: 34px;
   height: 34px;
-  border: 1px solid var(--ws-border-hairline);
-  background: color-mix(in srgb, var(--ws-bg-page) 55%, transparent);
+  border: 0;
+  background: var(--ws-hero-chip);
+  color: var(--ws-hero-fg);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
 }
 
-.ws-hero__dots {
+.ws-hero__bars {
   display: flex;
   align-items: center;
   gap: var(--ws-space-2);
+  padding-inline: var(--ws-space-1, 4px);
 }
 
-.ws-hero__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--ws-radius-pill);
-  border: 0;
+// A progress rail, not dots: the active bar fills over one auto-advance, so
+// the rhythm is visible and hovering to pause shows itself stopping.
+.ws-hero__bar {
+  position: relative;
+  width: 34px;
+  height: 4px;
   padding: 0;
-  background: var(--ws-text-subtle);
+  border: 0;
+  border-radius: var(--ws-radius-pill);
+  background: var(--ws-hero-chip);
   cursor: pointer;
-  transition: width var(--ws-motion-base) var(--ws-ease), background-color var(--ws-motion-base) var(--ws-ease);
+  overflow: hidden;
+  transition: width var(--ws-motion-base) var(--ws-ease);
 
   &.is-active {
-    width: 22px;
-    background: var(--ws-brand-primary);
+    width: 56px;
   }
+}
+
+.ws-hero__barfill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  transform: scaleX(0);
+  border-radius: inherit;
+  background: var(--ws-hero-accent);
+}
+
+.ws-hero__bar.is-active .ws-hero__barfill {
+  animation: ws-hero-fill var(--ws-hero-advance, 6500ms) linear both;
+}
+
+.ws-hero[data-paused] .ws-hero__barfill {
+  animation-play-state: paused;
+}
+
+// No auto-advance under reduced motion, so the bar reads as a plain selection
+// marker instead of a timer that never finishes.
+@media (prefers-reduced-motion: reduce) {
+  .ws-hero__bar.is-active .ws-hero__barfill {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes ws-hero-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+// Announced, not shown: an auto-advancing carousel has to tell a screen
+// reader where it has got to.
+.ws-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 // ─── Category discs ─────────────────────────────────────────────
@@ -3141,9 +4064,13 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--ws-space-6);
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-  > * { scroll-snap-align: start; }
+  > * {
+    scroll-snap-align: start;
+  }
 
   @media (min-width: $bp-md) {
     gap: var(--ws-space-5);
@@ -3182,12 +4109,18 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
 .ws-cat:hover .ws-cat__disc {
   transform: translateY(-2px);
   box-shadow: var(--ws-shadow-card);
-  background: color-mix(in srgb, var(--ws-brand-primary) 8%, var(--ws-bg-surface));
+  background: color-mix(
+    in srgb,
+    var(--ws-brand-primary) 8%,
+    var(--ws-bg-surface)
+  );
   border-color: color-mix(in srgb, var(--ws-brand-primary) 33%, transparent);
   color: var(--ws-brand-gold-text);
 }
 
-.ws-cat:active .ws-cat__disc { transform: translateY(0); }
+.ws-cat:active .ws-cat__disc {
+  transform: translateY(0);
+}
 
 .ws-cat:focus-visible .ws-cat__disc {
   outline: 2px solid var(--ws-brand-primary);
@@ -3224,7 +4157,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   font-weight: 500;
   color: var(--ws-brand-gold-text);
   text-decoration: none;
-  &:hover { color: var(--ws-brand-active); }
+  &:hover {
+    color: var(--ws-brand-active);
+  }
 }
 
 .ws-rail__track {
@@ -3239,16 +4174,24 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--ws-space-6);
   // Room for the card hover lift and focus ring, which overflow-x: auto would
-  // otherwise clip — cancelled by the negative margin so the rail sits on the
-  // same section rhythm as every other band.
+  // otherwise clip. Only the scrolling state needs it: on desktop the track is
+  // a plain grid that clips nothing, and the negative margin there was pulling
+  // the section's box in by 8px at each edge, which is what made the gap
+  // either side of this one band measure wider than every other gap.
   padding-block: var(--ws-space-2);
   margin-block: calc(var(--ws-space-2) * -1);
   scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-  > * { scroll-snap-align: start; }
+  > * {
+    scroll-snap-align: start;
+  }
 
-  @media (min-width: 480px) { grid-auto-columns: 260px; }
+  @media (min-width: 480px) {
+    grid-auto-columns: 260px;
+  }
 
   // On desktop it stops being a scroller and becomes a filling grid: with
   // only a few listings, fixed-width columns left most of the row empty. It
@@ -3261,21 +4204,51 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
     overflow-x: visible;
     margin-inline: 0;
     padding-inline: 0;
+    padding-block: 0;
+    margin-block: 0;
   }
 }
 
 // ─── Sellers row ────────────────────────────────────────────────
 
+// The same rail as the listing rows, on the same breakpoint: one store card
+// per screen read as a stack of billboards, and three across a phone squeezed
+// the stats strip past the point the numbers could be compared.
 .ws-sellers {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(74vw, 300px);
   gap: var(--ws-space-4);
-  grid-template-columns: 1fr;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--ws-space-6);
+  padding-block: var(--ws-space-2);
+  margin-block: calc(var(--ws-space-2) * -1);
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
-  // Exactly three stores, so three tracks from tablet up: the row always
-  // fills, and two columns would have orphaned the third below the others.
-  // The card's own container query tightens it for the narrower track.
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  @media (min-width: $bp-md) { gap: var(--ws-space-6); }
+  > * {
+    scroll-snap-align: start;
+  }
+
+  @media (min-width: 480px) {
+    grid-auto-columns: 280px;
+  }
+
+  // Exactly three stores, so unlike the listing rail this fills in three
+  // columns rather than four, and the row is always full.
+  @media (min-width: $bp-md) {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ws-space-6);
+    overflow-x: visible;
+    margin-inline: 0;
+    padding-inline: 0;
+    padding-block: 0;
+    margin-block: 0;
+  }
 }
 
 // ─── Store & mall directories ───────────────────────────────────
@@ -3294,7 +4267,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   }
 
   // Inside the results toolbar the chips sit on its line, not below it.
-  .ws-browse__toolbar .ws-activefilters { margin-bottom: 0; }
+  .ws-browse__toolbar .ws-activefilters {
+    margin-bottom: 0;
+  }
 }
 
 .ws-dirhero__filters {
@@ -3302,9 +4277,16 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   flex-wrap: wrap;
   gap: var(--ws-space-2);
 
-  > * { flex: 1 1 200px; max-width: 280px; }
+  > * {
+    flex: 1 1 200px;
+    max-width: 280px;
+  }
 
-  @media (max-width: $bp-sm) { > * { max-width: none; } }
+  @media (max-width: $bp-sm) {
+    > * {
+      max-width: none;
+    }
+  }
 }
 
 // Store cards need ~260px before their stats strip cramps, so this runs one
@@ -3314,9 +4296,16 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   gap: var(--ws-space-4);
   grid-template-columns: minmax(0, 1fr);
 
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  @media (min-width: $bp-md) { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ws-space-6); }
-  @media (min-width: $bp-lg) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: $bp-md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ws-space-6);
+  }
+  @media (min-width: $bp-lg) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 // ─── Store card ─────────────────────────────────────────────────
@@ -3347,7 +4336,11 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
     transform var(--ws-motion-base) var(--ws-ease);
 
   &:hover {
-    border-color: color-mix(in srgb, var(--ws-brand-primary) 35%, var(--ws-border-hairline));
+    border-color: color-mix(
+      in srgb,
+      var(--ws-brand-primary) 35%,
+      var(--ws-border-hairline)
+    );
     transform: translateY(-2px);
     box-shadow: var(--ws-shadow-lift);
   }
@@ -3367,7 +4360,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
 
   @media (prefers-reduced-motion: reduce) {
     transition: border-color var(--ws-motion-fast) var(--ws-ease);
-    &:hover { transform: none; }
+    &:hover {
+      transform: none;
+    }
   }
 }
 
@@ -3379,7 +4374,11 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   height: 96px;
   flex: none;
   overflow: hidden;
-  background: color-mix(in srgb, var(--ws-brand-primary) 9%, var(--ws-bg-sunken));
+  background: color-mix(
+    in srgb,
+    var(--ws-brand-primary) 9%,
+    var(--ws-bg-sunken)
+  );
   border-bottom: 1px solid var(--ws-border-hairline);
 
   // Absolutely positioned: with the row sized by content, a percentage
@@ -3393,13 +4392,21 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
     transition: transform var(--ws-motion-slow) var(--ws-ease);
   }
 
-  .ws-storecard:hover & img { transform: scale(1.04); }
+  .ws-storecard:hover & img {
+    transform: scale(1.04);
+  }
 
-  @container storecard (max-width: 279px) { height: 80px; }
+  @container storecard (max-width: 279px) {
+    height: 80px;
+  }
 
   @media (prefers-reduced-motion: reduce) {
-    img { transition: none; }
-    .ws-storecard:hover & img { transform: none; }
+    img {
+      transition: none;
+    }
+    .ws-storecard:hover & img {
+      transform: none;
+    }
   }
 }
 
@@ -3409,7 +4416,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   flex-direction: column;
   padding: 0 var(--ws-space-5) var(--ws-space-4);
 
-  @container storecard (max-width: 279px) { padding-inline: var(--ws-space-4); }
+  @container storecard (max-width: 279px) {
+    padding-inline: var(--ws-space-4);
+  }
 }
 
 // The logo row: logo pulled up over the banner edge on the left, the
@@ -3436,15 +4445,26 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   border-radius: var(--ws-radius-lg);
   overflow: hidden;
   // A ring of card surface so the logo reads as sitting on the banner edge.
-  box-shadow: 0 0 0 3px var(--ws-bg-surface), var(--ws-shadow-card);
+  box-shadow:
+    0 0 0 3px var(--ws-bg-surface),
+    var(--ws-shadow-card);
   // Initial fallback: tinted, in the display face — a monogram, not a blank.
-  background: color-mix(in srgb, var(--ws-brand-primary) 14%, var(--ws-bg-raised));
+  background: color-mix(
+    in srgb,
+    var(--ws-brand-primary) 14%,
+    var(--ws-bg-raised)
+  );
   color: var(--ws-brand-gold-text);
   font-family: var(--ws-font-display);
   font-weight: 700;
   font-size: 22px;
 
-  img { width: 100%; height: 100%; object-fit: cover; background: var(--ws-bg-raised); }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--ws-bg-raised);
+  }
 }
 
 .ws-storecard__tier {
@@ -3461,7 +4481,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   font-weight: 600;
   white-space: nowrap;
 
-  svg { flex: none; }
+  svg {
+    flex: none;
+  }
 }
 
 // "Mall" in the tier pill's slot. Neutral, not success-green: it says what
@@ -3479,7 +4501,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   font-weight: 600;
   white-space: nowrap;
 
-  svg { flex: none; }
+  svg {
+    flex: none;
+  }
 }
 
 .ws-storecard__name {
@@ -3512,8 +4536,14 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   gap: 3px;
   min-width: 0;
 
-  svg { flex: none; }
-  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  svg {
+    flex: none;
+  }
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .ws-storecard__mall {
@@ -3562,8 +4592,12 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
     min-width: 0;
     padding: 0 var(--ws-space-3);
 
-    &:first-child { padding-left: 0; }
-    + div { border-left: 1px solid var(--ws-border-hairline); }
+    &:first-child {
+      padding-left: 0;
+    }
+    + div {
+      border-left: 1px solid var(--ws-border-hairline);
+    }
   }
 
   dt {
@@ -3586,19 +4620,35 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   }
 
   @container storecard (max-width: 279px) {
-    > div { padding-inline: var(--ws-space-2); }
-    dd { font-size: 14px; }
+    > div {
+      padding-inline: var(--ws-space-2);
+    }
+    dd {
+      font-size: 14px;
+    }
   }
 }
 
-.ws-storecard__stats--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ws-storecard__stats--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
 // Rating-star orange (#F97316): the one sanctioned literal, via its token.
-.ws-storecard__star { flex: none; color: var(--ws-accent-star, #F97316); fill: currentColor; }
-.ws-storecard__glyph { flex: none; color: var(--ws-text-subtle); }
+.ws-storecard__star {
+  flex: none;
+  color: var(--ws-accent-star, #f97316);
+  fill: currentColor;
+}
+.ws-storecard__glyph {
+  flex: none;
+  color: var(--ws-text-subtle);
+}
 
 // "New" / "—": an honest empty value, quieter than a real number.
-.ws-storecard__muted { color: var(--ws-text-subtle) !important; font-weight: 500 !important; }
+.ws-storecard__muted {
+  color: var(--ws-text-subtle) !important;
+  font-weight: 500 !important;
+}
 
 .ws-storecard__foot {
   display: flex;
@@ -3611,7 +4661,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   font-size: 12px;
   color: var(--ws-text-subtle);
 
-  @container storecard (max-width: 279px) { margin-inline: var(--ws-space-4); }
+  @container storecard (max-width: 279px) {
+    margin-inline: var(--ws-space-4);
+  }
 }
 
 .ws-storecard__cta {
@@ -3624,11 +4676,19 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   font-weight: 600;
   color: var(--ws-brand-gold-text);
 
-  svg { transition: transform var(--ws-motion-fast) var(--ws-ease); }
+  svg {
+    transition: transform var(--ws-motion-fast) var(--ws-ease);
+  }
 
-  .ws-storecard:hover & svg { transform: translateX(3px); }
+  .ws-storecard:hover & svg {
+    transform: translateX(3px);
+  }
 
-  @media (prefers-reduced-motion: reduce) { svg { transition: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    svg {
+      transition: none;
+    }
+  }
 }
 
 // The card's own banner, logo and stats backgrounds are more specific than
@@ -3637,32 +4697,68 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   pointer-events: none;
 
   .ws-storecard__banner,
-  .ws-storecard__logo { background: var(--ws-bg-raised); }
+  .ws-storecard__logo {
+    background: var(--ws-bg-raised);
+  }
 
-  .ws-storecard__banner { border-bottom: 0; border-radius: 0; }
-  .ws-storecard__stats { border-top-color: transparent; }
+  .ws-storecard__banner {
+    border-bottom: 0;
+    border-radius: 0;
+  }
+  .ws-storecard__stats {
+    border-top-color: transparent;
+  }
 }
 
-.ws-storecard__skel { display: block; border-radius: 4px; }
+.ws-storecard__skel {
+  display: block;
+  border-radius: 4px;
+}
 
 // ─── Sell band ──────────────────────────────────────────────────
 
 // Quiet surface card — gold stays in the primary CTA and the numbered
 // step chips.
+// No panel of its own: the band sits directly on the page ground so it reads
+// as part of the page rather than a card dropped onto it. Structure comes
+// from the layout and one hairline, not from a container.
+//
+// Copy and drawing share the top row; the three steps run the full width
+// underneath, which is what lets the illustration be big enough to be worth
+// drawing and stops the steps being a narrow column squeezed beside it.
+// Words on the left, one big drawing on the right holding the full height of
+// them — the assurances band below it, mirrored, so the two read as a pair
+// rather than two unrelated arrangements.
 .ws-sellband {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--ws-space-8);
-  align-items: center;
-  padding: var(--ws-space-8) var(--ws-space-6);
-  border-radius: var(--ws-radius-xl);
-  background: var(--ws-bg-surface);
-  border: 1px solid var(--ws-border-hairline);
 
   @media (min-width: $bp-md) {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: var(--ws-space-16);
-    padding: var(--ws-space-16) var(--ws-space-12);
+    // A share of the row rather than a fixed 460: at the breakpoint itself a
+    // fixed column left the drawing wider than the words beside it.
+    grid-template-columns: minmax(0, 1fr) minmax(0, 38%);
+    grid-template-areas:
+      "intro art"
+      "steps art";
+    column-gap: var(--ws-space-16);
+    row-gap: var(--ws-space-10);
+    align-items: center;
+  }
+}
+
+.ws-sellband__intro {
+  @media (min-width: $bp-md) { grid-area: intro; }
+}
+
+.ws-sellband__art {
+  display: flex;
+  justify-content: center;
+
+  @media (min-width: $bp-md) {
+    grid-area: art;
+    justify-content: flex-end;
+    align-self: center;
   }
 }
 
@@ -3704,24 +4800,31 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   color: var(--ws-text-muted);
 }
 
+// A row across the foot of the band, divided by the same hairline the rest of
+// the page uses. As a column beside the copy it competed with the drawing for
+// the same space; here it reads as the summary of what the band just said.
+// One stacked row per step, like the points in the band below: the hairline
+// between rows does the spacing, so the list carries no gap of its own.
 .ws-sellband__steps {
   display: grid;
-  gap: var(--ws-space-5);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--ws-space-6) 0 0;
 
-  @media (min-width: $bp-md) {
-    gap: var(--ws-space-6);
-    padding-left: var(--ws-space-8);
-    border-left: 1px solid var(--ws-border-hairline);
-  }
+  @media (min-width: $bp-md) { grid-area: steps; }
 }
 
 .ws-sellband__step {
-  display: flex;
-  gap: var(--ws-space-3);
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ws-space-4);
+  padding-block: var(--ws-space-5);
+  border-top: 1px solid var(--ws-border-hairline);
+
+  &:first-child { padding-top: 0; border-top: 0; }
 }
 
 .ws-sellband__num {
@@ -3749,42 +4852,167 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   color: var(--ws-text-muted);
 }
 
+// ─── Sell band illustration ─────────────────────────────────────
+// Inline SVG, not an asset: no request, and every fill is a palette token so
+// it follows the theme instead of carrying its own colours. Flat fills only —
+// gold is the awning, the sign mark and the buyer's message, nothing else.
+
+.ws-sellart {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+
+  @media (min-width: $bp-md) { max-width: 480px; }
+}
+
+.ws-sellart__shadow { fill: var(--ws-border-hairline); }
+
+.ws-sellart__body,
+.ws-sellart__panel,
+.ws-sellart__windowbody,
+.ws-sellart__tagbody,
+.ws-sellart__chatbody {
+  fill: var(--ws-bg-page);
+  stroke: var(--ws-border-hairline);
+  stroke-width: 1.75;
+}
+
+.ws-sellart__doorbody,
+.ws-sellart__photo {
+  fill: var(--ws-bg-chip);
+  stroke: var(--ws-border-hairline);
+  stroke-width: 1.75;
+}
+
+.ws-sellart__post { fill: var(--ws-border-hairline); }
+.ws-sellart__knob { fill: var(--ws-text-subtle); }
+.ws-sellart__awningfill { fill: var(--ws-brand-primary); }
+
+// The stripes are punched out of the awning in the page colour rather than
+// drawn in a second hue, so the whole drawing stays gold plus neutrals.
+.ws-sellart__stripe { fill: var(--ws-bg-page); }
+
+.ws-sellart__line { fill: var(--ws-text-subtle); }
+.ws-sellart__line--dim { opacity: 0.5; }
+
+.ws-sellart__mark { fill: var(--ws-brand-primary); }
+.ws-sellart__mark--dim { fill: var(--ws-text-subtle); opacity: 0.55; }
+
+.ws-sellart__taghole {
+  fill: var(--ws-bg-page);
+  stroke: var(--ws-border-hairline);
+  stroke-width: 1.75;
+}
+
+.ws-sellart__dot { fill: var(--ws-brand-primary); }
+
+// The two floating pieces drift so the drawing is not completely static.
+// Reduced motion leaves them where they are.
+@media (prefers-reduced-motion: no-preference) {
+  .ws-sellart__float { animation: ws-sellart-float 6s var(--ws-ease) infinite; }
+  .ws-sellart__float--chat { animation-delay: -3s; }
+}
+
+@keyframes ws-sellart-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+// ── Motion, the two closing bands ──
+// The page default is a quick 320ms lift, right for a grid of cards arriving
+// at once. These two are read rather than scanned, so their pieces take a
+// longer, flatter curve and a wider beat between them — the eye follows the
+// pitch down the band instead of catching three things landing together.
+:is(.ws-sellband, .ws-assure) [data-reveal] {
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.16, 0.84, 0.28, 1);
+  transition-delay: calc(var(--reveal-i, 0) * 90ms);
+}
+
+html[data-reveal='ready'] :is(.ws-sellband, .ws-assure) [data-reveal]:not(.is-in) {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+// The page-wide reduce rule sits above this one, so it has to be repeated
+// here or these overrides would switch the motion back on for everyone who
+// asked for less of it.
+@media (prefers-reduced-motion: reduce) {
+  :is(.ws-sellband, .ws-assure) [data-reveal] {
+    transition: none;
+  }
+  html[data-reveal='ready'] :is(.ws-sellband, .ws-assure) [data-reveal]:not(.is-in) {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 // ─── Value props row (home) ─────────────────────────────────────
 // Named .ws-assure, NOT .ws-trust — that class belongs to the seller
 // trust facts on the listing/store sidebars and the two collided once.
 // One hairline-divided row, not a rack of feature cards: quiet, caption
 // weight, no accent discs.
 
+// Drawing on the left, the three points stacked beside it. The scene carries
+// the section now, so the points no longer need a drawing each at size — the
+// small marks read as labels next to it rather than three competing pictures.
 .ws-assure {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--ws-space-4);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ws-space-8);
+  align-items: center;
 
-  @media (min-width: $bp-sm) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  @media (min-width: $bp-md) { gap: var(--ws-space-6); }
+  // The one exception to .ws-home's single rhythm. The sell band above ends
+  // in a hairline-topped row, and at the shared gap this band rhymed into it
+  // as one long section; the extra step says the sell pitch ended.
+  margin-top: var(--ws-space-8);
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    gap: var(--ws-space-16);
+    margin-top: var(--ws-space-12);
+  }
 }
 
-// Three quiet panels rather than a hairline strip: it now matches the card
-// language the rest of the page speaks, at the lowest emphasis on the page.
+.ws-assure__art {
+  display: grid;
+  justify-items: center;
+
+  @media (min-width: $bp-md) { justify-items: start; }
+}
+
+.ws-assure__list {
+  display: grid;
+  gap: var(--ws-space-5);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// A row each, divided by hairlines rather than boxed: the same separating job
+// the three columns used to do, turned on its side.
 .ws-assure__item {
   display: grid;
-  gap: var(--ws-space-2);
-  align-content: start;
-  padding: var(--ws-space-6);
-  border: 1px solid var(--ws-border-hairline);
-  border-radius: var(--ws-radius-xl);
-  background: var(--ws-bg-surface);
-}
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ws-space-4);
+  padding-top: var(--ws-space-5);
+  border-top: 1px solid var(--ws-border-hairline);
 
-.ws-assure__icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--ws-radius-pill);
-  background: var(--ws-bg-sunken);
-  color: var(--ws-text-muted);
-  margin-bottom: var(--ws-space-1);
+  &:first-child { padding-top: 0; border-top: 0; }
+
+  // The per-point drawing shrinks to a mark at this size; the section's own
+  // illustration is the picture now.
+  .ws-art {
+    width: 64px;
+    margin-bottom: 0;
+  }
+
+  @media (min-width: $bp-md) {
+    gap: var(--ws-space-5);
+    .ws-art { width: 76px; }
+  }
 }
 
 .ws-assure__title {
@@ -3796,7 +5024,116 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
 .ws-assure__copy {
   @include ws-caption;
   color: var(--ws-text-muted);
-  max-width: 34ch;
+  // Wider than when these sat in three columns: each one has a full row now.
+  max-width: 52ch;
+}
+
+// ─── Assurance drawings ─────────────────────────────────────────
+// The same language as the sell band's shopfront: inline SVG, flat fills from
+// palette tokens, gold used once per drawing and neutrals for everything
+// else. No asset requests and nothing to swap per theme.
+
+.ws-art {
+  display: block;
+  width: 112px;
+  max-width: 100%;
+  height: auto;
+  margin-bottom: var(--ws-space-1);
+}
+
+.ws-art__panel {
+  fill: var(--ws-bg-surface);
+  stroke: var(--ws-border-hairline);
+  stroke-width: 2;
+}
+
+.ws-art__accent {
+  fill: var(--ws-brand-primary);
+}
+
+.ws-art__accent-fill { fill: var(--ws-brand-primary); }
+
+.ws-art__onaccent { fill: var(--ws-brand-on-primary, #18181B); }
+
+.ws-art__line { fill: var(--ws-text-subtle); }
+.ws-art__line--dim { opacity: 0.5; }
+
+.ws-art__band {
+  fill: var(--ws-bg-sunken);
+}
+
+.ws-art__seam,
+.ws-art__check {
+  fill: none;
+  stroke: var(--ws-text-subtle);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ws-art__check {
+  stroke: var(--ws-brand-gold-text);
+  stroke-width: 3.5;
+}
+
+.ws-art__check--sm { stroke-width: 3; }
+
+// ── Section drawing ──
+// Bigger sibling of the marks beside it, same palette rules as the sell
+// band's shopfront.
+.ws-trustart {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  overflow: visible;
+}
+
+.ws-trustart__shadow { fill: var(--ws-border-hairline); }
+
+.ws-trustart__body,
+.ws-trustart__photo,
+.ws-trustart__chat {
+  fill: var(--ws-bg-page);
+  stroke: var(--ws-border-hairline);
+  stroke-width: 1.75;
+}
+
+.ws-trustart__screen { fill: var(--ws-bg-chip); }
+.ws-trustart__line { fill: var(--ws-text-subtle); }
+.ws-trustart__line--dim { opacity: 0.5; }
+.ws-trustart__price { fill: var(--ws-brand-primary); }
+.ws-trustart__dot { fill: var(--ws-brand-primary); }
+
+.ws-trustart__shield {
+  fill: var(--ws-bg-surface);
+  stroke: var(--ws-border-hairline);
+  stroke-width: 1.75;
+}
+
+.ws-trustart__check {
+  fill: none;
+  stroke: var(--ws-brand-gold-text);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ws-trustart__pinbody { fill: var(--ws-brand-primary); }
+
+// Punched out in the page colour rather than drawn in a second hue, the same
+// trick the awning stripes use.
+.ws-trustart__pinhole { fill: var(--ws-bg-page); }
+
+// The badge and the reply drift, so the scene is not completely still.
+@media (prefers-reduced-motion: no-preference) {
+  .ws-trustart__float { animation: ws-trustart-float 7s var(--ws-ease) infinite; }
+  .ws-trustart__float--badge { animation-delay: -3.5s; }
+}
+
+@keyframes ws-trustart-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 // ─── Legal pages ────────────────────────────────────────────────
@@ -3806,7 +5143,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   margin-inline: auto;
   padding-block: var(--ws-space-8) var(--ws-space-12);
 
-  section { margin-top: var(--ws-space-8); }
+  section {
+    margin-top: var(--ws-space-8);
+  }
 
   section p {
     font-size: 14px;
@@ -3828,7 +5167,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   padding-top: var(--ws-space-6);
   border-top: 1px solid var(--ws-border-hairline);
 
-  a { color: var(--ws-brand-gold-text); }
+  a {
+    color: var(--ws-brand-gold-text);
+  }
 }
 
 // ─── 404 ────────────────────────────────────────────────────────
@@ -3851,7 +5192,8 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   letter-spacing: -2px;
   // Brand-tinted outline numeral: unmistakably a 404, quietly on-brand.
   color: transparent;
-  -webkit-text-stroke: 2px color-mix(in srgb, var(--ws-brand-primary) 55%, var(--ws-text-subtle));
+  -webkit-text-stroke: 2px
+    color-mix(in srgb, var(--ws-brand-primary) 55%, var(--ws-text-subtle));
 }
 
 .ws-404__copy {
@@ -3877,7 +5219,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   border: 1px solid var(--ws-border-hairline);
 
   // Same brand-border focus as the topbar search — no halo.
-  &:focus-within { border-color: var(--ws-brand-primary); }
+  &:focus-within {
+    border-color: var(--ws-brand-primary);
+  }
 }
 
 .ws-404__links {
@@ -3922,8 +5266,13 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   color: var(--ws-text-subtle);
 }
 
-.ws-mallcta__title { margin: 0 0 2px; }
-.ws-mallcta__sub { margin: 0; max-width: 60ch; }
+.ws-mallcta__title {
+  margin: 0 0 2px;
+}
+.ws-mallcta__sub {
+  margin: 0;
+  max-width: 60ch;
+}
 
 // Sidebar/stacked placement: no bottom margin of its own, copy wraps under.
 .ws-mallcta--card {
@@ -3939,7 +5288,6 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
 // The topbar mall link keeps its icon at every width but only earns a text
 // label on desktop, where there is room beside the search field. .ws-iconbtn
 // is a fixed square, so the label needs the width back.
-
 
 // Row action menu (the three-dots in table rows). Same panel spec as
 // .ws-locpick__panel, but positioned `fixed` from JS and portaled to <body>:
@@ -3971,7 +5319,9 @@ html[data-reveal='ready'] [data-reveal]:not(.is-in) {
   border-radius: var(--ws-radius-sm);
   cursor: pointer;
 
-  &:hover { background: var(--ws-bg-raised); }
+  &:hover {
+    background: var(--ws-bg-raised);
+  }
 
   &:focus-visible {
     outline: 2px solid var(--ws-brand-primary);

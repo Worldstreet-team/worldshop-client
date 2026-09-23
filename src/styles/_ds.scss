@@ -37,7 +37,7 @@ body:has(.ws) {
 @mixin ws-h2      { font-family: var(--ws-font-display); font-weight: 700; font-size: 20px; letter-spacing: -0.3px; line-height: 1.25; }
 @mixin ws-title   { font-weight: 600; font-size: 16px; line-height: 1.35; }
 @mixin ws-body    { font-weight: 400; font-size: 15px; line-height: 1.5; }
-@mixin ws-caption { font-weight: 400; font-size: 13px; line-height: 1.45; }
+@mixin ws-caption { font-weight: 400; font-size: 12px; line-height: 1.45; }
 @mixin ws-label   { font-weight: 500; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
 @mixin ws-badge   { font-weight: 600; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; }
 
@@ -84,11 +84,11 @@ body:has(.ws) {
   gap: var(--ws-space-2);
   min-height: 52px;
   padding: var(--ws-space-3) var(--ws-space-4);
-  border-radius: var(--ws-radius-md);
+  border-radius: var(--ws-radius-pill);
   border: 1px solid transparent;
   font-family: var(--ws-font-ui);
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 14px;
   line-height: 1;
   cursor: pointer;
   text-decoration: none;
