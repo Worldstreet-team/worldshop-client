@@ -2,11 +2,12 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Reveal from "@/shared/components/Reveal";
 import { SELL_STEPS } from "@/features/listings/content/home";
+import SellIllustration from "@/features/listings/components/home/SellIllustration";
 
 export default function SellBand() {
   return (
-    <Reveal as="section" className="ws-sellband" aria-labelledby="home-sell">
-      <div className="ws-sellband__intro">
+    <section className="ws-sellband" aria-labelledby="home-sell">
+      <Reveal className="ws-sellband__intro" index={0}>
         <span className="ws-sellband__eyebrow">Start selling</span>
         <h2 className="ws-sellband__title" id="home-sell">
           Selling? List it in minutes.
@@ -24,11 +25,15 @@ export default function SellBand() {
             Free · takes about two minutes
           </span>
         </div>
-      </div>
+      </Reveal>
+
+      <Reveal className="ws-sellband__art" index={1}>
+        <SellIllustration />
+      </Reveal>
 
       <ol className="ws-sellband__steps">
         {SELL_STEPS.map((step, i) => (
-          <li className="ws-sellband__step" key={step.title}>
+          <Reveal as="li" className="ws-sellband__step" index={2 + i} key={step.title}>
             <span className="ws-sellband__num ws-num" aria-hidden>
               {i + 1}
             </span>
@@ -36,9 +41,9 @@ export default function SellBand() {
               <h3 className="ws-sellband__steptitle">{step.title}</h3>
               <p className="ws-sellband__stepcopy">{step.copy}</p>
             </div>
-          </li>
+          </Reveal>
         ))}
       </ol>
-    </Reveal>
+    </section>
   );
 }

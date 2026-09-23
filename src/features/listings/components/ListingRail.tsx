@@ -6,7 +6,6 @@ import ListingCard from "@/features/listings/components/ListingCard";
 import ListingCardSkeleton from "@/features/listings/components/ListingCardSkeleton";
 
 type ListingRailProps = Omit<SectionHeadProps, "action"> & {
-  /** Target of the "See all" link. */
   to: string;
   items: ListingWithStore[];
   loading: boolean;
@@ -18,7 +17,6 @@ export default function ListingRail({
   loading,
   ...head
 }: ListingRailProps) {
-  // An empty rail is noise on a landing page — drop it rather than show a blank strip.
   if (!loading && items.length === 0) return null;
   return (
     <Section {...head} action={{ label: "See all", to }}>

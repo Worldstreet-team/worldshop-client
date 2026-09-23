@@ -15,6 +15,7 @@ import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
+import { useTransparentHeader } from "@/shared/hooks/useTransparentHeader";
 
 const NAV = [
   { to: "/", label: "Home", end: true },
@@ -59,9 +60,10 @@ export default function Header() {
     savedListings.count,
   );
   const unread = useUnreadCount(isAuthenticated);
+  const overHero = useTransparentHeader(location.pathname === "/");
 
   return (
-    <header className="ws-topbar">
+    <header className={`ws-topbar${overHero ? " ws-topbar--hero" : ""}`}>
       <div className="ws-wrap">
         <div className="ws-topbar__row">
           <Link to="/" className="ws-brand" aria-label="WorldStore home">
@@ -96,7 +98,7 @@ export default function Header() {
               {isAuthenticated && (
                 <Link
                   to="/saved"
-                  className="ws-iconbtn"
+                  className="ws-iconbtn ws-topbar__saved"
                   aria-label={
                     savedCount
                       ? `Saved listings, ${savedCount} saved`

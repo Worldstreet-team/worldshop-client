@@ -19,7 +19,7 @@ export default function FeaturedSellers({ sellers, loading }: FeaturedSellersPro
       sub="Rated stores with listings live on the marketplace right now."
       action={{ label: "See all", to: "/stores" }}
     >
-      <div className="ws-sellers">
+      <div className="ws-sellers ws-bleed">
         {loading
           ? Array.from({ length: 3 }, (_, i) => <StoreCardSkeleton key={i} />)
           : sellers.map((s, i) => (

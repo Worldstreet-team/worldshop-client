@@ -1,22 +1,21 @@
-import type { LucideIcon } from "lucide-react";
-import { MessageCircle, ShieldCheck, Tag } from "lucide-react";
+import type { AssuranceArtName } from "@/features/listings/components/home/AssuranceArt";
 
-export type Assurance = { Icon: LucideIcon; title: string; copy: string };
+export type Assurance = { art: AssuranceArtName; title: string; copy: string };
 export type SellStep = { title: string; copy: string };
 
 export const ASSURANCES: Assurance[] = [
   {
-    Icon: MessageCircle,
+    art: "chat",
     title: "Deal direct",
     copy: "Chat with the seller — no middlemen, no markups.",
   },
   {
-    Icon: ShieldCheck,
+    art: "verified",
     title: "Know your seller",
     copy: "Public ratings, reviews and verification on every store.",
   },
   {
-    Icon: Tag,
+    art: "meet",
     title: "Meet safely",
     copy: "Check the item in person before any money moves.",
   },
