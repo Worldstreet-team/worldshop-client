@@ -1,17 +1,19 @@
 import { useRef, type KeyboardEvent } from 'react';
-import { panelId, tabId } from '@/features/stores/model';
+import { panelId, tabId } from '@/shared/lib/tabs';
 
-export type StoreTab<K extends string> = { key: K; label: string; count?: number };
+export type Tab<K extends string> = { key: K; label: string; count?: number };
 
-type StoreTabsProps<K extends string> = {
+type TabsProps<K extends string> = {
   idPrefix: string;
-  tabs: StoreTab<K>[];
+  tabs: Tab<K>[];
   active: K;
   onChange: (key: K) => void;
+  /** Names the row for screen readers — "Store sections", "Listing details". */
+  label: string;
 };
 
 // WAI-ARIA tabs: one tab stop for the row, arrow keys move between tabs.
-export default function StoreTabs<K extends string>({ idPrefix, tabs, active, onChange }: StoreTabsProps<K>) {
+export default function Tabs<K extends string>({ idPrefix, tabs, active, onChange, label }: TabsProps<K>) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -29,7 +31,7 @@ export default function StoreTabs<K extends string>({ idPrefix, tabs, active, on
   };
 
   return (
-    <div className="ws-storetabs" role="tablist" aria-label="Store sections">
+    <div className="ws-storetabs" role="tablist" aria-label={label}>
       {tabs.map((t, i) => {
         const selected = t.key === active;
         return (

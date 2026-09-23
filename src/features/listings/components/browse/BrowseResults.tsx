@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, SearchX, SlidersHorizontal, X } from 'lucide-react';
-import type { useBrowseListings } from '@/features/listings/hooks/useBrowseListings';
-import type { useBrowseTokens } from '@/features/listings/hooks/useBrowseTokens';
-import Reveal from '@/shared/components/Reveal';
-import ListingCard from '@/features/listings/components/ListingCard';
-import ListingCardSkeleton from '@/features/listings/components/ListingCardSkeleton';
+import { Link } from "react-router-dom";
+import { SearchX, SlidersHorizontal, X } from "lucide-react";
+import Pagination from "@/shared/components/common/Pagination";
+import type { useBrowseListings } from "@/features/listings/hooks/useBrowseListings";
+import type { useBrowseTokens } from "@/features/listings/hooks/useBrowseTokens";
+import Reveal from "@/shared/components/Reveal";
+import ListingCard from "@/features/listings/components/ListingCard";
+import ListingCardSkeleton from "@/features/listings/components/ListingCardSkeleton";
 
 type BrowseResultsProps = ReturnType<typeof useBrowseListings> & {
   tokens: ReturnType<typeof useBrowseTokens>;
@@ -20,7 +21,6 @@ type BrowseResultsProps = ReturnType<typeof useBrowseListings> & {
 
 export default function BrowseResults({
   listings,
-  total,
   totalPages,
   loading,
   switching,
@@ -28,7 +28,6 @@ export default function BrowseResults({
   retry,
   prefetchPage,
   tokens,
-  place,
   page,
   sort,
   filtersOpen,
@@ -37,24 +36,11 @@ export default function BrowseResults({
   onOpenFilters,
   onClearAll,
 }: BrowseResultsProps) {
-
   const busy = loading || switching;
 
   return (
     <div className="ws-browse__results">
       <div className="ws-browse__toolbar">
-        <p className="ws-browse__count" aria-live="polite">
-          {busy ? (
-            'Searching…'
-          ) : (
-            <>
-              <strong className="ws-num">{total.toLocaleString('en-NG')}</strong>{' '}
-              {total === 1 ? 'listing' : 'listings'}
-              {place && ` in ${place}`}
-            </>
-          )}
-        </p>
-
         <div className="ws-browse__controls">
           <button
             type="button"
@@ -65,19 +51,24 @@ export default function BrowseResults({
           >
             <SlidersHorizontal size={16} aria-hidden />
             Filters
-            {tokens.length > 0 && <span className="ws-browse__badge ws-num">{tokens.length}</span>}
+            {tokens.length > 0 && (
+              <span className="ws-browse__badge ws-num">{tokens.length}</span>
+            )}
           </button>
 
-          <select
-            className="ws-select ws-select--sm"
-            value={sort}
-            onChange={(e) => onSort(e.target.value || null)}
-            aria-label="Sort listings"
-          >
-            <option value="">Newest first</option>
-            <option value="price_asc">Price: low to high</option>
-            <option value="price_desc">Price: high to low</option>
-          </select>
+          <label className="ws-browse__sort">
+            <span>Sort by</span>
+            <select
+              className="ws-select ws-select--sm"
+              value={sort}
+              onChange={(e) => onSort(e.target.value || null)}
+              aria-label="Sort listings"
+            >
+              <option value="">Newest first</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -118,7 +109,10 @@ export default function BrowseResults({
           <p className="ws-caption ws-muted">
             Check your connection and try again — your filters are still set.
           </p>
-          <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={retry}>
+          <button
+            className="ws-btn ws-btn--sm ws-btn--secondary"
+            onClick={retry}
+          >
             Try again
           </button>
         </div>
@@ -127,18 +121,26 @@ export default function BrowseResults({
           <span className="ws-empty__icon">
             <SearchX size={24} aria-hidden />
           </span>
-          <h2 className="ws-title">{tokens.length > 0 ? 'No matches' : 'Nothing listed yet'}</h2>
+          <h2 className="ws-title">
+            {tokens.length > 0 ? "No matches" : "Nothing listed yet"}
+          </h2>
           <p className="ws-caption ws-muted">
             {tokens.length > 0
-              ? 'Try removing a filter or searching a wider area.'
-              : 'Be the first to list something on the marketplace.'}
+              ? "Try removing a filter or searching a wider area."
+              : "Be the first to list something on the marketplace."}
           </p>
           {tokens.length > 0 ? (
-            <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={onClearAll}>
+            <button
+              className="ws-btn ws-btn--sm ws-btn--secondary"
+              onClick={onClearAll}
+            >
               Clear filters
             </button>
           ) : (
-            <Link to="/vendor/register" className="ws-btn ws-btn--sm ws-btn--primary">
+            <Link
+              to="/vendor/register"
+              className="ws-btn ws-btn--sm ws-btn--primary"
+            >
               Open a store
             </Link>
           )}
@@ -153,32 +155,13 @@ export default function BrowseResults({
         </div>
       )}
 
-      {totalPages > 1 && !busy && (
-        <nav className="ws-pager" aria-label="Pagination">
-          <button
-            className="ws-btn ws-btn--sm ws-btn--secondary"
-            disabled={page <= 1}
-            onClick={() => onPage(page - 1)}
-            onMouseEnter={() => prefetchPage(page - 1)}
-            onFocus={() => prefetchPage(page - 1)}
-          >
-            <ChevronLeft size={16} aria-hidden />
-            Previous
-          </button>
-          <span className="ws-pager__status">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            className="ws-btn ws-btn--sm ws-btn--secondary"
-            disabled={page >= totalPages}
-            onClick={() => onPage(page + 1)}
-            onMouseEnter={() => page < totalPages && prefetchPage(page + 1)}
-            onFocus={() => page < totalPages && prefetchPage(page + 1)}
-          >
-            Next
-            <ChevronRight size={16} aria-hidden />
-          </button>
-        </nav>
+      {!busy && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={onPage}
+          onPrefetch={prefetchPage}
+        />
       )}
     </div>
   );

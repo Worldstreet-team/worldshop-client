@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
 import { useBrowseFilters } from '@/features/listings/hooks/useBrowseFilters';
 import { useBrowseCategories } from '@/features/listings/hooks/useBrowseCategories';
 import { useBrowseListings } from '@/features/listings/hooks/useBrowseListings';
 import { useBrowseTokens } from '@/features/listings/hooks/useBrowseTokens';
 import { useLocations } from '@/shared/hooks/useLocations';
+import { useFilterDrawer } from '@/shared/hooks/useFilterDrawer';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
-import BrowseHero from '@/features/listings/components/browse/BrowseHero';
+import BrowseHeader from '@/features/listings/components/browse/BrowseHeader';
 import BrowseFilters from '@/features/listings/components/browse/BrowseFilters';
 import BrowseResults from '@/features/listings/components/browse/BrowseResults';
-
-const DESKTOP = '(min-width: 1024px)';
 
 export default function Browse() {
   const browseFilters = useBrowseFilters();
@@ -23,49 +21,26 @@ export default function Browse() {
   usePageTitle(search ? `“${search}”` : selected ? selected.name : 'Browse listings');
   const results = useBrowseListings(browseFilters, categories);
   const tokens = useBrowseTokens(browseFilters, selected, countryName);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const { open: filtersOpen, setOpen: setFiltersOpen } = useFilterDrawer();
 
-  useEffect(() => {
-    if (!filtersOpen) return;
-    const mq = window.matchMedia(DESKTOP);
-    if (mq.matches) return;
-    const close = () => setFiltersOpen(false);
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('keydown', onKey);
-    mq.addEventListener('change', close);
-    return () => {
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', onKey);
-      mq.removeEventListener('change', close);
-    };
-  }, [filtersOpen]);
-
-  const eyebrow = search ? 'Search results' : isLeaf && parent ? parent.name : 'Marketplace';
-  const title = search ? `“${search}”` : selected ? selected.name : 'Browse listings';
-  const sub = search
-    ? 'Matching listings across every category.'
+  const title = search
+    ? `Results for “${search}”`
     : selected
-      ? `Every listing in ${selected.name}, from sellers you can message directly.`
-      : 'Everything for sale right now. Message the seller and agree your own terms.';
+      ? selected.name
+      : 'All listings';
 
   return (
     <>
-      <BrowseHero
-        eyebrow={eyebrow}
-        title={title}
-        sub={sub}
-        parents={parents}
-        activeParentId={openParentId}
-        onPickCategory={(id) => setParam({ categoryId: id })}
-      />
-
       <div className="ws-wrap">
+        <BrowseHeader title={title} parent={parent} selected={selected} search={search} />
+
         <div className="ws-browse">
           <BrowseFilters
             filters={browseFilters}
+            parents={parents}
             subcategories={siblings}
             parentName={parent?.name}
+            openParentId={openParentId}
             needsSubcategory={Boolean(categoryId) && !isLeaf}
             facets={facets}
             countryName={countryName}

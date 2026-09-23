@@ -7,7 +7,8 @@ import StoreHead, { type StoreHeadStat } from '@/features/stores/components/Stor
 import StoreListings from '@/features/stores/components/StoreListings';
 import StoreReviews from '@/features/stores/components/StoreReviews';
 import StoreAbout from '@/features/stores/components/StoreAbout';
-import StoreTabs, { type StoreTab } from '@/features/stores/components/StoreTabs';
+import Tabs, { type Tab } from '@/shared/components/Tabs';
+import { panelId, tabId } from '@/shared/lib/tabs';
 import BackLink from '@/shared/components/BackLink';
 import ListingCardSkeleton from '@/features/listings/components/ListingCardSkeleton';
 import ReportButton from '@/features/reports/components/ReportButton';
@@ -15,9 +16,7 @@ import { useStorePage } from '@/features/stores/hooks/useStorePage';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 import { waLink } from '@/features/listings/model';
 import type { PublicStore } from '@/features/stores/api';
-import {
-  isVerifiedTier, panelId, replyTime, sinceLabel, tabId, VERIFICATION_LABEL,
-} from '@/features/stores/model';
+import { isVerifiedTier, replyTime, sinceLabel, VERIFICATION_LABEL } from '@/features/stores/model';
 import { formatLocation } from '@/shared/utils/locations';
 
 const TABS_ID = 'store';
@@ -150,7 +149,7 @@ export default function StorePage() {
   const location = formatLocation([store.city, store.state], store.country);
   const verified = isVerifiedTier(store.verificationTier);
   const mall = store.mall?.status === 'ACTIVE' || store.mall?.status === 'GRACE' ? store.mall : null;
-  const tabs: StoreTab<TabKey>[] = [
+  const tabs: Tab<TabKey>[] = [
     { key: 'about', label: 'About' },
     { key: 'listings', label: 'Listings', count: data.catalogueTotal ?? store.listingCount },
     { key: 'reviews', label: 'Reviews', count: store.reviewCount },
@@ -238,8 +237,9 @@ export default function StorePage() {
         />
 
         <div id={TABS_ID} className="ws-profile__tabs">
-          <StoreTabs
+          <Tabs
             idPrefix={TABS_ID}
+            label="Store sections"
             tabs={tabs}
             active={tab}
             onChange={(key) => {
