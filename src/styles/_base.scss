@@ -21,6 +21,9 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  // Anything scrolled to — an in-page anchor, a focused control, a skip link
+  // target — stops below the sticky bar instead of underneath it.
+  scroll-padding-top: calc(var(--ws-header-h, 65px) + var(--ws-space-4, 16px));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   // The page floor. Set here as well as on body so overscroll on iOS reveals

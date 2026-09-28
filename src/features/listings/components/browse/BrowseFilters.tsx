@@ -1,15 +1,25 @@
+import { useState } from "react";
 import { X } from "lucide-react";
 import type { Category, CategoryAttribute } from "@/features/catalog/types";
 import type { BrowseFilters as Filters } from "@/features/listings/hooks/useBrowseFilters";
+import CountrySelect from "@/shared/components/location/CountrySelect";
+import StateSelect from "@/shared/components/location/StateSelect";
 
 const CONDITIONS = ["NEW", "USED", "REFURBISHED"] as const;
 
 const titleCase = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 
+// Enough to recognise the shape of the catalogue without burying the filters
+// under it; the rest are one click away.
+const CATEGORIES_SHOWN = 8;
+
 type BrowseFiltersProps = {
   filters: Filters;
+  /** Top-level categories, for the sidebar's category block. */
+  parents: Category[];
   subcategories: Category[];
   parentName?: string;
+  openParentId: string;
   needsSubcategory: boolean;
   facets: CategoryAttribute[];
   countryName: string;
@@ -21,18 +31,24 @@ type BrowseFiltersProps = {
 
 export default function BrowseFilters({
   filters,
+  parents,
   subcategories,
   parentName,
+  openParentId,
   needsSubcategory,
   facets,
+  countryName,
   activeCount,
   total,
   open,
   onClose,
 }: BrowseFiltersProps) {
+  const [allCategories, setAllCategories] = useState(false);
   const {
     categoryId,
     condition,
+    countryFilter,
+    stateFilter,
     attrFilters,
     setParam,
     clearAll,
@@ -40,7 +56,6 @@ export default function BrowseFilters({
     setPriceDraft,
     applyPrice,
   } = filters;
-  const openParentId = subcategories[0]?.parentId ?? "";
 
   return (
     <>
@@ -60,11 +75,7 @@ export default function BrowseFilters({
             Filters
           </h2>
           {activeCount > 0 && (
-            <button
-              type="button"
-              className="ws-filters__reset"
-              onClick={clearAll}
-            >
+            <button type="button" className="ws-filters__reset" onClick={clearAll}>
               Reset
             </button>
           )}
@@ -79,62 +90,81 @@ export default function BrowseFilters({
         </div>
 
         <div className="ws-filters__body">
-          {subcategories.length > 0 && (
-            <details className="ws-filters__group" open>
-              <summary className="ws-filters__legend">
-                {parentName ?? "Subcategory"}
-              </summary>
-              <ul className="ws-subcats">
-                {subcategories.map((c) => (
+          {/* Category leads, the way it does on any shop: it is the filter that
+              decides which of the others below are even offered. */}
+          <details className="ws-filters__group" open>
+            <summary className="ws-filters__legend">Category</summary>
+            <ul className="ws-subcats">
+              {!openParentId &&
+                (allCategories ? parents : parents.slice(0, CATEGORIES_SHOWN)).map((c) => (
                   <li key={c.id}>
                     <button
                       type="button"
-                      className={`ws-subcat${c.id === categoryId ? " is-active" : ""}`}
-                      onClick={() =>
-                        setParam({
-                          categoryId: c.id === categoryId ? openParentId : c.id,
-                        })
-                      }
-                      aria-pressed={c.id === categoryId}
+                      className="ws-subcat"
+                      onClick={() => setParam({ categoryId: c.id })}
                     >
                       {c.name}
                     </button>
                   </li>
                 ))}
-              </ul>
-              {needsSubcategory && (
-                <p className="ws-filters__hint">
-                  Pick a subcategory to filter by brand, size and other details.
-                </p>
-              )}
-            </details>
-          )}
 
-          <details className="ws-filters__group" open>
-            <summary className="ws-filters__legend">Condition</summary>
-            <div className="ws-chiprow" role="group" aria-label="Condition">
-              <button
-                type="button"
-                className="ws-chip"
-                aria-pressed={!condition}
-                onClick={() => setParam({ condition: null })}
-              >
-                Any
-              </button>
-              {CONDITIONS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className="ws-chip"
-                  aria-pressed={condition === c}
-                  onClick={() =>
-                    setParam({ condition: condition === c ? null : c })
-                  }
-                >
-                  {titleCase(c)}
-                </button>
-              ))}
-            </div>
+              {!openParentId && parents.length > CATEGORIES_SHOWN && (
+                <li>
+                  <button
+                    type="button"
+                    className="ws-subcat ws-subcat--up"
+                    onClick={() => setAllCategories((v) => !v)}
+                  >
+                    {allCategories
+                      ? "Show fewer"
+                      : `Show all ${parents.length} categories`}
+                  </button>
+                </li>
+              )}
+
+              {openParentId && (
+                <>
+                  <li>
+                    <button
+                      type="button"
+                      className="ws-subcat ws-subcat--up"
+                      onClick={() => setParam({ categoryId: null })}
+                    >
+                      All categories
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      className={`ws-subcat${categoryId === openParentId ? " is-active" : ""}`}
+                      onClick={() => setParam({ categoryId: openParentId })}
+                      aria-pressed={categoryId === openParentId}
+                    >
+                      {parentName ?? "All in this category"}
+                    </button>
+                  </li>
+                  {subcategories.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        className={`ws-subcat ws-subcat--child${c.id === categoryId ? " is-active" : ""}`}
+                        onClick={() =>
+                          setParam({ categoryId: c.id === categoryId ? openParentId : c.id })
+                        }
+                        aria-pressed={c.id === categoryId}
+                      >
+                        {c.name}
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+            </ul>
+            {needsSubcategory && (
+              <p className="ws-filters__hint">
+                Pick a subcategory to filter by brand, size and other details.
+              </p>
+            )}
           </details>
 
           <details className="ws-filters__group" open>
@@ -153,9 +183,7 @@ export default function BrowseFilters({
                 inputMode="numeric"
                 placeholder="Min"
                 value={priceDraft.min}
-                onChange={(e) =>
-                  setPriceDraft((d) => ({ ...d, min: e.target.value }))
-                }
+                onChange={(e) => setPriceDraft((d) => ({ ...d, min: e.target.value }))}
                 onBlur={applyPrice}
                 aria-label="Minimum price"
               />
@@ -167,14 +195,60 @@ export default function BrowseFilters({
                 inputMode="numeric"
                 placeholder="Max"
                 value={priceDraft.max}
-                onChange={(e) =>
-                  setPriceDraft((d) => ({ ...d, max: e.target.value }))
-                }
+                onChange={(e) => setPriceDraft((d) => ({ ...d, max: e.target.value }))}
                 onBlur={applyPrice}
                 aria-label="Maximum price"
               />
               <button type="submit" hidden aria-hidden tabIndex={-1} />
             </form>
+          </details>
+
+          <details className="ws-filters__group" open>
+            <summary className="ws-filters__legend">Condition</summary>
+            <div className="ws-chiprow" role="group" aria-label="Condition">
+              <button
+                type="button"
+                className="ws-chip"
+                aria-pressed={!condition}
+                onClick={() => setParam({ condition: null })}
+              >
+                Any
+              </button>
+              {CONDITIONS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className="ws-chip"
+                  aria-pressed={condition === c}
+                  onClick={() => setParam({ condition: condition === c ? null : c })}
+                >
+                  {titleCase(c)}
+                </button>
+              ))}
+            </div>
+          </details>
+
+          {/* Where the item is decides whether a buyer can collect it at all,
+              so it belongs with the filters rather than only in the search bar. */}
+          <details className="ws-filters__group" open>
+            <summary className="ws-filters__legend">Location</summary>
+            <div className="ws-filters__stack">
+              <CountrySelect
+                value={countryFilter}
+                placeholder="Anywhere"
+                onChange={(e) => setParam({ country: e.target.value, state: null })}
+                aria-label="Filter by country"
+              />
+              {countryFilter && (
+                <StateSelect
+                  country={countryFilter}
+                  value={stateFilter}
+                  placeholder={`All of ${countryName}`}
+                  onChange={(e) => setParam({ state: e.target.value })}
+                  aria-label="Filter by state or region"
+                />
+              )}
+            </div>
           </details>
 
           {facets.map((attr) => (
@@ -183,9 +257,7 @@ export default function BrowseFilters({
               <select
                 className="ws-select"
                 value={attrFilters[attr.name] ?? ""}
-                onChange={(e) =>
-                  setParam({ [`attr.${attr.name}`]: e.target.value })
-                }
+                onChange={(e) => setParam({ [`attr.${attr.name}`]: e.target.value })}
                 aria-label={attr.name}
               >
                 <option value="">Any {attr.name.toLowerCase()}</option>
@@ -205,8 +277,7 @@ export default function BrowseFilters({
             className="ws-btn ws-btn--primary ws-filters__done"
             onClick={onClose}
           >
-            Show {total.toLocaleString("en-NG")}{" "}
-            {total === 1 ? "listing" : "listings"}
+            Show {total.toLocaleString("en-NG")} {total === 1 ? "listing" : "listings"}
           </button>
         </div>
       </aside>

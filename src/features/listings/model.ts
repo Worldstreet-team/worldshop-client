@@ -34,3 +34,15 @@ export function waLink(number: string, message?: string): string {
   const intl = digits.startsWith('234') ? digits : `234${digits.replace(/^0/, '')}`;
   return message ? `https://wa.me/${intl}?text=${encodeURIComponent(message)}` : `https://wa.me/${intl}`;
 }
+
+/** How fresh a listing is, as a buyer reads it: "Today", "5 days ago". */
+export function postedAgo(iso: string): string | null {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  const days = Math.floor(ms / 86_400_000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months === 1 ? '' : 's'} ago`;
+}

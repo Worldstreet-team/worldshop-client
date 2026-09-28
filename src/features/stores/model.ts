@@ -31,6 +31,3 @@ export function replyTime(mins: number): string {
   const days = Math.round(mins / (60 * 24));
   return `~${days} day${days === 1 ? '' : 's'}`;
 }
-
-export const tabId = (prefix: string, key: string) => `${prefix}-tab-${key}`;
-export const panelId = (prefix: string, key: string) => `${prefix}-panel-${key}`;

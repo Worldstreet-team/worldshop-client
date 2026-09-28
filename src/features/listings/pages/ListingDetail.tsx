@@ -1,35 +1,38 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import ContactSeller from "@/features/stores/components/ContactSeller";
-import SellerCard from "@/features/stores/components/SellerCard";
 import ListingRail from "@/features/listings/components/ListingRail";
 import ListingGallery from "@/features/listings/components/detail/ListingGallery";
-import ListingSummary from "@/features/listings/components/detail/ListingSummary";
+import ListingBuyBox from "@/features/listings/components/detail/ListingBuyBox";
 import HowBuyingWorks from "@/features/listings/components/detail/HowBuyingWorks";
 import ListingReviews from "@/features/reviews/components/ListingReviews";
 import ReportButton from "@/features/reports/components/ReportButton";
 import BackLink from "@/shared/components/BackLink";
+import Tabs, { type Tab } from "@/shared/components/Tabs";
+import { panelId, tabId } from "@/shared/lib/tabs";
 import { useListingDetail } from "@/features/listings/hooks/useListingDetail";
-import { fmtNaira, priceLabel, type ImageRef } from "@/features/listings/model";
+import { postedAgo, priceLabel, type ImageRef } from "@/features/listings/model";
 import { usePageTitle } from "@/shared/hooks/usePageTitle";
 import { formatLocation } from "@/shared/utils/locations";
+
+const TABS_ID = "listing";
+type TabKey = "description" | "specs" | "how" | "reviews";
 
 function DetailSkeleton() {
   return (
     <div className="ws-wrap">
-      <div className="ws-listing" aria-busy="true" aria-label="Loading listing">
-        <div className="ws-listing__main">
-          <div className="ws-skeleton ws-listing__skelmedia" />
-        </div>
-        <div className="ws-listing__side">
-          <div className="ws-card ws-summary">
-            <div className="ws-skeleton" style={{ height: 12, width: "30%" }} />
-            <div className="ws-skeleton" style={{ height: 30, width: "80%" }} />
-            <div className="ws-skeleton" style={{ height: 28, width: "50%" }} />
-            <div className="ws-skeleton" style={{ height: 14, width: "60%" }} />
-          </div>
+      <div className="ws-pdp" aria-busy="true" aria-label="Loading listing">
+        <div className="ws-skeleton ws-listing__skelmedia" />
+        <div className="ws-buybox">
+          <div className="ws-skeleton" style={{ height: 30, width: "80%" }} />
+          <div className="ws-skeleton" style={{ height: 14, width: "40%" }} />
+          <div className="ws-skeleton" style={{ height: 34, width: "55%" }} />
           <div
             className="ws-skeleton"
-            style={{ height: 240, borderRadius: "var(--ws-radius-xl)" }}
+            style={{ height: 120, borderRadius: "var(--ws-radius-lg)" }}
+          />
+          <div
+            className="ws-skeleton"
+            style={{ height: 48, borderRadius: "var(--ws-radius-pill)" }}
           />
         </div>
       </div>
@@ -40,6 +43,7 @@ function DetailSkeleton() {
 export default function ListingDetail() {
   const { idOrSlug } = useParams<{ idOrSlug: string }>();
   const { listing, loading, notFound, similar } = useListingDetail(idOrSlug);
+  const [tab, setTab] = useState<TabKey>("description");
 
   usePageTitle(notFound ? "Listing not available" : listing?.name);
 
@@ -83,6 +87,10 @@ export default function ListingDetail() {
           },
         ]
       : []),
+    ...(listing.brand ? [{ label: "Brand", value: listing.brand }] : []),
+    ...(listing.material
+      ? [{ label: "Material", value: listing.material }]
+      : []),
     ...Object.entries(listing.attributes ?? {}).map(([label, value]) => ({
       label,
       value: String(value),
@@ -90,15 +98,47 @@ export default function ListingDetail() {
     ...(listing.customFields ?? []),
   ];
 
+  // Facts about the listing rather than the item. They used to sit in the buy
+  // box, where they competed with the price for the same glance.
+  const ago = listing.publishedAt ? postedAgo(listing.publishedAt) : null;
+  const about = [
+    ...(location ? [{ label: "Item location", value: location }] : []),
+    ...(ago ? [{ label: "Posted", value: ago }] : []),
+    ...(listing.viewCount > 0
+      ? [{ label: "Views", value: listing.viewCount.toLocaleString("en-NG") }]
+      : []),
+    ...(listing.category ? [{ label: "Category", value: listing.category.name }] : []),
+  ];
+
+  const tabs: Tab<TabKey>[] = [
+    { key: "description", label: "Description" },
+    {
+      key: "specs",
+      label: "Specifications",
+      count: specs.length + about.length,
+    },
+    { key: "how", label: "How to buy" },
+    { key: "reviews", label: "Reviews", count: listing.reviewCount ?? 0 },
+  ];
+
+  const showTab = (key: TabKey) => {
+    setTab(key);
+    document.getElementById(TABS_ID)?.scrollIntoView({ block: "start" });
+  };
+
   const scrollToContact = () => {
     const reduce = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     document.getElementById("contact-panel")?.scrollIntoView({
       behavior: reduce ? "auto" : "smooth",
-      block: "start",
+      block: "center",
     });
-    document.getElementById("contact-message")?.focus({ preventScroll: true });
+
+    const target =
+      document.getElementById("contact-message") ??
+      document.querySelector<HTMLElement>(".ws-ask__cta");
+    target?.focus({ preventScroll: true });
   };
 
   return (
@@ -108,27 +148,47 @@ export default function ListingDetail() {
           <BackLink fallbackTo="/listings" fallbackLabel="All listings" />
         </div>
 
-        <div className="ws-listing">
-          <div className="ws-listing__main">
-            <div className="ws-listing__gallery">
-              <ListingGallery
-                key={listing.id}
-                images={images}
-                name={listing.name}
-              />
-            </div>
+        <div className="ws-pdp">
+          <div className="ws-pdp__media">
+            <ListingGallery
+              key={listing.id}
+              images={images}
+              name={listing.name}
+            />
+          </div>
 
-            <div className="ws-listing__body">
-              <section
-                className="ws-detail__section"
-                aria-labelledby="listing-about"
-              >
-                <h2 className="ws-h2" id="listing-about">
-                  About this item
-                </h2>
-                <p className="ws-body ws-muted ws-listing__desc">
-                  {listing.description}
-                </p>
+          <div className="ws-pdp__buy">
+            <ListingBuyBox
+              listing={listing}
+              location={location}
+              onSeeReviews={() => showTab("reviews")}
+            />
+          </div>
+        </div>
+
+        <section
+          className="ws-pdp__tabs"
+          id={TABS_ID}
+          aria-label="Listing details"
+        >
+          <Tabs
+            idPrefix={TABS_ID}
+            label="Listing details"
+            tabs={tabs}
+            active={tab}
+            onChange={setTab}
+          />
+
+          <div
+            role="tabpanel"
+            id={panelId(TABS_ID, tab)}
+            aria-labelledby={tabId(TABS_ID, tab)}
+            className="ws-storetabs__panel"
+            key={tab}
+          >
+            {tab === "description" && (
+              <div className="ws-pdp__read">
+                <p className="ws-listing__desc">{listing.description}</p>
 
                 {listing.tags.length > 0 && (
                   <div className="ws-taglist">
@@ -143,89 +203,62 @@ export default function ListingDetail() {
                     ))}
                   </div>
                 )}
-              </section>
-
-              {specs.length > 0 && (
-                <section
-                  className="ws-detail__section"
-                  aria-labelledby="listing-details"
-                >
-                  <h2 className="ws-h2" id="listing-details">
-                    Details
-                  </h2>
-                  <p className="ws-listing__hint">
-                    Provided by the seller. Ask them to confirm anything that
-                    matters to you.
-                  </p>
-                  <dl className="ws-spec">
-                    {specs.map((s, i) => (
-                      <div className="ws-spec__row" key={`${s.label}-${i}`}>
-                        <dt>{s.label}</dt>
-                        <dd>{s.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
-              )}
-
-              {listing.variants.length > 0 && (
-                <section
-                  className="ws-detail__section"
-                  aria-labelledby="listing-options"
-                >
-                  <h2 className="ws-h2" id="listing-options">
-                    Available options
-                  </h2>
-                  <p className="ws-listing__hint">
-                    Each option has its own price. Say which one you want when
-                    you message the seller.
-                  </p>
-                  <dl className="ws-spec">
-                    {listing.variants.map((v, i) => (
-                      <div className="ws-spec__row" key={v.id ?? i}>
-                        <dt>
-                          {v.name || Object.values(v.attributes).join(" / ")}
-                        </dt>
-                        <dd className="ws-num">
-                          {v.price != null ? fmtNaira(v.price) : "—"}
-                          {v.isAvailable === false && (
-                            <span
-                              className="ws-badge ws-badge--danger"
-                              style={{ marginLeft: "var(--ws-space-2)" }}
-                            >
-                              Sold out
-                            </span>
-                          )}
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
-              )}
-
-              <ListingReviews listingId={listing.id} />
-
-              <div className="ws-listing__report">
-                <ReportButton
-                  targetType="LISTING"
-                  targetId={listing.id}
-                  targetName={listing.name}
-                  label="Report this listing"
-                />
               </div>
-            </div>
-          </div>
+            )}
 
-          <div className="ws-listing__side">
-            <div className="ws-listing__summary">
-              <ListingSummary listing={listing} location={location} />
-            </div>
-            <div className="ws-listing__contact" id="contact-panel">
-              <ContactSeller listing={listing} />
-              <HowBuyingWorks />
-              <SellerCard store={listing.store} />
-            </div>
+            {tab === "specs" && (
+              <div className="ws-pdp__read">
+                {specs.length > 0 && (
+                  <div className="ws-pdp__specgroup">
+                    <h3 className="ws-howbuy__head">About the item</h3>
+                    <p className="ws-listing__hint">
+                      Provided by the seller. Ask them to confirm anything that
+                      matters to you.
+                    </p>
+                    <dl className="ws-facts">
+                      {specs.map((s, i) => (
+                        <div className="ws-facts__item" key={`${s.label}-${i}`}>
+                          <dt>{s.label}</dt>
+                          <dd>{s.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
+
+                {about.length > 0 && (
+                  <div className="ws-pdp__specgroup">
+                    <h3 className="ws-howbuy__head">About this listing</h3>
+                    <dl className="ws-facts">
+                      {about.map((s) => (
+                        <div className="ws-facts__item" key={s.label}>
+                          <dt>{s.label}</dt>
+                          <dd>{s.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tab === "how" && (
+              <div className="ws-pdp__read">
+                <HowBuyingWorks heading={false} />
+              </div>
+            )}
+
+            {tab === "reviews" && <ListingReviews listingId={listing.id} />}
           </div>
+        </section>
+
+        <div className="ws-listing__report">
+          <ReportButton
+            targetType="LISTING"
+            targetId={listing.id}
+            targetName={listing.name}
+            label="Report this listing"
+          />
         </div>
 
         {listing.category && (

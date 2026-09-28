@@ -30,6 +30,7 @@ import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
+import { useTransparentHeader } from "@/shared/hooks/useTransparentHeader";
 
 /**
  * Radius options as the sandbox lists them. Static for now: the API has no
@@ -95,6 +96,7 @@ export default function Header() {
     savedListings.count,
   );
   const unread = useUnreadCount(isAuthenticated);
+<<<<<<< HEAD
   const navigate = useNavigate();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const [term, setTerm] = useState(urlSearch);
@@ -108,9 +110,12 @@ export default function Header() {
     const q = term.trim();
     navigate(q ? `/listings?search=${encodeURIComponent(q)}` : "/listings");
   };
+=======
+  const overHero = useTransparentHeader(location.pathname === "/");
+>>>>>>> f2905ba02d9a957cf3bd05ef9c9548fb9d9014ee
 
   return (
-    <header className="ws-topbar">
+    <header className={`ws-topbar${overHero ? " ws-topbar--hero" : ""}`}>
       <div className="ws-wrap">
         <div className="ws-topbar__row">
           <Link to="/" className="ws-brandmark" aria-label="WorldStore home">
@@ -145,7 +150,37 @@ export default function Header() {
                 All categories
                 <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
               </button>
+<<<<<<< HEAD
               {menuOpen && <CategoryMenu onClose={() => setMenuOpen(false)} />}
+=======
+
+              {isAuthenticated && (
+                <Link
+                  to="/saved"
+                  className="ws-iconbtn ws-topbar__saved"
+                  aria-label={
+                    savedCount
+                      ? `Saved listings, ${savedCount} saved`
+                      : "Saved listings"
+                  }
+                  title="Saved listings"
+                >
+                  <Heart size={18} />
+                  {savedCount > 0 && <span className="ws-iconbtn__dot" />}
+                </Link>
+              )}
+
+              {isAuthenticated && user?.role === "ADMIN" && (
+                <Link
+                  to="/admin"
+                  className="ws-iconbtn ws-topbar__admin"
+                  aria-label="Admin console"
+                  title="Admin console"
+                >
+                  <LayoutGrid size={18} />
+                </Link>
+              )}
+>>>>>>> f2905ba02d9a957cf3bd05ef9c9548fb9d9014ee
             </div>
 
             <form className="ws-hfield ws-hfield--search" onSubmit={submitSearch} role="search">

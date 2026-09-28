@@ -6,7 +6,7 @@ import { resolveCategoryIds } from '@/features/catalog/model';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import type { BrowseFilters } from './useBrowseFilters';
 
-const PER_PAGE = 24;
+export const PER_PAGE = 24;
 const FANOUT_LIMIT = 200;
 
 type Row = Listing & { store: PublicStore };

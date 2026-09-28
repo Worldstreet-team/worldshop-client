@@ -1,4 +1,4 @@
-import { HandCoins, MessageCircle, ShieldCheck } from 'lucide-react';
+import { HandCoins, MessageCircle, ShieldAlert, ShieldCheck, Truck } from 'lucide-react';
 
 const STEPS = [
   {
@@ -18,27 +18,56 @@ const STEPS = [
   },
 ];
 
+const TERMS = [
+  {
+    Icon: Truck,
+    copy: 'Delivery and payment are agreed directly with the seller. Nothing is arranged for you.',
+  },
+  {
+    Icon: ShieldAlert,
+    copy: 'WorldStore does not handle payment, so there is no refund if a deal goes wrong. Never pay before you have seen the item.',
+  },
+];
+
 /**
- * Buyers arrive expecting an "Add to cart" button. There isn't one, so the
- * page says what happens instead, next to the only action it offers.
+ * Buyers arrive expecting an "Add to cart" button. There isn't one, so this
+ * says what happens instead. It has its own tab rather than a slot in the buy
+ * box: everyone needs it once, nobody needs it beside the price every visit.
  */
-export default function HowBuyingWorks() {
+export default function HowBuyingWorks({ heading = true }: { heading?: boolean }) {
   return (
-    <section className="ws-card ws-howbuy" aria-labelledby="how-buying-works">
-      <h2 className="ws-title" id="how-buying-works">How buying works</h2>
+    <section className="ws-howbuy" aria-labelledby={heading ? 'how-buying-works' : undefined}>
+      {heading && (
+        <h2 className="ws-howbuy__head" id="how-buying-works">
+          How buying works
+        </h2>
+      )}
+
       <ol className="ws-howbuy__steps">
-        {STEPS.map(({ Icon, title, copy }) => (
+        {STEPS.map(({ Icon, title, copy }, i) => (
           <li key={title} className="ws-howbuy__step">
             <span className="ws-howbuy__icon" aria-hidden>
               <Icon size={16} />
             </span>
             <span>
-              <span className="ws-howbuy__title">{title}</span>
+              <span className="ws-howbuy__title">
+                <span className="ws-howbuy__num ws-num" aria-hidden>{i + 1}.</span>
+                {title}
+              </span>
               <span className="ws-howbuy__copy">{copy}</span>
             </span>
           </li>
         ))}
       </ol>
+
+      <ul className="ws-howbuy__terms">
+        {TERMS.map(({ Icon, copy }) => (
+          <li key={copy}>
+            <Icon size={16} aria-hidden />
+            <span>{copy}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
