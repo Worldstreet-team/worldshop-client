@@ -24,7 +24,7 @@ const ecosystemLinks: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: 'https://academy.worldstreetgold.com', label: 'Academy', Icon: GraduationCap },
   { href: 'https://social.worldstreetgold.com', label: 'Social', Icon: Users },
   // Label per the DS link set ("Xstream"); the subdomain is what it is.
-  { href: 'https://xtreme.worldstreetgold.com', label: 'Xstream', Icon: Zap },
+  { href: 'https://xtream.worldstreetgold.com', label: 'Xstream', Icon: Zap },
   { href: 'https://trader.worldstreetgold.com', label: 'Trader', Icon: TrendingUp },
 ];
 

@@ -19,7 +19,7 @@ const ecosystemLinks: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: 'https://dashboard.worldstreetgold.com', label: 'Dashboard', Icon: Compass },
   { href: 'https://academy.worldstreetgold.com', label: 'Academy', Icon: GraduationCap },
   { href: 'https://social.worldstreetgold.com', label: 'Social', Icon: Users },
-  { href: 'https://xtreme.worldstreetgold.com', label: 'Xstream', Icon: Zap },
+  { href: 'https://xtream.worldstreetgold.com', label: 'Xstream', Icon: Zap },
   { href: 'https://trader.worldstreetgold.com', label: 'Trader', Icon: TrendingUp },
 ];
 
