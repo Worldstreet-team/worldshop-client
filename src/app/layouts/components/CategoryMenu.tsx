@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, MapPin } from "lucide-react";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
-import { publicMarketplace } from "@/features/stores/api";
-import { queryKeys } from "@/shared/lib/queryKeys";
-import { MINUTE } from "@/app/providers/QueryProvider";
+import { resolveCategoryIds } from "@/features/catalog/model";
+import { useCategoryListings } from "@/features/catalog/hooks/useCategoryListings";
 import { firstImage, priceLabel } from "@/features/listings/model";
 import { departmentIcon } from "@/features/catalog/departmentIcons";
 import { departmentsWithStock, childrenWithStock , listingCount } from "@/features/catalog/categoryTree";
@@ -40,12 +38,14 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
   const activeDept = departments.find((d) => d.id === active);
   const activeName = activeDept?.name ?? "";
 
-  const featured = useQuery({
-    queryKey: queryKeys.listings({ categoryId: active ?? undefined, limit: FEATURED }),
-    queryFn: () => publicMarketplace.browse({ categoryId: active, limit: FEATURED }),
-    enabled: !!active,
-    staleTime: 10 * MINUTE,
-  });
+  // Asked for by its sections: the API matches one category id exactly and
+  // listings only file under a section, so the department's own id finds
+  // nothing (see resolveCategoryIds).
+  const sectionIds = useMemo(
+    () => (active ? resolveCategoryIds(categories, active) : []),
+    [categories, active],
+  );
+  const featured = useCategoryListings(sectionIds);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -66,7 +66,7 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
 
   if (isLoading || departments.length === 0) return null;
 
-  const rows = featured.data?.data ?? [];
+  const rows = featured.rows.slice(0, FEATURED);
 
   return (
     <div className="ws-megamenu" ref={rootRef}>
@@ -127,7 +127,7 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
         <div className="ws-megamenu__col ws-megamenu__col--featured">
           <p className="ws-megamenu__heading">Featured in {activeName}</p>
 
-          {featured.isPending ? (
+          {featured.loading ? (
             Array.from({ length: FEATURED }, (_, i) => (
               <span key={i} className="ws-megamenu__listing ws-megamenu__listing--skeleton" aria-hidden>
                 <span className="ws-megamenu__thumb" />

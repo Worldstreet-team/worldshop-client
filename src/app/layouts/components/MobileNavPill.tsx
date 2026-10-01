@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Bookmark, Home, MessageCircle, Search, Store, ChevronsUpDown } from "lucide-react";
+import { Bookmark, ChevronsUpDown, Home, MessageCircle, Search, Store } from "lucide-react";
 import ModuleSwitcher from "@/app/layouts/components/ModuleSwitcher";
 
 /**
@@ -26,6 +26,7 @@ const ITEMS = [
 
 export default function MobileNavPill() {
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
 
   // The admin console and the seller dashboards have their own chrome; a
@@ -34,7 +35,7 @@ export default function MobileNavPill() {
 
   return (
     <>
-      {switcherOpen && <ModuleSwitcher onClose={() => setSwitcherOpen(false)} />}
+      {switcherOpen && <ModuleSwitcher toggleRef={toggleRef} onClose={() => setSwitcherOpen(false)} />}
       <div className="ws-navpill" role="navigation" aria-label="Main">
       <div className="ws-navpill__bar">
         {ITEMS.map(({ to, label, Icon, end }) => (
@@ -53,13 +54,14 @@ export default function MobileNavPill() {
         ))}
 
         <button
+          ref={toggleRef}
           type="button"
           className={`ws-navpill__btn${switcherOpen ? " is-active" : ""}`}
           onClick={() => setSwitcherOpen((v) => !v)}
           aria-haspopup="dialog"
           aria-expanded={switcherOpen}
-          title="Switch module"
-          aria-label="More, switch module"
+          title={switcherOpen ? "Close module switcher" : "Switch module"}
+          aria-label={switcherOpen ? "Close module switcher" : "More, switch module"}
         >
           <ChevronsUpDown size={20} aria-hidden />
         </button>

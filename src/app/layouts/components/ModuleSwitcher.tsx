@@ -39,7 +39,18 @@ const MODULES: Module[] = [
   { name: "Prediction", href: "https://prediction.worldstreetgold.com", Icon: BarChart3, accent: "var(--ws-domain-prediction-accent)" },
 ];
 
-export default function ModuleSwitcher({ onClose }: { onClose: () => void }) {
+export default function ModuleSwitcher({
+  onClose,
+  toggleRef,
+}: {
+  onClose: () => void;
+  /**
+   * The button that opens this. A press on it is left to its own click, which
+   * closes the switcher; treating it as an outside press as well would close
+   * the switcher on pointerdown and the click would open it straight back.
+   */
+  toggleRef?: React.RefObject<HTMLElement | null>;
+}) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,7 +62,9 @@ export default function ModuleSwitcher({ onClose }: { onClose: () => void }) {
       if (e.key === "Escape") onClose();
     };
     const onDown = (e: PointerEvent) => {
-      if (!panelRef.current?.contains(e.target as Node)) onClose();
+      const target = e.target as Node;
+      if (toggleRef?.current?.contains(target)) return;
+      if (!panelRef.current?.contains(target)) onClose();
     };
     document.addEventListener("keydown", onKey);
     // Deferred, or the click that opened it closes it in the same tick.
@@ -61,7 +74,7 @@ export default function ModuleSwitcher({ onClose }: { onClose: () => void }) {
       document.removeEventListener("pointerdown", onDown);
       clearTimeout(t);
     };
-  }, [onClose]);
+  }, [onClose, toggleRef]);
 
   return (
     <div className="ws-modules" role="dialog" aria-label="Switch module" aria-modal="false">
