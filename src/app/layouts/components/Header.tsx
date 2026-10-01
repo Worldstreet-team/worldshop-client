@@ -160,7 +160,6 @@ export default function Header() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
-                <LayoutGrid size={16} fill="currentColor" aria-hidden />
                 All categories
                 <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
               </button>
@@ -258,7 +257,6 @@ export default function Header() {
             <div className="ws-catbar__scroller">
               <div className="ws-catbar__row" ref={catRow} role="group" aria-label="Browse categories">
                 <Link to="/categories" className="ws-pill">
-                  <LayoutGrid size={14} fill="currentColor" aria-hidden />
                   All categories
                 </Link>
                 {/* Stores and Malls lead the bar rather than sitting among the
