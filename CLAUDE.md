@@ -33,17 +33,28 @@ so local config never lands in a commit.
 
 ## Backend
 
-**The real API is offline.** Both `shop-api.worldstreetgold.com` and
-`api.worldstreetgold.com` return `503 "This service has been suspended"` (header
-`x-render-routing: suspend` — the Render services are suspended, not sleeping). Nothing in
+**The real API is offline.** `shop-api.worldstreetgold.com`, `api.worldstreetgold.com` and
+`worldshop-server-3vul.onrender.com` (the URL in `.env`) all return
+`503 "This service has been suspended"` (header `x-render-routing: suspend` — the Render
+services are suspended, not sleeping). The browser reports that as a CORS error. Nothing in
 the client is wrong when every page shows empty state; check the API before debugging.
 
-`mock-api/` stands in for it — zero dependencies, node builtins only:
+`mock-api/` stands in for it — zero dependencies, node builtins only. It was retired in
+`827c066` and restored on 2026-09-30, extended for what the client gained in between
+(countries, malls, the admin console):
 
-- `mock-api/server.mjs` — ~56 routes, matched top-to-bottom so literal segments must be
-  registered before `:param` ones (`/stores/plans` and `/stores/me/*` before `/stores/:slug`).
+- `mock-api/server.mjs` — ~98 routes, matched top-to-bottom so literal segments must be
+  registered before `:param` ones (`/stores/plans` and `/stores/me/*` before `/stores/:slug`,
+  and the same for `/malls`).
 - `mock-api/data.mjs` — seed data. Shapes are copied from the client's own types, so
   anything a page destructures exists.
+- There is no auth: every request is answered as the seeded user, who owns a store
+  (`lagos-tech-hub`) and a mall (`computer-village-arcade`). Clerk still gates `/account`,
+  `/vendor` and `/mall` in the client, so those need a real Clerk sign-in.
+- The admin console is the exception: it starts signed out and `/admin/login` accepts any
+  email and password. The session is one in-memory flag, not a cookie.
+- Listing management is registered once per base path (`registerListingRoutes`), for
+  `/stores/me/listings` and `/malls/me/substores/:id/listings`, mirroring `createListingApi`.
 - Unhandled routes log `⚠ unhandled` and return an empty-but-well-formed envelope rather
   than erroring, so a missing handler degrades one section instead of crashing a page.
 - Writes (send a message, publish a listing, edit profile) persist in memory until restart.
@@ -55,6 +66,10 @@ the client is wrong when every page shows empty state; check the API before debu
 - Each listing carries exactly one photo. Padding the gallery would mean showing a
   different product under the same title.
 - Records with no photo fall back to a generated SVG at `/img/*.svg`, so nothing 404s.
+- Categories are the sandbox's taxonomy: 12 departments, 4 to 7 sections each. Only five
+  departments hold listings; the rest exist to show structure. Sections that had listings
+  kept their old ids. `productCount` is **own listings only**, as the real API reports it:
+  the client sums the subtree, so rolling children up in the mock double-counted.
 - To re-point a listing at a different photo, change its `photoFile` in `data.mjs`.
 - `MOCK_LATENCY=0 npm run mock` removes the artificial 120ms delay; `PORT=9000` moves it.
 
@@ -99,7 +114,8 @@ provides is discovery plus buyer↔vendor chat.
 
 Legacy ecommerce URLs (`/cart`, `/checkout/*`, `/products/:slug`, `/category/:slug`,
 `/search`) redirect to `/listings`; `/store/:slug` → `/stores/:slug`. Removed vendor/admin
-pages fall through a `*` route to their dashboard rather than a route error.
+pages fall through a `*` route to their dashboard rather than a route error. `/categories`
+(plural) is a real page now, not a redirect; see "Sandbox ports" below.
 
 Dead weight still in the tree: cart/order/download types, `userService` wishlist calls, and
 the order/inventory/withdrawal half of `adminService`. They are unreferenced by the router.
@@ -178,9 +194,56 @@ On a 401 the interceptor retries **once** with a fresh Clerk token before reject
   `utils/listingFormat.ts` rather than formatting inline.
 - `attributes` (admin-defined, controlled vocabulary) drive browse facets.
   `customFields` (vendor-invented free text) are display-only and never filterable.
+- The listing page (`pages/ListingDetail.tsx`, styles in `_market-listing.scss`, `ws-ld*`
+  classes) is a port of the sandbox's `/listings/:id`. It shows commerce the platform does
+  not have yet, and there are two kinds:
+  - **Data-backed pieces** (discount badge and was-price, "Only N left", delivery terms,
+    seller badges, items sold, last active, helpful counts, review photos) read optional
+    fields on `Listing`, `PublicStore` and `MarketplaceReview`. Only the mock sends them;
+    each piece is simply absent when its field is.
+  - **Fixed copy** (Buy now, Pay Later, Buyer protection, the returns and escrow line) is
+    always shown. There is no checkout behind it: Buy now, Make offer and Message all open
+    the same chat composer with a different opening line, and helpful votes are local state.
+    This copy contradicts the "How to buy" tab, which still says WorldStore never takes
+    payment. Settle which is true before this ships.
 - Browse keeps **all filter state in the URL** so a filtered result set survives sharing,
   bookmarking, and the back button. Attribute facets only appear once a *subcategory* is
   selected, since attributes are defined per category.
+
+### Sandbox ports
+
+Pages rebuilt to match the designer's sandbox (worldstreet-sandbox-8i8m.vercel.app) as
+exactly as the data allows. The rule used throughout: copy the reference, and keep anything
+the old page had that the reference lacks. The sandbox bundle carries its component source,
+so values were taken from its Tailwind classes, not by eye.
+
+- **Categories** (`features/catalog/pages/Categories.tsx` and `CategoryPage.tsx`,
+  `_market-categories.scss`, `ws-cx*` / `ws-cf*`). `/categories` shows every department,
+  empty ones included. `/categories/:slug` takes a department or a section slug. Its
+  filters (price band, condition, seller rating, free delivery, reduced price, verified)
+  run on the client over the category's rows, because each option shows a count the API
+  cannot produce. The state is still in the URL. Rows are fetched per section, up to 200
+  each (`useCategoryListings`); a real catalogue past that would want server paging. Header
+  pills, the mega-menu, home tiles and listing breadcrumbs now link here, not to `/listings`.
+- **Store page** (`stores/pages/StorePage.tsx`, `StoreHero.tsx`, `_market-shop.scss`,
+  `ws-shero` / `ws-shop*`). The header carries only the sandbox's two actions. WhatsApp,
+  phone and website moved to the About tab. **Follow is local-only** (`followedStores.ts`,
+  localStorage); there is no follow API. **Message seller** opens the chat composer
+  anchored to the shop's newest listing, since conversations must hang off a listing.
+  Reviews reuse the listing page's `ListingReviews` (without `listingId`, so read-only).
+- **Vendor workspace** (`app/layouts/VendorLayout.tsx`, `stores/components/vendor/`,
+  `_market-vendor.scss`, `ws-vx*`). The admin and mall consoles still use `ws-console`.
+  Not ported: **Orders and payouts**, since nothing is ordered on the platform. Each
+  order-shaped card on the Overview was swapped for its nearest real counterpart
+  (inquiries, the dollar wallet, conversations waiting on a reply, the subscription).
+  Settings' fulfilment defaults and notification toggles are not here either: the API
+  stores neither. The listing editor is the sandbox's 4-step wizard; its delivery step is
+  "Pricing & location", since nothing ships. `Products` and `ProductEdit` also render
+  inside the mall console for substores, so their styles cannot depend on `VendorLayout`.
+- `/vendor/*` needs a Clerk sign-in, so these pages were checked by temporarily mounting
+  them ungated on a dev-only route, since removed.
+- The escrow copy now appears in three places (listing page, category page strapline,
+  shop About tab) against a product that takes no payment. Same open question as above.
 
 ## Conventions
 

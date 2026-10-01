@@ -317,6 +317,23 @@
 // ─── Header: search cluster ─────────────────────────────────────
 // The sandbox centres a 880px cluster of location, categories and search
 // between the brand and the account actions.
+// ─── Header: row ────────────────────────────────────────────────
+// 56px with the hairline under it, which is the offset .ws-catbar and the
+// mega-menu sit at. Every sticky offset reads --ws-header-h, so it moves too.
+:root {
+  --ws-header-h: 56px;
+}
+
+// A flex row, not the 1fr auto 1fr grid it inherits. That grid centred the
+// fields on the bar, which left a gap after the brand that widened with the
+// screen. Here the fields start 16px after the chip and search takes whatever
+// is left before the actions.
+.ws-topbar__row {
+  display: flex;
+  gap: 16px;
+  height: 55px;
+}
+
 .ws-topbar__centre {
   display: none;
   min-width: 0;
@@ -331,6 +348,7 @@
 }
 
 .ws-hfield {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -338,7 +356,7 @@
   flex-shrink: 0;
   padding: 0 14px;
   border: 1px solid var(--ws-border-default);
-  border-radius: var(--ws-radius-lg);
+  border-radius: var(--ws-radius-xl);
   background: var(--ws-surface-base);
   color: var(--ws-text-primary);
   font-size: 13.5px;
@@ -367,19 +385,51 @@
     padding-right: 4px;
   }
 
+  // Leading icons are quieter than the value beside them.
+  > svg {
+    flex-shrink: 0;
+    color: var(--ws-text-tertiary);
+  }
+
   &__chev {
     flex-shrink: 0;
     color: var(--ws-text-tertiary);
+  }
+
+  // The chevron lies over the select's own padding instead of sitting beside
+  // it, so a click anywhere right of the pin opens the list.
+  &--location {
+    padding-right: 0;
+
+    .ws-hfield__select {
+      align-self: stretch;
+      padding-right: 32px;
+    }
+
+    .ws-hfield__chev {
+      position: absolute;
+      right: 12px;
+      pointer-events: none;
+    }
+
+    // The pin is drawn solid, so its dot is cut back out in the field colour.
+    > svg circle {
+      fill: var(--ws-surface-base);
+      stroke: none;
+    }
   }
 
   &--search {
     flex: 1;
     min-width: 0;
     max-width: 520px;
+    gap: 12px;
+    padding-right: 12px;
 
     input {
       flex: 1;
       min-width: 0;
+      padding: 0 8px 0 3px;
       border: 0;
       background: transparent;
       outline: none;
@@ -409,9 +459,15 @@
   position: sticky;
   top: 56px;
   z-index: 40;
-  border-bottom: 1px solid var(--ws-border-subtle);
+  // The rule is above the bar, between it and the header row. The line under
+  // it is .ws-topbar's own, so a second one here would double it.
+  border-top: 1px solid var(--ws-border-subtle);
   background: color-mix(in srgb, var(--ws-surface-canvas) 92%, transparent);
   backdrop-filter: blur(4px);
+
+  &__scroller {
+    position: relative;
+  }
 
   &__row {
     display: flex;
@@ -419,10 +475,57 @@
     gap: 8px;
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding: 16px 0;
+    // 2px at the sides keeps a pill's focus ring inside the scroll clip.
+    padding: 18px 2px;
     scrollbar-width: none;
 
     &::-webkit-scrollbar { display: none; }
+  }
+
+  // Shown only on a side that has more to scroll to. The pills fade out under
+  // it rather than being cut off mid-word.
+  &__edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    width: 48px;
+    pointer-events: none;
+
+    &--start {
+      left: 0;
+      justify-content: flex-start;
+      background: linear-gradient(to left, transparent, var(--ws-surface-canvas));
+    }
+
+    &--end {
+      right: 0;
+      justify-content: flex-end;
+      background: linear-gradient(to right, transparent, var(--ws-surface-canvas));
+    }
+  }
+
+  &__nudge {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--ws-border-default);
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-surface-base);
+    color: var(--ws-text-primary);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: border-color var(--ws-duration-fast, 0.15s) var(--ws-ease-standard, ease);
+
+    &:hover { border-color: var(--ws-border-strong); }
+
+    &:focus-visible {
+      outline: 2px solid var(--ws-focus-ring);
+      outline-offset: 2px;
+    }
   }
 }
 
@@ -445,6 +548,11 @@
     background-color var(--ws-duration-fast, 0.15s) var(--ws-ease-standard, ease),
     border-color var(--ws-duration-fast, 0.15s) var(--ws-ease-standard, ease);
 
+  > svg {
+    flex-shrink: 0;
+    color: var(--ws-text-secondary);
+  }
+
   &:hover {
     border-color: var(--ws-border-strong);
     background: var(--ws-surface-raised);
@@ -455,6 +563,8 @@
     border-color: var(--ws-action-primary-default);
     background: var(--ws-action-primary-tonal);
     color: var(--ws-action-primary-text);
+
+    > svg { color: inherit; }
   }
 }
 
@@ -539,7 +649,7 @@
   // against whatever it overlaps.
   &__count {
     position: absolute;
-    top: -6px;
+    top: 0;
     right: -8px;
     display: inline-flex;
     align-items: center;
@@ -547,7 +657,7 @@
     height: 18px;
     min-width: 18px;
     padding: 0 6px;
-    border-radius: var(--ws-radius-md);
+    border-radius: var(--ws-radius-full);
     background: var(--ws-feedback-danger-fill);
     color: var(--ws-text-on-feedback);
     font-size: 10px;
@@ -606,6 +716,12 @@
     font-size: 12px;
     font-weight: 600;
     overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 
   &__text {
@@ -1296,6 +1412,8 @@
   background: var(--mk-tint);
   color: var(--mk-ink);
 
+  > svg { color: inherit; }
+
   &:hover {
     border-color: color-mix(in srgb, var(--mk-accent) 55%, transparent);
     background: color-mix(in srgb, var(--mk-accent) 16%, transparent);
@@ -1700,7 +1818,7 @@
   // is over 1100px wide, and hanging that off a control sitting mid-row pushed
   // its right edge past the viewport on anything under about 1700px.
   position: fixed;
-  top: 64px;
+  top: var(--ws-header-h);
   left: 24px;
   right: 24px;
   z-index: 60;

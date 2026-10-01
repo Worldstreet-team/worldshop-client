@@ -66,7 +66,7 @@ export default function ListingSummary({ listing, location }: ListingSummaryProp
       <div className="ws-summary__top">
         {listing.category ? (
           <Link
-            to={`/listings?categoryId=${listing.category.id}`}
+            to={`/categories/${listing.category.slug}`}
             className="ws-hero__eyebrow ws-summary__eyebrow"
           >
             {listing.category.name}

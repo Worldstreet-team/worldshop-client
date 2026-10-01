@@ -9,12 +9,13 @@
 
 <head>
   <meta charset="UTF-8" />
-  <!-- The SVG mark first: it is the current WorldStore logo and scales to any
-       size. The .ico and PNGs below are the previous brand, kept only as a
-       fallback for browsers without SVG favicon support; regenerate them from
-       wstore-mark.svg when there is tooling to hand. -->
+  <!-- Every icon here is the header logo, brand/wstore-mark.svg. The .ico and
+       PNGs are rasters of that file, so whichever one a browser picks, the tab
+       shows the same mark; regenerate all of them if the SVG changes. The
+       apple-touch icon is full-bleed and opaque because iOS masks the corners
+       itself and paints transparency black. -->
   <link rel="icon" type="image/svg+xml" href="/brand/wstore-mark.svg" />
-  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

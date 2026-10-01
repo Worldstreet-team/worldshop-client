@@ -54,7 +54,7 @@ export default function CategoryRail() {
       <div className="ws-carousel__track ws-carousel__track--categories">
         {tiles.map((c) => (
           <div className="ws-carousel__item" key={c.id}>
-            <Link to={`/listings?categoryId=${c.id}`} className="ws-tile">
+            <Link to={`/categories/${c.slug}`} className="ws-tile">
               <img className="ws-tile__art" src={c.photo} alt="" loading="lazy" />
               <div className="ws-tile__scrim" aria-hidden />
               <span className="ws-tile__name">{c.name}</span>

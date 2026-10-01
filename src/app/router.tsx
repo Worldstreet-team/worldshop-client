@@ -35,6 +35,8 @@ const StoresDirectoryPage = lazy(() => import('@/features/stores/pages/StoresDir
 const MallsDirectoryPage = lazy(() => import('@/features/malls/pages/MallsDirectory'));
 const MarketplaceMallPage = lazy(() => import('@/features/malls/pages/MallPage'));
 const SavedPage = lazy(() => import('@/features/listings/pages/Saved'));
+const CategoriesPage = lazy(() => import('@/features/catalog/pages/Categories'));
+const CategoryPage = lazy(() => import('@/features/catalog/pages/CategoryPage'));
 const LegalPage = lazy(() => import('@/features/legal/pages/Legal'));
 
 // Admin Pages
@@ -113,6 +115,14 @@ const router = createBrowserRouter([
         element: <SuspenseWrapper><ListingDetailPage /></SuspenseWrapper>,
       },
       {
+        path: 'categories',
+        element: <SuspenseWrapper><CategoriesPage /></SuspenseWrapper>,
+      },
+      {
+        path: 'categories/:slug',
+        element: <SuspenseWrapper><CategoryPage /></SuspenseWrapper>,
+      },
+      {
         path: 'stores',
         element: <SuspenseWrapper><StoresDirectoryPage /></SuspenseWrapper>,
       },
@@ -146,7 +156,6 @@ const router = createBrowserRouter([
       { path: 'products', element: <Navigate to="/listings" replace /> },
       { path: 'products/:slug', element: <Navigate to="/listings" replace /> },
       { path: 'category/:slug', element: <Navigate to="/listings" replace /> },
-      { path: 'categories', element: <Navigate to="/listings" replace /> },
       { path: 'search', element: <Navigate to="/listings" replace /> },
       { path: 'cart', element: <Navigate to="/listings" replace /> },
       { path: 'checkout/*', element: <Navigate to="/listings" replace /> },

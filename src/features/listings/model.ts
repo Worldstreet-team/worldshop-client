@@ -35,6 +35,18 @@ export function waLink(number: string, message?: string): string {
   return message ? `https://wa.me/${intl}?text=${encodeURIComponent(message)}` : `https://wa.me/${intl}`;
 }
 
+/** Coarse and past-tense, as the reference writes it: 30m, 5h, 3d, then weeks. */
+export function timeAgo(iso: string): string {
+  const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  if (!Number.isFinite(mins) || mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+}
+
 /** How fresh a listing is, as a buyer reads it: "Today", "5 days ago". */
 export function postedAgo(iso: string): string | null {
   const ms = Date.now() - new Date(iso).getTime();

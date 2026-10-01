@@ -10,10 +10,14 @@ type TabsProps<K extends string> = {
   onChange: (key: K) => void;
   /** Names the row for screen readers — "Store sections", "Listing details". */
   label: string;
+  /** Block name for the row, its tabs and counts. The listing page has its own look. */
+  block?: string;
 };
 
 // WAI-ARIA tabs: one tab stop for the row, arrow keys move between tabs.
-export default function Tabs<K extends string>({ idPrefix, tabs, active, onChange, label }: TabsProps<K>) {
+export default function Tabs<K extends string>({
+  idPrefix, tabs, active, onChange, label, block = 'ws-storetabs',
+}: TabsProps<K>) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -31,7 +35,7 @@ export default function Tabs<K extends string>({ idPrefix, tabs, active, onChang
   };
 
   return (
-    <div className="ws-storetabs" role="tablist" aria-label={label}>
+    <div className={block} role="tablist" aria-label={label}>
       {tabs.map((t, i) => {
         const selected = t.key === active;
         return (
@@ -44,12 +48,12 @@ export default function Tabs<K extends string>({ idPrefix, tabs, active, onChang
             aria-selected={selected}
             aria-controls={panelId(idPrefix, t.key)}
             tabIndex={selected ? 0 : -1}
-            className="ws-storetabs__tab"
+            className={`${block}__tab`}
             onClick={() => onChange(t.key)}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
             {t.label}
-            {t.count != null && <span className="ws-storetabs__count ws-num">{t.count.toLocaleString()}</span>}
+            {t.count != null && <span className={`${block}__count ws-num`}>{t.count.toLocaleString()}</span>}
           </button>
         );
       })}

@@ -17,7 +17,12 @@ const errMessage = (err: unknown, fallback: string) => {
   return fieldError || e.message;
 };
 
-export function useListingReviews(listingId: string) {
+/**
+ * `storeSlug` widens the list to everything written about the seller. Writing
+ * stays anchored to the listing either way, and the list lives under the
+ * listing's query key so posting or deleting a review refreshes it.
+ */
+export function useListingReviews(listingId: string, storeSlug?: string) {
   const { isSignedIn } = useAuth();
   const addToast = useUIStore((s) => s.addToast);
   const client = useQueryClient();
@@ -31,8 +36,10 @@ export function useListingReviews(listingId: string) {
   const [formError, setFormError] = useState<string | null>(null);
 
   const listQuery = useQuery({
-    queryKey: queryKeys.listingReviewPage(listingId, { page, verifiedOnly }),
-    queryFn: () => marketplaceReviewService.forListing(listingId, { page, limit: PER_PAGE, verifiedOnly }),
+    queryKey: queryKeys.listingReviewPage(listingId, { page, verifiedOnly, ...(storeSlug ? { storeSlug } : {}) }),
+    queryFn: () => (storeSlug
+      ? marketplaceReviewService.forStore(storeSlug, { page, limit: PER_PAGE, verifiedOnly })
+      : marketplaceReviewService.forListing(listingId, { page, limit: PER_PAGE, verifiedOnly })),
     placeholderData: keepPreviousData,
     staleTime: 2 * MINUTE,
   });
@@ -40,14 +47,14 @@ export function useListingReviews(listingId: string) {
   const eligibilityQuery = useQuery({
     queryKey: queryKeys.listingReviewEligibility(listingId),
     queryFn: () => marketplaceReviewService.eligibility(listingId).then((r) => r.data),
-    enabled: Boolean(isSignedIn),
+    enabled: Boolean(isSignedIn) && Boolean(listingId),
     staleTime: 2 * MINUTE,
   });
 
   const mineQuery = useQuery({
     queryKey: queryKeys.myListingReview(listingId),
     queryFn: () => marketplaceReviewService.mine(listingId).then((r) => r.data),
-    enabled: Boolean(isSignedIn),
+    enabled: Boolean(isSignedIn) && Boolean(listingId),
     staleTime: 2 * MINUTE,
   });
 

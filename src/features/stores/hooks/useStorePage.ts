@@ -81,6 +81,8 @@ export function useStorePage(slug: string | undefined, filters: StoreListingFilt
     failed: listingsQuery.isError,
     retry: () => listingsQuery.refetch(),
     catalogueTotal: catalogueQuery.data?.pagination.total ?? null,
+    /** The unfiltered first page of the catalogue, newest first. */
+    catalogue: catalogueQuery.data?.data ?? NO_ROWS,
     categories,
     prefetchPage,
   };

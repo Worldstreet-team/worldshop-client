@@ -217,12 +217,32 @@ export interface Listing {
   avgRating?: number | null;
   reviewCount?: number | null;
   isFeatured?: boolean;
+  /**
+   * Commerce details the listing page is laid out around. The live API does
+   * not send them yet, so each is optional and the page draws the matching
+   * piece only when its field is present: nothing is invented for a listing
+   * that does not carry it.
+   */
+  compareAtPrice?: number | null;
+  stockLeft?: number | null;
+  delivery?: ListingDelivery | null;
   updatedAt: string;
   /**
    * Present on vendor-scoped responses only. `problems` is every gate that
    * would reject a publish, worded exactly as the publish endpoint words it.
    */
   compliance?: ListingCompliance;
+}
+
+export interface ListingDelivery {
+  /** Buy box headline: "Free delivery". */
+  label: string;
+  /** The line under it: "Arrives in 1–2 days to Lekki". */
+  note: string;
+  /** Fact strip value: "Free to Lagos". */
+  summary: string;
+  /** Rows of the Delivery & returns tab. */
+  zones: Array<{ label: string; value: string }>;
 }
 
 export interface ListingCompliance {
@@ -384,6 +404,8 @@ export default storeService;
 
 // ─── Public (buyer-facing) ──────────────────────────────────────
 
+export type StoreBadge = 'TOP_RATED' | 'FAST_SHIPPER';
+
 export interface PublicStore {
   id: string;
   name: string;
@@ -411,6 +433,10 @@ export interface PublicStore {
   mallId?: string | null;
   /** Substores link back to their mall ("Part of <Mall>"). */
   mall?: { name: string; slug: string; status: string } | null;
+  /** Earned badges, past verification. Optional for the same reason as above. */
+  badges?: StoreBadge[];
+  itemsSold?: number | null;
+  lastActiveAt?: string | null;
   createdAt: string;
 }
 

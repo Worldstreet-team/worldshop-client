@@ -1,30 +1,23 @@
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Bell,
   Bookmark,
-  Car,
-  Dumbbell,
-  Gem,
-  Home,
-  Baby,
-  Monitor,
-  Plus,
-  Shirt,
   Building2,
-  Sparkles,
-  Smartphone,
-  Store,
-  Tag,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
   MapPin,
   Menu,
+  Plus,
   Search,
+  Store,
   User,
-  LayoutGrid,
 } from "lucide-react";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
 import CategoryMenu from "@/app/layouts/components/CategoryMenu";
+import { departmentIcon, OUTLINED } from "@/features/catalog/departmentIcons";
 import { departmentsWithStock } from "@/features/catalog/categoryTree";
 import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -35,21 +28,36 @@ import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
  * Radius options as the sandbox lists them. Static for now: the API has no
  * location filter yet, so wiring it would mean inventing an endpoint.
  */
-/** Department name to icon, as the sandbox pairs them. Tag is the fallback. */
-export function departmentIcon(name: string) {
-  const n = name.toLowerCase();
-  if (/vehicle|car|auto/.test(n)) return Car;
-  if (/phone|tablet|mobile/.test(n)) return Smartphone;
-  if (/electronic|computer|laptop/.test(n)) return Monitor;
-  if (/fashion|cloth|wear/.test(n)) return Shirt;
-  if (/home|furniture|appliance/.test(n)) return Home;
-  if (/sport|fitness|outdoor/.test(n)) return Dumbbell;
-  if (/beauty|health|personal/.test(n)) return Sparkles;
-  if (/propert|estate|land/.test(n)) return Building2;
-  if (/jewel|watch/.test(n)) return Gem;
-  if (/baby|kid|child/.test(n)) return Baby;
-  return Tag;
+
+/**
+ * Which ends of a horizontally scrolling row have more to reveal. Measured
+ * from observer and scroll callbacks only: a ResizeObserver reports once as
+ * soon as it starts observing, so there is no first read to do by hand.
+ */
+function useScrollEdges<T extends HTMLElement>(contentKey: unknown) {
+  const ref = useRef<T>(null);
+  const [edges, setEdges] = useState({ start: false, end: false });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const start = el.scrollLeft > 1;
+      const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setEdges((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    el.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [contentKey]);
+
+  return [ref, edges] as const;
 }
+
 
 /** Placeholder pill widths, roughly the spread of real department names. */
 const SKELETON_PILLS = [104, 86, 122, 94, 138, 110, 80, 126];
@@ -102,6 +110,17 @@ export default function Header() {
   // Departments that hold something, biggest first. An empty category in the
   // nav costs a tap to discover and teaches buyers the bar cannot be trusted.
   const departments = departmentsWithStock(categories).slice(0, 10);
+  // Re-measured when the pills change, since that changes the row's scroll
+  // width without changing its own box.
+  const [catRow, catEdges] = useScrollEdges<HTMLDivElement>(
+    categoriesLoading ? "loading" : departments.length,
+  );
+  const nudgeCats = (direction: 1 | -1) => {
+    const el = catRow.current;
+    if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollBy({ left: direction * el.clientWidth * 0.6, behavior: reduced ? "auto" : "smooth" });
+  };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +140,7 @@ export default function Header() {
 
           <div className="ws-topbar__centre">
             <label className="ws-hfield ws-hfield--location">
-              <MapPin size={16} aria-hidden />
+              <MapPin size={16} fill="currentColor" aria-hidden />
               <span className="ws-sr-only">Location and radius</span>
               <select className="ws-hfield__select" defaultValue="lagos-10">
                 {RADIUS.map((r) => (
@@ -141,7 +160,7 @@ export default function Header() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
-                <LayoutGrid size={16} aria-hidden />
+                <LayoutGrid size={16} fill="currentColor" aria-hidden />
                 All categories
                 <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
               </button>
@@ -168,7 +187,7 @@ export default function Header() {
                 className="ws-actionbtn"
                 aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
               >
-                <Bell size={18} aria-hidden />
+                <Bell size={18} fill="currentColor" aria-hidden />
                 {unread > 0 && (
                   <span className="ws-actionbtn__count">{unread > 99 ? "99+" : unread}</span>
                 )}
@@ -181,7 +200,7 @@ export default function Header() {
                 className="ws-actionbtn"
                 aria-label={savedCount ? `Saved listings, ${savedCount} saved` : "Saved listings"}
               >
-                <Bookmark size={18} aria-hidden />
+                <Bookmark size={18} fill="currentColor" aria-hidden />
               </Link>
             )}
 
@@ -198,7 +217,9 @@ export default function Header() {
 
             <Link to="/account" className="ws-acct" aria-label={isAuthenticated ? "Your account" : "Sign in"}>
               <span className="ws-acct__avatar">
-                {isAuthenticated && user?.firstName ? (
+                {isAuthenticated && user?.avatar ? (
+                  <img src={user.avatar} alt="" />
+                ) : isAuthenticated && user?.firstName ? (
                   user.firstName.charAt(0).toUpperCase()
                 ) : (
                   <User size={16} aria-hidden />
@@ -234,42 +255,68 @@ export default function Header() {
       {(categoriesLoading || departments.length > 0) && (
         <div className="ws-catbar">
           <div className="ws-wrap">
-            <div className="ws-catbar__row" role="group" aria-label="Browse categories">
-              <Link to="/listings" className="ws-pill">
-                <LayoutGrid size={14} aria-hidden />
-                All categories
-              </Link>
-              {/* Stores and Malls lead the bar rather than sitting among the
-                  departments: they are different kinds of destination, and the
-                  bar is the only nav this header has left. */}
-              <Link to="/stores" className="ws-pill ws-pill--place">
-                <Store size={14} aria-hidden />
-                Stores
-              </Link>
-              <Link to="/malls" className="ws-pill ws-pill--place">
-                <Building2 size={14} aria-hidden />
-                Malls
-              </Link>
-              {categoriesLoading
-                ? // Widths vary so the row reads as words of different lengths
-                  // rather than a progress bar chopped into pieces.
-                  SKELETON_PILLS.map((w, i) => (
-                    <span
-                      key={i}
-                      className="ws-pill ws-pill--skeleton"
-                      style={{ width: w }}
-                      aria-hidden
-                    />
-                  ))
-                : departments.map((c) => {
-                    const Icon = departmentIcon(c.name);
-                    return (
-                      <Link key={c.id} to={`/listings?categoryId=${c.id}`} className="ws-pill">
-                        <Icon size={14} aria-hidden />
-                        {c.name}
-                      </Link>
-                    );
-                  })}
+            <div className="ws-catbar__scroller">
+              <div className="ws-catbar__row" ref={catRow} role="group" aria-label="Browse categories">
+                <Link to="/categories" className="ws-pill">
+                  <LayoutGrid size={14} fill="currentColor" aria-hidden />
+                  All categories
+                </Link>
+                {/* Stores and Malls lead the bar rather than sitting among the
+                    departments: they are different kinds of destination, and the
+                    bar is the only nav this header has left. */}
+                <Link to="/stores" className="ws-pill ws-pill--place">
+                  <Store size={14} fill="currentColor" aria-hidden />
+                  Stores
+                </Link>
+                <Link to="/malls" className="ws-pill ws-pill--place">
+                  <Building2 size={14} fill="currentColor" aria-hidden />
+                  Malls
+                </Link>
+                {categoriesLoading
+                  ? // Widths vary so the row reads as words of different lengths
+                    // rather than a progress bar chopped into pieces.
+                    SKELETON_PILLS.map((w, i) => (
+                      <span
+                        key={i}
+                        className="ws-pill ws-pill--skeleton"
+                        style={{ width: w }}
+                        aria-hidden
+                      />
+                    ))
+                  : departments.map((c) => {
+                      const Icon = departmentIcon(c.name);
+                      return (
+                        <Link key={c.id} to={`/categories/${c.slug}`} className="ws-pill">
+                          <Icon size={14} fill={OUTLINED.has(Icon) ? "none" : "currentColor"} aria-hidden />
+                          {c.name}
+                        </Link>
+                      );
+                    })}
+              </div>
+              {catEdges.start && (
+                <div className="ws-catbar__edge ws-catbar__edge--start">
+                  <button
+                    type="button"
+                    className="ws-catbar__nudge"
+                    onClick={() => nudgeCats(-1)}
+                    aria-label="Scroll categories back"
+                  >
+                    <ChevronLeft size={14} aria-hidden />
+                  </button>
+                </div>
+              )}
+              {catEdges.end && (
+                <div className="ws-catbar__edge ws-catbar__edge--end">
+                  <button
+                    type="button"
+                    className="ws-catbar__nudge"
+                    onClick={() => nudgeCats(1)}
+                    aria-label="Scroll categories forward"
+                  >
+                    <ChevronRight size={14} aria-hidden />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

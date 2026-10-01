@@ -1,75 +1,81 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import {
-  BadgeCheck, Building2, Globe, MapPin, MessageCircle, Phone, Star, Store,
-} from 'lucide-react';
-import StoreHead, { type StoreHeadStat } from '@/features/stores/components/StoreHead';
+import { Store } from 'lucide-react';
+import StoreHero from '@/features/stores/components/StoreHero';
 import StoreListings from '@/features/stores/components/StoreListings';
-import StoreReviews from '@/features/stores/components/StoreReviews';
 import StoreAbout from '@/features/stores/components/StoreAbout';
+import ContactSeller from '@/features/stores/components/ContactSeller';
+import ListingReviews from '@/features/reviews/components/ListingReviews';
 import Tabs, { type Tab } from '@/shared/components/Tabs';
+import Modal from '@/shared/components/common/Modal';
 import { panelId, tabId } from '@/shared/lib/tabs';
-import BackLink from '@/shared/components/BackLink';
 import ListingCardSkeleton from '@/features/listings/components/ListingCardSkeleton';
 import ReportButton from '@/features/reports/components/ReportButton';
 import { useStorePage } from '@/features/stores/hooks/useStorePage';
+import { useFollowing } from '@/features/stores/followedStores';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
-import { waLink } from '@/features/listings/model';
-import type { PublicStore } from '@/features/stores/api';
-import { isVerifiedTier, replyTime, sinceLabel, VERIFICATION_LABEL } from '@/features/stores/model';
-import { formatLocation } from '@/shared/utils/locations';
+import { useUIStore } from '@/shared/store/uiStore';
+import type { PublicListing } from '@/features/stores/api';
 
 const TABS_ID = 'store';
-type TabKey = 'about' | 'listings' | 'reviews';
-const TAB_KEYS: TabKey[] = ['about', 'listings', 'reviews'];
+type TabKey = 'listings' | 'about' | 'reviews';
+const TAB_KEYS: TabKey[] = ['listings', 'about', 'reviews'];
 
-function storeStats(store: PublicStore, liveCount: number | null): StoreHeadStat[] {
-  const since = sinceLabel(store.createdAt);
-  return [
-    store.reviewCount > 0
-      ? {
-          label: `${store.reviewCount.toLocaleString()} review${store.reviewCount === 1 ? '' : 's'}`,
-          value: (
-            <>
-              <Star size={14} aria-hidden className="ws-storecard__star" />
-              {store.avgRating.toFixed(1)}
-            </>
-          ),
-        }
-      : { label: 'No reviews', value: 'New', muted: true },
-    { label: 'Live listings', value: (liveCount ?? store.listingCount).toLocaleString() },
-    store.avgResponseMins != null
-      ? { label: 'Replies in', value: replyTime(store.avgResponseMins) }
-      : store.responseRate != null
-        ? { label: 'Reply rate', value: `${Math.round(store.responseRate * 100)}%` }
-        : { label: 'Replies in', value: '—', muted: true },
-    { label: 'Selling since', value: since ?? '—', muted: !since },
-  ];
+function Crumbs({ name }: { name?: string }) {
+  return (
+    <nav aria-label="Breadcrumb" className="ws-ldcrumbs">
+      <ol>
+        <li>
+          <Link to="/">Home</Link>
+          <span aria-hidden>/</span>
+        </li>
+        {/* The sandbox has no store directory and routes through All
+            categories here; this app has one, so the trail uses it. */}
+        <li>
+          {name ? <Link to="/stores">Stores</Link> : <span aria-current="page">Stores</span>}
+          {name && <span aria-hidden>/</span>}
+        </li>
+        {name && (
+          <li>
+            <span aria-current="page">{name}</span>
+          </li>
+        )}
+      </ol>
+    </nav>
+  );
 }
 
 function StoreSkeleton() {
   return (
-    <div className="ws-wrap">
-      <div className="ws-profile" aria-busy="true" aria-label="Loading store">
-        <div className="ws-storehead" aria-hidden>
-          <div className="ws-storehead__banner ws-skeleton" />
-          <div className="ws-storehead__body">
-            <span className="ws-storehead__logo ws-skeleton" />
-            <div className="ws-storehead__id">
-              <span className="ws-skeleton ws-storecard__skel" style={{ height: 26, width: 220 }} />
-              <span className="ws-skeleton ws-storecard__skel" style={{ height: 14, width: 160, marginTop: 10 }} />
+    <div className="ws-wrap ws-shop" aria-busy="true" aria-label="Loading store">
+      <Crumbs />
+      <div className="ws-shero ws-shero--loading" aria-hidden>
+        <div className="ws-shero__cover ws-skeleton" />
+        <div className="ws-shero__body">
+          <div className="ws-shero__row">
+            <span className="ws-shero__avatar ws-skeleton" />
+            <div className="ws-shero__id">
+              <span className="ws-skeleton" style={{ display: 'block', height: 24, width: 220 }} />
+              <span className="ws-skeleton" style={{ display: 'block', height: 14, width: 160, marginTop: 10 }} />
             </div>
           </div>
-          <div className="ws-storehead__stats ws-skeleton" style={{ height: 64 }} />
         </div>
-        <div className="ws-grid">
-          {Array.from({ length: 4 }, (_, i) => <ListingCardSkeleton key={i} />)}
-        </div>
+      </div>
+      <div className="ws-results ws-shop__grid" style={{ marginTop: 24 }}>
+        {Array.from({ length: 5 }, (_, i) => <ListingCardSkeleton key={i} />)}
       </div>
     </div>
   );
 }
 
+/**
+ * /stores/:slug — a seller's shop, ported from the sandbox's /shops/:slug:
+ * the seller header, then Listings, About and Reviews as tabs.
+ *
+ * Kept from the page it replaces: search inside the shop, server paging, the
+ * WhatsApp / phone / website contacts (now in About, since the header carries
+ * only the sandbox's two actions), the mall link and the report button.
+ */
 export default function StorePage() {
   const { slug } = useParams<{ slug: string }>();
   const [params, setParams] = useSearchParams();
@@ -77,13 +83,13 @@ export default function StorePage() {
   const search = params.get('q') ?? '';
   const categoryId = params.get('category') ?? '';
   const tabParam = params.get('tab') as TabKey | null;
-  const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam)
-    ? tabParam
-    : search || categoryId ? 'listings' : 'about';
+  const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam) ? tabParam : 'listings';
   const filters = useMemo(() => ({ page, search, categoryId }), [page, search, categoryId]);
   const data = useStorePage(slug, filters);
   const { store, notFound } = data;
-  const [showPhone, setShowPhone] = useState(false);
+  const { following, toggle } = useFollowing(store?.id ?? '');
+  const addToast = useUIStore((s) => s.addToast);
+  const [messaging, setMessaging] = useState(false);
 
   usePageTitle(notFound ? 'Store not available' : store?.name);
 
@@ -111,9 +117,8 @@ export default function StorePage() {
     const tabs = document.getElementById(TABS_ID);
     if (tabs && tabs.getBoundingClientRect().top < 0) tabs.scrollIntoView({ block: 'start' });
   };
-
   const onTab = useCallback(
-    (key: TabKey) => update({ tab: key === 'about' ? null : key, page: null }),
+    (key: TabKey) => update({ tab: key === 'listings' ? null : key, page: null }),
     [update],
   );
   const onPage = useCallback(
@@ -124,20 +129,26 @@ export default function StorePage() {
     [update],
   );
 
+  // Conversations hang off a listing, so a message from the shop is anchored
+  // to its newest one; the seller sees which item the buyer came through.
+  const anchor = data.catalogue[0];
+  const opening = store
+    ? `Hi, I found ${store.name} on WorldStore. Do you have anything else in stock?`
+    : '';
+
   if (notFound) {
     return (
-      <div className="ws-wrap">
-        <BackLink fallbackTo="/stores" fallbackLabel="All stores" />
-
-        <div className="ws-empty" style={{ marginBlock: 'var(--ws-space-8) var(--ws-space-16)' }}>
-          <span className="ws-empty__icon"><Store size={24} aria-hidden /></span>
-          <h1 className="ws-title">Store not available</h1>
-          <p className="ws-caption ws-muted">
-            This store may have closed, or its subscription is not currently active.
-          </p>
-          <div className="ws-contact__row" style={{ justifyContent: 'center' }}>
-            <Link to="/stores" className="ws-btn ws-btn--sm ws-btn--secondary">Browse stores</Link>
-            <Link to="/listings" className="ws-btn ws-btn--sm ws-btn--primary">Browse listings</Link>
+      <div className="ws-wrap ws-shop">
+        <div className="ws-cxempty ws-shop__missing">
+          <div className="ws-cxempty__inner">
+            <span className="ws-cxempty__icon"><Store size={20} aria-hidden /></span>
+            <p className="ws-cxempty__title">No shop at that address</p>
+            <p className="ws-cxempty__body">
+              The seller may have closed it, its subscription may have lapsed, or the link is wrong.
+            </p>
+            <div className="ws-cxempty__action">
+              <Link to="/stores" className="ws-btn ws-btn--sm ws-btn--secondary">Browse stores</Link>
+            </div>
           </div>
         </div>
       </div>
@@ -146,160 +157,111 @@ export default function StorePage() {
 
   if (!store) return <StoreSkeleton />;
 
-  const location = formatLocation([store.city, store.state], store.country);
-  const verified = isVerifiedTier(store.verificationTier);
   const mall = store.mall?.status === 'ACTIVE' || store.mall?.status === 'GRACE' ? store.mall : null;
+  const count = data.catalogueTotal ?? store.listingCount;
   const tabs: Tab<TabKey>[] = [
+    { key: 'listings', label: `Listings (${count.toLocaleString('en-NG')})` },
     { key: 'about', label: 'About' },
-    { key: 'listings', label: 'Listings', count: data.catalogueTotal ?? store.listingCount },
-    { key: 'reviews', label: 'Reviews', count: store.reviewCount },
+    {
+      key: 'reviews',
+      label: store.reviewCount ? `Reviews (${store.reviewCount.toLocaleString('en-NG')})` : 'Reviews',
+    },
   ];
 
-  return (
-    <div className="ws-wrap">
-      <BackLink fallbackTo="/stores" fallbackLabel="All stores" />
+  const follow = () => {
+    const now = toggle();
+    addToast({ type: 'info', message: now ? `Following ${store.name}` : 'Unfollowed' });
+  };
 
-      <div className="ws-profile">
-        <StoreHead
-          name={store.name}
-          logo={store.logo}
-          banner={store.banner}
-          badge={
-            verified && (
-              <span className="ws-storecard__tier">
-                <BadgeCheck size={13} aria-hidden />
-                {VERIFICATION_LABEL[store.verificationTier]}
-              </span>
-            )
-          }
-          meta={
-            <>
-              {location && (
-                <span className="ws-storehead__fact">
-                  <MapPin size={14} aria-hidden />
-                  {store.address ? `${store.address}, ${location}` : location}
-                </span>
-              )}
-              {mall && (
-                <span className="ws-storehead__fact">
-                  <Building2 size={14} aria-hidden />
-                  Part of{' '}
-                  <Link to={`/malls/${mall.slug}`} className="ws-storehead__link">
-                    {mall.name}
-                  </Link>
-                </span>
-              )}
-            </>
-          }
-          stats={storeStats(store, data.catalogueTotal)}
-          actions={
-            <>
-              {store.whatsapp && (
-                <a
-                  href={waLink(store.whatsapp, `Hi, I found ${store.name} on WorldStore.`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ws-btn ws-btn--sm ws-btn--primary"
-                >
-                  <MessageCircle size={14} aria-hidden />
-                  WhatsApp
-                </a>
-              )}
-              {store.phone &&
-                (showPhone ? (
-                  <a href={`tel:${store.phone}`} className="ws-btn ws-btn--sm ws-btn--secondary ws-num">
-                    <Phone size={14} aria-hidden />
-                    {store.phone}
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    className="ws-btn ws-btn--sm ws-btn--secondary"
-                    onClick={() => setShowPhone(true)}
-                  >
-                    <Phone size={14} aria-hidden />
-                    Show number
-                  </button>
-                ))}
-              {store.website && (
-                <a
-                  href={store.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ws-btn ws-btn--sm ws-btn--secondary"
-                >
-                  <Globe size={14} aria-hidden />
-                  Website
-                </a>
-              )}
-            </>
-          }
+  return (
+    <div className="ws-wrap ws-shop">
+      <Crumbs name={store.name} />
+
+      <StoreHero
+        store={store}
+        listingCount={count}
+        mall={mall}
+        following={following}
+        onMessage={anchor ? () => setMessaging(true) : undefined}
+        onFollow={follow}
+      />
+
+      <section id={TABS_ID} className="ws-shop__tabs" aria-label="Shop">
+        <Tabs
+          idPrefix={TABS_ID}
+          label="Shop"
+          tabs={tabs}
+          active={tab}
+          onChange={(key) => {
+            onTab(key);
+            scrollToTabs();
+          }}
+          block="ws-ldtabs"
         />
 
-        <div id={TABS_ID} className="ws-profile__tabs">
-          <Tabs
-            idPrefix={TABS_ID}
-            label="Store sections"
-            tabs={tabs}
-            active={tab}
-            onChange={(key) => {
-              onTab(key);
-              scrollToTabs();
-            }}
-          />
+        <div
+          role="tabpanel"
+          id={panelId(TABS_ID, tab)}
+          aria-labelledby={tabId(TABS_ID, tab)}
+          className="ws-shop__panel"
+          key={tab}
+        >
+          {tab === 'listings' && (
+            <StoreListings
+              storeName={store.name}
+              listings={data.listings}
+              total={data.total}
+              totalPages={data.totalPages}
+              catalogueTotal={data.catalogueTotal}
+              categories={data.categories}
+              page={page}
+              search={search}
+              categoryId={categoryId}
+              loading={data.loading}
+              refreshing={data.refreshing}
+              failed={data.failed}
+              onRetry={data.retry}
+              onSearch={onSearch}
+              onCategory={onCategory}
+              onPage={onPage}
+              onClear={onClear}
+              prefetchPage={data.prefetchPage}
+            />
+          )}
 
-          <div
-            role="tabpanel"
-            id={panelId(TABS_ID, tab)}
-            aria-labelledby={tabId(TABS_ID, tab)}
-            className="ws-storetabs__panel"
-            key={tab}
-          >
-            {tab === 'about' && (
-              <StoreAbout
-                store={store}
-                mall={mall}
-                liveCount={data.catalogueTotal}
-                onShowListings={() => onTab('listings')}
-              />
-            )}
+          {tab === 'about' && <StoreAbout store={store} mall={mall} />}
 
-            {tab === 'listings' && (
-              <StoreListings
-                storeName={store.name}
-                listings={data.listings}
-                total={data.total}
-                totalPages={data.totalPages}
-                catalogueTotal={data.catalogueTotal}
-                categories={data.categories}
-                page={page}
-                search={search}
-                categoryId={categoryId}
-                loading={data.loading}
-                refreshing={data.refreshing}
-                failed={data.failed}
-                onRetry={data.retry}
-                onSearch={onSearch}
-                onCategory={onCategory}
-                onPage={onPage}
-                onClear={onClear}
-                prefetchPage={data.prefetchPage}
-              />
-            )}
-
-            {tab === 'reviews' && slug && <StoreReviews slug={slug} />}
-          </div>
+          {tab === 'reviews' &&
+            slug &&
+            (store.reviewCount > 0 ? (
+              <ListingReviews storeSlug={slug} heading={false} />
+            ) : (
+              <div className="ws-cxempty">
+                <div className="ws-cxempty__inner">
+                  <p className="ws-cxempty__title">No written reviews yet</p>
+                  <p className="ws-cxempty__body">
+                    This shop has not been reviewed on WorldStore yet. Reviews come from buyers who
+                    messaged the seller about a listing.
+                  </p>
+                </div>
+              </div>
+            ))}
         </div>
+      </section>
 
-        <footer className="ws-profile__foot">
-          <ReportButton
-            targetType="STORE"
-            targetId={store.id}
-            targetName={store.name}
-            label="Report this store"
+      <footer className="ws-shop__foot">
+        <ReportButton targetType="STORE" targetId={store.id} targetName={store.name} label="Report this store" />
+      </footer>
+
+      {anchor && (
+        <Modal isOpen={messaging} onClose={() => setMessaging(false)} title={`Message ${store.name}`}>
+          <ContactSeller
+            listing={{ ...anchor, store } as unknown as PublicListing}
+            cta={false}
+            autoStart={opening}
           />
-        </footer>
-      </div>
+        </Modal>
+      )}
     </div>
   );
 }

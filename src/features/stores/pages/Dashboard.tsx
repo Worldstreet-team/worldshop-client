@@ -1,35 +1,55 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertCircle, AlertTriangle, Info, Eye, EyeOff, Wallet, CalendarCheck,
-  Package, MessageCircle, MailOpen, Star, Store, ExternalLink,
-  type LucideIcon,
+  AlertCircle, AlertTriangle, ArrowRight, CheckCircle2, Clock, ExternalLink, Eye, EyeOff, Info,
+  MessagesSquare, Package, Plus, Star, Wallet, type LucideIcon,
 } from 'lucide-react';
-import { storeService, type VendorDashboard, type DashboardAlert } from '@/features/stores/api';
+import { listingService, storeService, type DashboardAlert, type Listing, type VendorDashboard } from '@/features/stores/api';
+import { chatService } from '@/features/chat/api';
+import { useVendorDashboard } from '@/features/stores/hooks/useVendorDashboard';
+import {
+  ListingStatus, VendorBadge, VendorPage, VendorPageHead, VendorSectionHead, VendorStat,
+} from '@/features/stores/components/vendor/VendorPage';
+import MallCallout from '@/features/malls/components/MallCallout';
+import { firstImage, fmtNaira, timeAgo } from '@/features/listings/model';
 import { useUIStore } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
-import MallCallout from '@/features/malls/components/MallCallout';
+import { queryKeys } from '@/shared/lib/queryKeys';
+import { MINUTE } from '@/app/providers/QueryProvider';
 
 /**
- * Vendor dashboard for the marketplace model.
+ * Vendor Overview, laid out as the sandbox's: greeting, four stat cards, the
+ * listing table beside a column of things to act on.
  *
- * The old version answered "how much did I sell". Nothing is sold on the
- * platform any more, so this answers the two questions that replaced it:
- * is my store visible and until when, and is the subscription earning its
- * keep. Everything comes from one call — GET /stores/me/dashboard.
+ * The sandbox's cards are about orders and payouts, which this marketplace
+ * does not have. Each is swapped for the nearest thing it does: orders to
+ * action become buyer inquiries, released revenue becomes the dollar wallet,
+ * orders needing attention become conversations waiting on a reply, and the
+ * payout card becomes the subscription that keeps the shop visible. Below
+ * that sits what the old dashboard carried: how buyers see the shop, the mall
+ * offer and the subscription detail.
  */
 
 /** Subscription prices are USD; listing prices stay in naira. */
-const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+const usd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
 
-const formatDate = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+// Assembled by hand: en-GB abbreviates September as "Sept".
+const MONTH = new Intl.DateTimeFormat('en-US', { month: 'short' });
 
-const formatResponseTime = (mins: number | null) => {
-  if (mins == null) return '—';
-  if (mins < 60) return `${mins}m`;
-  if (mins < 60 * 24) return `${Math.round(mins / 60)}h`;
-  return `${Math.round(mins / (60 * 24))}d`;
+const shortDate = (iso: string | null) => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTH.format(d)}`;
+};
+
+const formatDate = (iso: string | null) => (iso ? `${shortDate(iso)} ${new Date(iso).getFullYear()}` : '—');
+
+const replyTime = (mins: number | null) => {
+  if (mins == null) return null;
+  if (mins < 60) return `${mins} min`;
+  if (mins < 60 * 24) return `${Math.round(mins / 60)} hr`;
+  return `${Math.round(mins / (60 * 24))} days`;
 };
 
 const errMessage = (err: unknown, fallback: string) => {
@@ -38,7 +58,10 @@ const errMessage = (err: unknown, fallback: string) => {
   return fieldError || e.message;
 };
 
-const errStatus = (err: unknown) => toApiError(err, '').statusCode;
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+};
 
 const ALERT: Record<DashboardAlert['severity'], { cls: string; Icon: LucideIcon }> = {
   critical: { cls: '', Icon: AlertCircle },
@@ -46,65 +69,60 @@ const ALERT: Record<DashboardAlert['severity'], { cls: string; Icon: LucideIcon 
   info: { cls: 'ws-alert--info', Icon: Info },
 };
 
-/** Plain-language store state — "DRAFT" means nothing to a vendor. */
-function visibilityLabel(d: VendorDashboard): { text: string; tone: 'good' | 'bad' } {
-  if (d.store.publiclyVisible) return { text: 'Visible to buyers', tone: 'good' };
-  if (d.store.status === 'SUSPENDED' || d.store.status === 'BANNED') {
-    return { text: 'Hidden by WorldStore', tone: 'bad' };
-  }
-  if (d.subscription?.status === 'LAPSED') return { text: 'Hidden — subscription lapsed', tone: 'bad' };
-  return { text: 'Not visible yet', tone: 'bad' };
+/** Plain-language store state: "DRAFT" means nothing to a vendor. */
+function visibility(d: VendorDashboard): { text: string; good: boolean } {
+  if (d.store.publiclyVisible) return { text: 'Visible to buyers', good: true };
+  if (d.store.status === 'SUSPENDED' || d.store.status === 'BANNED') return { text: 'Hidden by WorldStore', good: false };
+  if (d.subscription?.status === 'LAPSED') return { text: 'Hidden, subscription lapsed', good: false };
+  return { text: 'Not visible yet', good: false };
+}
+
+function priceOf(l: Listing) {
+  if (l.priceType === 'ON_REQUEST') return 'On request';
+  return l.basePrice != null ? fmtNaira(l.basePrice) : '—';
 }
 
 export default function VendorDashboard() {
-  const [data, setData] = useState<VendorDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [charging, setCharging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const client = useQueryClient();
   const addToast = useUIStore((s) => s.addToast);
+  const [charging, setCharging] = useState(false);
+  const { data, isPending, isError, error, refetch } = useVendorDashboard();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await storeService.getDashboard();
-      setData(res.data);
-    } catch (err: unknown) {
-      const msg = errMessage(err, 'Failed to load dashboard');
-      setError(msg);
-      addToast({ type: 'error', message: msg });
-    } finally {
-      setLoading(false);
-    }
-  }, [addToast]);
+  const top = useQuery({
+    queryKey: ['vendor', 'listings', 'top'],
+    queryFn: () => listingService.list({ status: 'PUBLISHED', limit: 50 }).then((r) => r.data),
+    staleTime: MINUTE,
+    select: (rows: Listing[]) => [...rows].sort((a, b) => b.viewCount - a.viewCount).slice(0, 5),
+  });
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const waiting = useQuery({
+    queryKey: ['vendor', 'conversations', 'waiting'],
+    queryFn: () => chatService.list({ side: 'selling', limit: 20 }).then((r) => r.data),
+    staleTime: MINUTE,
+    select: (rows) => rows.filter((c) => c.unread > 0).slice(0, 4),
+  });
 
   /**
    * Activating charges the vendor's real wallet, so the amount is stated and
    * confirmed before the request goes out. A 402 is an expected outcome, not
-   * an error — it means "top up", and it is worded that way.
+   * an error: it means "top up", and it is worded that way.
    */
   const handleActivate = async () => {
     if (!data?.subscription) return;
     const wallet = data.wallet;
     // Credit is spent first, so the wallet is only charged the remainder.
-    const price = formatUsd(wallet?.dueMinor ?? data.subscription.plan.amountMinor);
+    const price = usd(wallet?.dueMinor ?? data.subscription.plan.amountMinor);
 
-    // The server would answer 402 anyway; refusing here saves a round trip and
-    // says the useful thing — how much is missing.
     if (wallet && !wallet.sufficient) {
       addToast({
         type: 'error',
-        message: `Your wallet has ${formatUsd(wallet.availableMinor)} but ${price} is due. Top up ${formatUsd(wallet.dueMinor - wallet.availableMinor)} and try again.`,
+        message: `Your wallet has ${usd(wallet.availableMinor)} but ${price} is due. Top up ${usd(wallet.dueMinor - wallet.availableMinor)} and try again.`,
       });
       return;
     }
 
-    const balanceNote = wallet ? ` Your balance is ${formatUsd(wallet.availableMinor)}.` : '';
-
+    const balanceNote = wallet ? ` Your balance is ${usd(wallet.availableMinor)}.` : '';
     if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your store visible for the next month?${balanceNote}`)) {
       return;
     }
@@ -114,16 +132,14 @@ export default function VendorDashboard() {
       const res = await storeService.chargeSubscription();
       addToast({
         type: 'success',
-        message: res.data.alreadyPaid
-          ? 'This period is already paid for.'
-          : 'Your store is now visible to buyers.',
+        message: res.data.alreadyPaid ? 'This period is already paid for.' : 'Your store is now visible to buyers.',
       });
-      await load();
+      await client.invalidateQueries({ queryKey: queryKeys.vendorDashboard() });
     } catch (err: unknown) {
       addToast({
         type: 'error',
         message:
-          errStatus(err) === 402
+          toApiError(err, '').statusCode === 402
             ? 'Not enough balance in your dollar wallet. Top up and try again.'
             : errMessage(err, 'Could not complete the payment'),
       });
@@ -132,256 +148,306 @@ export default function VendorDashboard() {
     }
   };
 
-  if (loading) {
+  const create = (
+    <button type="button" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary" onClick={() => navigate('/vendor/products/new')}>
+      <Plus size={16} aria-hidden />
+      Create listing
+    </button>
+  );
+
+  if (isPending) {
     return (
-      <div className="ws-page">
-        <div className="ws-page__head"><h1 className="ws-page__title">Dashboard</h1></div>
-        <div className="ws-stats">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="ws-card ws-stack">
+      <VendorPage wide>
+        <VendorPageHead title="Overview" description="Loading your shop…" action={create} />
+        <section className="ws-vxstats" aria-busy="true">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="ws-vxstat">
               <div className="ws-skeleton" style={{ height: 12, width: '60%' }} />
-              <div className="ws-skeleton" style={{ height: 28, width: '40%' }} />
+              <div className="ws-skeleton" style={{ height: 28, width: '40%', marginTop: 16 }} />
             </div>
           ))}
-        </div>
-      </div>
+        </section>
+      </VendorPage>
     );
   }
 
-  if (error || !data) {
+  if (isError || !data) {
     return (
-      <div className="ws-page">
-        <div className="ws-page__head"><h1 className="ws-page__title">Dashboard</h1></div>
-        <div className="ws-empty">
-          <div className="ws-empty__icon" style={{ color: 'var(--ws-status-danger)' }}>
-            <AlertCircle size={26} aria-hidden />
+      <VendorPage wide>
+        <VendorPageHead title="Overview" action={create} />
+        <div className="ws-cxempty">
+          <div className="ws-cxempty__inner">
+            <span className="ws-cxempty__icon"><AlertCircle size={20} aria-hidden /></span>
+            <p className="ws-cxempty__title">Could not load your dashboard</p>
+            <p className="ws-cxempty__body">{errMessage(error, 'Failed to load dashboard')}</p>
+            <div className="ws-cxempty__action">
+              <button type="button" className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => refetch()}>
+                Try again
+              </button>
+            </div>
           </div>
-          <h2 className="ws-title">Could not load your dashboard</h2>
-          <p className="ws-caption ws-muted" style={{ maxWidth: '40ch' }}>{error}</p>
-          <button onClick={load} className="ws-btn ws-btn--sm ws-btn--primary">Retry</button>
         </div>
-      </div>
+      </VendorPage>
     );
   }
 
-  const visibility = visibilityLabel(data);
+  const seen = visibility(data);
   const sub = data.subscription;
   const wallet = data.wallet;
-  const needsPayment =
-    sub != null && ['PENDING_PAYMENT', 'GRACE', 'LAPSED'].includes(sub.status);
-  /** What the wallet is charged — credit covers the rest. */
+  const needsPayment = sub != null && ['PENDING_PAYMENT', 'GRACE', 'LAPSED'].includes(sub.status);
   const dueMinor = wallet?.dueMinor ?? sub?.plan.amountMinor ?? 0;
-
-  const VisibilityIcon = visibility.tone === 'good' ? Eye : EyeOff;
+  const reply = replyTime(data.engagement.avgResponseMins);
+  const onSchedule = sub?.status === 'ACTIVE';
 
   return (
-    <div className="ws-page">
-      <div className="ws-page__head">
-        <h1 className="ws-page__title">Dashboard</h1>
-        <span
-          className="ws-badge"
-          style={{
-            background: visibility.tone === 'good' ? 'var(--ws-money-credit-chip)' : 'var(--ws-money-debit-chip)',
-            color: visibility.tone === 'good' ? 'var(--ws-status-success)' : 'var(--ws-status-danger)',
-          }}
-        >
-          <VisibilityIcon size={12} aria-hidden />
-          {visibility.text}
-        </span>
-      </div>
-
-      <div className="ws-stack--lg">
-        {/* Whatever needs doing, most urgent first. */}
-        {data.alerts.length > 0 && (
-          <div className="ws-stack">
-            {data.alerts.map((alert) => {
-              const { cls, Icon } = ALERT[alert.severity];
-              return (
-                <div key={alert.type} className={`ws-alert ${cls}`.trim()}>
-                  <Icon size={16} aria-hidden />
-                  <span style={{ flex: 1 }}>{alert.message}</span>
-                  {needsPayment && ['ACTIVATE', 'PAYMENT_FAILED', 'EXPIRED'].includes(alert.type) && (
-                    <button
-                      onClick={handleActivate}
-                      disabled={charging}
-                      className="ws-btn ws-btn--sm ws-btn--primary"
-                    >
-                      {charging ? 'Processing…' : `Pay ${formatUsd(dueMinor)}`}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* The wallet the subscription is charged against. Shown always, not
-            just when payment is due: "can I afford the renewal" is a question
-            vendors ask before the alert appears. Just the number — what to do
-            about it is the alert's job. */}
-        <div className="ws-card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-          <span className="ws-iconchip">
-            <Wallet size={22} aria-hidden />
-          </span>
-          <div>
-            <span className="ws-label">WorldStreet dollar wallet</span>
-            <div className="ws-stat__value">
-              {wallet ? formatUsd(wallet.availableMinor) : 'Unavailable'}
-            </div>
-          </div>
-        </div>
-
-        {/* The four numbers that matter now. */}
-        <div className="ws-stats">
-          <div className="ws-stat">
-            <span className="ws-stat__label"><CalendarCheck size={12} aria-hidden /> Days Remaining</span>
-            <span className="ws-stat__value">
-              {sub?.daysRemaining != null && sub.daysRemaining > 0 ? sub.daysRemaining : '—'}
+    <VendorPage wide>
+      <VendorPageHead
+        title={`${greeting()}, ${data.store.name}`}
+        description={
+          <>
+            Here is what needs your attention across listings and buyer conversations.{' '}
+            <span className={`ws-vxvis${seen.good ? ' is-good' : ''}`}>
+              {seen.good ? <Eye size={12} aria-hidden /> : <EyeOff size={12} aria-hidden />}
+              {seen.text}
             </span>
-            <span className="ws-stat__delta ws-muted">
-              {sub?.currentPeriodEnd ? `Renews ${formatDate(sub.currentPeriodEnd)}` : 'Not active'}
-            </span>
-          </div>
+          </>
+        }
+        action={create}
+      />
 
-          <div className="ws-stat">
-            <span className="ws-stat__label"><Package size={12} aria-hidden /> Live Listings</span>
-            <span className="ws-stat__value">{data.listings.published}</span>
-            <span className="ws-stat__delta ws-muted">
-              {data.listings.draft > 0 ? `${data.listings.draft} in draft` : 'All published'}
-            </span>
-          </div>
-
-          <div className="ws-stat">
-            <span className="ws-stat__label"><MessageCircle size={12} aria-hidden /> Inquiries This Period</span>
-            <span className="ws-stat__value">{data.engagement.inquiriesThisPeriod}</span>
-            <span className="ws-stat__delta ws-muted">since {formatDate(data.engagement.since)}</span>
-          </div>
-
-          <Link to="/vendor/messages" className="ws-stat ws-plink">
-            <span className="ws-stat__label"><MailOpen size={12} aria-hidden /> Unread Messages</span>
-            <span className="ws-stat__value">{data.inbox.unread}</span>
-            <span className="ws-stat__delta ws-muted">
-              {data.inbox.openThreads} open conversation{data.inbox.openThreads === 1 ? '' : 's'}
-            </span>
-          </Link>
-        </div>
-
-        {/* What buyers see about this seller. */}
-        <section>
-          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>How buyers see you</h2>
-          <div className="ws-stats">
-            <div className="ws-stat">
-              <span className="ws-stat__label">Response Rate</span>
-              <span className="ws-stat__value">
-                {data.engagement.responseRate != null ? `${Math.round(data.engagement.responseRate * 100)}%` : '—'}
-              </span>
-            </div>
-            <div className="ws-stat">
-              <span className="ws-stat__label">Avg. Reply Time</span>
-              <span className="ws-stat__value">{formatResponseTime(data.engagement.avgResponseMins)}</span>
-            </div>
-            <div className="ws-stat">
-              <span className="ws-stat__label">Rating</span>
-              <span className="ws-stat__value">
-                {data.reputation.reviewCount > 0 ? data.reputation.avgRating.toFixed(1) : '—'}
-                {data.reputation.reviewCount > 0 && (
-                  <Star size={16} aria-hidden style={{ color: 'var(--ws-accent-star, #F97316)', fill: 'var(--ws-accent-star, #F97316)', marginLeft: 4 }} />
+      {/* Whatever needs doing, most urgent first. */}
+      {data.alerts.length > 0 && (
+        <div className="ws-vxalerts">
+          {data.alerts.map((alert) => {
+            const { cls, Icon } = ALERT[alert.severity];
+            return (
+              <div key={alert.type} className={`ws-alert ${cls}`.trim()}>
+                <Icon size={16} aria-hidden />
+                <span style={{ flex: 1 }}>{alert.message}</span>
+                {needsPayment && ['ACTIVATE', 'PAYMENT_FAILED', 'EXPIRED'].includes(alert.type) && (
+                  <button onClick={handleActivate} disabled={charging} className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary">
+                    {charging ? 'Processing…' : `Pay ${usd(dueMinor)}`}
+                  </button>
                 )}
-              </span>
-              <span className="ws-stat__delta ws-muted">
-                {data.reputation.reviewCount} review{data.reputation.reviewCount === 1 ? '' : 's'}
-              </span>
-            </div>
-            <div className="ws-stat">
-              <span className="ws-stat__label">Listing Views</span>
-              <span className="ws-stat__value">{data.engagement.views}</span>
-            </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <section aria-label="Shop summary" className="ws-vxstats">
+        <VendorStat
+          label="Active listings"
+          value={data.listings.published.toLocaleString('en-NG')}
+          detail={`${data.listings.draft} ${data.listings.draft === 1 ? 'draft' : 'drafts'} waiting`}
+          icon={Package}
+        />
+        <VendorStat
+          label="Inquiries this period"
+          value={data.engagement.inquiriesThisPeriod.toLocaleString('en-NG')}
+          detail={`Since ${formatDate(data.engagement.since)}`}
+          icon={MessagesSquare}
+        />
+        <VendorStat
+          label="Unread messages"
+          value={data.inbox.unread.toLocaleString('en-NG')}
+          detail={reply ? `Median reply time: ${reply}` : `${data.inbox.openThreads} open conversations`}
+          icon={MessagesSquare}
+        />
+        <VendorStat
+          label="Wallet balance"
+          value={wallet ? usd(wallet.availableMinor) : '—'}
+          detail={wallet ? `${usd(dueMinor)} due at renewal` : 'Wallet unavailable right now'}
+          icon={Wallet}
+        />
+      </section>
+
+      <div className="ws-vxover">
+        <section className="ws-vxover__main">
+          <VendorSectionHead
+            title="Listing performance"
+            description="Views and inquiries across your live listings."
+            action={
+              <Link to="/vendor/products" className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--ghost">
+                View listings
+                <ArrowRight size={14} aria-hidden />
+              </Link>
+            }
+          />
+          <div className="ws-vxcard ws-vxcard--pad">
+            <table className="ws-vxtable ws-vxtable--compact">
+              <caption className="ws-sr-only">Top listings by views</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Listing</th>
+                  <th scope="col" style={{ width: 96 }}>Status</th>
+                  <th scope="col" className="is-num" style={{ width: 112 }}>Price</th>
+                  <th scope="col" className="is-num" style={{ width: 80 }}>Views</th>
+                  <th scope="col" className="is-num" style={{ width: 80 }}>Inquiries</th>
+                </tr>
+              </thead>
+              <tbody>
+                {top.isPending
+                  ? Array.from({ length: 5 }, (_, i) => (
+                      <tr key={i}>
+                        <td colSpan={5}><div className="ws-skeleton" style={{ height: 32 }} /></td>
+                      </tr>
+                    ))
+                  : (top.data ?? []).map((l) => {
+                      const img = firstImage(l);
+                      return (
+                        <tr key={l.id}>
+                          <th scope="row">
+                            <Link to={`/vendor/products/${l.id}`} className="ws-vxtable__id">
+                              {img ? <img src={img} alt="" className="ws-vxthumb ws-vxthumb--sm" /> : <span className="ws-vxthumb ws-vxthumb--sm" />}
+                              <span className="ws-vxtable__name">{l.name}</span>
+                            </Link>
+                          </th>
+                          <td><ListingStatus status={l.status} /></td>
+                          <td className="is-num ws-vxtable__price">{priceOf(l)}</td>
+                          <td className="is-num">{l.viewCount.toLocaleString('en-NG')}</td>
+                          <td className="is-num">{l.inquiryCount.toLocaleString('en-NG')}</td>
+                        </tr>
+                      );
+                    })}
+                {!top.isPending && (top.data ?? []).length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="ws-vxtable__none">
+                      Nothing is live yet. Publish a listing and its numbers show up here.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <p className="ws-vxnote">Updated {top.dataUpdatedAt ? timeAgo(new Date(top.dataUpdatedAt).toISOString()) : 'just now'}</p>
           </div>
         </section>
 
-        {/* A vendor running more than one storefront is the mall product's
-            whole audience, so the offer belongs here rather than only in the
-            directory. Renders as "go to your mall" once they own one. */}
-        <MallCallout variant="card" />
+        <section className="ws-vxover__side">
+          <VendorSectionHead title="Conversations needing a reply" description="Buyers waiting on you, newest first." />
+          <div className="ws-vxcard ws-vxlist">
+            {(waiting.data ?? []).length === 0 ? (
+              <p className="ws-vxlist__none">
+                {waiting.isPending ? 'Checking your inbox…' : 'Nobody is waiting on you. Every conversation has an answer.'}
+              </p>
+            ) : (
+              waiting.data!.map((c) => {
+                const img = c.listing ? firstImage(c.listing) : null;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="ws-vxlist__row"
+                    onClick={() => navigate(`/vendor/messages?conversation=${c.id}`)}
+                  >
+                    {img ? <img src={img} alt="" className="ws-vxthumb ws-vxthumb--lg" /> : <span className="ws-vxthumb ws-vxthumb--lg" />}
+                    <span className="ws-vxlist__text">
+                      <span className="ws-vxlist__title">{c.listing?.name ?? 'Listing removed'}</span>
+                      <span className="ws-vxlist__meta">
+                        {c.buyer?.name ?? 'A buyer'} · {timeAgo(c.lastMessageAt)}
+                      </span>
+                    </span>
+                    <VendorBadge tone="pending" icon={Clock}>
+                      {c.unread} new
+                    </VendorBadge>
+                  </button>
+                );
+              })
+            )}
+          </div>
 
-        {/* Subscription detail. Credit is spent before the wallet, so it is
-            only shown when there is some — otherwise it is noise. */}
-        {sub && (
-          <section>
-            <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Subscription</h2>
-            <div className="ws-card ws-card--flush ws-table-wrap">
-              <table className="ws-table">
-                <tbody>
-                  <tr>
-                    <td>Plan</td>
-                    <td><strong>{sub.plan.name}</strong> — {formatUsd(sub.plan.amountMinor)}/month</td>
-                  </tr>
-                  <tr>
-                    <td>Status</td>
-                    <td>{sub.status.replace(/_/g, ' ').toLowerCase()}</td>
-                  </tr>
-                  <tr>
-                    <td>Current period</td>
-                    <td>{formatDate(sub.currentPeriodStart)} — {formatDate(sub.currentPeriodEnd)}</td>
-                  </tr>
-                  <tr>
-                    <td>Auto-renew</td>
-                    <td>{sub.autoRenew ? 'On' : 'Off'}</td>
-                  </tr>
-                  {sub.creditMinor > 0 && (
-                    <tr>
-                      <td>Store credit</td>
-                      <td>{formatUsd(sub.creditMinor)} — used before your wallet is charged</td>
-                    </tr>
+          <VendorSectionHead title="Subscription" description="What keeps your shop visible to buyers." />
+          <div className="ws-vxcard ws-vxcard--pad">
+            {sub ? (
+              <>
+                <div className="ws-vxpayout">
+                  <div>
+                    <p className="ws-vxpayout__label">Next renewal</p>
+                    <p className="ws-vxpayout__value ws-num">{usd(sub.plan.amountMinor)}</p>
+                  </div>
+                  {onSchedule ? (
+                    <VendorBadge tone="success" icon={CheckCircle2}>On schedule</VendorBadge>
+                  ) : (
+                    <VendorBadge tone="pending" icon={AlertTriangle}>
+                      {sub.status === 'LAPSED' ? 'Lapsed' : 'Payment due'}
+                    </VendorBadge>
                   )}
-                  <tr>
-                    <td>Wallet balance</td>
-                    <td>{wallet ? formatUsd(wallet.availableMinor) : 'Unavailable right now'}</td>
-                  </tr>
-                  {sub.lastCharge && (
-                    <tr>
-                      <td>Last payment</td>
-                      <td>
-                        {sub.lastCharge.status === 'PAID'
-                          ? `${formatUsd(sub.lastCharge.amountMinor)} on ${formatDate(sub.lastCharge.chargedAt)}`
-                          : `Failed${sub.lastCharge.failureCode ? ` (${sub.lastCharge.failureCode.replace(/_/g, ' ').toLowerCase()})` : ''}`}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        <section>
-          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-4)' }}>Quick Links</h2>
-          <div className="ws-stats">
-            <Link to="/vendor/products" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-              <Package size={18} aria-hidden />
-              <span className="ws-title">Manage Listings</span>
-            </Link>
-            <Link to="/vendor/messages" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-              <MessageCircle size={18} aria-hidden />
-              <span className="ws-title">Messages</span>
-            </Link>
-            <Link to="/vendor/reviews?unreplied=1" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-              <Star size={18} aria-hidden />
-              <span className="ws-title">Reviews</span>
-            </Link>
-            <Link to="/vendor/settings" className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-              <Store size={18} aria-hidden />
-              <span className="ws-title">Store Profile</span>
-            </Link>
-            {data.store.publiclyVisible && (
-              <Link to={`/stores/${data.store.slug}`} className="ws-card ws-plink" style={{ display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-                <ExternalLink size={18} aria-hidden />
-                <span className="ws-title">View Public Store</span>
-              </Link>
+                </div>
+                <p className="ws-vxpayout__foot">
+                  {sub.currentPeriodEnd ? `Renews ${shortDate(sub.currentPeriodEnd)}` : 'Not active yet'} · {sub.plan.name} plan ·
+                  Auto-renew {sub.autoRenew ? 'on' : 'off'}
+                </p>
+              </>
+            ) : (
+              <p className="ws-vxlist__none">No subscription yet. Your shop goes live once one is active.</p>
             )}
           </div>
         </section>
       </div>
-    </div>
+
+      {/* What buyers see about this seller. */}
+      <section className="ws-vxblock">
+        <VendorSectionHead title="How buyers see you" description="The trust signals on your shop and listing pages." />
+        <div className="ws-vxstats">
+          <VendorStat
+            label="Response rate"
+            value={data.engagement.responseRate != null ? `${Math.round(data.engagement.responseRate * 100)}%` : '—'}
+            icon={MessagesSquare}
+          />
+          <VendorStat label="Average reply time" value={reply ?? '—'} icon={Clock} />
+          <VendorStat
+            label="Rating"
+            value={data.reputation.reviewCount > 0 ? data.reputation.avgRating.toFixed(1) : '—'}
+            detail={`${data.reputation.reviewCount} ${data.reputation.reviewCount === 1 ? 'review' : 'reviews'}`}
+            icon={Star}
+          />
+          <VendorStat label="Listing views" value={data.engagement.views.toLocaleString('en-NG')} icon={Eye} />
+        </div>
+      </section>
+
+      {/* A vendor running more than one storefront is the mall product's
+          whole audience, so the offer belongs here too. */}
+      <section className="ws-vxblock">
+        <MallCallout variant="card" />
+      </section>
+
+      {sub && (
+        <section className="ws-vxblock">
+          <VendorSectionHead
+            title="Subscription detail"
+            action={
+              data.store.publiclyVisible ? (
+                <Link to={`/stores/${data.store.slug}`} className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--ghost">
+                  View public shop
+                  <ExternalLink size={14} aria-hidden />
+                </Link>
+              ) : undefined
+            }
+          />
+          <div className="ws-vxcard">
+            <dl className="ws-vxdl">
+              <div><dt>Plan</dt><dd>{sub.plan.name}, {usd(sub.plan.amountMinor)} a month</dd></div>
+              <div><dt>Status</dt><dd>{sub.status.replace(/_/g, ' ').toLowerCase()}</dd></div>
+              <div><dt>Current period</dt><dd>{formatDate(sub.currentPeriodStart)} to {formatDate(sub.currentPeriodEnd)}</dd></div>
+              <div><dt>Auto-renew</dt><dd>{sub.autoRenew ? 'On' : 'Off'}</dd></div>
+              {sub.creditMinor > 0 && (
+                <div><dt>Store credit</dt><dd>{usd(sub.creditMinor)}, used before your wallet is charged</dd></div>
+              )}
+              <div><dt>Wallet balance</dt><dd>{wallet ? usd(wallet.availableMinor) : 'Unavailable right now'}</dd></div>
+              {sub.lastCharge && (
+                <div>
+                  <dt>Last payment</dt>
+                  <dd>
+                    {sub.lastCharge.status === 'PAID'
+                      ? `${usd(sub.lastCharge.amountMinor)} on ${formatDate(sub.lastCharge.chargedAt)}`
+                      : `Failed${sub.lastCharge.failureCode ? ` (${sub.lastCharge.failureCode.replace(/_/g, ' ').toLowerCase()})` : ''}`}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        </section>
+      )}
+    </VendorPage>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
@@ -15,12 +15,28 @@ const errMessage = (err: unknown, fallback: string) => {
   return fieldError || e.message;
 };
 
+/** Lets a button elsewhere on the page open the composer with its own opening line. */
+export type ContactSellerHandle = { start: (draft?: string) => void };
+
 type ContactSellerProps = {
   listing: PublicListing;
   subject?: string;
+  /**
+   * False when the page supplies its own buttons and drives this through
+   * `ref`. The composer and the sent state still render here; only the
+   * built-in call to action is dropped.
+   */
+  cta?: boolean;
+  /**
+   * Opens the composer with this line as soon as it mounts, for a composer
+   * that lives in a sheet: the sheet mounts its body after it opens, so a
+   * `ref.start()` from the opener would find nothing to start.
+   */
+  autoStart?: string;
+  ref?: Ref<ContactSellerHandle>;
 };
 
-export default function ContactSeller({ listing, subject }: ContactSellerProps) {
+export default function ContactSeller({ listing, subject, cta = true, autoStart, ref }: ContactSellerProps) {
   const { isSignedIn } = useAuth();
   const navigate = useNavigate();
   const addToast = useUIStore((s) => s.addToast);
@@ -43,16 +59,28 @@ export default function ContactSeller({ listing, subject }: ContactSellerProps) 
 
   const draft = `Hi, is "${subject ?? listing.name}" still available?`;
 
-  const start = () => {
+  const start = (opening: string = draft) => {
     if (!isSignedIn) {
       navigate(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
-    setMessage(draft);
+    setSentId(null);
+    setMessage(opening);
     setOpen(true);
     // The textarea only exists once open, so focus waits for the paint.
     requestAnimationFrame(() => document.getElementById('contact-message')?.focus());
   };
+
+  useImperativeHandle(ref, () => ({ start }));
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (!autoStart || started.current) return;
+    started.current = true;
+    start(autoStart);
+    // Once per mount; `start` is a fresh closure every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   const send = () => {
     const body = message.trim();
@@ -81,9 +109,10 @@ export default function ContactSeller({ listing, subject }: ContactSellerProps) 
   }
 
   if (!open) {
+    if (!cta) return null;
     return (
       <div className="ws-ask">
-        <button type="button" className="ws-btn ws-btn--primary ws-btn--block ws-ask__cta" onClick={start}>
+        <button type="button" className="ws-btn ws-btn--primary ws-btn--block ws-ask__cta" onClick={() => start()}>
           <MessageCircle size={18} aria-hidden />
           {isSignedIn ? 'Message seller' : 'Sign in to message'}
         </button>

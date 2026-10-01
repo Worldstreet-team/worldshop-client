@@ -1,19 +1,22 @@
-import { useState, useSyncExternalStore } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useSyncExternalStore, type RefObject } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import {
-  BadgeCheck, Check, ChevronRight, Clock, Heart, MapPin, MessageCircle, Share2, Star,
+  Check, Clock, Heart, MapPin, MessageCircle, MessagesSquare, Share2, ShieldCheck, Star, Tag,
+  TriangleAlert, Truck, Zap,
 } from 'lucide-react';
 import type { PublicListing, ListingVariant } from '@/features/stores/api';
-import ContactSeller from '@/features/stores/components/ContactSeller';
-import Stars from '@/features/reviews/components/Stars';
-import { fmtNaira, priceLabel, waLink } from '@/features/listings/model';
+import ContactSeller, { type ContactSellerHandle } from '@/features/stores/components/ContactSeller';
+import { fmtNaira, priceLabel, timeAgo, waLink } from '@/features/listings/model';
 import { savedListings } from '@/features/listings/savedListings';
-import { isVerifiedTier, replyTime, VERIFICATION_LABEL } from '@/features/stores/model';
+
+/** At or under this many, the count is worth a badge. Above it, it is just stock. */
+const LOW_STOCK = 5;
+const PAY_LATER_PARTS = 4;
 
 function priceHint(l: PublicListing): string {
-  if (l.priceType === 'ON_REQUEST') return 'No public price — ask the seller for one.';
+  if (l.priceType === 'ON_REQUEST') return 'No public price. Ask the seller for one.';
   if (l.priceType === 'RANGE') return 'Price depends on the option you choose.';
-  return l.isNegotiable ? 'Asking price — the seller takes offers.' : 'Fixed price set by the seller.';
+  return l.isNegotiable ? 'Asking price. The seller takes offers.' : 'Fixed price set by the seller.';
 }
 
 const variantLabel = (v: ListingVariant, i: number) =>
@@ -22,22 +25,28 @@ const variantLabel = (v: ListingVariant, i: number) =>
 type ListingBuyBoxProps = {
   listing: PublicListing;
   location: string;
-  onSeeReviews: () => void;
+  /** Owned by the page, because the seller card and the mobile bar open the same composer. */
+  contact: RefObject<ContactSellerHandle | null>;
 };
 
-export default function ListingBuyBox({ listing, location, onSeeReviews }: ListingBuyBoxProps) {
+export default function ListingBuyBox({ listing, location, contact }: ListingBuyBoxProps) {
+  const { isSignedIn } = useAuth();
   const [copied, setCopied] = useState(false);
   const [variant, setVariant] = useState<number | null>(null);
   const saved = useSyncExternalStore(savedListings.subscribe, () => savedListings.has(listing.id));
   const store = listing.store;
-  const verified = isVerifiedTier(store.verificationTier);
-  const reply = store.avgResponseMins != null ? replyTime(store.avgResponseMins) : null;
-  const condition = listing.condition
-    ? listing.condition.charAt(0) + listing.condition.slice(1).toLowerCase()
-    : null;
-  const rating = listing.avgRating ?? 0;
-  const reviews = listing.reviewCount ?? 0;
   const chosen = variant != null ? listing.variants[variant] : null;
+  const subject = chosen ? `${listing.name} (${variantLabel(chosen, variant ?? 0)})` : listing.name;
+  const titleId = `${listing.id}-title`;
+
+  // One number to buy at, when there is one: the chosen option's, else a fixed
+  // asking price. A range or "contact for price" has nothing to split or discount.
+  const price = chosen?.price ?? (listing.priceType === 'FIXED' ? listing.basePrice : null);
+  const was = !chosen && price != null && listing.compareAtPrice != null && listing.compareAtPrice > price
+    ? listing.compareAtPrice
+    : null;
+  const off = was != null && price != null ? Math.round((1 - price / was) * 100) : 0;
+  const lowStock = listing.stockLeft != null && listing.stockLeft > 0 && listing.stockLeft <= LOW_STOCK;
 
   const share = async () => {
     const url = window.location.href;
@@ -55,60 +64,80 @@ export default function ListingBuyBox({ listing, location, onSeeReviews }: Listi
   };
 
   return (
-    <div className="ws-buybox">
-      <div className="ws-buybox__head">
-        <h1 className="ws-buybox__title">{listing.name}</h1>
-        <div className="ws-buybox__acts">
-          <button
-            type="button"
-            className={`ws-iconbtn${saved ? ' is-saved' : ''}`}
-            aria-pressed={saved}
-            aria-label={saved ? 'Remove from saved' : 'Save listing'}
-            onClick={() => savedListings.toggle(listing)}
-          >
-            <Heart size={18} />
-          </button>
-          <button
-            type="button"
-            className="ws-iconbtn"
-            aria-label="Share listing"
-            title={copied ? 'Link copied' : 'Share'}
-            onClick={share}
-          >
-            {copied ? <Check size={18} /> : <Share2 size={18} />}
-          </button>
-        </div>
-      </div>
+    <section className="ws-ldbuy" aria-labelledby={titleId}>
+      <div className="ws-ldbuy__head">
+        {(lowStock || off > 0) && (
+          <div className="ws-ldbuy__badges">
+            {lowStock && (
+              <span className="ws-ldbadge ws-ldbadge--warning">
+                <TriangleAlert size={12} aria-hidden className="ws-solid ws-solid--cut" />
+                Only {listing.stockLeft} left
+              </span>
+            )}
+            {off > 0 && (
+              <span className="ws-ldbadge ws-ldbadge--sale">
+                <Tag size={12} aria-hidden className="ws-solid ws-solid--cut" />
+                −{off}%
+              </span>
+            )}
+          </div>
+        )}
 
-      <div className="ws-buybox__rating">
-        {reviews > 0 ? (
-          <button type="button" className="ws-buybox__ratinglink" onClick={onSeeReviews}>
-            <Stars value={rating} size={14} />
-            <span className="ws-num">{rating.toFixed(1)}</span>
+        <h1 className="ws-ldbuy__title" id={titleId}>{listing.name}</h1>
+
+        <p className="ws-ldbuy__meta">
+          {store.reviewCount > 0 ? (
+            <a href="#reviews" className="ws-ldbuy__rating">
+              <Star size={16} aria-hidden className="ws-solid ws-ldstar" />
+              <span className="ws-ldbuy__score ws-num">{store.avgRating.toFixed(1)}</span>
+              <span className="ws-ldbuy__count">
+                ({store.reviewCount.toLocaleString()} {store.reviewCount === 1 ? 'review' : 'reviews'})
+              </span>
+            </a>
+          ) : (
+            <span>No reviews yet</span>
+          )}
+          {location && (
             <span>
-              ({reviews.toLocaleString()} {reviews === 1 ? 'review' : 'reviews'})
+              <MapPin size={16} aria-hidden className="ws-solid ws-solid--cut" />
+              {location}
             </span>
-          </button>
-        ) : (
-          <span className="ws-buybox__noreviews">No reviews yet</span>
-        )}
-        {condition && <span className="ws-badge ws-badge--neutral">{condition}</span>}
+          )}
+          {listing.publishedAt && (
+            <span>
+              <Clock size={16} aria-hidden className="ws-solid ws-solid--cut" />
+              Listed {timeAgo(listing.publishedAt)}
+            </span>
+          )}
+        </p>
       </div>
 
-      <div className="ws-buybox__price">
-        <span className="ws-price ws-price--lg">
-          {chosen?.price != null ? fmtNaira(chosen.price) : priceLabel(listing)}
-        </span>
-        {listing.isNegotiable && listing.priceType !== 'ON_REQUEST' && (
-          <span className="ws-badge ws-badge--warning">Negotiable</span>
+      <div className="ws-ldbuy__pricing">
+        <p className="ws-ldbuy__price">
+          <span className="ws-ldbuy__now ws-num">
+            <span className="ws-sr-only">Price: </span>
+            {chosen?.price != null ? fmtNaira(chosen.price) : priceLabel(listing)}
+          </span>
+          {was != null && (
+            <span className="ws-ldbuy__was ws-num">
+              <span className="ws-sr-only">Was </span>
+              {fmtNaira(was)}
+            </span>
+          )}
+        </p>
+        {price != null && (
+          <p className="ws-ldbuy__later">
+            or {PAY_LATER_PARTS} × <strong className="ws-num">{fmtNaira(Math.round(price / PAY_LATER_PARTS))}</strong>{' '}
+            with WorldStreet Pay Later
+          </p>
         )}
+        <p className="ws-ldbuy__later">{priceHint(listing)}</p>
       </div>
-      <p className="ws-buybox__hint">{priceHint(listing)}</p>
 
       {listing.variants.length > 0 && (
-        <div className="ws-buybox__options">
+        <div className="ws-ldbuy__options">
           <span className="ws-label">
-            Options{chosen && <span className="ws-buybox__chosen"> · {variantLabel(chosen, variant ?? 0)}</span>}
+            Options{chosen && <span className="ws-ldbuy__chosen"> · {variantLabel(chosen, variant ?? 0)}</span>}
           </span>
           <div className="ws-chiprow" role="group" aria-label="Available options">
             {listing.variants.map((v, i) => (
@@ -128,67 +157,95 @@ export default function ListingBuyBox({ listing, location, onSeeReviews }: Listi
         </div>
       )}
 
-      {location && (
-        <p className="ws-buybox__where">
-          <MapPin size={14} aria-hidden />
-          <span>{location}</span>
-        </p>
-      )}
+      {/* There is no checkout behind these yet. Each opens the conversation
+          with the seller, with an opening line that says which one was pressed. */}
+      <div className="ws-ldbuy__actions">
+        <button
+          type="button"
+          className="ws-ldbtn ws-ldbtn--primary"
+          onClick={() => contact.current?.start(`Hi, I would like to buy "${subject}". Is it still available?`)}
+        >
+          <Zap size={18} aria-hidden className="ws-solid" />
+          Buy now
+        </button>
 
-      <div className="ws-buybox__cta" id="contact-panel">
-        <ContactSeller
-          listing={listing}
-          subject={chosen ? `${listing.name} (${variantLabel(chosen, variant ?? 0)})` : listing.name}
-        />
+        <div className="ws-ldbuy__row">
+          <button
+            type="button"
+            className="ws-ldbtn ws-ldbtn--outline"
+            onClick={() => contact.current?.start(`Hi, I would like to make an offer on "${subject}": ₦`)}
+          >
+            Make offer
+          </button>
+          <button
+            type="button"
+            className="ws-ldbtn ws-ldbtn--outline"
+            onClick={() => contact.current?.start(`Hi, is "${subject}" still available?`)}
+          >
+            <MessagesSquare size={18} aria-hidden className="ws-solid" />
+            Message
+          </button>
+          <button
+            type="button"
+            className={`ws-ldbtn ws-ldbtn--outline ws-ldbtn--icon${saved ? ' is-saved' : ''}`}
+            aria-pressed={saved}
+            aria-label={saved ? 'Remove from saved' : 'Save listing'}
+            onClick={() => savedListings.toggle(listing)}
+          >
+            <Heart size={18} aria-hidden className={saved ? 'ws-solid' : undefined} />
+          </button>
+          <button
+            type="button"
+            className="ws-ldbtn ws-ldbtn--outline ws-ldbtn--icon"
+            aria-label="Share listing"
+            title={copied ? 'Link copied' : 'Share'}
+            onClick={share}
+          >
+            {copied ? <Check size={18} aria-hidden /> : <Share2 size={18} aria-hidden />}
+          </button>
+        </div>
+
         {store.whatsapp && (
           <a
             href={waLink(store.whatsapp, `Hi, is "${listing.name}" still available?`)}
             target="_blank"
             rel="noopener noreferrer"
-            className="ws-btn ws-btn--secondary ws-btn--block"
+            className="ws-ldbtn ws-ldbtn--outline"
           >
             <MessageCircle size={18} aria-hidden />
             WhatsApp the seller
           </a>
         )}
+
+        {!isSignedIn && (
+          <p className="ws-ldbuy__note">
+            A free account lets the seller reply to you. Signing in brings you back here.
+          </p>
+        )}
       </div>
 
-      <Link to={`/stores/${store.slug}`} className="ws-sellerline ws-buybox__seller">
-        <span className="ws-avatar ws-sellerline__avatar" aria-hidden>
-          {store.logo ? <img src={store.logo} alt="" /> : store.name.charAt(0).toUpperCase()}
-        </span>
-        <span className="ws-sellerline__id">
-          <span className="ws-sellerline__name">
-            {store.name}
-            {verified && (
-              <BadgeCheck
-                size={14}
-                aria-label={VERIFICATION_LABEL[store.verificationTier]}
-                className="ws-sellerline__tick"
-              />
-            )}
+      <div id="contact-panel" className="ws-ldbuy__contact">
+        <ContactSeller ref={contact} listing={listing} subject={subject} cta={false} />
+      </div>
+
+      <ul className="ws-ldbuy__trust">
+        {listing.delivery && (
+          <li>
+            <Truck size={16} aria-hidden className="ws-solid" />
+            <span>
+              <strong>{listing.delivery.label}</strong>
+              <span>{listing.delivery.note}</span>
+            </span>
+          </li>
+        )}
+        <li>
+          <ShieldCheck size={16} aria-hidden className="ws-solid ws-solid--cut" />
+          <span>
+            <strong>Buyer protection</strong>
+            <span>Your payment is held until you confirm delivery.</span>
           </span>
-          <span className="ws-sellerline__meta">
-            {store.reviewCount > 0 ? (
-              <>
-                <Star size={12} aria-hidden className="ws-storecard__star" />
-                <span className="ws-num">{store.avgRating.toFixed(1)}</span>
-                <span>({store.reviewCount})</span>
-              </>
-            ) : (
-              <span>New seller</span>
-            )}
-            {reply && (
-              <>
-                <span aria-hidden>·</span>
-                <Clock size={12} aria-hidden />
-                <span>Replies in {reply}</span>
-              </>
-            )}
-          </span>
-        </span>
-        <ChevronRight size={18} aria-hidden className="ws-sellerline__go" />
-      </Link>
-    </div>
+        </li>
+      </ul>
+    </section>
   );
 }

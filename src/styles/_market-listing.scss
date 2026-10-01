@@ -1,0 +1,1216 @@
+// WorldStore - the listing page.
+//
+// Ported from the sandbox's /listings/:id, measurement for measurement: a
+// gallery beside a buy column, a four-cell fact strip, tabs, the seller's
+// reviews, then similar listings. Everything is under the `ws-ld` prefix so it
+// cannot collide with the older `ws-pdp` / `ws-buybox` rules it replaces.
+//
+// The sandbox breaks on container width. These use the viewport instead, with
+// the 48px of page gutter added on: a query container would make this wrapper
+// the containing block for the fixed-position dialogs opened inside it. The
+// gallery is the exception, and says why where it is declared.
+
+@keyframes ws-ld-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// ─── Solid icons ────────────────────────────────────────────────
+// lucide draws outlines. The sandbox's icons are solid, so these are filled
+// in, and where a shape carries a detail inside it (a tick, a pin's dot, a
+// clock's hands) the detail is drawn back over the fill in the colour behind
+// the icon. `--ws-cut` is that colour; a surface sets it for what it holds.
+.ws-solid { fill: currentColor; }
+
+.ws-solid--cut > :not(:first-child) {
+  fill: none;
+  stroke: var(--ws-cut, var(--ws-surface-sunken));
+}
+
+.ws-solid--cut > circle:not(:first-child) {
+  fill: var(--ws-cut, var(--ws-surface-sunken));
+}
+
+.ws-ldstar { color: var(--ws-action-primary-text); }
+
+// ─── Shared pieces ──────────────────────────────────────────────
+.ws-ldeyebrow {
+  margin: 0;
+  font-family: var(--ws-font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ws-text-tertiary);
+}
+
+.ws-ldbadge {
+  --ws-cut: var(--ws-surface-base);
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--badge) 45%, transparent);
+  border-radius: var(--ws-radius-full);
+  background: color-mix(in srgb, var(--badge) 10%, transparent);
+  color: var(--badge);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+
+  &--warning { --badge: var(--ws-feedback-warning); }
+  &--success { --badge: var(--ws-feedback-success); }
+  &--info { --badge: var(--ws-feedback-info); }
+
+  // The one filled badge: a discount is the loudest thing in the row.
+  &--sale {
+    --ws-cut: var(--ws-feedback-danger-fill);
+    border: 0;
+    background: var(--ws-feedback-danger-fill);
+    color: var(--ws-text-on-feedback);
+  }
+}
+
+.ws-ldbtn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border: 1px solid transparent;
+  border-radius: var(--ws-radius-lg);
+  background: transparent;
+  color: var(--ws-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--ws-duration-fast, 0.15s) ease,
+    border-color var(--ws-duration-fast, 0.15s) ease,
+    color var(--ws-duration-fast, 0.15s) ease;
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-action-primary-default);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  &:active:not(:disabled) { transform: translateY(1px); }
+
+  // Same gloss as the header's Create listing: a white wash over the top 65%
+  // that goes out when the button is pressed.
+  &--primary {
+    background-color: var(--ws-action-primary-default);
+    background-image: linear-gradient(to bottom, var(--ws-sheen), transparent 65%);
+    color: var(--ws-text-on-accent);
+
+    &:hover { background-color: var(--ws-action-primary-hover); }
+    &:active:not(:disabled) { background-image: none; }
+  }
+
+  &--outline {
+    border-color: var(--ws-border-default);
+    background: var(--ws-surface-base);
+
+    &:hover {
+      border-color: var(--ws-border-strong);
+      background: var(--ws-surface-raised);
+    }
+  }
+
+  &--ghost {
+    color: var(--ws-text-secondary);
+
+    &:hover {
+      background: var(--ws-surface-base);
+      color: var(--ws-text-primary);
+    }
+
+    &[aria-pressed='true'] { color: var(--ws-text-primary); }
+  }
+
+  &--icon {
+    width: 44px;
+    padding: 0;
+  }
+
+  &--sm {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: var(--ws-radius-md);
+    font-size: 13.5px;
+  }
+
+  &--xs {
+    height: 28px;
+    gap: 6px;
+    padding: 0 12px;
+    border-radius: var(--ws-radius-md);
+    font-size: 12.5px;
+  }
+
+  &.is-saved { color: var(--mk-accent); }
+}
+
+// Label left, value right. The tabs use the roomier rows, the seller card the
+// tighter ones.
+.ws-ldrows {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 32px;
+    font-size: 13px;
+  }
+
+  dt {
+    width: 40%;
+    flex-shrink: 0;
+    color: var(--ws-text-tertiary);
+  }
+
+  dd {
+    min-width: 0;
+    flex: 1;
+    margin: 0;
+    text-align: right;
+    color: var(--ws-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &--tight {
+    gap: 0;
+
+    > div {
+      min-height: 28px;
+      font-size: 12.5px;
+    }
+  }
+}
+
+// ─── Page frame ─────────────────────────────────────────────────
+.ws-ldcrumbs {
+  margin-bottom: 20px;
+
+  ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  a {
+    border-radius: var(--ws-radius-sm);
+    color: var(--ws-text-secondary);
+    text-decoration: none;
+    text-underline-offset: 4px;
+    transition: color var(--ws-duration-fast, 0.15s) ease;
+
+    &:hover {
+      color: var(--ws-text-primary);
+      text-decoration: underline;
+    }
+  }
+
+  li > span[aria-hidden] {
+    flex-shrink: 0;
+    color: var(--ws-text-tertiary);
+  }
+
+  [aria-current] {
+    font-weight: 500;
+    color: var(--ws-text-primary);
+  }
+}
+
+.ws-ld__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+
+  @media (min-width: 868px) {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}
+
+.ws-ld__side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ws-ld__skelmedia {
+  aspect-ratio: 1;
+  border-radius: var(--ws-radius-xl);
+}
+
+.ws-ld__tabs { margin-top: 32px; }
+
+.ws-ld__report { margin-top: 24px; }
+
+.ws-ld__more { margin-top: 40px; }
+
+// ─── Gallery ────────────────────────────────────────────────────
+// A query container, unlike the rest of the page: whether the thumbnails fit
+// beside the photo depends on how wide this column is, and that changes with
+// the two-column break as well as the viewport. Nothing fixed-position lives
+// inside it; the lightbox is a modal dialog, which the top layer lifts out.
+.ws-ldgallery {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.ws-ldgallery__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.ws-ldgallery__thumbs {
+  order: 2;
+  display: flex;
+  gap: 8px;
+  overflow: auto;
+  // Room for the selected thumb's ring, which sits outside its box.
+  padding: 2px;
+}
+
+.ws-ldgallery__thumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ws-radius-md);
+  background: none;
+  overflow: hidden;
+  opacity: 0.6;
+  cursor: pointer;
+  transition:
+    opacity var(--ws-duration-fast, 0.15s) ease,
+    box-shadow var(--ws-duration-fast, 0.15s) ease;
+
+  &:hover { opacity: 1; }
+
+  &[aria-selected='true'] {
+    opacity: 1;
+    box-shadow:
+      0 0 0 2px var(--ws-surface-canvas),
+      0 0 0 4px var(--mk-accent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-action-primary-default);
+    outline-offset: 2px;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.ws-ldgallery__stage {
+  position: relative;
+  order: 1;
+  aspect-ratio: 1;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-surface-raised);
+  overflow: hidden;
+
+  &:hover .ws-ldgallery__expand { opacity: 1; }
+}
+
+@container (min-width: 640px) {
+  .ws-ldgallery__grid--rail {
+    grid-template-columns: 80px minmax(0, 1fr);
+
+    .ws-ldgallery__thumbs {
+      order: 1;
+      flex-direction: column;
+      // Takes the stage's height rather than setting the row's: past seven
+      // photos the rail scrolls instead of stretching the gallery.
+      height: 0;
+      min-height: 100%;
+    }
+
+    .ws-ldgallery__thumb {
+      width: 80px;
+      height: 80px;
+    }
+
+    .ws-ldgallery__stage { order: 2; }
+  }
+}
+
+.ws-ldgallery__zoom {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: ws-ld-fade var(--ws-duration-base, 0.22s) ease both;
+  }
+}
+
+.ws-ldgallery__count {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 10px;
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-tip-surface);
+  color: var(--ws-tip-text);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.ws-ldgallery__expand {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-tip-surface);
+  color: var(--ws-tip-text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ws-duration-fast, 0.15s) ease;
+}
+
+.ws-ldgallery__nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ws-border-default);
+  border-radius: var(--ws-radius-full);
+  background: var(--ws-surface-base);
+  color: var(--ws-text-primary);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    background-color var(--ws-duration-fast, 0.15s) ease,
+    border-color var(--ws-duration-fast, 0.15s) ease;
+
+  &--prev { left: 12px; }
+  &--next { right: 12px; }
+
+  &:hover {
+    border-color: var(--ws-border-strong);
+    background: var(--ws-surface-raised);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ws-action-primary-default);
+    outline-offset: 2px;
+  }
+}
+
+.ws-ldlightbox {
+  max-width: 100vw;
+  max-height: 100vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+
+  &::backdrop { background: var(--ws-overlay-scrim); }
+
+  img {
+    display: block;
+    max-width: min(92vw, 1200px);
+    max-height: 92vh;
+    border-radius: var(--ws-radius-xl);
+  }
+
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-tip-surface);
+    color: var(--ws-tip-text);
+    cursor: pointer;
+  }
+}
+
+// ─── Buy column ─────────────────────────────────────────────────
+.ws-ldbuy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &__head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 32px;
+    letter-spacing: -0.01em;
+    color: var(--ws-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    margin: 0;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--ws-text-secondary);
+
+    > * {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    svg { color: var(--ws-text-tertiary); }
+  }
+
+  &__rating {
+    border-radius: var(--ws-radius-sm);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+
+    svg { color: var(--ws-action-primary-text); }
+  }
+
+  &__score {
+    font-weight: 500;
+    color: var(--ws-text-primary);
+  }
+
+  &__count { color: var(--ws-text-tertiary); }
+
+  &__pricing {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 12px;
+    margin: 0;
+  }
+
+  &__now {
+    font-size: 31px;
+    font-weight: 600;
+    line-height: 36px;
+    color: var(--ws-action-primary-text);
+  }
+
+  &__was {
+    font-size: 15px;
+    color: var(--ws-text-tertiary);
+    text-decoration: line-through;
+  }
+
+  &__later {
+    margin: 0;
+    font-size: 13px;
+    line-height: 19.5px;
+    color: var(--ws-text-secondary);
+
+    strong {
+      font-weight: 500;
+      color: var(--ws-text-primary);
+    }
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__chosen {
+    font-weight: 400;
+    color: var(--ws-text-secondary);
+  }
+
+  &__actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  // Two equal buttons, then the icon buttons at their own width.
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+    gap: 8px;
+
+    // The labelled pair gives way before the icons do on a narrow phone.
+    > .ws-ldbtn:not(.ws-ldbtn--icon) { padding-inline: 12px; }
+  }
+
+  &__note {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--ws-text-tertiary);
+  }
+
+  // Empty until a button opens the composer, and an empty box would still
+  // take a gap in the column.
+  &__contact:empty { display: none; }
+
+  &__trust {
+    --ws-cut: var(--ws-surface-base);
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 16px;
+    border-radius: var(--ws-radius-xl);
+    background: var(--ws-surface-base);
+    font-size: 13px;
+    line-height: 19.5px;
+    list-style: none;
+
+    li {
+      display: flex;
+      gap: 12px;
+    }
+
+    svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--ws-feedback-success);
+    }
+
+    strong {
+      font-weight: 500;
+      color: var(--ws-text-primary);
+    }
+
+    span > span {
+      display: block;
+      color: var(--ws-text-secondary);
+    }
+  }
+}
+
+// ─── Seller card ────────────────────────────────────────────────
+.ws-ldseller {
+  --ws-cut: var(--ws-surface-base);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-surface-base);
+  animation: ws-ld-fade var(--ws-duration-base, 0.22s) ease both;
+
+  &__id {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    > div {
+      min-width: 0;
+      flex: 1;
+    }
+  }
+
+  &__avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-surface-raised);
+    font-size: 18px;
+    font-weight: 600;
+    overflow: hidden;
+    user-select: none;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__name {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 24px;
+    color: var(--ws-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__where {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 18.75px;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+
+// ─── Fact strip ─────────────────────────────────────────────────
+// The hairlines between cells are the list's own background showing through a
+// 1px gap, so they stay one pixel however the cells wrap.
+.ws-ldfacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 32px 0 0;
+  padding: 0;
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-border-subtle);
+  list-style: none;
+  overflow: hidden;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  li {
+    padding: 12px 16px;
+    background: var(--ws-surface-canvas);
+  }
+
+  .ws-ldeyebrow { letter-spacing: 0.14em; }
+
+  p:last-child {
+    margin: 4px 0 0;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 21px;
+    color: var(--ws-text-primary);
+    overflow-wrap: anywhere;
+  }
+}
+
+// ─── Tabs ───────────────────────────────────────────────────────
+// The rule under the row is an inset shadow over 1px of padding, not a border.
+// The selected tab's indicator has to sit on that line, and anything drawn
+// over a border counts as overflow, which in a row that scrolls sideways
+// brings up a vertical scrollbar.
+.ws-ldtabs {
+  display: flex;
+  padding-bottom: 1px;
+  box-shadow: inset 0 -1px 0 var(--ws-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: thin;
+
+  &__tab {
+    position: relative;
+    display: inline-flex;
+    flex: 1 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    background: transparent;
+    color: var(--ws-text-secondary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      color var(--ws-duration-fast, 0.15s) ease,
+      background-color var(--ws-duration-fast, 0.15s) ease;
+
+    &:hover {
+      color: var(--ws-text-primary);
+      background: color-mix(in srgb, var(--ws-text-primary) 4%, transparent);
+    }
+
+    &[aria-selected='true'] {
+      color: var(--ws-text-primary);
+      font-weight: 600;
+
+      // Over the row's rule, in the domain accent.
+      &::after {
+        content: '';
+        position: absolute;
+        right: 12px;
+        bottom: -1px;
+        left: 12px;
+        height: 2px;
+        border-radius: 2px 2px 0 0;
+        background: var(--mk-accent);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--ws-action-primary-default);
+      outline-offset: -4px;
+      border-radius: var(--ws-radius-sm);
+    }
+  }
+
+  &__panel {
+    display: grid;
+    gap: 16px;
+    max-width: 640px;
+    padding-top: 36px;
+  }
+}
+
+.ws-ldcopy {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.625;
+  color: var(--ws-text-secondary);
+  text-wrap: pretty;
+  // Sellers write in paragraphs; keep the breaks they typed.
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.ws-ldhint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ws-text-tertiary);
+}
+
+// ─── Reviews ────────────────────────────────────────────────────
+.ws-ldmeter {
+  display: inline-flex;
+  align-items: center;
+
+  &__star {
+    position: relative;
+    display: inline-block;
+
+    svg { display: block; }
+
+    > svg { color: var(--ws-border-strong); }
+
+    // The filled copy, clipped to the fraction this star is worth.
+    > span {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+
+      svg { color: var(--ws-action-primary-text); }
+    }
+  }
+}
+
+.ws-ldreviews {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 40px;
+  // Clears the sticky header and department bar when the rating links here.
+  scroll-margin-top: 141px;
+
+  &__title {
+    margin: 0 0 -4px;
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 28px;
+    color: var(--ws-text-primary);
+  }
+
+  // Stacked at every width, as the sandbox renders it: the score, then the
+  // bars running the full measure beneath.
+  &__summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  &__score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+
+    p {
+      margin: 0;
+      font-size: 44px;
+      font-weight: 600;
+      line-height: 1;
+      color: var(--ws-text-primary);
+    }
+
+    > span:last-child {
+      font-size: 13px;
+      color: var(--ws-text-secondary);
+    }
+  }
+
+  &__bars {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    button {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) 56px;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 6px 8px;
+      border: 0;
+      border-radius: var(--ws-radius-md);
+      background: transparent;
+      color: var(--ws-text-secondary);
+      font: inherit;
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+      transition: background-color var(--ws-duration-fast, 0.15s) ease;
+
+      &:enabled:hover,
+      &[aria-pressed='true'] { background: var(--ws-surface-raised); }
+
+      &[aria-pressed='true'] { color: var(--ws-text-primary); }
+
+      &:disabled { cursor: default; }
+
+      > span:first-child {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 500;
+      }
+
+      > span:last-child { text-align: right; }
+    }
+  }
+
+  &__track {
+    position: relative;
+    height: 4px;
+    border-radius: var(--ws-radius-full);
+    background: color-mix(in srgb, var(--ws-text-primary) 10%, transparent);
+    overflow: hidden;
+
+    span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: var(--ws-radius-full);
+      background: var(--ws-action-primary-default);
+      transition: width var(--ws-duration-slow, 0.32s) ease;
+    }
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .ws-pill { cursor: pointer; font: inherit; font-size: 13px; font-weight: 500; }
+  }
+
+  &__count,
+  &__empty {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__empty { font-size: 14px; }
+
+  > .ws-ldbtn { align-self: flex-start; }
+}
+
+// A segmented control: the chosen option is a raised chip in a sunken track.
+.ws-ldseg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--ws-radius-lg);
+  background: color-mix(in srgb, var(--ws-text-primary) 5%, transparent);
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--ws-radius-md);
+    background: transparent;
+    color: var(--ws-text-tertiary);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition:
+      background-color var(--ws-duration-fast, 0.15s) ease,
+      color var(--ws-duration-fast, 0.15s) ease,
+      box-shadow var(--ws-duration-fast, 0.15s) ease;
+
+    &:hover { color: var(--ws-text-primary); }
+
+    &[aria-pressed='true'] {
+      background: var(--ws-surface-base);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--ws-text-primary) 8%, transparent);
+      color: var(--ws-text-primary);
+      font-weight: 500;
+    }
+  }
+}
+
+.ws-ldreview {
+  display: grid;
+  gap: 12px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--ws-border-subtle);
+  animation: ws-ld-fade var(--ws-duration-base, 0.22s) ease both;
+
+  &:last-child { border-bottom: 0; }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    > div {
+      min-width: 0;
+      flex: 1;
+    }
+  }
+
+  &__avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--ws-radius-full);
+    background: var(--ws-surface-raised);
+    font-size: 12px;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  &__who {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+
+    p {
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ws-text-primary);
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--ws-text-tertiary);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ws-text-primary);
+  }
+
+  &__body {
+    margin: 4px 0 0;
+    font-size: 13.5px;
+    line-height: 1.625;
+    color: var(--ws-text-secondary);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  &__more {
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--ws-radius-sm);
+    background: none;
+    color: var(--ws-text-primary);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    text-underline-offset: 3px;
+    cursor: pointer;
+
+    &:hover { text-decoration-color: currentColor; }
+  }
+
+  &__photos {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    a {
+      display: block;
+      width: 64px;
+      height: 64px;
+      border-radius: var(--ws-radius-md);
+      overflow: hidden;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__reply {
+    padding: 12px;
+    border-radius: var(--ws-radius-lg);
+    background: var(--ws-surface-sunken);
+    font-size: 13px;
+    line-height: 19.5px;
+
+    p { margin: 0; }
+
+    p:first-child {
+      font-weight: 500;
+      color: var(--ws-text-primary);
+    }
+
+    time {
+      font-weight: 400;
+      color: var(--ws-text-tertiary);
+    }
+
+    p + p {
+      margin-top: 4px;
+      color: var(--ws-text-secondary);
+    }
+  }
+
+  &__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--ws-text-tertiary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-ldseller,
+  .ws-ldreview,
+  .ws-ldgallery__zoom img { animation: none; }
+
+  .ws-ldbtn:active:not(:disabled) { transform: none; }
+}

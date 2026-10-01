@@ -7,7 +7,7 @@ import { publicMarketplace } from "@/features/stores/api";
 import { queryKeys } from "@/shared/lib/queryKeys";
 import { MINUTE } from "@/app/providers/QueryProvider";
 import { firstImage, priceLabel } from "@/features/listings/model";
-import { departmentIcon } from "@/app/layouts/components/Header";
+import { departmentIcon } from "@/features/catalog/departmentIcons";
 import { departmentsWithStock, childrenWithStock , listingCount } from "@/features/catalog/categoryTree";
 
 /**
@@ -37,7 +37,8 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
     [categories, active],
   );
 
-  const activeName = departments.find((d) => d.id === active)?.name ?? "";
+  const activeDept = departments.find((d) => d.id === active);
+  const activeName = activeDept?.name ?? "";
 
   const featured = useQuery({
     queryKey: queryKeys.listings({ categoryId: active ?? undefined, limit: FEATURED }),
@@ -76,7 +77,7 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
             return (
             <Link
               key={d.id}
-              to={`/listings?categoryId=${d.id}`}
+              to={`/categories/${d.slug}`}
               className={`ws-megamenu__dept${d.id === active ? " is-active" : ""}`}
               onMouseEnter={() => setActiveId(d.id)}
               onFocus={() => setActiveId(d.id)}
@@ -100,7 +101,7 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
             children.map((c) => (
               <Link
                 key={c.id}
-                to={`/listings?categoryId=${c.id}`}
+                to={`/categories/${c.slug}`}
                 className="ws-megamenu__sub"
                 onClick={onClose}
               >
@@ -114,7 +115,7 @@ export default function CategoryMenu({ onClose }: { onClose: () => void }) {
             // A department with no subcategories is browsable in its own right,
             // so offer that rather than an empty column.
             <Link
-              to={`/listings?categoryId=${active}`}
+              to={activeDept ? `/categories/${activeDept.slug}` : "/categories"}
               className="ws-megamenu__sub"
               onClick={onClose}
             >

@@ -26,5 +26,6 @@ export const queryKeys = {
   myListingReview: (listingId: string) => ['reviews', 'listing', listingId, 'mine'] as const,
 
   unreadCount: () => ['chat', 'unread'] as const,
+  vendorDashboard: () => ['vendor', 'dashboard'] as const,
   wallet: () => ['wallet'] as const,
 } as const;

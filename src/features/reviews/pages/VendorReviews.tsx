@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import {
+  BadgeCheck, ChevronLeft, ChevronRight, MessageSquareText, Star, ThumbsDown, ThumbsUp,
+} from 'lucide-react';
+import {
+  VendorBadge, VendorPage, VendorPageHead, VendorStat,
+} from '@/features/stores/components/vendor/VendorPage';
 import {
   marketplaceReviewService,
   type MarketplaceReview,
@@ -27,8 +32,15 @@ const errMessage = (err: unknown, fallback: string) => {
   return fieldError || e.message;
 };
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-NG', { year: 'numeric', month: 'short', day: 'numeric' });
+const initialsOf = (name: string) =>
+  name.split(/\s+/).map((w) => w.charAt(0)).join('').slice(0, 2).toUpperCase();
+
+// Assembled by hand: en-GB and en-NG abbreviate September as "Sept".
+const MONTH = new Intl.DateTimeFormat('en-US', { month: 'short' });
+const formatDate = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTH.format(d)} ${d.getFullYear()}`;
+};
 
 const Stars = ({ value }: { value: number }) => (
   <span className="ws-rating" aria-label={`${value} out of 5`}>
@@ -119,135 +131,124 @@ export default function VendorReviews() {
   const unrepliedCount = reviews.filter((r) => !r.vendorReply).length;
 
   return (
-    <div className="ws-page">
-      <div className="ws-page__head">
-        <div>
-          <h1 className="ws-page__title">Reviews</h1>
-          <p className="ws-page__sub">
-            Buyers can only review you after messaging you, and reviews show as
-            verified once you have replied to that message.
-          </p>
-        </div>
-      </div>
+    <VendorPage>
+      <VendorPageHead
+        title="Reviews"
+        description="Buyers can only review you after messaging you, and reviews show as verified once you have replied to that message."
+      />
 
       {summary && total > 0 && (
-        <div className="ws-stats" style={{ marginBottom: 'var(--ws-space-6)' }}>
-          <div className="ws-stat">
-            <span className="ws-stat__label">Average Rating</span>
-            <span className="ws-stat__value">
-              {summary.averageRating.toFixed(1)}
-              <Star size={16} aria-hidden style={{ color: 'var(--ws-accent-star, #F97316)', fill: 'var(--ws-accent-star, #F97316)', marginLeft: 4 }} />
-            </span>
-          </div>
-          <div className="ws-stat">
-            <span className="ws-stat__label">Total Reviews</span>
-            <span className="ws-stat__value">{summary.reviewCount}</span>
-          </div>
-          <div className="ws-stat">
-            <span className="ws-stat__label">5-star</span>
-            <span className="ws-stat__value">{summary.distribution['5'] ?? 0}</span>
-          </div>
-          <div className="ws-stat">
-            <span className="ws-stat__label">1-star</span>
-            <span className="ws-stat__value">{summary.distribution['1'] ?? 0}</span>
-          </div>
-        </div>
+        <section aria-label="Review summary" className="ws-vxstats ws-vxreviews__stats">
+          <VendorStat label="Average rating" value={summary.averageRating.toFixed(1)} detail="Out of 5" icon={Star} />
+          <VendorStat label="Total reviews" value={summary.reviewCount} icon={MessageSquareText} />
+          <VendorStat label="5-star" value={summary.distribution['5'] ?? 0} icon={ThumbsUp} />
+          <VendorStat label="1-star" value={summary.distribution['1'] ?? 0} icon={ThumbsDown} />
+        </section>
       )}
 
       {total > 0 && (
-        <label className="ws-check" style={{ marginBottom: 'var(--ws-space-4)' }}>
-          <input
-            type="checkbox"
-            className="ws-check__input"
-            checked={unrepliedOnly}
-            onChange={(e) => { setUnrepliedOnly(e.target.checked); setPage(1); }}
-          />
-          <span className="ws-check__label">
-            Only show reviews I have not replied to
-            {!unrepliedOnly && unrepliedCount > 0 && (
-              <span style={{ color: 'var(--ws-status-warning)', fontWeight: 600 }}>
-                {' '}({unrepliedCount} on this page)
-              </span>
-            )}
-          </span>
-        </label>
+        <div className="ws-vxreviews__bar">
+          <div className="ws-segmented" role="group" aria-label="Which reviews">
+            <button
+              type="button"
+              aria-pressed={!unrepliedOnly}
+              className={`ws-segmented__btn${!unrepliedOnly ? ' is-active' : ''}`}
+              onClick={() => { setUnrepliedOnly(false); setPage(1); }}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              aria-pressed={unrepliedOnly}
+              className={`ws-segmented__btn${unrepliedOnly ? ' is-active' : ''}`}
+              onClick={() => { setUnrepliedOnly(true); setPage(1); }}
+            >
+              Needs a reply
+              {!unrepliedOnly && unrepliedCount > 0 && (
+                <span className="ws-pill__count ws-num">{unrepliedCount}</span>
+              )}
+            </button>
+          </div>
+        </div>
       )}
 
       {loading ? (
-        <div className="ws-stack">
+        <div className="ws-vxreviews__list">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="ws-skeleton" style={{ height: 96, borderRadius: 'var(--ws-radius-xl)' }} />
+            <div key={i} className="ws-skeleton" style={{ height: 120, borderRadius: 'var(--ws-radius-lg)' }} />
           ))}
         </div>
       ) : reviews.length === 0 ? (
-        <div className="ws-empty">
-          <div className="ws-empty__icon">
-            <Star size={26} aria-hidden />
+        <div className="ws-cxempty">
+          <div className="ws-cxempty__inner">
+            <span className="ws-cxempty__icon"><Star size={20} aria-hidden /></span>
+            <p className="ws-cxempty__title">{unrepliedOnly ? 'Nothing waiting' : 'No reviews yet'}</p>
+            <p className="ws-cxempty__body">
+              {unrepliedOnly
+                ? 'You have replied to every review.'
+                : 'They come from buyers who have messaged you, so answering your messages is what leads to reviews.'}
+            </p>
+            {!unrepliedOnly && (
+              <div className="ws-cxempty__action">
+                <Link to="/vendor/messages" className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary">Go to messages</Link>
+              </div>
+            )}
           </div>
-          <p className="ws-body ws-muted" style={{ maxWidth: '44ch' }}>
-            {unrepliedOnly
-              ? 'You have replied to every review. Nothing waiting.'
-              : 'No reviews yet. They come from buyers who have messaged you, so answering your messages is what leads to reviews.'}
-          </p>
-          {!unrepliedOnly && (
-            <Link to="/vendor/messages" className="ws-btn ws-btn--sm ws-btn--primary">
-              Go to messages
-            </Link>
-          )}
         </div>
       ) : (
-        <div className="ws-stack--lg">
+        <div className="ws-vxreviews__list">
           {reviews.map((r) => (
-            <article key={r.id} className="ws-card">
-              <div className="ws-review__head">
-                <Stars value={r.rating} />
-                <strong style={{ fontSize: 14 }}>{r.userName}</strong>
-
-                {r.isVerified && (
-                  <span className="ws-badge ws-badge--success" title="This buyer messaged you and you replied">
-                    Contacted you
-                  </span>
-                )}
-
-                {r.status === 'FLAGGED' && (
-                  <span className="ws-badge ws-badge--warning">Reported — under review</span>
-                )}
-
-                <span className="ws-review__date">{formatDate(r.createdAt)}</span>
-              </div>
-
-              {r.product && (
-                <div className="ws-caption ws-muted" style={{ marginTop: 2 }}>
-                  on <Link to={`/listings/${r.product.slug}`} style={{ color: 'var(--ws-brand-gold-text)' }}>{r.product.name}</Link>
+            <article key={r.id} className="ws-vxcard ws-vxcard--pad ws-vxreview">
+              <header className="ws-vxreview__head">
+                <span className="ws-vxavatar ws-vxavatar--md" aria-hidden>
+                  {initialsOf(r.userName)}
+                </span>
+                <div className="ws-vxreview__who">
+                  <p>
+                    <strong>{r.userName}</strong>
+                    {r.isVerified && (
+                      <VendorBadge tone="success" icon={BadgeCheck}>Contacted you</VendorBadge>
+                    )}
+                    {r.status === 'FLAGGED' && <VendorBadge tone="pending">Reported, under review</VendorBadge>}
+                  </p>
+                  <p className="ws-vxreview__meta">
+                    <Stars value={r.rating} />
+                    <time dateTime={r.createdAt.slice(0, 10)}>{formatDate(r.createdAt)}</time>
+                    {r.product && (
+                      <>
+                        {' · on '}
+                        <Link to={`/listings/${r.product.slug}`}>{r.product.name}</Link>
+                      </>
+                    )}
+                  </p>
                 </div>
-              )}
+              </header>
 
-              {r.title && <div className="ws-title" style={{ marginTop: 'var(--ws-space-2)' }}>{r.title}</div>}
-              <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap', marginTop: 'var(--ws-space-1)' }}>
-                {r.comment}
-              </p>
+              {r.title && <h3 className="ws-vxreview__title">{r.title}</h3>}
+              <p className="ws-vxreview__body">{r.comment}</p>
 
               {/* ── The reply ── */}
               {replyingTo === r.id ? (
-                <div className="ws-stack" style={{ marginTop: 'var(--ws-space-3)' }}>
+                <div className="ws-vxreview__compose">
                   <textarea
-                    className="ws-textarea"
+                    className="ws-vxinput ws-vxinput--area"
                     rows={3}
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     maxLength={1000}
+                    aria-label={`Reply to ${r.userName}`}
                     placeholder="Answer publicly. Buyers read this alongside the review, so a calm, factual reply reads better than a defensive one."
                   />
-                  <div style={{ display: 'flex', gap: 'var(--ws-space-2)' }}>
+                  <div className="ws-vxreview__actions">
                     <button
-                      className="ws-btn ws-btn--sm ws-btn--primary"
+                      className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary"
                       disabled={saving || draft.trim().length < 2}
                       onClick={() => submitReply(r.id)}
                     >
                       {saving ? 'Posting…' : r.vendorReply ? 'Update reply' : 'Post reply'}
                     </button>
                     <button
-                      className="ws-btn ws-btn--sm ws-btn--ghost"
+                      className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--ghost"
                       onClick={() => { setReplyingTo(null); setDraft(''); }}
                     >
                       Cancel
@@ -255,28 +256,24 @@ export default function VendorReviews() {
                   </div>
                 </div>
               ) : r.vendorReply ? (
-                <div className="ws-review__reply">
-                  <div className="ws-caption" style={{ fontWeight: 600 }}>
+                <div className="ws-vxreview__reply">
+                  <p className="ws-vxreview__replyhead">
                     Your reply
-                    {r.vendorRepliedAt && (
-                      <span className="ws-muted" style={{ fontWeight: 400 }}> · {formatDate(r.vendorRepliedAt)}</span>
-                    )}
-                  </div>
-                  <p className="ws-body ws-muted" style={{ whiteSpace: 'pre-wrap', margin: '2px 0 var(--ws-space-2)' }}>
-                    {r.vendorReply}
+                    {r.vendorRepliedAt && <span> · {formatDate(r.vendorRepliedAt)}</span>}
                   </p>
-                  <div style={{ display: 'flex', gap: 'var(--ws-space-2)' }}>
-                    <button className="ws-btn ws-btn--sm ws-btn--secondary" onClick={() => startReply(r)}>
+                  <p className="ws-vxreview__body">{r.vendorReply}</p>
+                  <div className="ws-vxreview__actions">
+                    <button className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--outline" onClick={() => startReply(r)}>
                       Edit reply
                     </button>
-                    <button className="ws-btn ws-btn--sm ws-btn--danger" onClick={() => removeReply(r.id)}>
+                    <button className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--ghost ws-vxreview__remove" onClick={() => removeReply(r.id)}>
                       Remove reply
                     </button>
                   </div>
                 </div>
               ) : (
-                <div style={{ marginTop: 'var(--ws-space-3)', display: 'flex', alignItems: 'center', gap: 'var(--ws-space-3)' }}>
-                  <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={() => startReply(r)}>
+                <div className="ws-vxreview__actions">
+                  <button className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary" onClick={() => startReply(r)}>
                     Reply publicly
                   </button>
                   {/* The seller is usually the one who spots a fake review, so
@@ -295,26 +292,30 @@ export default function VendorReviews() {
       )}
 
       {totalPages > 1 && (
-        <div className="ws-pager">
-          <button
-            className="ws-btn ws-btn--sm ws-btn--secondary"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous
-          </button>
-          <span className="ws-pager__status ws-num">
+        <div className="ws-vxpager ws-vxreviews__pager">
+          <span className="ws-vxpager__range ws-num">
             Page {page} of {totalPages} · {total} review{total === 1 ? '' : 's'}
           </span>
-          <button
-            className="ws-btn ws-btn--sm ws-btn--secondary"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </button>
+          <nav aria-label="Review pages" className="ws-vxpager__nav">
+            <button
+              className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--icon ws-ldbtn--ghost"
+              aria-label="Previous page"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft size={16} aria-hidden />
+            </button>
+            <button
+              className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--icon ws-ldbtn--ghost"
+              aria-label="Next page"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight size={16} aria-hidden />
+            </button>
+          </nav>
         </div>
       )}
-    </div>
+    </VendorPage>
   );
 }

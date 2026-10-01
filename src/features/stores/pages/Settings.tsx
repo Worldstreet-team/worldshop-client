@@ -1,75 +1,123 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Copy } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, Check, Copy, ExternalLink, ImagePlus } from 'lucide-react';
 import { storeService, type MyStore } from '@/features/stores/api';
+import { VendorPage, VendorPageHead, VendorSectionHead } from '@/features/stores/components/vendor/VendorPage';
 import { DEFAULT_COUNTRY } from '@/shared/utils/locations';
 import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import { useUIStore } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
+import { queryKeys } from '@/shared/lib/queryKeys';
 
 /**
- * Store profile settings.
+ * Shop settings, laid out as the sandbox's: titled sections of bordered
+ * field groups, and a sticky bar that says whether anything is unsaved.
  *
- * Replaces the ecommerce version, which edited the vendor fields on
- * UserProfile and a bank withdrawal account — both features that no longer
- * exist. Everything here is what buyers see: identity, branding, contact
- * channels and location. There is nothing financial on this page; the
- * subscription lives on the dashboard.
+ * Everything here is what buyers see: identity, location, contact channels
+ * and branding. There is nothing financial on this page; the subscription
+ * lives on the Overview. The sandbox's fulfilment defaults and notification
+ * toggles are not here: the API stores neither.
  *
  * One rule carried through the whole form: an emptied field is sent as null
- * (clear it), a filled one as its value — the payload is the full form state.
+ * (clear it), a filled one as its value; the payload is the full form state.
  * The only dangerous control is `regenerateSlug`, so it is opt-in per save and
  * worded as the link-breaking action it is.
  */
 
-/**
- * Field-level validation errors are more specific than the envelope message
- * ("Validation failed"), so prefer the first one when present.
- */
 const errMessage = (err: unknown, fallback: string) => {
   const e = toApiError(err, fallback);
   const fieldError = e.errors && Object.values(e.errors)[0];
   return fieldError || e.message;
 };
 
-/** "" in a text input means the vendor cleared it — send null, not "". */
+/** "" in a text input means the vendor cleared it: send null, not "". */
 const orNull = (v: string): string | null => (v.trim() === '' ? null : v.trim());
 
-/** Same pattern Registration enforces when a store is first created — kept in
- * sync so a number rejected there can't be saved unchecked here later. */
+/** Same pattern Registration enforces when a store is first created, kept in
+ * sync so a number rejected there cannot be saved unchecked here later. */
 const PHONE_RE = /^\+?[0-9\s-]{7,20}$/;
+
+const BIO_MAX = 1000;
+
+type Form = {
+  name: string;
+  description: string;
+  // The value saved: a bare storage key from a fresh upload, or whatever the
+  // server sent back. The preview is held apart, since a presigned URL
+  // expires and must never be the saved value when a key is available.
+  logo: string | null;
+  banner: string | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  country: string;
+  state: string;
+  city: string;
+  address: string;
+};
+
+const fromStore = (s: MyStore): Form => ({
+  name: s.name,
+  description: s.description ?? '',
+  logo: s.logo ?? null,
+  banner: s.banner ?? null,
+  phone: s.phone ?? '',
+  whatsapp: s.whatsapp ?? '',
+  email: s.email ?? '',
+  website: s.website ?? '',
+  country: s.country ?? DEFAULT_COUNTRY,
+  state: s.state ?? '',
+  city: s.city ?? '',
+  address: s.address ?? '',
+});
+
+function Field({
+  label,
+  required,
+  counter,
+  wide,
+  children,
+  htmlFor,
+}: {
+  label: string;
+  required?: boolean;
+  counter?: string;
+  wide?: boolean;
+  children: ReactNode;
+  htmlFor: string;
+}) {
+  return (
+    <div className={`ws-vxfieldset${wide ? ' is-wide' : ''}`}>
+      <div className="ws-vxfieldset__top">
+        <label htmlFor={htmlFor} className="ws-vxlabel">
+          {label}
+          {required && <span aria-hidden className="ws-vxlabel__req">*</span>}
+        </label>
+        {counter && <span className="ws-vxfieldset__count ws-num">{counter}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function VendorSettings() {
   const addToast = useUIStore((s) => s.addToast);
+  const client = useQueryClient();
+  const id = useId();
 
   const [store, setStore] = useState<MyStore | null>(null);
+  const [form, setForm] = useState<Form | null>(null);
+  const [previews, setPreviews] = useState<{ logo: string | null; banner: string | null }>({ logo: null, banner: null });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState<'logo' | 'banner' | null>(null);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // ── Form state ──
-  const [name, setName] = useState('');
   const [regenerateSlug, setRegenerateSlug] = useState(false);
-  const [description, setDescription] = useState('');
-  // Value/preview pairs: the value is what gets saved (a bare R2 key from a
-  // fresh upload, or whatever the server sent back), the preview is always a
-  // displayable URL. A presigned URL expires and is too long to persist, so
-  // it must never be the saved value when a key is available.
-  const [logo, setLogo] = useState<string | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [banner, setBanner] = useState<string | null>(null);
-  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  const [phone, setPhone] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [email, setEmail] = useState('');
-  const [website, setWebsite] = useState('');
-  const [country, setCountry] = useState(DEFAULT_COUNTRY);
-  const [state, setState] = useState('');
-  const [city, setCity] = useState('');
-  const [address, setAddress] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,24 +126,11 @@ export default function VendorSettings() {
       .getMyStore()
       .then((res) => {
         if (cancelled) return;
-        const s = res.data;
-        setStore(s);
-        setName(s.name);
-        setDescription(s.description ?? '');
+        setStore(res.data);
+        setForm(fromStore(res.data));
         // The server signs stored keys into display URLs on read; use them for
-        // both value and preview — the server collapses URLs back to keys on save.
-        setLogo(s.logo ?? null);
-        setLogoPreview(s.logo ?? null);
-        setBanner(s.banner ?? null);
-        setBannerPreview(s.banner ?? null);
-        setPhone(s.phone ?? '');
-        setWhatsapp(s.whatsapp ?? '');
-        setEmail(s.email ?? '');
-        setWebsite(s.website ?? '');
-        setCountry(s.country ?? DEFAULT_COUNTRY);
-        setState(s.state ?? '');
-        setCity(s.city ?? '');
-        setAddress(s.address ?? '');
+        // both value and preview. It collapses URLs back to keys on save.
+        setPreviews({ logo: res.data.logo ?? null, banner: res.data.banner ?? null });
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(errMessage(err, 'Could not load your store'));
@@ -109,8 +144,14 @@ export default function VendorSettings() {
     };
   }, []);
 
+  const set = <K extends keyof Form>(key: K, value: Form[K]) => {
+    setSaved(false);
+    setForm((f) => (f ? { ...f, [key]: value } : f));
+  };
+
   const publicUrl = store ? `${window.location.origin}/stores/${store.slug}` : '';
-  const nameChanged = store != null && name.trim() !== store.name;
+  const nameChanged = store != null && form != null && form.name.trim() !== store.name;
+  const dirty = store != null && form != null && JSON.stringify(form) !== JSON.stringify(fromStore(store));
 
   const copyUrl = () => {
     if (!publicUrl) return;
@@ -130,13 +171,8 @@ export default function VendorSettings() {
       // for old servers that only returned one of the two).
       const value = String(uploaded.key || uploaded.cloudflareId || uploaded.url || '');
       const preview = String(uploaded.url || uploaded.key || '');
-      if (kind === 'logo') {
-        setLogo(value);
-        setLogoPreview(preview);
-      } else {
-        setBanner(value);
-        setBannerPreview(preview);
-      }
+      set(kind, value);
+      setPreviews((p) => ({ ...p, [kind]: preview }));
     } catch (err: unknown) {
       addToast({ type: 'error', message: errMessage(err, 'Image upload failed') });
     } finally {
@@ -144,52 +180,49 @@ export default function VendorSettings() {
     }
   };
 
+  const discard = () => {
+    if (!store) return;
+    setForm(fromStore(store));
+    setPreviews({ logo: store.logo ?? null, banner: store.banner ?? null });
+    setRegenerateSlug(false);
+    setError(null);
+  };
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form) return;
     setError(null);
 
-    if (name.trim().length < 3) {
-      setError('Store name must be at least 3 characters.');
-      return;
-    }
-    if (!country) {
-      setError('Choose the country you operate from — buyers browse by it.');
-      return;
-    }
-    if (!state.trim()) {
-      setError('Choose the state or region you operate from — buyers browse by it.');
-      return;
-    }
-    if (phone.trim() && !PHONE_RE.test(phone.trim())) {
-      setError('Enter a valid phone number.');
-      return;
-    }
-    if (whatsapp.trim() && !PHONE_RE.test(whatsapp.trim())) {
-      setError('Enter a valid WhatsApp number.');
-      return;
-    }
+    if (form.name.trim().length < 3) return setError('Store name must be at least 3 characters.');
+    if (!form.country) return setError('Choose the country you operate from. Buyers browse by it.');
+    if (!form.state.trim()) return setError('Choose the state or region you operate from. Buyers browse by it.');
+    if (form.phone.trim() && !PHONE_RE.test(form.phone.trim())) return setError('Enter a valid phone number.');
+    if (form.whatsapp.trim() && !PHONE_RE.test(form.whatsapp.trim())) return setError('Enter a valid WhatsApp number.');
 
     setSaving(true);
     try {
       const res = await storeService.updateStore({
-        name: name.trim(),
-        description: orNull(description),
-        logo,
-        banner,
-        phone: orNull(phone),
-        whatsapp: orNull(whatsapp),
-        email: orNull(email),
-        website: orNull(website),
-        country,
-        state: state.trim(),
-        city: orNull(city),
-        address: orNull(address),
+        name: form.name.trim(),
+        description: orNull(form.description),
+        logo: form.logo,
+        banner: form.banner,
+        phone: orNull(form.phone),
+        whatsapp: orNull(form.whatsapp),
+        email: orNull(form.email),
+        website: orNull(form.website),
+        country: form.country,
+        state: form.state.trim(),
+        city: orNull(form.city),
+        address: orNull(form.address),
         // Only meaningful alongside a rename, and disarmed after every save so
         // it cannot linger across later edits.
         ...(regenerateSlug && nameChanged ? { regenerateSlug: true } : {}),
       });
       setStore(res.data);
+      setForm(fromStore(res.data));
       setRegenerateSlug(false);
+      setSaved(true);
+      client.invalidateQueries({ queryKey: queryKeys.vendorDashboard() });
       addToast({ type: 'success', message: 'Store profile saved' });
     } catch (err: unknown) {
       setError(errMessage(err, 'Could not save your store profile'));
@@ -198,68 +231,211 @@ export default function VendorSettings() {
     }
   };
 
+  const head = (
+    <VendorPageHead
+      title="Shop settings"
+      description={
+        <>
+          Control the public details buyers see and how they reach you. Your subscription is managed from the{' '}
+          <Link to="/vendor" className="ws-vxlink">Overview</Link>.
+        </>
+      }
+    />
+  );
+
   if (loading) {
     return (
-      <div className="ws-page">
-        <div className="ws-page__head"><h1 className="ws-page__title">Store Settings</h1></div>
-        <div className="ws-skeleton" style={{ height: 400, borderRadius: 'var(--ws-radius-xl)' }} />
-      </div>
+      <VendorPage>
+        {head}
+        <div className="ws-skeleton" style={{ height: 400, maxWidth: 820, borderRadius: 'var(--ws-radius-lg)' }} />
+      </VendorPage>
     );
   }
 
-  if (!store) {
+  if (!store || !form) {
     return (
-      <div className="ws-page">
-        <div className="ws-page__head"><h1 className="ws-page__title">Store Settings</h1></div>
+      <VendorPage>
+        {head}
         <div className="ws-alert" role="alert">
           <AlertCircle size={16} aria-hidden />
           <span>{error ?? 'Could not load your store.'}</span>
         </div>
-      </div>
+      </VendorPage>
     );
   }
 
-  return (
-    <div className="ws-page" style={{ maxWidth: 860 }}>
-      <div className="ws-page__head">
-        <div>
-          <h1 className="ws-page__title">Store Settings</h1>
-          <p className="ws-page__sub">
-            Everything on this page is what buyers see. Your subscription is
-            managed from the{' '}
-            <Link to="/vendor" style={{ color: 'var(--ws-brand-gold-text)' }}>dashboard</Link>.
-          </p>
-        </div>
-      </div>
+  const f = (name: string) => `${id}-${name}`;
 
-      <div className="ws-stack--lg">
-        {/* ── Store URL ── */}
-        <section className="ws-card">
-          <h2 className="ws-h2" style={{ marginBottom: 'var(--ws-space-3)' }}>Store link</h2>
-          <div style={{ display: 'flex', gap: 'var(--ws-space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
-            <code
-              style={{
-                background: 'var(--ws-bg-sunken)',
-                border: '1px solid var(--ws-border-hairline)',
-                borderRadius: 'var(--ws-radius-md)',
-                padding: '8px 11px',
-                fontSize: 13,
-              }}
-            >
-              {publicUrl}
-            </code>
-            <button type="button" className="ws-btn ws-btn--sm ws-btn--secondary" onClick={copyUrl}>
-              <Copy size={14} aria-hidden />
+  return (
+    <VendorPage>
+      {head}
+
+      <form onSubmit={save} className="ws-vxform">
+        <section>
+          <VendorSectionHead title="Public shop profile" description="These details appear on your shop and listing pages." />
+          <div className="ws-vxgroup">
+            <Field label="Shop name" required htmlFor={f('name')} wide>
+              <input
+                id={f('name')}
+                className="ws-vxinput"
+                value={form.name}
+                onChange={(e) => set('name', e.target.value)}
+                maxLength={60}
+                required
+              />
+            </Field>
+
+            {/* The one link-breaking control on the page, armed per save. */}
+            {nameChanged && (
+              <div className="ws-vxfieldset is-wide">
+                <span className="ws-cfcheck">
+                  <input
+                    id={f('slug')}
+                    type="checkbox"
+                    className="ws-cfcheck__box"
+                    checked={regenerateSlug}
+                    onChange={(e) => setRegenerateSlug(e.target.checked)}
+                  />
+                  <label htmlFor={f('slug')}>
+                    Also update my shop link to match the new name.
+                    <span className="ws-vxhint ws-vxhint--warn">
+                      This changes your URL. Anywhere you have shared the old link will stop working.
+                    </span>
+                  </label>
+                </span>
+              </div>
+            )}
+
+            <Field label="Shop bio" htmlFor={f('bio')} counter={`${form.description.length} / ${BIO_MAX}`} wide>
+              <textarea
+                id={f('bio')}
+                className="ws-vxinput ws-vxinput--area"
+                rows={4}
+                maxLength={BIO_MAX}
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
+                placeholder="What do you sell? Why should a buyer contact you?"
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <VendorSectionHead title="Location" description="Buyers browse by it, so it decides who finds you." />
+          <div className="ws-vxgroup">
+            <Field label="Country" required htmlFor={f('country')}>
+              <CountrySelect
+                id={f('country')}
+                className="ws-select ws-vxinput ws-vxinput--select"
+                value={form.country}
+                onChange={(e) => {
+                  set('country', e.target.value);
+                  set('state', '');
+                }}
+              />
+            </Field>
+            <Field label="State / region" required htmlFor={f('state')}>
+              <StateSelect
+                id={f('state')}
+                className="ws-select ws-vxinput ws-vxinput--select"
+                country={form.country}
+                value={form.state}
+                onChange={(e) => set('state', e.target.value)}
+              />
+            </Field>
+            <Field label="City / area" htmlFor={f('city')}>
+              <input id={f('city')} className="ws-vxinput" value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="e.g. Ikeja" />
+            </Field>
+            <Field label="Shop address" htmlFor={f('address')}>
+              <input
+                id={f('address')}
+                className="ws-vxinput"
+                value={form.address}
+                onChange={(e) => set('address', e.target.value)}
+                placeholder="Shown to buyers if you have a physical shop"
+              />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <VendorSectionHead
+            title="Contact"
+            description="Buyers message you on WorldStore first; these let them reach you directly too. Clearing a field removes it from your shop."
+          />
+          <div className="ws-vxgroup">
+            <Field label="Phone number" htmlFor={f('phone')}>
+              <input id={f('phone')} type="tel" className="ws-vxinput" value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="e.g. 08031234567" />
+            </Field>
+            <Field label="WhatsApp number" htmlFor={f('wa')}>
+              <input id={f('wa')} type="tel" className="ws-vxinput" value={form.whatsapp} onChange={(e) => set('whatsapp', e.target.value)} placeholder="If different from your phone number" />
+            </Field>
+            <Field label="Contact email" htmlFor={f('email')}>
+              <input id={f('email')} type="email" className="ws-vxinput" value={form.email} onChange={(e) => set('email', e.target.value)} />
+            </Field>
+            <Field label="Website or social page" htmlFor={f('web')}>
+              <input id={f('web')} type="url" className="ws-vxinput" value={form.website} onChange={(e) => set('website', e.target.value)} placeholder="https://instagram.com/yourstore" />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <VendorSectionHead title="Branding" description="Your logo sits on every listing; the banner heads your shop page." />
+          <div className="ws-vxgroup">
+            {(['logo', 'banner'] as const).map((kind) => {
+              const value = form[kind];
+              const preview = previews[kind] ?? value;
+              return (
+                <div key={kind} className={`ws-vxfieldset${kind === 'banner' ? ' is-wide' : ''}`}>
+                  <span className="ws-vxlabel">{kind === 'logo' ? 'Logo' : 'Banner'}</span>
+                  {value && preview ? (
+                    <div className={`ws-vxbrand ws-vxbrand--${kind}`}>
+                      <img src={preview} alt="" />
+                      <button
+                        type="button"
+                        className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--ghost"
+                        onClick={() => {
+                          set(kind, null);
+                          setPreviews((p) => ({ ...p, [kind]: null }));
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={`ws-vxdrop${uploading === kind ? ' is-busy' : ''}`}>
+                      <ImagePlus size={18} aria-hidden />
+                      <span>{uploading === kind ? 'Uploading…' : `Choose a ${kind} image`}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="ws-sr-only"
+                        disabled={uploading === kind}
+                        onChange={(e) => uploadImage(kind, e.target.files)}
+                      />
+                    </label>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <VendorSectionHead title="Shop link" description="Where buyers land when you share your shop." />
+          <div className="ws-vxgroup ws-vxgroup--row">
+            <code className="ws-vxcode">{publicUrl}</code>
+            <button type="button" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--outline" onClick={copyUrl}>
+              {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
               {copied ? 'Copied' : 'Copy'}
             </button>
             {store.isPubliclyVisible ? (
-              <Link to={`/stores/${store.slug}`} className="ws-btn ws-btn--sm ws-btn--secondary">
+              <Link to={`/stores/${store.slug}`} className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--ghost">
                 View public page
+                <ExternalLink size={14} aria-hidden />
               </Link>
             ) : (
-              <span className="ws-caption" style={{ color: 'var(--ws-status-warning)' }}>
-                Not visible to buyers yet — activate from the dashboard.
-              </span>
+              <span className="ws-vxhint ws-vxhint--warn">Not visible to buyers yet. Activate from the Overview.</span>
             )}
           </div>
         </section>
@@ -271,194 +447,19 @@ export default function VendorSettings() {
           </div>
         )}
 
-        <form onSubmit={save} className="ws-stack--lg">
-          {/* ── Identity ── */}
-          <section className="ws-card ws-stack--lg">
-            <h2 className="ws-h2">Identity</h2>
-
-            <div className="ws-formfield">
-              <label htmlFor="name" className="ws-formfield__label">Store Name *</label>
-              <input id="name" className="ws-field" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} />
-            </div>
-
-            {/* The one link-breaking control on the page, armed per save. */}
-            {nameChanged && (
-              <label className="ws-check">
-                <input
-                  type="checkbox"
-                  className="ws-check__input"
-                  checked={regenerateSlug}
-                  onChange={(e) => setRegenerateSlug(e.target.checked)}
-                />
-                <span className="ws-check__body">
-                  <span className="ws-check__label">Also update my store link to match the new name.</span>
-                  <span className="ws-check__desc" style={{ color: 'var(--ws-status-warning)' }}>
-                    This changes your URL — anywhere you have shared the old link will stop working.
-                  </span>
-                </span>
-              </label>
-            )}
-
-            <div className="ws-formfield">
-              <label htmlFor="description" className="ws-formfield__label">About Your Store</label>
-              <textarea
-                id="description"
-                className="ws-textarea"
-                rows={4}
-                maxLength={1000}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What do you sell? Why should a buyer contact you?"
-              />
-            </div>
-          </section>
-
-          {/* ── Branding ── */}
-          <section className="ws-card ws-stack--lg">
-            <h2 className="ws-h2">Branding</h2>
-
-            <div style={{ display: 'flex', gap: 'var(--ws-space-8)', flexWrap: 'wrap' }}>
-              <div className="ws-formfield">
-                <span className="ws-formfield__label">Logo</span>
-                {logo ? (
-                  <div style={{ display: 'flex', gap: 'var(--ws-space-2)', alignItems: 'center' }}>
-                    <img
-                      src={logoPreview ?? logo}
-                      alt=""
-                      style={{
-                        width: 64, height: 64, borderRadius: 'var(--ws-radius-pill)',
-                        objectFit: 'cover', border: '1px solid var(--ws-border-hairline)',
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="ws-btn ws-btn--sm ws-btn--ghost"
-                      onClick={() => { setLogo(null); setLogoPreview(null); }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="ws-file"
-                    disabled={uploading === 'logo'}
-                    onChange={(e) => uploadImage('logo', e.target.files)}
-                  />
-                )}
-                {uploading === 'logo' && <p className="ws-caption ws-muted">Uploading…</p>}
-              </div>
-
-              <div className="ws-formfield" style={{ flex: 1, minWidth: 260 }}>
-                <span className="ws-formfield__label">Banner</span>
-                {banner ? (
-                  <div>
-                    <img
-                      src={bannerPreview ?? banner}
-                      alt=""
-                      style={{
-                        width: '100%', maxWidth: 420, height: 90, objectFit: 'cover',
-                        borderRadius: 'var(--ws-radius-lg)', border: '1px solid var(--ws-border-hairline)',
-                      }}
-                    />
-                    <div>
-                      <button
-                        type="button"
-                        className="ws-btn ws-btn--sm ws-btn--ghost"
-                        onClick={() => { setBanner(null); setBannerPreview(null); }}
-                        style={{ marginTop: 'var(--ws-space-2)' }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="ws-file"
-                    disabled={uploading === 'banner'}
-                    onChange={(e) => uploadImage('banner', e.target.files)}
-                  />
-                )}
-                {uploading === 'banner' && <p className="ws-caption ws-muted">Uploading…</p>}
-              </div>
-            </div>
-          </section>
-
-          {/* ── Contact ── */}
-          <section className="ws-card ws-stack--lg">
-            <div>
-              <h2 className="ws-h2">Contact</h2>
-              <p className="ws-caption ws-muted">
-                Shown on your store page and listings. Buyers message you on
-                WorldStore first; these let them also reach you directly. Clearing
-                a field removes it from your page.
-              </p>
-            </div>
-
-            <div className="ws-formgrid">
-              <div className="ws-formfield">
-                <label htmlFor="phone" className="ws-formfield__label">Phone Number</label>
-                <input id="phone" type="tel" className="ws-field" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g. 08031234567" />
-              </div>
-
-              <div className="ws-formfield">
-                <label htmlFor="whatsapp" className="ws-formfield__label">WhatsApp Number</label>
-                <input id="whatsapp" type="tel" className="ws-field" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="If different from your phone number" />
-              </div>
-
-              <div className="ws-formfield">
-                <label htmlFor="email" className="ws-formfield__label">Contact Email</label>
-                <input id="email" type="email" className="ws-field" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-
-              <div className="ws-formfield">
-                <label htmlFor="website" className="ws-formfield__label">Website or Social Page</label>
-                <input id="website" type="url" className="ws-field" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://instagram.com/yourstore" />
-              </div>
-            </div>
-          </section>
-
-          {/* ── Location ── */}
-          <section className="ws-card ws-stack--lg">
-            <h2 className="ws-h2">Location</h2>
-
-            <div className="ws-formgrid">
-              <div className="ws-formfield">
-                <label htmlFor="country" className="ws-formfield__label">Country *</label>
-                <CountrySelect
-                  id="country"
-                  value={country}
-                  onChange={(e) => { setCountry(e.target.value); setState(''); }}
-                />
-              </div>
-
-              <div className="ws-formfield">
-                <label htmlFor="state" className="ws-formfield__label">State / Region *</label>
-                <StateSelect id="state" country={country} value={state} onChange={(e) => setState(e.target.value)} />
-              </div>
-
-              <div className="ws-formfield">
-                <label htmlFor="city" className="ws-formfield__label">City / Area</label>
-                <input id="city" className="ws-field" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Ikeja" />
-              </div>
-
-              <div className="ws-formfield ws-formgrid__full">
-                <label htmlFor="address" className="ws-formfield__label">Shop Address</label>
-                <input id="address" className="ws-field" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Shown to buyers if you have a physical shop" />
-              </div>
-            </div>
-          </section>
-
-          <div>
-            <button type="submit" className="ws-btn ws-btn--primary" disabled={saving || uploading != null}>
-              {saving ? 'Saving…' : 'Save changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="ws-vxsavebar">
+          <span className={`ws-vxsavebar__state${saved && !dirty ? ' is-saved' : ''}`} aria-live="polite">
+            {saved && !dirty ? 'Settings saved' : dirty ? 'You have unsaved changes' : 'Everything is up to date'}
+          </span>
+          <button type="button" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--ghost" disabled={!dirty || saving} onClick={discard}>
+            Discard
+          </button>
+          <button type="submit" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary" disabled={!dirty || saving || uploading != null}>
+            <Check size={16} aria-hidden />
+            {saving ? 'Saving…' : 'Save changes'}
+          </button>
+        </div>
+      </form>
+    </VendorPage>
   );
 }

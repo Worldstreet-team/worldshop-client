@@ -26,6 +26,9 @@ export interface MarketplaceReview {
   createdAt: string;
   updatedAt: string;
   product?: { id: string; name: string; slug: string };
+  /** Not sent by the live API yet; the helpful count and photo strip appear when they are. */
+  helpfulCount?: number;
+  photos?: string[];
 }
 
 export interface ReviewSummary {
