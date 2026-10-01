@@ -6,6 +6,8 @@ import { queryKeys } from "@/shared/lib/queryKeys";
 import { MINUTE } from "@/app/providers/QueryProvider";
 import { useCategories } from "@/features/catalog/hooks/useCategories";
 import { departmentsWithStock } from "@/features/catalog/categoryTree";
+import { resolveCategoryIds } from "@/features/catalog/model";
+import { useCategoryListings } from "@/features/catalog/hooks/useCategoryListings";
 import ListingCard from "@/features/listings/components/ListingCard";
 import ListingCardSkeleton from "@/features/listings/components/ListingCardSkeleton";
 
@@ -41,14 +43,24 @@ export default function AllListings() {
   );
 
   const query = useQuery({
-    queryKey: queryKeys.listings({ limit: PAGE, categoryId: categoryId ?? undefined }),
-    queryFn: () =>
-      publicMarketplace.browse({ limit: PAGE, ...(categoryId ? { categoryId } : {}) }),
+    queryKey: queryKeys.listings({ limit: PAGE }),
+    queryFn: () => publicMarketplace.browse({ limit: PAGE }),
     staleTime: 5 * MINUTE,
+    enabled: !categoryId,
   });
 
-  const rows = query.data?.data ?? NO_ROWS;
-  const total = query.data?.pagination.total ?? 0;
+  // A department is asked for by its sections: the API matches one category
+  // id exactly and listings only file under a section, so the department's own
+  // id finds nothing (see resolveCategoryIds).
+  const sectionIds = useMemo(
+    () => (categoryId ? resolveCategoryIds(categories, categoryId) : []),
+    [categories, categoryId],
+  );
+  const department = useCategoryListings(sectionIds);
+
+  const rows = categoryId ? department.rows : (query.data?.data ?? NO_ROWS);
+  const total = categoryId ? department.rows.length : (query.data?.pagination.total ?? 0);
+  const pending = categoryId ? department.loading : query.isPending;
 
   // A copy, because sort mutates and the query cache holds this array.
   const sorted = useMemo(() => {
@@ -69,7 +81,7 @@ export default function AllListings() {
 
         <div className="ws-all__controls">
           <p className="ws-all__count ws-num" aria-live="polite">
-            {query.isPending
+            {pending
               ? "Loading listings…"
               : `${total.toLocaleString("en-NG")} ${total === 1 ? "listing" : "listings"}`}
           </p>
@@ -120,12 +132,12 @@ export default function AllListings() {
       )}
 
       <div className="ws-results">
-        {query.isPending
+        {pending
           ? Array.from({ length: 10 }, (_, i) => <ListingCardSkeleton key={i} showSeller />)
           : sorted.map((l) => <ListingCard key={l.id} listing={l} showSeller />)}
       </div>
 
-      {!query.isPending && sorted.length === 0 && (
+      {!pending && sorted.length === 0 && (
         <p className="ws-all__empty">
           Nothing listed here yet. Try another category.
         </p>
