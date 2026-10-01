@@ -1,19 +1,15 @@
 import Inbox from '@/features/chat/components/Inbox';
+import CategoryHead from '@/features/catalog/components/CategoryHead';
+import { usePageTitle } from '@/shared/hooks/usePageTitle';
 
-/** Buyer inbox — conversations this user started with sellers. */
+/** Buyer inbox: conversations this user started with sellers. */
 export default function AccountMessages() {
+  usePageTitle('Messages');
   return (
-    // `.ws-page` because MainLayout, unlike VendorLayout, adds no gutters of
-    // its own — without it the page sits flush against the viewport edge.
-    <div className="ws-page">
-      <div className="ws-page__head">
-        <div>
-          <h1 className="ws-page__title">My Messages</h1>
-          <p className="ws-page__sub">
-            Your conversations with sellers about their listings.
-          </p>
-        </div>
-      </div>
+    <div className="ws-wrap ws-cx ws-acctinbox">
+      <CategoryHead crumbs={[{ label: 'My account', to: '/account' }, { label: 'Messages' }]} eyebrow="Account" title="Messages">
+        Your conversations with sellers, with the listing each one is about.
+      </CategoryHead>
       <Inbox side="buying" />
     </div>
   );

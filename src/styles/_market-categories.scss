@@ -645,3 +645,108 @@
     > * { flex: 1; }
   }
 }
+
+// ─── Account ────────────────────────────────────────────────────
+// The sandbox has no account pages. These are built from the marketplace's
+// own parts: the category head, the /categories tile map, and the vendor
+// settings' field groups, so the account area reads as the same site.
+.ws-acctmap {
+  @media (min-width: 1080px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ws-acctsaved,
+.ws-acctinbox .ws-vxinbox { margin-top: 32px; }
+
+.ws-acctinbox .ws-vxinbox { min-height: 560px; }
+
+.ws-acctprofile {
+  display: grid;
+  align-items: start;
+  gap: 32px;
+  margin-top: 32px;
+
+  @media (min-width: 1080px) { grid-template-columns: minmax(0, 820px) 280px; }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    min-width: 0;
+  }
+
+  &__save {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: -12px;
+
+    .ws-vxhint { margin: 0; }
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+
+  &__rowtitle {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ws-text-primary);
+  }
+
+  &__side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 24px 16px;
+    text-align: center;
+
+    .ws-vxhint { margin: 0; }
+  }
+
+  &__avatar {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--mk-tint);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--mk-tint-ink);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ws-text-primary);
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+}

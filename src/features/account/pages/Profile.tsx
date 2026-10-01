@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Info, MessageCircle, ShoppingBag, Store } from 'lucide-react';
+import { Bookmark, Check, ExternalLink, Info, MessagesSquare, ShoppingBag, Store } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +8,9 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { profileService } from '@/features/account/api';
 import { toast } from '@/shared/store/uiStore';
 import type { UserProfile, Gender } from '@/features/auth/types';
+import CategoryHead from '@/features/catalog/components/CategoryHead';
+import { VendorSectionHead } from '@/features/stores/components/vendor/VendorPage';
+import { usePageTitle } from '@/shared/hooks/usePageTitle';
 
 // ─── Validation Schema ───────────────────────────────────────
 
@@ -31,9 +34,19 @@ const genderOptions: { value: Gender | ''; label: string }[] = [
   { value: 'PREFER_NOT_TO_SAY', label: 'Prefer not to say' },
 ];
 
+const QUICK_LINKS = [
+  { to: '/account/messages', label: 'Messages', Icon: MessagesSquare },
+  { to: '/saved', label: 'Saved listings', Icon: Bookmark },
+  { to: '/categories', label: 'Browse categories', Icon: ShoppingBag },
+  { to: '/vendor', label: 'Sell on WorldStore', Icon: Store },
+];
+
+const securityUrl = `${(import.meta.env.VITE_LOGIN_URL || 'https://worldstreetgold.com/login').replace(/\/login\/?$/, '')}/account/security`;
+
 // ─── Component ───────────────────────────────────────────────
 
 export default function ProfilePage() {
+  usePageTitle('Profile');
   const { user, updateUser } = useAuthStore();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -145,13 +158,23 @@ export default function ProfilePage() {
 
   // ─── Loading state ─────────────────────────────────────────
 
+  const head = (
+    <CategoryHead
+      crumbs={[{ label: 'My account', to: '/account' }, { label: 'Profile' }]}
+      eyebrow="Account"
+      title="Profile"
+    >
+      {isNewProfile
+        ? 'Complete your profile so sellers know who they are talking to.'
+        : 'Your personal details. Sellers see your name when you message them.'}
+    </CategoryHead>
+  );
+
   if (isFetching) {
     return (
-      <div className="ws-page">
-        <div className="ws-stack--lg">
-          <div className="ws-skeleton" style={{ height: 32, width: '30%' }} />
-          <div className="ws-skeleton" style={{ height: 280, borderRadius: 'var(--ws-radius-xl)' }} />
-        </div>
+      <div className="ws-wrap ws-cx">
+        {head}
+        <div className="ws-skeleton" style={{ height: 320, maxWidth: 820, marginTop: 32, borderRadius: 'var(--ws-radius-lg)' }} />
       </div>
     );
   }
@@ -179,189 +202,119 @@ export default function ProfilePage() {
   // ─── Render ────────────────────────────────────────────────
 
   return (
-    <div className="ws-page">
-      <nav className="ws-crumbs" aria-label="Breadcrumb">
-        <Link to="/account">My Account</Link>
-        <ChevronRight size={12} aria-hidden />
-        <span style={{ color: 'var(--ws-text-primary)', fontWeight: 500 }}>Profile</span>
-      </nav>
+    <div className="ws-wrap ws-cx">
+      {head}
 
-      <div className="ws-detail">
-        {/* ── Main form ───────────────────────────────── */}
-        <main className="ws-stack--lg">
-          <section className="ws-card">
-            <div className="ws-sectionhead">
-              <div>
-                <h1 className="ws-h2">Personal Information</h1>
-                <p className="ws-caption ws-muted">
-                  {isNewProfile
-                    ? 'Complete your profile so sellers know who they are talking to'
-                    : 'Manage your personal details and preferences'}
-                </p>
-              </div>
+      <div className="ws-acctprofile">
+        <div className="ws-acctprofile__main">
+          {isNewProfile && (
+            <div className="ws-alert ws-alert--info">
+              <Info size={16} aria-hidden />
+              <span>
+                <strong>Welcome to WorldStore.</strong> Fill in your details below and save to set up your profile.
+              </span>
             </div>
+          )}
 
-            {isNewProfile && (
-              <div className="ws-alert ws-alert--info" style={{ marginBottom: 'var(--ws-space-4)' }}>
-                <Info size={16} aria-hidden />
-                <span>
-                  <strong>Welcome to WorldStore.</strong> Fill in your details
-                  below and hit save to set up your profile.
-                </span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
-              <div className="ws-formgrid">
-                <div className="ws-formfield">
-                  <label htmlFor="firstName" className="ws-formfield__label">First Name</label>
-                  <input
-                    id="firstName"
-                    type="text"
-                    className={`ws-field ${errors.firstName ? 'ws-field--invalid' : ''}`}
-                    placeholder="Enter first name"
-                    {...register('firstName')}
-                  />
-                  {errors.firstName && (
-                    <span className="ws-formfield__error">{errors.firstName.message}</span>
-                  )}
+          <form onSubmit={handleSubmit(onSubmit)} className="ws-vxform">
+            <section>
+              <VendorSectionHead title="Personal information" description="Your name is what sellers see when you message them." />
+              <div className="ws-vxgroup">
+                <div className="ws-vxfieldset">
+                  <label htmlFor="firstName" className="ws-vxlabel">
+                    First name<span aria-hidden className="ws-vxlabel__req">*</span>
+                  </label>
+                  <input id="firstName" type="text" className="ws-vxinput" placeholder="Enter first name" aria-invalid={!!errors.firstName} {...register('firstName')} />
+                  {errors.firstName && <p className="ws-vxerror" role="alert">{errors.firstName.message}</p>}
                 </div>
-
-                <div className="ws-formfield">
-                  <label htmlFor="lastName" className="ws-formfield__label">Last Name</label>
-                  <input
-                    id="lastName"
-                    type="text"
-                    className={`ws-field ${errors.lastName ? 'ws-field--invalid' : ''}`}
-                    placeholder="Enter last name"
-                    {...register('lastName')}
-                  />
-                  {errors.lastName && (
-                    <span className="ws-formfield__error">{errors.lastName.message}</span>
-                  )}
+                <div className="ws-vxfieldset">
+                  <label htmlFor="lastName" className="ws-vxlabel">
+                    Last name<span aria-hidden className="ws-vxlabel__req">*</span>
+                  </label>
+                  <input id="lastName" type="text" className="ws-vxinput" placeholder="Enter last name" aria-invalid={!!errors.lastName} {...register('lastName')} />
+                  {errors.lastName && <p className="ws-vxerror" role="alert">{errors.lastName.message}</p>}
                 </div>
-
-                {/* Email — read only; Clerk owns it. */}
-                <div className="ws-formfield">
-                  <label htmlFor="email" className="ws-formfield__label">Email Address</label>
-                  <input
-                    id="email"
-                    type="email"
-                    className="ws-field"
-                    value={displayEmail}
-                    disabled
-                  />
-                  <span className="ws-formfield__hint">
-                    Email is managed by your WorldStreet account
-                  </span>
+                {/* Email is read only: the WorldStreet account owns it. */}
+                <div className="ws-vxfieldset">
+                  <label htmlFor="email" className="ws-vxlabel">Email address</label>
+                  <input id="email" type="email" className="ws-vxinput" value={displayEmail} disabled />
+                  <span className="ws-vxhint">Managed by your WorldStreet account</span>
                 </div>
-
-                <div className="ws-formfield">
-                  <label htmlFor="phone" className="ws-formfield__label">Phone Number</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    className="ws-field"
-                    placeholder="+234 XXX XXX XXXX"
-                    {...register('phone')}
-                  />
+                <div className="ws-vxfieldset">
+                  <label htmlFor="phone" className="ws-vxlabel">Phone number</label>
+                  <input id="phone" type="tel" className="ws-vxinput" placeholder="+234 XXX XXX XXXX" {...register('phone')} />
                 </div>
-
-                <div className="ws-formfield">
-                  <label htmlFor="dateOfBirth" className="ws-formfield__label">Date of Birth</label>
-                  <input id="dateOfBirth" type="date" className="ws-field" {...register('dateOfBirth')} />
+                <div className="ws-vxfieldset">
+                  <label htmlFor="dateOfBirth" className="ws-vxlabel">Date of birth</label>
+                  <input id="dateOfBirth" type="date" className="ws-vxinput" {...register('dateOfBirth')} />
                 </div>
-
-                <div className="ws-formfield">
-                  <label htmlFor="gender" className="ws-formfield__label">Gender</label>
-                  <select id="gender" className="ws-select" {...register('gender')}>
+                <div className="ws-vxfieldset">
+                  <label htmlFor="gender" className="ws-vxlabel">Gender</label>
+                  <select id="gender" className="ws-select ws-vxinput ws-vxinput--select" {...register('gender')}>
                     {genderOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
                 </div>
               </div>
+            </section>
 
-              <div>
-                <button
-                  type="submit"
-                  className="ws-btn ws-btn--primary"
-                  disabled={isSaving || !isDirty}
-                  aria-busy={isSaving || undefined}
-                >
-                  {isSaving && (
-                    <span className="ws-btn__spinner" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="31.4 31.4" />
-                      </svg>
-                    </span>
-                  )}
-                  {isSaving ? 'Saving…' : isNewProfile ? 'Create Profile' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </section>
-
-          {/* ── Security ────────────────────────── */}
-          <section className="ws-card">
-            <div className="ws-sectionhead">
-              <div>
-                <h2 className="ws-h2">Security</h2>
-                <p className="ws-caption ws-muted">Manage your password and account security</p>
-              </div>
-            </div>
-
-            <div className="ws-listrow">
-              <div className="ws-listrow__body">
-                <span className="ws-listrow__title">Password</span>
-                <span className="ws-listrow__sub">Change your account password</span>
-              </div>
-              <a
-                href={`${(import.meta.env.VITE_LOGIN_URL || 'https://worldstreetgold.com/login').replace(/\/login\/?$/, '')}/account/security`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ws-btn ws-btn--sm ws-btn--secondary"
+            <div className="ws-acctprofile__save">
+              <button
+                type="submit"
+                className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary"
+                disabled={isSaving || !isDirty}
+                aria-busy={isSaving || undefined}
               >
-                Change Password
+                <Check size={16} aria-hidden />
+                {isSaving ? 'Saving…' : isNewProfile ? 'Create profile' : 'Save changes'}
+              </button>
+              {!isDirty && !isNewProfile && <span className="ws-vxhint">Everything is up to date</span>}
+            </div>
+          </form>
+
+          <section>
+            <VendorSectionHead title="Security" description="Your password lives with your WorldStreet account." />
+            <div className="ws-vxcard ws-acctprofile__row">
+              <span>
+                <span className="ws-acctprofile__rowtitle">Password</span>
+                <span className="ws-vxhint">Change your account password</span>
+              </span>
+              <a href={securityUrl} target="_blank" rel="noopener noreferrer" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--outline">
+                Change password
+                <ExternalLink size={14} aria-hidden />
               </a>
             </div>
           </section>
-        </main>
+        </div>
 
-        {/* ── Sidebar ─────────────────────────────────── */}
-        <aside className="ws-aside">
-          <div className="ws-card" style={{ display: 'grid', justifyItems: 'center', textAlign: 'center', gap: 'var(--ws-space-2)' }}>
-            <span className="ws-avatar ws-avatar--l" style={{ width: 72, height: 72, fontSize: 24 }}>
+        <aside className="ws-acctprofile__side">
+          <div className="ws-vxcard ws-acctprofile__card">
+            <span className="ws-acctprofile__avatar">
               {profile?.avatar ? <img src={profile.avatar} alt="" /> : initials}
             </span>
-            <h2 className="ws-title">{displayFirstName} {displayLastName}</h2>
-            <p className="ws-caption ws-muted">{displayEmail}</p>
-            {memberSince && <p className="ws-caption ws-subtle">Member since {memberSince}</p>}
+            <p className="ws-acctprofile__name">{displayFirstName} {displayLastName}</p>
+            <p className="ws-vxhint">{displayEmail}</p>
+            {memberSince && <p className="ws-vxhint">Member since {memberSince}</p>}
           </div>
 
-          {/* Orders / addresses / wishlist went with the buying flows — these
-              are the destinations that still exist. */}
-          <div className="ws-card ws-card--flush">
-            <div className="ws-inbox__head">Quick Links</div>
-            <Link to="/account/messages" className="ws-listrow ws-listrow--link">
-              <MessageCircle size={18} aria-hidden />
-              <div className="ws-listrow__body">
-                <span className="ws-listrow__title">My Messages</span>
-              </div>
-            </Link>
-            <Link to="/listings" className="ws-listrow ws-listrow--link">
-              <ShoppingBag size={18} aria-hidden />
-              <div className="ws-listrow__body">
-                <span className="ws-listrow__title">Browse listings</span>
-              </div>
-            </Link>
-            <Link to="/vendor" className="ws-listrow ws-listrow--link">
-              <Store size={18} aria-hidden />
-              <div className="ws-listrow__body">
-                <span className="ws-listrow__title">Sell on WorldStore</span>
-              </div>
-            </Link>
-          </div>
+          {/* Orders, addresses and the wishlist went with the buying flows;
+              these are the destinations that still exist. */}
+          <nav className="ws-cxsections" aria-label="Account">
+            <h2 className="ws-cxsections__title">Quick links</h2>
+            <ul>
+              {QUICK_LINKS.map(({ to, label, Icon }) => (
+                <li key={to}>
+                  <Link to={to} className="ws-cxsections__link">
+                    <span className="ws-acctprofile__link">
+                      <Icon size={16} aria-hidden />
+                      {label}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </aside>
       </div>
     </div>
