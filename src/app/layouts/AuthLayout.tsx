@@ -6,9 +6,8 @@ export default function AuthLayout() {
     <div className="ws ws-auth">
       <div className="ws-auth__panel">
         <Link to="/" className="ws-brand" aria-label="WorldStore home">
-          {/* Unified ecosystem lockup (05-screens): gold wsa-mark 26px +
-              "WorldStore" Poppins SemiBold 15 + gold app eyebrow. */}
-          <img src="/brand/wsa-mark.png" alt="" className="ws-brand__mark" />
+          {/* The same mark as the header's, brand/wstore-mark.svg. */}
+          <img src="/brand/wstore-mark.svg" alt="" className="ws-brand__mark" />
           <span className="ws-brand__stack">
             <span className="ws-brand__word">WorldStore</span>
           </span>
