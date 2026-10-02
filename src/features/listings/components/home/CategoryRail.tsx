@@ -11,22 +11,36 @@ import { departmentsWithStock , listingCount } from "@/features/catalog/category
  * a category, so it is better left out than shipped empty.
  */
 
-const PHOTOS: Record<string, string> = {
-  fashion: "/img/cat/fashion.jpg",
-  electronics: "/img/cat/electronics.jpg",
-  home: "/img/cat/home.jpg",
-  sports: "/img/cat/sports.jpg",
-  vehicles: "/img/cat/vehicles.jpg",
-};
+// One photo per department, matched on its name. The first five are the
+// design sandbox's own; the rest are public-domain photos (CC0 / no known
+// copyright) chosen to match the live API's departments, each checked by eye.
+// Sources are listed in public/img/cat/CREDITS.md.
+const PHOTO = (file: string) => `/img/cat/${file}`;
+
+// Order matters: "Healthy" before "Health", and whole words for cars, since a
+// bare /car/ matches "Personal Care".
+const RULES: Array<[RegExp, string]> = [
+  [/healthy/, PHOTO("healthy.jpg")],
+  [/phone|tablet|mobile/, PHOTO("phones.jpg")],
+  [/beauty|personal care|cosmetic/, PHOTO("beauty.jpg")],
+  [/health|fitness|gym/, PHOTO("fitness.jpg")],
+  [/food|agric|grocer/, PHOTO("food.webp")],
+  [/propert|real estate|\bland\b/, PHOTO("property.jpg")],
+  [/baby|kid|child/, PHOTO("baby.webp")],
+  [/business|industrial|office/, PHOTO("business.jpg")],
+  [/service/, PHOTO("services.jpg")],
+  [/book|media|hobb/, PHOTO("books.jpg")],
+  [/\bpets?\b|animal/, PHOTO("pets.jpg")],
+  [/fashion|cloth|wear/, PHOTO("fashion.jpg")],
+  [/electronic|computer|laptop/, PHOTO("electronics.jpg")],
+  [/home|furniture|appliance/, PHOTO("home.jpg")],
+  [/sport|outdoor/, PHOTO("sports.jpg")],
+  [/vehicle|\bcars?\b|\bauto/, PHOTO("vehicles.jpg")],
+];
 
 function photoFor(name: string): string | undefined {
   const n = name.toLowerCase();
-  if (/fashion|cloth|wear/.test(n)) return PHOTOS.fashion;
-  if (/electronic|phone|tablet|computer|laptop/.test(n)) return PHOTOS.electronics;
-  if (/home|furniture|appliance/.test(n)) return PHOTOS.home;
-  if (/sport|fitness|outdoor/.test(n)) return PHOTOS.sports;
-  if (/vehicle|car|auto/.test(n)) return PHOTOS.vehicles;
-  return undefined;
+  return RULES.find(([re]) => re.test(n))?.[1];
 }
 
 export default function CategoryRail() {
