@@ -15,7 +15,8 @@ export default function CategoryHead({
   children,
 }: {
   crumbs: Crumb[];
-  eyebrow: ReactNode;
+  /** Left out where it would only repeat the trail ("My account" / "Account"). */
+  eyebrow?: ReactNode;
   title: string;
   children: ReactNode;
 }) {
@@ -41,7 +42,7 @@ export default function CategoryHead({
       </nav>
 
       <header className="ws-cxhead">
-        <p className="ws-cxhead__eyebrow">{eyebrow}</p>
+        {eyebrow && <p className="ws-cxhead__eyebrow">{eyebrow}</p>}
         <h1 className="ws-cxhead__title">{title}</h1>
         <p className="ws-cxhead__lede">{children}</p>
       </header>

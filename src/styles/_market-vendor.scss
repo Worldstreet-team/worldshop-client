@@ -417,7 +417,8 @@ $vx-side: 264px;
   padding: 28px 16px;
 
   @media (min-width: $vx-md) { padding-inline: 24px; }
-  @media (min-width: $vx-desk) { padding-block: 36px; }
+  // 24px, not 36: the console's top bar already sits above every page.
+  @media (min-width: $vx-desk) { padding-block: 24px 36px; }
 
   &--wide { max-width: none; }
 }
@@ -1944,9 +1945,9 @@ $vx-inbox: 860px;
 // fields beside them, the actions pinned under the fields.
 .ws-vxwiz-page {
   max-width: 1120px;
-  padding-block: 24px;
+  padding-block: 20px 24px;
 
-  @media (min-width: $vx-desk) { padding-block: 36px; }
+  @media (min-width: $vx-desk) { padding-block: 24px 36px; }
 
   &__top {
     display: flex;

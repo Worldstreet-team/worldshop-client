@@ -161,7 +161,6 @@ export default function ProfilePage() {
   const head = (
     <CategoryHead
       crumbs={[{ label: 'My account', to: '/account' }, { label: 'Profile' }]}
-      eyebrow="Account"
       title="Profile"
     >
       {isNewProfile

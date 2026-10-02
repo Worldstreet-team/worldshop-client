@@ -804,9 +804,8 @@ $bp-lg: 1280px;
 .ws-browsehead {
   display: grid;
   gap: var(--ws-space-3);
-  padding-block: var(--ws-space-4) 0;
-
-  @media (min-width: $bp-md) { padding-block: var(--ws-space-5) 0; }
+  // No top padding: .ws-shell__main sets the page's top rhythm, and this
+  // plus the crumbs' own stacked a 68px gap above the trail.
 }
 
 .ws-browsehead__row {
@@ -3828,7 +3827,6 @@ details:not([open]) > .ws-filters__legend::after {
   display: flex;
   align-items: center;
   gap: var(--ws-space-2);
-  padding-top: var(--ws-space-4);
   font-size: 13px;
   color: var(--ws-text-subtle);
   flex-wrap: wrap;
@@ -4844,7 +4842,9 @@ html[data-reveal="ready"] [data-reveal]:not(.is-in) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--ws-space-6);
   }
-  @media (min-width: $bp-lg) {
+  // Four only on wide screens: at 1280-1600 the directory's filter rail
+  // leaves each of four cards about 230px, and they read as crammed.
+  @media (min-width: 1600px) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -5172,6 +5172,37 @@ html[data-reveal="ready"] [data-reveal]:not(.is-in) {
 
 .ws-storecard__stats--2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+// The store card's figures as one line of text, dot-separated. The divided
+// three-cell strip (still used by the mall card) gave every value a label and
+// a column, and with the footer's own rule it stacked the card into bands.
+.ws-storecard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 0;
+  margin-top: var(--ws-space-4);
+  font-size: 12px;
+  color: var(--ws-text-subtle);
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+
+    + span::before {
+      content: '·';
+      margin-inline: 6px;
+      color: var(--ws-text-subtle);
+    }
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--ws-text-primary);
+  }
 }
 
 // Rating-star orange (#F97316): the one sanctioned literal, via its token.

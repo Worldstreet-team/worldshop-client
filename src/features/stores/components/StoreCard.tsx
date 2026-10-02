@@ -8,12 +8,14 @@ export default function StoreCard({ store }: { store: PublicStore }) {
   const location = formatLocation([store.city, store.state], store.country);
   const verified = isVerifiedTier(store.verificationTier);
   const since = sinceLabel(store.createdAt);
+  // Only what the store actually has: an empty value ("No reviews", "—")
+  // took a slot and a label for nothing and made the card read as a form.
   const reply =
     store.avgResponseMins != null
-      ? { label: 'Replies in', value: replyTime(store.avgResponseMins) }
+      ? `Replies ${replyTime(store.avgResponseMins)}`
       : store.responseRate != null
-        ? { label: 'Reply rate', value: `${Math.round(store.responseRate * 100)}%` }
-        : { label: 'Replies in', value: '—' };
+        ? `${Math.round(store.responseRate * 100)}% reply rate`
+        : null;
 
   return (
     <Link to={`/stores/${store.slug}`} className="ws-storecard">
@@ -48,34 +50,22 @@ export default function StoreCard({ store }: { store: PublicStore }) {
         )}
         <p className="ws-storecard__desc">{store.description}</p>
 
-        <dl className="ws-storecard__stats">
-          <div>
-            {store.reviewCount > 0 ? (
-              <>
-                <dt>
-                  {store.reviewCount.toLocaleString()} review{store.reviewCount === 1 ? '' : 's'}
-                </dt>
-                <dd className="ws-num" aria-label={`Rated ${store.avgRating.toFixed(1)} out of 5`}>
-                  <Star size={12} aria-hidden className="ws-storecard__star" />
-                  {store.avgRating.toFixed(1)}
-                </dd>
-              </>
-            ) : (
-              <>
-                <dt>No reviews</dt>
-                <dd className="ws-storecard__muted">New</dd>
-              </>
-            )}
-          </div>
-          <div>
-            <dt>{store.listingCount === 1 ? 'Listing' : 'Listings'}</dt>
-            <dd className="ws-num">{store.listingCount.toLocaleString()}</dd>
-          </div>
-          <div>
-            <dt>{reply.label}</dt>
-            <dd className={`ws-num${reply.value === '—' ? ' ws-storecard__muted' : ''}`}>{reply.value}</dd>
-          </div>
-        </dl>
+        <p className="ws-storecard__meta">
+          {store.reviewCount > 0 && (
+            <span
+              className="ws-num"
+              aria-label={`Rated ${store.avgRating.toFixed(1)} out of 5 from ${store.reviewCount} review${store.reviewCount === 1 ? '' : 's'}`}
+            >
+              <Star size={12} aria-hidden className="ws-storecard__star" />
+              <strong>{store.avgRating.toFixed(1)}</strong>
+              <span aria-hidden>({store.reviewCount.toLocaleString()})</span>
+            </span>
+          )}
+          <span className="ws-num">
+            <strong>{store.listingCount.toLocaleString()}</strong> {store.listingCount === 1 ? 'listing' : 'listings'}
+          </span>
+          {reply && <span className="ws-num">{reply}</span>}
+        </p>
       </div>
 
       <div className="ws-storecard__foot">

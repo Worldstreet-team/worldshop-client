@@ -27,6 +27,9 @@
 
   &__title {
     margin: 8px 0 0;
+
+    // No eyebrow above it (the account pages): nothing to space from.
+    &:first-child { margin-top: 0; }
     font-size: 26px;
     line-height: 32px;
     font-weight: 600;
@@ -650,12 +653,19 @@
 // The sandbox has no account pages. These are built from the marketplace's
 // own parts: the category head, the /categories tile map, and the vendor
 // settings' field groups, so the account area reads as the same site.
+// Trail to title: 12px, not the listing page's 20. Under the shell's own top
+// padding the larger step made the head read as a separate band.
+.ws-cx .ws-ldcrumbs { margin-bottom: 12px; }
+
+// Head to content: 24px, not 32, so the first tile is not well down the screen.
 .ws-acctmap {
+  margin-top: 24px;
+
   @media (min-width: 1080px) { grid-template-columns: repeat(2, 1fr); }
 }
 
 .ws-acctsaved,
-.ws-acctinbox .ws-vxinbox { margin-top: 32px; }
+.ws-acctinbox .ws-vxinbox { margin-top: 24px; }
 
 .ws-acctinbox .ws-vxinbox { min-height: 560px; }
 
@@ -663,7 +673,7 @@
   display: grid;
   align-items: start;
   gap: 32px;
-  margin-top: 32px;
+  margin-top: 24px;
 
   @media (min-width: 1080px) { grid-template-columns: minmax(0, 820px) 280px; }
 

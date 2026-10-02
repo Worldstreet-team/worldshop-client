@@ -13,7 +13,7 @@ export default function StoreCardSkeleton() {
           <span className="ws-skeleton ws-storecard__skel" style={{ height: 12, width: '94%' }} />
           <span className="ws-skeleton ws-storecard__skel" style={{ height: 12, width: '70%', marginTop: 6 }} />
         </div>
-        <div className="ws-storecard__stats ws-skeleton" />
+        <span className="ws-skeleton ws-storecard__skel" style={{ height: 12, width: '64%', marginTop: 16 }} />
       </div>
       <div className="ws-storecard__foot">
         <span className="ws-skeleton ws-storecard__skel" style={{ height: 12, width: 84 }} />

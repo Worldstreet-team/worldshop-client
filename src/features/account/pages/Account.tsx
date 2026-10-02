@@ -72,7 +72,6 @@ export default function AccountPage() {
     <div className="ws-wrap ws-cx">
       <CategoryHead
         crumbs={[{ label: 'My account' }]}
-        eyebrow="Account"
         title={user?.firstName ? `Welcome back, ${user.firstName}` : 'My account'}
       >
         Your messages, saved listings and profile in one place.
