@@ -21,13 +21,9 @@ import { departmentIcon, OUTLINED } from "@/features/catalog/departmentIcons";
 import { departmentsWithStock } from "@/features/catalog/categoryTree";
 import { savedListings } from "@/features/listings/savedListings";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useCurrentPlace } from "@/shared/hooks/useCurrentPlace";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
-
-/**
- * Radius options as the sandbox lists them. Static for now: the API has no
- * location filter yet, so wiring it would mean inventing an endpoint.
- */
 
 /**
  * Which ends of a horizontally scrolling row have more to reveal. Measured
@@ -62,10 +58,13 @@ function useScrollEdges<T extends HTMLElement>(contentKey: unknown) {
 /** Placeholder pill widths, roughly the spread of real department names. */
 const SKELETON_PILLS = [104, 86, 122, 94, 138, 110, 80, 126];
 
-const RADIUS = [
-  { value: "lagos-5", label: "Lagos · 5 km" },
-  { value: "lagos-10", label: "Lagos · 10 km" },
-  { value: "lagos-25", label: "Lagos · 25 km" },
+// Display only for now: the API has no distance filter, so the radius is not
+// sent anywhere. The place is the buyer's own state when the browser shares
+// it (useCurrentPlace), Lagos until then.
+const radiusOptions = (place: string) => [
+  { value: "near-5", label: `${place} · 5 km` },
+  { value: "near-10", label: `${place} · 10 km` },
+  { value: "near-25", label: `${place} · 25 km` },
   { value: "ng", label: "Anywhere in Nigeria" },
 ];
 
@@ -73,6 +72,7 @@ export default function Header() {
   const location = useLocation();
   const [params] = useSearchParams();
   const { isAuthenticated, user } = useAuth();
+  const place = useCurrentPlace();
   const { toggleMobileMenu } = useUIStore();
   const urlSearch = params.get("search") ?? "";
   const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
@@ -142,8 +142,8 @@ export default function Header() {
             <label className="ws-hfield ws-hfield--location">
               <MapPin size={16} fill="currentColor" aria-hidden />
               <span className="ws-sr-only">Location and radius</span>
-              <select className="ws-hfield__select" defaultValue="lagos-10">
-                {RADIUS.map((r) => (
+              <select className="ws-hfield__select" defaultValue="near-10">
+                {radiusOptions(place ?? "Lagos").map((r) => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </select>
@@ -160,6 +160,7 @@ export default function Header() {
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
               >
+                <LayoutGrid size={16} fill="currentColor" aria-hidden />
                 All categories
                 <ChevronDown size={14} aria-hidden className="ws-hfield__chev" />
               </button>
@@ -200,12 +201,6 @@ export default function Header() {
                 aria-label={savedCount ? `Saved listings, ${savedCount} saved` : "Saved listings"}
               >
                 <Bookmark size={18} fill="currentColor" aria-hidden />
-              </Link>
-            )}
-
-            {isAuthenticated && user?.role === "ADMIN" && (
-              <Link to="/admin" className="ws-actionbtn" aria-label="Admin console">
-                <LayoutGrid size={18} aria-hidden />
               </Link>
             )}
 
@@ -257,6 +252,7 @@ export default function Header() {
             <div className="ws-catbar__scroller">
               <div className="ws-catbar__row" ref={catRow} role="group" aria-label="Browse categories">
                 <Link to="/categories" className="ws-pill">
+                  <LayoutGrid size={14} fill="currentColor" aria-hidden />
                   All categories
                 </Link>
                 {/* Stores and Malls lead the bar rather than sitting among the

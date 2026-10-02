@@ -33,6 +33,9 @@ const SUPPORT: FooterLink[] = [
   { label: "Terms", to: "/terms" },
   { label: "Privacy", to: "/privacy" },
   { label: "Cookies", to: "/cookies" },
+  // The header has no admin shortcut (the reference has none); this is the
+  // way in. /admin asks for the admin password, so it is safe to list.
+  { label: "Admin", to: "/admin" },
 ];
 
 const ECOSYSTEM: FooterLink[] = [
