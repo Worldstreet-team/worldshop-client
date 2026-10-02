@@ -1,4 +1,6 @@
 import type { Listing } from '@/features/stores/api';
+import { Bookmark } from 'lucide-react';
+import { useUIStore } from '@/shared/store/uiStore';
 
 
 export type SavedListing = Pick<
@@ -82,3 +84,22 @@ export const savedListings = {
     return () => listeners.delete(cb);
   },
 };
+
+const SAVED_MSG = 'Added to Saved';
+const REMOVED_MSG = 'Removed from Saved';
+
+/** What the save buttons call: toggles, then confirms with a short toast. */
+export function toggleSaved(listing: Omit<SavedListing, 'savedAt'>) {
+  const nowSaved = savedListings.toggle(listing);
+  // Tapping a heart on and off would otherwise stack "Saved" over "Removed";
+  // only the latest state is worth showing.
+  const ui = useUIStore.getState();
+  ui.toasts
+    .filter((t) => t.message === SAVED_MSG || t.message === REMOVED_MSG)
+    .forEach((t) => ui.removeToast(t.id));
+  if (nowSaved) {
+    ui.addToast({ type: 'success', message: SAVED_MSG, description: 'Find it any time under Saved items.', duration: 3000 });
+  } else {
+    ui.addToast({ type: 'info', message: REMOVED_MSG, icon: Bookmark, duration: 3000 });
+  }
+}

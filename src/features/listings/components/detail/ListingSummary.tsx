@@ -2,7 +2,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Clock, Eye, Heart, MapPin, Share2, Tag } from 'lucide-react';
 import type { Listing, PublicStore } from '@/features/stores/api';
-import { savedListings } from '@/features/listings/savedListings';
+import { savedListings, toggleSaved } from '@/features/listings/savedListings';
 import { priceLabel } from '@/features/listings/model';
 
 function postedAgo(iso: string): string | null {
@@ -82,7 +82,7 @@ export default function ListingSummary({ listing, location }: ListingSummaryProp
             aria-pressed={saved}
             aria-label={saved ? 'Remove from saved' : 'Save listing'}
             title={saved ? 'Saved' : 'Save'}
-            onClick={() => savedListings.toggle(listing)}
+            onClick={() => toggleSaved(listing)}
           >
             <Heart size={18} />
           </button>

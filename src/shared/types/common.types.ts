@@ -1,3 +1,5 @@
+import type { LucideIcon } from 'lucide-react';
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -49,5 +51,9 @@ export interface Toast {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
   message: string;
+  /** Optional second line under the message. */
+  description?: string;
+  /** Replaces the tone's default icon. */
+  icon?: LucideIcon;
   duration?: number;
 }

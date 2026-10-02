@@ -10,7 +10,7 @@ import {
   type ImageRef,
 } from "@/features/listings/model";
 import { isVerifiedTier } from "@/features/stores/model";
-import { savedListings } from "@/features/listings/savedListings";
+import { savedListings, toggleSaved } from "@/features/listings/savedListings";
 import { useListingPrefetch } from "@/features/listings/hooks/useListingPrefetch";
 import { formatLocation } from "@/shared/utils/locations";
 
@@ -145,7 +145,7 @@ export default function ListingCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              savedListings.toggle(listing);
+              toggleSaved(listing);
             }}
           >
             <Heart size={16} aria-hidden />

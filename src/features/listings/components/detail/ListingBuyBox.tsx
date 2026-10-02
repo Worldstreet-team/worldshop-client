@@ -7,7 +7,7 @@ import {
 import type { PublicListing, ListingVariant } from '@/features/stores/api';
 import ContactSeller, { type ContactSellerHandle } from '@/features/stores/components/ContactSeller';
 import { fmtNaira, priceLabel, timeAgo, waLink } from '@/features/listings/model';
-import { savedListings } from '@/features/listings/savedListings';
+import { savedListings, toggleSaved } from '@/features/listings/savedListings';
 
 /** At or under this many, the count is worth a badge. Above it, it is just stock. */
 const LOW_STOCK = 5;
@@ -190,7 +190,7 @@ export default function ListingBuyBox({ listing, location, contact }: ListingBuy
             className={`ws-ldbtn ws-ldbtn--outline ws-ldbtn--icon${saved ? ' is-saved' : ''}`}
             aria-pressed={saved}
             aria-label={saved ? 'Remove from saved' : 'Save listing'}
-            onClick={() => savedListings.toggle(listing)}
+            onClick={() => toggleSaved(listing)}
           >
             <Heart size={18} aria-hidden className={saved ? 'ws-solid' : undefined} />
           </button>
