@@ -1236,25 +1236,29 @@ select option {
   color: var(--ws-text-muted);
 }
 
-// The feedback fill, not the olive action colour: a confirmation should read
-// as done, not as another button.
+// Fill and ink come from two theme-level settings, so a theme can give its
+// confirmations its own colour: the deep feedback green by default, the
+// WorldStreet yellow in that theme (_worldstreet.scss).
 .ws-toast--success {
-  background: var(--ws-feedback-success-fill);
+  --toast-fill: var(--ws-toast-success-fill, var(--ws-feedback-success-fill));
+  --toast-ink: var(--ws-toast-success-ink, var(--ws-text-on-feedback));
+
+  background: var(--toast-fill);
   border-color: transparent;
-  color: var(--ws-text-on-feedback);
+  color: var(--toast-ink);
 
   .ws-toast__icon {
     border-radius: 50%;
-    // Translucent white over the green, so the tile follows the fill.
-    background: color-mix(in srgb, var(--ws-text-on-feedback) 18%, transparent);
-    color: var(--ws-text-on-feedback);
-    // Filled badge, with the check cut out in the toast's own green.
-    svg { fill: currentColor; stroke: var(--ws-feedback-success-fill); }
+    // A wash of the ink over the fill, so the tile follows either.
+    background: color-mix(in srgb, var(--toast-ink) 16%, transparent);
+    color: var(--toast-ink);
+    // Filled badge, with the check cut out in the toast's own fill.
+    svg { fill: currentColor; stroke: var(--toast-fill); }
   }
 
-  .ws-toast__desc { color: color-mix(in srgb, var(--ws-text-on-feedback) 72%, transparent); }
+  .ws-toast__desc { color: color-mix(in srgb, var(--toast-ink) 72%, transparent); }
   .ws-toast__close,
-  .ws-toast__close:hover { color: var(--ws-text-on-feedback); }
+  .ws-toast__close:hover { color: var(--toast-ink); }
 }
 
 .ws-toast--danger .ws-toast__icon { color: var(--ws-status-danger); }

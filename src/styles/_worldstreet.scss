@@ -126,6 +126,11 @@
   --ws-tonal-warning-text: #fbbf24;
   --ws-tonal-info-surface: rgba(96, 165, 250, 0.14);
   --ws-tonal-info-text: #93c5fd;
+  // Confirmations ("Added to Saved", "Profile updated") in the brand yellow
+  // rather than the generic success green, with the logo's black ink.
+  --ws-toast-success-fill: var(--ws-action-primary-default);
+  --ws-toast-success-ink: var(--ws-text-on-accent);
+
   --ws-tonal-neutral-surface: var(--ws-surface-raised);
   --ws-tonal-neutral-text: var(--ws-text-secondary);
 
