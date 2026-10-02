@@ -1626,22 +1626,80 @@ select option {
 // straight out to the identity hub, so this is a waypoint, not a destination —
 // it stays deliberately plain.
 
+// The admin sign-in and the password-link pages. Built from the marketplace's
+// own parts (ws-vx fields, ws-ldbtn) rather than the older ds form kit, whose
+// pill button and caps labels read as a different product.
 .ws-auth {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: var(--ws-space-6);
-  background: var(--ws-bg-page);
+  padding: var(--ws-space-6) var(--ws-space-4);
+  background: var(--ws-surface-sunken);
 }
 
 .ws-auth__panel {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   display: grid;
   justify-items: center;
   gap: var(--ws-space-6);
+}
 
-  > .ws-card { width: 100%; }
+.ws-auth__card {
+  width: 100%;
+  padding: 28px;
+  border: 1px solid var(--ws-border-subtle);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-surface-base);
+  box-shadow: var(--ws-shadow-card);
+
+  @media (max-width: 420px) { padding: 22px 18px; }
+
+  .ws-stack--lg { gap: 20px; }
+}
+
+// The header lockup scaled up, with a hairline under it so it heads the card
+// rather than crowding the title.
+.ws-auth__brand {
+  gap: 12px;
+  margin: -4px 0 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ws-border-subtle);
+
+  .ws-brand__mark { width: 40px; height: 40px; }
+  .ws-brand__stack { gap: 4px; }
+  .ws-brand__word { font-size: 18px; }
+}
+
+.ws-auth__title {
+  margin: 0;
+  font-family: var(--ws-font-display);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ws-text-primary);
+}
+
+.ws-auth__lede {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ws-text-secondary);
+}
+
+.ws-auth__submit { width: 100%; }
+
+.ws-auth__foot {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ws-text-secondary);
+
+  a {
+    color: var(--ws-action-primary-text);
+    font-weight: 500;
+  }
 }
 
 // ─── Alert (inline form + page errors) ──────────────────────────

@@ -44,9 +44,9 @@ export default function SetupPasswordPage() {
         <span className="ws-empty__icon" style={{ color: 'var(--ws-status-danger)' }}>
           <AlertCircle size={26} aria-hidden />
         </span>
-        <h1 className="ws-h2">Invalid link</h1>
-        <p className="ws-body ws-muted">This password setup link is invalid or has expired.</p>
-        <Link to="/auth/forgot-password" className="ws-btn ws-btn--sm ws-btn--primary">
+        <h1 className="ws-auth__title">Invalid link</h1>
+        <p className="ws-auth__lede">This password setup link is invalid or has expired.</p>
+        <Link to="/auth/forgot-password" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary">
           Request a new link
         </Link>
       </div>
@@ -71,8 +71,8 @@ export default function SetupPasswordPage() {
   return (
     <div className="ws-stack--lg">
       <div>
-        <h1 className="ws-h2">Create your admin password</h1>
-        <p className="ws-body ws-muted">
+        <h1 className="ws-auth__title">Create your admin password</h1>
+        <p className="ws-auth__lede">
           Choose a password for the admin console. You'll use it to sign in from now on.
         </p>
       </div>
@@ -85,8 +85,8 @@ export default function SetupPasswordPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
-        <div className="ws-formfield">
-          <label htmlFor="password" className="ws-formfield__label">Password</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="password" className="ws-vxlabel">Password</label>
           {/* The reveal toggle is a real button inside the group, so it needs
               pointer events that .ws-inputgroup__icon deliberately removes. */}
           <div className="ws-inputgroup">
@@ -95,7 +95,7 @@ export default function SetupPasswordPage() {
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
               placeholder="At least 8 characters"
-              className={`ws-field ${errors.password ? 'ws-field--invalid' : ''}`}
+              className="ws-vxinput" aria-invalid={!!errors.password}
               style={{ paddingRight: 42 }}
               {...register('password')}
             />
@@ -109,30 +109,30 @@ export default function SetupPasswordPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <span className="ws-formfield__error">{errors.password.message}</span>}
+          {errors.password && <p className="ws-vxerror" role="alert">{errors.password.message}</p>}
         </div>
 
-        <div className="ws-formfield">
-          <label htmlFor="confirmPassword" className="ws-formfield__label">Confirm Password</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="confirmPassword" className="ws-vxlabel">Confirm password</label>
           <input
             id="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
             placeholder="Confirm your password"
-            className={`ws-field ${errors.confirmPassword ? 'ws-field--invalid' : ''}`}
+            className="ws-vxinput" aria-invalid={!!errors.confirmPassword}
             {...register('confirmPassword')}
           />
           {errors.confirmPassword && (
-            <span className="ws-formfield__error">{errors.confirmPassword.message}</span>
+            <p className="ws-vxerror" role="alert">{errors.confirmPassword.message}</p>
           )}
         </div>
 
-        <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={isLoading}>
+        <button type="submit" className="ws-ldbtn ws-ldbtn--primary ws-auth__submit" disabled={isLoading}>
           {isLoading ? 'Saving…' : 'Create password'}
         </button>
       </form>
 
-      <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
+      <p className="ws-auth__foot" style={{ textAlign: 'center' }}>
         Already set one up?{' '}
         <Link to="/admin/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
       </p>

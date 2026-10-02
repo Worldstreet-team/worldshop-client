@@ -44,12 +44,12 @@ export default function ForgotPasswordPage() {
         <span className="ws-empty__icon">
           <MailCheck size={26} aria-hidden />
         </span>
-        <h1 className="ws-h2">Check your email</h1>
-        <p className="ws-body ws-muted">
+        <h1 className="ws-auth__title">Check your email</h1>
+        <p className="ws-auth__lede">
           If an admin account exists for that address, we've sent it a link.
           Please check your inbox.
         </p>
-        <Link to="/admin/login" className="ws-btn ws-btn--sm ws-btn--primary">
+        <Link to="/admin/login" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary">
           Back to sign in
         </Link>
       </div>
@@ -59,8 +59,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="ws-stack--lg">
       <div>
-        <h1 className="ws-h2">Admin password link</h1>
-        <p className="ws-body ws-muted">
+        <h1 className="ws-auth__title">Admin password link</h1>
+        <p className="ws-auth__lede">
           Enter your email address and we'll send you a link to set or reset your
           admin password.
         </p>
@@ -74,24 +74,24 @@ export default function ForgotPasswordPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
-        <div className="ws-formfield">
-          <label htmlFor="email" className="ws-formfield__label">Email Address</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="email" className="ws-vxlabel">Email address</label>
           <input
             id="email"
             type="email"
             placeholder="Enter your email"
-            className={`ws-field ${errors.email ? 'ws-field--invalid' : ''}`}
+            className="ws-vxinput" aria-invalid={!!errors.email}
             {...register('email')}
           />
-          {errors.email && <span className="ws-formfield__error">{errors.email.message}</span>}
+          {errors.email && <p className="ws-vxerror" role="alert">{errors.email.message}</p>}
         </div>
 
-        <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={isLoading}>
+        <button type="submit" className="ws-ldbtn ws-ldbtn--primary ws-auth__submit" disabled={isLoading}>
           {isLoading ? 'Sending…' : 'Send reset link'}
         </button>
       </form>
 
-      <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
+      <p className="ws-auth__foot" style={{ textAlign: 'center' }}>
         Remember your password?{' '}
         <Link to="/admin/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
       </p>

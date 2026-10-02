@@ -39,9 +39,9 @@ export default function ResetPasswordPage() {
         <span className="ws-empty__icon" style={{ color: 'var(--ws-status-danger)' }}>
           <AlertCircle size={26} aria-hidden />
         </span>
-        <h1 className="ws-h2">Invalid link</h1>
-        <p className="ws-body ws-muted">This password reset link is invalid or has expired.</p>
-        <Link to="/auth/forgot-password" className="ws-btn ws-btn--sm ws-btn--primary">
+        <h1 className="ws-auth__title">Invalid link</h1>
+        <p className="ws-auth__lede">This password reset link is invalid or has expired.</p>
+        <Link to="/auth/forgot-password" className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary">
           Request a new link
         </Link>
       </div>
@@ -66,8 +66,8 @@ export default function ResetPasswordPage() {
   return (
     <div className="ws-stack--lg">
       <div>
-        <h1 className="ws-h2">Reset password</h1>
-        <p className="ws-body ws-muted">Enter your new password below.</p>
+        <h1 className="ws-auth__title">Reset password</h1>
+        <p className="ws-auth__lede">Enter your new password below.</p>
       </div>
 
       {error && (
@@ -78,8 +78,8 @@ export default function ResetPasswordPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
-        <div className="ws-formfield">
-          <label htmlFor="password" className="ws-formfield__label">New Password</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="password" className="ws-vxlabel">New password</label>
           {/* The reveal toggle is a real button inside the group, so it needs
               pointer events that .ws-inputgroup__icon deliberately removes. */}
           <div className="ws-inputgroup">
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="At least 8 characters"
-              className={`ws-field ${errors.password ? 'ws-field--invalid' : ''}`}
+              className="ws-vxinput" aria-invalid={!!errors.password}
               style={{ paddingRight: 42 }}
               {...register('password')}
             />
@@ -101,29 +101,29 @@ export default function ResetPasswordPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <span className="ws-formfield__error">{errors.password.message}</span>}
+          {errors.password && <p className="ws-vxerror" role="alert">{errors.password.message}</p>}
         </div>
 
-        <div className="ws-formfield">
-          <label htmlFor="confirmPassword" className="ws-formfield__label">Confirm Password</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="confirmPassword" className="ws-vxlabel">Confirm password</label>
           <input
             id="confirmPassword"
             type={showPassword ? 'text' : 'password'}
             placeholder="Confirm your password"
-            className={`ws-field ${errors.confirmPassword ? 'ws-field--invalid' : ''}`}
+            className="ws-vxinput" aria-invalid={!!errors.confirmPassword}
             {...register('confirmPassword')}
           />
           {errors.confirmPassword && (
-            <span className="ws-formfield__error">{errors.confirmPassword.message}</span>
+            <p className="ws-vxerror" role="alert">{errors.confirmPassword.message}</p>
           )}
         </div>
 
-        <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={isLoading}>
+        <button type="submit" className="ws-ldbtn ws-ldbtn--primary ws-auth__submit" disabled={isLoading}>
           {isLoading ? 'Resetting…' : 'Reset password'}
         </button>
       </form>
 
-      <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
+      <p className="ws-auth__foot" style={{ textAlign: 'center' }}>
         Remember your password?{' '}
         <Link to="/admin/login" style={{ color: 'var(--ws-brand-gold-text)' }}>Sign in</Link>
       </p>

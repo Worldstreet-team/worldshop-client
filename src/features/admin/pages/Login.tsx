@@ -63,11 +63,11 @@ export default function AdminLoginPage() {
         <span className="ws-empty__icon">
           <MailCheck size={26} aria-hidden />
         </span>
-        <h1 className="ws-h2">Check your email</h1>
-        <p className="ws-body ws-muted">{setupNotice}</p>
+        <h1 className="ws-auth__title">Check your email</h1>
+        <p className="ws-auth__lede">{setupNotice}</p>
         <button
           type="button"
-          className="ws-btn ws-btn--sm ws-btn--primary"
+          className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--primary"
           onClick={() => setSetupNotice(null)}
         >
           Back to sign in
@@ -79,8 +79,8 @@ export default function AdminLoginPage() {
   return (
     <div className="ws-stack--lg">
       <div>
-        <h1 className="ws-h2">Admin sign in</h1>
-        <p className="ws-body ws-muted">Sign in with your admin email and password.</p>
+        <h1 className="ws-auth__title">Admin sign in</h1>
+        <p className="ws-auth__lede">Sign in with your admin email and password.</p>
       </div>
 
       {error && (
@@ -91,21 +91,21 @@ export default function AdminLoginPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="ws-stack--lg">
-        <div className="ws-formfield">
-          <label htmlFor="email" className="ws-formfield__label">Email Address</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="email" className="ws-vxlabel">Email address</label>
           <input
             id="email"
             type="email"
             autoComplete="username"
             placeholder="Enter your email"
-            className={`ws-field ${errors.email ? 'ws-field--invalid' : ''}`}
+            className="ws-vxinput" aria-invalid={!!errors.email}
             {...register('email')}
           />
-          {errors.email && <span className="ws-formfield__error">{errors.email.message}</span>}
+          {errors.email && <p className="ws-vxerror" role="alert">{errors.email.message}</p>}
         </div>
 
-        <div className="ws-formfield">
-          <label htmlFor="password" className="ws-formfield__label">Password</label>
+        <div className="ws-vxfieldset">
+          <label htmlFor="password" className="ws-vxlabel">Password</label>
           {/* The reveal toggle is a real button inside the group, so it needs
               pointer events that .ws-inputgroup__icon deliberately removes. */}
           <div className="ws-inputgroup">
@@ -114,7 +114,7 @@ export default function AdminLoginPage() {
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               placeholder="Enter your password"
-              className={`ws-field ${errors.password ? 'ws-field--invalid' : ''}`}
+              className="ws-vxinput" aria-invalid={!!errors.password}
               style={{ paddingRight: 42 }}
               {...register('password')}
             />
@@ -128,15 +128,15 @@ export default function AdminLoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <span className="ws-formfield__error">{errors.password.message}</span>}
+          {errors.password && <p className="ws-vxerror" role="alert">{errors.password.message}</p>}
         </div>
 
-        <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={isLoading}>
+        <button type="submit" className="ws-ldbtn ws-ldbtn--primary ws-auth__submit" disabled={isLoading}>
           {isLoading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
 
-      <p className="ws-caption ws-muted" style={{ textAlign: 'center' }}>
+      <p className="ws-auth__foot" style={{ textAlign: 'center' }}>
         First time here, or forgot your password?{' '}
         <Link to="/auth/forgot-password" style={{ color: 'var(--ws-brand-gold-text)' }}>
           Get a link
