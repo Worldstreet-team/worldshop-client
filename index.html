@@ -1,28 +1,26 @@
 <!doctype html>
-<!-- data-ws-theme selects the palette. "market" is the marketplace design
-     from the sandbox, defined in src/styles/_market.scss: paper #F7F7F5, olive
-     gold #8C9D15 for actions, burnt orange #C2410C as the domain accent,
-     Instrument Sans. Set this back to "platform" to return to the dark
-     near-black + #FFCC29 theme in src/styles/_tokens.scss, which is still
-     intact along with the legacy "shop" modes. -->
-<html lang="en" data-ws-theme="market">
+<!-- data-ws-theme selects the palette. "worldstreet" matches the WorldStreet
+     dashboard: near-black, lime #C9DD25, Public Sans (src/styles/_worldstreet.scss).
+     Two alternatives stay maintained, each one attribute away: "shop" (espresso +
+     coral, _tokens.scss + _shop.scss) and "market" (paper + olive, _market.scss).
+     If you switch, change theme-color below too. -->
+<html lang="en" data-ws-theme="worldstreet">
 
 <head>
   <meta charset="UTF-8" />
-  <!-- Every icon here is the header logo, brand/wstore-mark.svg. The .ico and
-       PNGs are rasters of that file, so whichever one a browser picks, the tab
-       shows the same mark; regenerate all of them if the SVG changes. The
+  <!-- Every icon here is the gold W on black, the header logo (brand/wsa-tile.png). The .ico and
+       PNGs show the same mark, so whichever one a browser picks, the tab
+       shows the same logo; regenerate all of them if it changes. The
        apple-touch icon is full-bleed and opaque because iOS masks the corners
        itself and paints transparency black. -->
-  <link rel="icon" type="image/svg+xml" href="/brand/wstore-mark.svg" />
   <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
-  <!-- Sanctioned literal: mirrors --ws-bg-page (market) — a meta tag cannot
+  <!-- Sanctioned literal: mirrors --ws-bg-page (worldstreet; shop is #0F0C0A, market #EEEEEC) — a meta tag cannot
        read a CSS variable. Keep in sync with src/shared/utils/theme.ts. -->
-  <meta name="theme-color" content="#F7F7F5" />
+  <meta name="theme-color" content="#050505" />
 
   <!-- The market theme has no dark counterpart yet, so the stored
        platform/platform-light choice is ignored rather than applied: honouring
@@ -32,13 +30,13 @@
   <meta name="description" content="WorldStore — buy and sell directly with sellers across Nigeria." />
   <title>WorldStore — Marketplace</title>
 
-  <!-- Market theme pairing, matching the sandbox: Instrument Sans throughout,
-       IBM Plex Mono for figures. The Noto Sans request is the naira sign only,
-       which Instrument Sans does not carry. -->
+  <!-- Every theme's fonts: Public Sans for worldstreet, Space Grotesk + Inter for
+       shop, Instrument Sans for market, IBM Plex Mono for figures in all three. The Noto Sans request is the
+       naira sign only, which Instrument Sans does not carry. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&text=%E2%82%A6" rel="stylesheet" />
 </head>

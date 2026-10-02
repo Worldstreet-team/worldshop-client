@@ -10,7 +10,7 @@ export default function AuthLayout() {
               lockup was too small to anchor the page and read as detached.
               Every page under this layout is the admin's, hence the eyebrow. */}
           <Link to="/" className="ws-brand ws-auth__brand" aria-label="WorldStore home">
-            <img src="/brand/wstore-mark.svg" alt="" className="ws-brand__mark" />
+            <img src="/brand/wsa-tile.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
               <span className="ws-brand__word">WorldStore</span>
               <span className="ws-brand__eyebrow">Admin console</span>

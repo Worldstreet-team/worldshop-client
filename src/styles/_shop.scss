@@ -1,0 +1,167 @@
+// Shop theme: espresso + coral, the app's first ws palette (2026-08-03), back
+// as the default. Selected with data-ws-theme="shop" on <html>.
+//
+// _tokens.scss already carries this mode's legacy vocabulary (--ws-bg-*,
+// --ws-brand-*, --ws-text-muted …). This file adds the newer vocabulary that
+// every screen redesigned under the market theme is written against
+// (surface/text/border/action/domain/feedback), resolved to espresso and
+// coral. Without it those screens lose their backgrounds, borders and button
+// fills, since the names only exist inside [data-ws-theme="market"].
+//
+// It is the mirror of _market.scss: same names, dark values. The market theme
+// is untouched; switching back is the one attribute in index.html.
+//
+// Choices that are not a straight copy:
+//   - Coral is the action colour (buttons, links), as it was. The marketplace
+//     domain accent (Stores/Malls pills, rails, tags) is amber, the token
+//     file's --ws-accent-shop, so the two do not collide.
+//   - Text that sat on light tints used the dark end of a ramp; on espresso
+//     the light end reads, so the --mk-* inks flip to it.
+//   - Radii are market's, not the older 7/10/13, so redesigned screens keep
+//     the shape they were built and checked at.
+
+[data-ws-theme="shop"] {
+  // ─── Primitive ramps ──────────────────────────────────────────
+  // Warm neutrals from the espresso surfaces and their text.
+  --ws-prim-neutral-50: #faf9f5;
+  --ws-prim-neutral-100: #f1efe8;
+  --ws-prim-neutral-200: #e0dcd2;
+  --ws-prim-neutral-300: #c7c1b5;
+  --ws-prim-neutral-400: #aba398;
+  --ws-prim-neutral-500: #7c7367;
+  --ws-prim-neutral-600: #5c544a;
+  --ws-prim-neutral-700: #3d3731;
+  --ws-prim-neutral-800: #2c2621;
+  --ws-prim-neutral-900: #201b17;
+  --ws-prim-neutral-950: #0f0c0a;
+
+  // "gold" is the action ramp's name in the sandbox; here it carries coral.
+  --ws-prim-gold-50: #fff1ec;
+  --ws-prim-gold-100: #ffddd2;
+  --ws-prim-gold-200: #ffbba6;
+  --ws-prim-gold-300: #ff9a7c;
+  --ws-prim-gold-400: #ff7a5a;
+  --ws-prim-gold-500: #f7603d;
+  --ws-prim-gold-600: #f0502f;
+  --ws-prim-gold-700: #c73e22;
+  --ws-prim-gold-800: #9c2f18;
+  --ws-prim-gold-900: #5e1b0d;
+  --ws-prim-gold-950: #2e0d06;
+
+  --ws-prim-market-50: #fffbeb;
+  --ws-prim-market-100: #fef3c7;
+  --ws-prim-market-200: #fde68a;
+  --ws-prim-market-300: #fcd34d;
+  --ws-prim-market-400: #fbbf24;
+  --ws-prim-market-500: #f59e0b;
+  --ws-prim-market-600: #d97706;
+  --ws-prim-market-700: #b45309;
+  --ws-prim-market-800: #92400e;
+  --ws-prim-market-900: #78350f;
+  --ws-prim-market-950: #451a03;
+
+  // ─── Surfaces, text, borders ──────────────────────────────────
+  // Same three-step ladder as market: shell on sunken, header and footer bands
+  // on canvas, cards on base. On a dark theme each step is a shade lighter.
+  --ws-surface-sunken: #0f0c0a;
+  --ws-surface-canvas: #171310;
+  --ws-surface-base: #201b17;
+  --ws-surface-raised: #2c2621;
+  --ws-surface-overlay: #2c2621;
+  --ws-surface-ticket: var(--ws-surface-raised);
+  --ws-text-on-ticket: var(--ws-text-primary);
+
+  --ws-text-primary: #faf9f5;
+  --ws-text-secondary: #d6d0c5;
+  --ws-text-tertiary: #aba398;
+  --ws-text-disabled: #7c7367;
+  --ws-text-on-accent: #0f0c0a;
+  --ws-text-on-danger: #fafafa;
+  // Ink on the amber domain accent: white on amber fails contrast.
+  --ws-text-on-domain: #0f0c0a;
+
+  --ws-border-subtle: rgba(255, 255, 255, 0.08);
+  --ws-border-default: rgba(255, 255, 255, 0.14);
+  --ws-border-strong: rgba(255, 255, 255, 0.28);
+
+  // ─── Actions and domain accents ───────────────────────────────
+  --ws-action-primary-default: #f0502f;
+  --ws-action-primary-hover: #ff6a47;
+  --ws-action-primary-active: #c73e22;
+  // Raw coral as text on espresso is thin; the token file lightens it too.
+  --ws-action-primary-text: #ff7a5a;
+  --ws-action-primary-tonal: rgba(240, 80, 47, 0.16);
+  --ws-action-primary-tonal-hover: rgba(240, 80, 47, 0.24);
+
+  --ws-domain-marketplace-accent: #f59e0b;
+  --ws-domain-social-accent: #60a5fa;
+  --ws-domain-vivid-accent: #818cf8;
+  --ws-domain-prediction-accent: #c084fc;
+  --ws-domain-academy-accent: #fbbf24;
+  --ws-domain-xstream-accent: #34d399;
+  --ws-domain-vision-accent: #2dd4bf;
+
+  --mk-accent: var(--ws-domain-marketplace-accent);
+  --mk-on-accent: var(--ws-text-on-domain);
+  --mk-ink: var(--ws-prim-market-300);
+  --mk-tint: color-mix(in srgb, var(--ws-domain-marketplace-accent) 14%, transparent);
+  --mk-tint-ink: var(--ws-prim-market-200);
+  --mk-line: color-mix(in srgb, var(--ws-domain-marketplace-accent) 45%, transparent);
+
+  // ─── Feedback ─────────────────────────────────────────────────
+  --ws-feedback-success: #10b981;
+  --ws-feedback-warning: #f59e0b;
+  --ws-feedback-danger: #ef4444;
+  --ws-feedback-info: #60a5fa;
+  --ws-text-on-feedback: #fafafa;
+  --ws-feedback-success-fill: #065f46;
+  --ws-feedback-warning-fill: #b45309;
+  --ws-feedback-danger-fill: #b91c1c;
+  --ws-feedback-info-fill: #1e40af;
+
+  --ws-tonal-success-surface: rgba(16, 185, 129, 0.14);
+  --ws-tonal-success-text: #34d399;
+  --ws-tonal-error-surface: rgba(239, 68, 68, 0.14);
+  --ws-tonal-error-text: #f87171;
+  --ws-tonal-warning-surface: rgba(245, 158, 11, 0.14);
+  --ws-tonal-warning-text: #fbbf24;
+  --ws-tonal-info-surface: rgba(96, 165, 250, 0.14);
+  --ws-tonal-info-text: #93c5fd;
+  --ws-tonal-neutral-surface: var(--ws-surface-raised);
+  --ws-tonal-neutral-text: var(--ws-text-secondary);
+
+  // Scrims and text over photography stay dark-on-light whatever the theme.
+  --ws-tip-surface: var(--ws-prim-neutral-950);
+  --ws-tip-text: var(--ws-prim-neutral-50);
+  --ws-tip-muted: var(--ws-prim-neutral-400);
+
+  // ─── Elevation ────────────────────────────────────────────────
+  // The button gloss is a white wash; on coral over espresso it has to be
+  // fainter than market's or the button reads as lit from inside.
+  --ws-sheen: rgba(255, 255, 255, 0.22);
+  --ws-shadow-control: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 1px 0 0 rgba(0, 0, 0, 0.4), 0 4px 10px -4px rgba(0, 0, 0, 0.5);
+  --ws-shadow-control-pressed: inset 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+  --ws-shadow-overlay: 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 12px 28px -8px rgba(0, 0, 0, 0.65);
+  --ws-shadow-nav: var(--ws-shadow-overlay);
+
+  // ─── Type ─────────────────────────────────────────────────────
+  --ws-font-display: "Space Grotesk", system-ui, sans-serif;
+  --ws-font-ui: "Inter", system-ui, sans-serif;
+  --ws-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  // ─── Radii ────────────────────────────────────────────────────
+  --ws-radius-sm: 4px;
+  --ws-radius-md: 8px;
+  --ws-radius-lg: 12px;
+  --ws-radius-xl: 16px;
+  --ws-radius-sheet: 22px;
+  --ws-radius-full: 9999px;
+  --ws-radius-pill: 9999px;
+
+  // ─── Legacy names that market bridges and this mode leaves unset ──
+  --ws-bg-page: var(--ws-surface-sunken);
+  --ws-bg-sunken: var(--ws-surface-sunken);
+  --ws-bg-surface: var(--ws-surface-base);
+  --ws-bg-raised: var(--ws-surface-raised);
+  --ws-accent-star: #f97316; // ratings, theme-independent by definition
+}

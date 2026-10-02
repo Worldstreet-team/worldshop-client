@@ -86,7 +86,7 @@ export default function MobileMenu() {
             className="ws-brand"
             aria-label="WorldStore home"
           >
-            <img src="/brand/wstore-mark.svg" alt="" className="ws-brand__mark" />
+            <img src="/brand/wsa-tile.png" alt="" className="ws-brand__mark" />
             <span className="ws-brand__stack">
               <span className="ws-brand__word">WorldStore</span>
             </span>

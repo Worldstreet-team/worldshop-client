@@ -1,0 +1,192 @@
+// WorldStreet theme: the palette of the WorldStreet dashboard and sign-in
+// (dashboard.worldstreetgold.com → worldstreetgold.com/login), read off that
+// site's computed styles on 2026-10-02, so Shop sits in the same family as the
+// app its users arrive from. Selected with data-ws-theme="worldstreet".
+//
+// What the dashboard sets: near-black page #050505, cards #020202 separated by
+// white/10 hairlines, off-white ink #FBFAF9, gray muted text, Public Sans
+// throughout. The accent is NOT the sign-in page's lime: it is the old
+// WorldStreet yellow #FFCC29, the colour of the gold W logo, with black ink.
+//
+// The dashboard draws its cards darker than the page and relies on borders.
+// Shop's layouts lift cards with a three-step surface ladder instead, so the
+// steps here are a few points lighter than the page rather than darker; the
+// hairlines carry the dashboard's look.
+//
+// Unlike market and shop, _tokens.scss has no block for this mode, so this
+// file defines both vocabularies: the newer one the redesigned screens use,
+// and the legacy --ws-bg-* / --ws-brand-* names the older ones still read.
+// The market and shop themes are untouched; each is one attribute away.
+
+[data-ws-theme="worldstreet"] {
+  // ─── Primitive ramps ──────────────────────────────────────────
+  --ws-prim-neutral-50: #fbfaf9;
+  --ws-prim-neutral-100: #f3f1f1;
+  --ws-prim-neutral-200: #e8e4e3;
+  --ws-prim-neutral-300: #c4c4c4;
+  --ws-prim-neutral-400: #a3a3a3;
+  --ws-prim-neutral-500: #808080;
+  --ws-prim-neutral-600: #5c5c5c;
+  --ws-prim-neutral-700: #2e2e2e;
+  --ws-prim-neutral-800: #1a1a1a;
+  --ws-prim-neutral-900: #0a0a0a;
+  --ws-prim-neutral-950: #050505;
+
+  // WorldStreet yellow, #FFCC29 at 500: the logo's gold.
+  --ws-prim-gold-50: #fffaeb;
+  --ws-prim-gold-100: #fff1c2;
+  --ws-prim-gold-200: #ffe58a;
+  --ws-prim-gold-300: #ffdc66;
+  --ws-prim-gold-400: #ffd75c;
+  --ws-prim-gold-500: #ffcc29;
+  --ws-prim-gold-600: #d4a917;
+  --ws-prim-gold-700: #a8850f;
+  --ws-prim-gold-800: #7a6008;
+  --ws-prim-gold-900: #453604;
+  --ws-prim-gold-950: #221a02;
+
+  --ws-prim-market-50: #fffbeb;
+  --ws-prim-market-100: #fef3c7;
+  --ws-prim-market-200: #fde68a;
+  --ws-prim-market-300: #fcd34d;
+  --ws-prim-market-400: #fbbf24;
+  --ws-prim-market-500: #f59e0b;
+  --ws-prim-market-600: #d97706;
+  --ws-prim-market-700: #b45309;
+  --ws-prim-market-800: #92400e;
+  --ws-prim-market-900: #78350f;
+  --ws-prim-market-950: #451a03;
+
+  // ─── Surfaces, text, borders ──────────────────────────────────
+  --ws-surface-sunken: #050505;
+  --ws-surface-canvas: #0a0a0a;
+  --ws-surface-base: #111111;
+  --ws-surface-raised: #1a1a1a;
+  --ws-surface-overlay: #161616;
+  --ws-surface-ticket: var(--ws-surface-raised);
+  --ws-text-on-ticket: var(--ws-text-primary);
+
+  --ws-text-primary: #fbfaf9;
+  --ws-text-secondary: #d4d4d4;
+  --ws-text-tertiary: #8f8f8f;
+  --ws-text-disabled: #5c5c5c;
+  // Black on yellow, as the logo.
+  --ws-text-on-accent: #000000;
+  --ws-text-on-danger: #fafafa;
+  --ws-text-on-domain: #050505;
+
+  // The dashboard's --border is white/10 and --input white/15.
+  --ws-border-subtle: rgba(255, 255, 255, 0.08);
+  --ws-border-default: rgba(255, 255, 255, 0.15);
+  --ws-border-strong: rgba(255, 255, 255, 0.28);
+
+  // ─── Actions and domain accents ───────────────────────────────
+  --ws-action-primary-default: #ffcc29;
+  --ws-action-primary-hover: #ffd75c;
+  --ws-action-primary-active: #d4a917;
+  // Yellow has the contrast to be text on near-black (12:1).
+  --ws-action-primary-text: #ffcc29;
+  --ws-action-primary-tonal: rgba(255, 204, 41, 0.14);
+  --ws-action-primary-tonal-hover: rgba(255, 204, 41, 0.22);
+
+  // The dashboard has no marketplace accent; amber is the token file's
+  // --ws-accent-shop. It sits close to the yellow, so it is pushed to orange
+// here to keep tags from reading as buttons.
+  --ws-domain-marketplace-accent: #f97316;
+  --ws-domain-social-accent: #60a5fa;
+  --ws-domain-vivid-accent: #818cf8;
+  --ws-domain-prediction-accent: #c084fc;
+  --ws-domain-academy-accent: #fbbf24;
+  --ws-domain-xstream-accent: #34d399;
+  --ws-domain-vision-accent: #2dd4bf;
+
+  --mk-accent: var(--ws-domain-marketplace-accent);
+  --mk-on-accent: var(--ws-text-on-domain);
+  --mk-ink: #fdba74; // orange-300, legible on the orange tint
+  --mk-tint: color-mix(in srgb, var(--ws-domain-marketplace-accent) 14%, transparent);
+  --mk-tint-ink: #fed7aa;
+  --mk-line: color-mix(in srgb, var(--ws-domain-marketplace-accent) 45%, transparent);
+
+  // ─── Feedback ─────────────────────────────────────────────────
+  --ws-feedback-success: #10b981;
+  --ws-feedback-warning: #f59e0b;
+  --ws-feedback-danger: #ff6568; // the dashboard's dark --destructive
+  --ws-feedback-info: #60a5fa;
+  --ws-text-on-feedback: #fafafa;
+  --ws-feedback-success-fill: #065f46;
+  --ws-feedback-warning-fill: #b45309;
+  --ws-feedback-danger-fill: #b91c1c;
+  --ws-feedback-info-fill: #1e40af;
+
+  --ws-tonal-success-surface: rgba(16, 185, 129, 0.14);
+  --ws-tonal-success-text: #34d399;
+  --ws-tonal-error-surface: rgba(255, 101, 104, 0.14);
+  --ws-tonal-error-text: #ff8a8c;
+  --ws-tonal-warning-surface: rgba(245, 158, 11, 0.14);
+  --ws-tonal-warning-text: #fbbf24;
+  --ws-tonal-info-surface: rgba(96, 165, 250, 0.14);
+  --ws-tonal-info-text: #93c5fd;
+  --ws-tonal-neutral-surface: var(--ws-surface-raised);
+  --ws-tonal-neutral-text: var(--ws-text-secondary);
+
+  --ws-tip-surface: var(--ws-prim-neutral-950);
+  --ws-tip-text: var(--ws-prim-neutral-50);
+  --ws-tip-muted: var(--ws-prim-neutral-400);
+
+  // ─── Elevation ────────────────────────────────────────────────
+  // The dashboard's buttons are flat; a faint sheen keeps Shop's gloss
+  // without lighting the yellow from inside.
+  --ws-sheen: rgba(255, 255, 255, 0.18);
+  --ws-shadow-control: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 1px 0 0 rgba(0, 0, 0, 0.5), 0 4px 10px -4px rgba(0, 0, 0, 0.6);
+  --ws-shadow-control-pressed: inset 0 1px 3px 0 rgba(0, 0, 0, 0.6);
+  --ws-shadow-overlay: 0 1px 2px 0 rgba(0, 0, 0, 0.5), 0 12px 28px -8px rgba(0, 0, 0, 0.75);
+  --ws-shadow-nav: var(--ws-shadow-overlay);
+
+  // ─── Type ─────────────────────────────────────────────────────
+  --ws-font-display: "Public Sans", system-ui, sans-serif;
+  --ws-font-ui: "Public Sans", system-ui, sans-serif;
+  --ws-font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  // ─── Radii ────────────────────────────────────────────────────
+  --ws-radius-sm: 4px;
+  --ws-radius-md: 8px;
+  --ws-radius-lg: 12px;
+  --ws-radius-xl: 16px;
+  --ws-radius-sheet: 22px;
+  --ws-radius-full: 9999px;
+  --ws-radius-pill: 9999px;
+
+  // ─── Legacy vocabulary ────────────────────────────────────────
+  --ws-bg-page: var(--ws-surface-sunken);
+  --ws-bg-sunken: var(--ws-surface-sunken);
+  --ws-bg-surface: var(--ws-surface-base);
+  --ws-bg-raised: var(--ws-surface-raised);
+  --ws-bg-chip: var(--ws-surface-raised);
+  --ws-bg-track: rgba(255, 255, 255, 0.06);
+  --ws-border-hairline: var(--ws-border-subtle);
+
+  --ws-text-muted: var(--ws-text-tertiary);
+  --ws-text-subtle: var(--ws-text-disabled);
+
+  --ws-brand-primary: var(--ws-action-primary-default);
+  --ws-brand-active: var(--ws-action-primary-hover);
+  --ws-brand-dim: var(--ws-prim-gold-600);
+  --ws-brand-on-primary: var(--ws-text-on-accent);
+  --ws-brand-gold-text: var(--ws-action-primary-text);
+
+  --ws-status-success: var(--ws-feedback-success);
+  --ws-status-danger: var(--ws-feedback-danger);
+  --ws-status-warning: var(--ws-feedback-warning);
+  --ws-status-warning-chip: var(--ws-tonal-warning-surface);
+
+  --ws-money-credit: var(--ws-feedback-success);
+  --ws-money-credit-chip: var(--ws-tonal-success-surface);
+  --ws-money-debit: var(--ws-feedback-danger);
+  --ws-money-debit-chip: var(--ws-tonal-error-surface);
+  --ws-money-convert: var(--ws-action-primary-text);
+  --ws-money-convert-chip: var(--ws-action-primary-tonal);
+
+  --ws-overlay-scrim: rgba(0, 0, 0, 0.65);
+  --ws-focus-ring: var(--ws-action-primary-default);
+  --ws-accent-star: #f97316; // ratings, theme-independent by definition
+}

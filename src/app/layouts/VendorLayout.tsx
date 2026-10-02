@@ -66,7 +66,7 @@ function Sidebar({ items, onNavigate, plan }: { items: NavItem[]; onNavigate?: (
   return (
     <div className="ws-vxside">
       <div className="ws-vxside__brand">
-        <img src="/brand/wstore-mark.svg" alt="" width={32} height={32} />
+        <img src="/brand/wsa-tile.png" alt="" width={32} height={32} />
         <span className="ws-vxside__word">Marketplace</span>
         {plan && <span className="ws-vxside__plan">{plan}</span>}
       </div>
