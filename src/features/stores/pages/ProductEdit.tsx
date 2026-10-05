@@ -8,7 +8,7 @@ import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import Modal from '@/shared/components/common/Modal';
 import { fmtNaira, imageSrc } from '@/features/listings/model';
-import { dealError, MAX_DEAL_DAYS, toLocalDate, useListingEditor } from '@/features/stores/hooks/useListingEditor';
+import { dealError, lastDealDay, MAX_DEAL_DAYS, toLocalDate, useListingEditor } from '@/features/stores/hooks/useListingEditor';
 import { formatLocation } from '@/shared/utils/locations';
 
 /**
@@ -628,7 +628,7 @@ export default function ListingEdit() {
                   type="date"
                   className="ws-vxinput"
                   min={toLocalDate(new Date())}
-                  max={toLocalDate(new Date(Date.now() + MAX_DEAL_DAYS * 86_400_000))}
+                  max={lastDealDay()}
                   value={dealEndsOn}
                   aria-invalid={!!errors.dealEndsOn}
                   onChange={(e) => set(setDealEndsOn, 'dealEndsOn')(e.target.value)}

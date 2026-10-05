@@ -1033,6 +1033,17 @@ $vx-side: 264px;
     color: var(--ws-action-primary-text);
   }
 
+  // Under the price of a listing on a live deal, so the vendor can see at a
+  // glance which rows are reduced without opening each one.
+  &__deal {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mk-ink, var(--ws-text-secondary));
+    white-space: nowrap;
+  }
+
   &__posted {
     font-size: 12.5px;
     white-space: nowrap;
@@ -2663,5 +2674,39 @@ $vx-inbox: 860px;
   dd {
     margin: 0;
     color: var(--ws-text-primary);
+  }
+}
+
+// The bulk deal modal's preview: each listing with its price before and after,
+// so the vendor sees what a percentage does to real prices before saving.
+.ws-vxdeallist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-md);
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ws-space-3);
+    padding: var(--ws-space-2) var(--ws-space-3);
+    font-size: 13px;
+
+    & + li { border-top: 1px solid var(--ws-border-hairline); }
+  }
+
+  &__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  s {
+    color: var(--ws-text-muted);
+    margin-right: var(--ws-space-1);
   }
 }

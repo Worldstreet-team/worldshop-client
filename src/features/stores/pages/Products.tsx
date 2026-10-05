@@ -14,6 +14,9 @@ import { toApiError } from '@/shared/lib/api';
 import { firstImage, fmtNaira, postedAgo } from '@/features/listings/model';
 import { imageFallback, PRODUCT_PLACEHOLDER } from '@/shared/utils/imageFallback';
 import { formatLocation } from '@/shared/utils/locations';
+import DealModal from '@/features/stores/components/vendor/DealModal';
+import BulkDealModal from '@/features/stores/components/vendor/BulkDealModal';
+import { liveDeal } from '@/features/stores/hooks/useListingEditor';
 
 /**
  * Manage Listings, laid out as the sandbox's vendor Listings: a toolbar of
@@ -131,6 +134,9 @@ export default function VendorListings() {
   const [search, setSearch] = useState(() => params.get('q') ?? '');
   const [appliedSearch, setAppliedSearch] = useState(() => params.get('q') ?? '');
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // The listing whose deal is being set or edited from its row menu.
+  const [dealFor, setDealFor] = useState<Listing | null>(null);
+  const [bulkDeal, setBulkDeal] = useState(false);
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' } | null>(null);
   const addToast = useUIStore((s) => s.addToast);
 
@@ -400,6 +406,7 @@ export default function VendorListings() {
             <span className="ws-vxbulk__rule" aria-hidden />
             <button type="button" className="ws-vxbulk__btn" onClick={() => bulk('publish')}>Publish</button>
             <button type="button" className="ws-vxbulk__btn" onClick={() => bulk('hide')}>Hide</button>
+            <button type="button" className="ws-vxbulk__btn" onClick={() => setBulkDeal(true)}>Put on deal</button>
             <span className="ws-vxbulk__rule" aria-hidden />
             <button type="button" className="ws-vxbulk__btn ws-vxbulk__btn--danger" onClick={() => bulk('delete')}>
               Delete
@@ -532,11 +539,17 @@ export default function VendorListings() {
                     const thumb = firstImage(l);
                     const place = formatLocation([l.city, l.state], l.country);
                     const posted = postedAgo(l.publishedAt ?? l.updatedAt);
+                    const onDeal = liveDeal(l);
                     const menu: RowMenuItem[] =
                       l.status === 'REMOVED'
                         ? [{ label: 'Removed by admin. Contact support', onSelect: () => {}, disabled: true }]
                         : [
                             { label: 'Edit', onSelect: () => navigate(`${productsBasePath}/${l.id}`) },
+                            // Deals need a single price to cut, so ranges and
+                            // "contact for price" listings do not get the option.
+                            ...(l.priceType === 'FIXED'
+                              ? [{ label: onDeal ? 'Edit deal' : 'Put on deal', onSelect: () => setDealFor(l), disabled: busy }]
+                              : []),
                             l.status === 'PUBLISHED'
                               ? { label: 'Hide listing', onSelect: () => one(hide, l), disabled: busy }
                               : {
@@ -596,7 +609,14 @@ export default function VendorListings() {
                           </div>
                         </th>
                         <td><ListingStatus status={l.status} /></td>
-                        <td className="is-num"><span className="ws-vxtable__bigprice">{priceLabel(l)}</span></td>
+                        <td className="is-num">
+                          <span className="ws-vxtable__bigprice">{priceLabel(l)}</span>
+                          {onDeal && (
+                            <span className="ws-vxtable__deal">
+                              On deal, was {fmtNaira(l.compareAtPrice!)}
+                            </span>
+                          )}
+                        </td>
                         <td className="is-num">{l.viewCount.toLocaleString('en-NG')}</td>
                         <td className="is-num">{l.inquiryCount.toLocaleString('en-NG')}</td>
                         <td><span className="ws-vxtable__posted">{posted ?? '—'}</span></td>
@@ -703,6 +723,29 @@ export default function VendorListings() {
           </div>
         )}
       </div>
+
+      {bulkDeal && (
+        <BulkDealModal
+          listings={listings.filter((l) => selected.has(l.id) && l.status !== 'REMOVED')}
+          onClose={() => setBulkDeal(false)}
+          onDone={() => {
+            setBulkDeal(false);
+            setSelected(new Set());
+            void load();
+          }}
+        />
+      )}
+
+      {dealFor && (
+        <DealModal
+          listing={dealFor}
+          onClose={() => setDealFor(null)}
+          onSaved={() => {
+            setDealFor(null);
+            void load();
+          }}
+        />
+      )}
     </VendorPage>
   );
 }

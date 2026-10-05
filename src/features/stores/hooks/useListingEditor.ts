@@ -25,6 +25,20 @@ export function toLocalDate(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/**
+ * The last day a deal may be set to end on. A deal runs to the end of its day,
+ * so a date MAX_DEAL_DAYS out would run past the server's limit by up to a day
+ * and be refused on save. Today counts as day one.
+ */
+export function lastDealDay(): string {
+  return toLocalDate(new Date(Date.now() + (MAX_DEAL_DAYS - 1) * 86_400_000));
+}
+
+/** Whether a listing as stored carries a deal that is still running. */
+export function liveDeal(l: { priceType: string; compareAtPrice?: number | null; dealEndsAt?: string | null }): boolean {
+  return l.priceType === 'FIXED' && l.compareAtPrice != null && !!l.dealEndsAt && Date.parse(l.dealEndsAt) > Date.now();
+}
+
 /** A deal "ends on the 12th" means it runs through the 12th, local time. */
 export function endOfDay(date: string): Date {
   const [y, m, d] = date.split('-').map(Number);
@@ -47,7 +61,7 @@ export function dealError(v: {
   if (!v.dealEndsOn) return { field: 'dealEndsOn', message: 'Choose when the deal ends.' };
   const end = endOfDay(v.dealEndsOn).getTime();
   if (end <= Date.now()) return { field: 'dealEndsOn', message: 'The end date has already passed.' };
-  if (end - Date.now() > MAX_DEAL_DAYS * 86_400_000 + 86_400_000) {
+  if (end - Date.now() > MAX_DEAL_DAYS * 86_400_000) {
     return { field: 'dealEndsOn', message: `A deal can run for at most ${MAX_DEAL_DAYS} days.` };
   }
   return null;
