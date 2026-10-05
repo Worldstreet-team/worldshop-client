@@ -278,10 +278,16 @@ export default function VendorListings() {
     if (ok) await load();
   };
 
-  const bulk = async (kind: 'publish' | 'hide' | 'delete') => {
-    const rows = listings.filter((l) => selected.has(l.id));
+  // Show and Hide are greyed out when nothing selected can take them.
+  const selectedRows = listings.filter((l) => selected.has(l.id));
+  const canShow = selectedRows.some((l) => l.status === 'DRAFT' || l.status === 'HIDDEN');
+  const canHide = selectedRows.some((l) => l.status === 'PUBLISHED');
+
+  /** Show publishes drafts and unhides hidden listings: both make them visible. */
+  const bulk = async (kind: 'show' | 'hide' | 'delete') => {
+    const rows = selectedRows;
     const eligible = rows.filter((l) =>
-      kind === 'publish' ? l.status !== 'PUBLISHED' && l.status !== 'REMOVED'
+      kind === 'show' ? l.status === 'DRAFT' || l.status === 'HIDDEN'
         : kind === 'hide' ? l.status === 'PUBLISHED'
           : l.status !== 'REMOVED',
     );
@@ -289,20 +295,20 @@ export default function VendorListings() {
     if (kind === 'delete' && !window.confirm(`Delete ${eligible.length} ${eligible.length === 1 ? 'listing' : 'listings'}? This cannot be undone.`)) {
       return;
     }
-    const action = kind === 'publish' ? publish : kind === 'hide' ? hide : remove;
+    const action = kind === 'show' ? publish : kind === 'hide' ? hide : remove;
     const failed: Listing[] = [];
     for (const l of eligible) if (!(await action(l, true))) failed.push(l);
     const done = eligible.length - failed.length;
-    const verb = kind === 'publish' ? 'published' : kind === 'hide' ? 'hidden' : 'deleted';
+    const verb = kind === 'show' ? 'now visible' : kind === 'hide' ? 'hidden' : 'deleted';
     addToast({
       type: failed.length ? 'error' : 'success',
       message: failed.length
-        ? `${done} of ${eligible.length} ${verb}.${kind === 'publish' ? ' The rest show why on their rows.' : ''}`
+        ? `${done} of ${eligible.length} ${verb}.${kind === 'show' ? ' The rest show why on their rows.' : ''}`
         : `${done} ${done === 1 ? 'listing' : 'listings'} ${verb}.`,
     });
     // Reloading clears the pinned checklists, so a publish that left some
     // behind keeps the rows it has and only drops the selection.
-    if (kind === 'publish' && failed.length) {
+    if (kind === 'show' && failed.length) {
       const ok = new Set(eligible.filter((l) => !failed.includes(l)).map((l) => l.id));
       setListings((prev) => prev.map((l) => (ok.has(l.id) ? { ...l, status: 'PUBLISHED' } : l)));
       setSelected(new Set(failed.map((l) => l.id)));
@@ -404,8 +410,8 @@ export default function VendorListings() {
               Clear
             </button>
             <span className="ws-vxbulk__rule" aria-hidden />
-            <button type="button" className="ws-vxbulk__btn" onClick={() => bulk('publish')}>Publish</button>
-            <button type="button" className="ws-vxbulk__btn" onClick={() => bulk('hide')}>Hide</button>
+            <button type="button" className="ws-vxbulk__btn" onClick={() => bulk('show')} disabled={!canShow}>Show</button>
+            <button type="button" className="ws-vxbulk__btn" onClick={() => bulk('hide')} disabled={!canHide}>Hide</button>
             <button type="button" className="ws-vxbulk__btn" onClick={() => setBulkDeal(true)}>Put on deal</button>
             <span className="ws-vxbulk__rule" aria-hidden />
             <button type="button" className="ws-vxbulk__btn ws-vxbulk__btn--danger" onClick={() => bulk('delete')}>
@@ -550,10 +556,15 @@ export default function VendorListings() {
                             ...(l.priceType === 'FIXED'
                               ? [{ label: onDeal ? 'Edit deal' : 'Put on deal', onSelect: () => setDealFor(l), disabled: busy }]
                               : []),
+                            // The buyer's view of a live listing, in a new tab so
+                            // the vendor keeps their place in this list.
+                            ...(l.status === 'PUBLISHED'
+                              ? [{ label: 'View on marketplace', onSelect: () => window.open(`/listings/${l.slug || l.id}`, '_blank', 'noopener') }]
+                              : []),
                             l.status === 'PUBLISHED'
                               ? { label: 'Hide listing', onSelect: () => one(hide, l), disabled: busy }
                               : {
-                                  label: 'Publish',
+                                  label: l.status === 'HIDDEN' ? 'Unhide' : 'Publish',
                                   onSelect: () => one(publish, l),
                                   disabled: busy || blockers.length > 0,
                                 },

@@ -937,6 +937,14 @@ $vx-side: 264px;
 
     &:hover { background: color-mix(in srgb, var(--ws-tip-text) 8%, transparent); }
 
+    // Show or Hide with nothing in the selection to act on: kept in place so
+    // the bar does not shift as rows are ticked, just quieted.
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+      background: none;
+    }
+
     &--danger { color: var(--ws-feedback-danger); }
   }
 
