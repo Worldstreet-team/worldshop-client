@@ -225,6 +225,16 @@ GET('/listings', (_p, q) => {
     });
   }
 
+  // deals=1: live vendor-set deals only, soonest-ending first (as the API).
+  if (q.deals === '1' || q.deals === 'true') {
+    const now = new Date().toISOString();
+    rows = rows
+      .filter((l) => l.compareAtPrice != null && l.dealEndsAt && l.dealEndsAt > now)
+      .sort((a, b) => a.dealEndsAt.localeCompare(b.dealEndsAt));
+    const { slice, pagination } = paginate(rows, q);
+    return { success: true, data: slice.map(withStore), pagination };
+  }
+
   const sort = q.sort ?? q.sortBy;
   if (sort === 'price_asc') rows = [...rows].sort((a, b) => (a.basePrice ?? 1e15) - (b.basePrice ?? 1e15));
   else if (sort === 'price_desc') rows = [...rows].sort((a, b) => (b.basePrice ?? -1) - (a.basePrice ?? -1));
@@ -835,6 +845,102 @@ POST('/auth/admin/logout', () => {
 });
 
 // --- Admin ---
+
+// --- Admin billing (plans + revenue) ---
+// Mirrors worldshop-server's /admin/billing/*. Plans are the same records the
+// public /stores/plans and /malls/plans serve, so an edit here shows up on the
+// vendor side straight away, as it does against the real API. Revenue figures
+// are invented for the mock only.
+
+const adminPlans = () => [
+  ...plans.map((p) => ({ kind: 'STORE', substoreLimit: null, ...p })),
+  ...mallPlans.map((p) => ({ kind: 'MALL', ...p })),
+].map((p, i) => ({
+  graceDays: 7,
+  isActive: true,
+  sortOrder: i,
+  updatedAt: new Date().toISOString(),
+  ...p,
+  isDefault: p.code === 'BASIC' || p.code === 'MALL_STARTER',
+  subscribers: p.code === 'BASIC'
+    ? { active: 1, grace: 0, pending: 0, other: 0 }
+    : p.code === 'MALL_STARTER'
+      ? { active: 1, grace: 0, pending: 0, other: 0 }
+      : { active: 0, grace: 0, pending: 0, other: 0 },
+}));
+
+const planList = (kind) => (kind === 'MALL' ? mallPlans : plans);
+
+GET('/admin/billing/plans', () => ok(adminPlans()));
+POST('/admin/billing/plans', (_p, _q, body) => {
+  if (adminPlans().some((p) => p.code === body.code)) {
+    return { status: 409, body: { success: false, message: `A plan with the code "${body.code}" already exists` } };
+  }
+  const plan = { id: `plan-${Date.now()}`, currency: 'USD', ...body };
+  planList(body.kind).push(plan);
+  return ok(adminPlans().find((p) => p.id === plan.id));
+});
+PATCH('/admin/billing/plans/:id', ({ id }, _q, body) => {
+  for (const list of [plans, mallPlans]) {
+    const plan = list.find((p) => p.id === id);
+    if (!plan) continue;
+    if (body.isActive === false && adminPlans().find((p) => p.id === id)?.isDefault) {
+      return { status: 409, body: { success: false, message: 'This is the default plan new vendors are put on. Deactivating it would block every new signup.' } };
+    }
+    Object.assign(plan, body);
+    return ok(adminPlans().find((p) => p.id === id));
+  }
+  return { status: 404, body: { success: false, message: 'Plan not found' } };
+});
+
+GET('/admin/billing/revenue', (_p, q) => {
+  const months = Math.min(Math.max(Number(q.months) || 12, 1), 24);
+  const now = new Date();
+  const series = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    // A slow ramp from launch three months ago; nothing before it.
+    const age = 3 - i;
+    const stores = age < 0 ? 0 : 2 + age * 2;
+    const malls = age < 1 ? 0 : 1;
+    series.push({
+      month: d.toISOString().slice(0, 7),
+      storeMinor: stores * 500,
+      mallMinor: malls * 2500,
+      walletMinor: stores * 500 + malls * 2500 - (age === 0 ? 500 : 0),
+      creditMinor: age === 0 ? 500 : 0,
+      payments: stores + malls,
+    });
+  }
+  const sum = (k) => series.reduce((n, r) => n + r[k], 0);
+  const last = series[series.length - 1];
+  const prev = series[series.length - 2];
+  const at = (daysAgo) => new Date(Date.now() - daysAgo * 86_400_000).toISOString();
+  return ok({
+    currency: 'USD',
+    totals: {
+      allTimeMinor: sum('storeMinor') + sum('mallMinor'),
+      allTimeWalletMinor: sum('walletMinor'),
+      allTimeCreditMinor: sum('creditMinor'),
+      allTimePayments: sum('payments'),
+      thisMonthMinor: last.storeMinor + last.mallMinor,
+      lastMonthMinor: prev ? prev.storeMinor + prev.mallMinor : 0,
+      monthlyRecurringMinor: 8 * 500 + 2500,
+      failedLast30Days: 2,
+    },
+    subscriptions: {
+      stores: { ACTIVE: 8, GRACE: 1, PENDING_PAYMENT: 3, CANCELLED: 1, LAPSED: 2 },
+      malls: { ACTIVE: 1, PENDING_PAYMENT: 1 },
+    },
+    series,
+    recent: [
+      { id: 'c1', kind: 'STORE', name: 'Lagos Tech Hub', slug: 'lagos-tech-hub', plan: 'Basic', amountMinor: 500, walletMinor: 500, creditMinor: 0, status: 'PAID', failureCode: null, attempts: 0, periodStart: at(2), periodEnd: at(-28), at: at(2) },
+      { id: 'c2', kind: 'MALL', name: 'Computer Village Arcade', slug: 'computer-village-arcade', plan: 'Starter', amountMinor: 2500, walletMinor: 2500, creditMinor: 0, status: 'PAID', failureCode: null, attempts: 0, periodStart: at(5), periodEnd: at(-25), at: at(5) },
+      { id: 'c3', kind: 'STORE', name: 'Abuja Home Goods', slug: null, plan: 'Basic', amountMinor: 500, walletMinor: 0, creditMinor: 0, status: 'FAILED', failureCode: 'INSUFFICIENT_BALANCE', attempts: 3, periodStart: at(4), periodEnd: at(-26), at: at(1) },
+      { id: 'c4', kind: 'STORE', name: 'Ikeja Phones', slug: null, plan: 'Basic', amountMinor: 500, walletMinor: 300, creditMinor: 200, status: 'PAID', failureCode: null, attempts: 1, periodStart: at(9), periodEnd: at(-21), at: at(8) },
+    ],
+  });
+});
 
 GET('/admin/dashboard/stats', () => ok(adminStats));
 GET('/admin/categories', () => ok(db.categories.map((c) => ({

@@ -9,11 +9,12 @@ export function useBrowseTokens(
   selected: Category | undefined,
   countryName: string,
 ) {
-  const { search, countryFilter, stateFilter, condition, minPrice, maxPrice, attrFilters, setParam } = filters;
+  const { search, countryFilter, stateFilter, condition, minPrice, maxPrice, deals, attrFilters, setParam } = filters;
 
   const activeTokens = useMemo(() => {
     const out: Array<{ key: string; label: string; clear: () => void }> = [];
     if (search) out.push({ key: 'search', label: `“${search}”`, clear: () => setParam({ search: null }) });
+    if (deals) out.push({ key: 'deals', label: 'On deal', clear: () => setParam({ deals: null }) });
     if (selected) out.push({ key: 'cat', label: selected.name, clear: () => setParam({ categoryId: null }) });
     if (countryFilter) out.push({ key: 'country', label: countryName, clear: () => setParam({ country: null, state: null }) });
     if (stateFilter) out.push({ key: 'state', label: stateFilter, clear: () => setParam({ state: null }) });
@@ -30,7 +31,7 @@ export function useBrowseTokens(
       out.push({ key: `attr.${name}`, label: `${name}: ${value}`, clear: () => setParam({ [`attr.${name}`]: null }) });
     }
     return out;
-  }, [search, selected, countryFilter, countryName, stateFilter, condition, minPrice, maxPrice, attrFilters, setParam]);
+  }, [search, selected, countryFilter, countryName, stateFilter, condition, minPrice, maxPrice, deals, attrFilters, setParam]);
 
   return activeTokens;
 }

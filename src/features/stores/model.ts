@@ -24,6 +24,16 @@ export function sinceLabel(iso: string): string | null {
     : at.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 }
 
+/**
+ * How often a subscription plan bills: "a month", "every 3 months",
+ * "every 30 days". Plans are set in the admin console, so the wording comes
+ * from the plan instead of assuming monthly.
+ */
+export function billingInterval(plan: { intervalMonths: number | null; intervalDays: number }): string {
+  if (plan.intervalMonths) return plan.intervalMonths === 1 ? 'a month' : `every ${plan.intervalMonths} months`;
+  return plan.intervalDays === 1 ? 'a day' : `every ${plan.intervalDays} days`;
+}
+
 /** Average reply time as a buyer reads it: "~5 min", "~2 hr", "~3 days". */
 export function replyTime(mins: number): string {
   if (mins < 60) return `~${Math.max(1, Math.round(mins))} min`;

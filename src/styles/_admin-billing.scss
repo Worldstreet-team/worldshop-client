@@ -1,0 +1,234 @@
+// Admin console: Pricing (plan cards and the plan dialog) and Revenue (the
+// monthly chart). Built on the console's ds pieces (ws-card, ws-stat,
+// ws-table, ws-modal); only what those do not cover lives here.
+
+// ─── Plan cards ─────────────────────────────────────────────────
+
+.ws-plancards {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.ws-plancard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ws-space-3);
+
+  // A hidden plan still bills its existing subscribers, so it stays fully
+  // legible; the dimming only says "not offered to new signups".
+  &.is-inactive { opacity: 0.72; }
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ws-space-2);
+  }
+
+  &__name {
+    margin: 0;
+    font-family: var(--ws-font-display);
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  &__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  &__price {
+    margin: 0;
+    font-size: 14px;
+
+    .ws-num {
+      font-family: var(--ws-font-display);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ws-text-primary);
+    }
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ws-space-3) var(--ws-space-4);
+    margin: 0;
+    padding-top: var(--ws-space-3);
+    border-top: 1px solid var(--ws-border-hairline);
+
+    dt {
+      font-size: 12px;
+      color: var(--ws-text-muted);
+    }
+
+    dd {
+      margin: 2px 0 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
+
+  &__perks {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ws-text-secondary, var(--ws-text-muted));
+  }
+
+  // Pinned to the bottom so the edit buttons line up across a row.
+  &__edit {
+    align-self: flex-start;
+    margin-top: auto;
+  }
+}
+
+// ─── Plan dialog ────────────────────────────────────────────────
+
+.ws-plangrid {
+  display: grid;
+  gap: var(--ws-space-4);
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 640px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  // A field with a hint makes its row taller; without this its neighbour
+  // spreads the spare height between label and input and sits out of line.
+  > * { align-content: start; }
+
+  &__wide { grid-column: 1 / -1; }
+}
+
+.ws-planswitch {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ws-space-3);
+  cursor: pointer;
+
+  > span {
+    display: grid;
+    gap: 2px;
+    font-size: 14px;
+  }
+
+  .ws-switch { margin-top: 2px; }
+}
+
+// ─── Revenue chart ──────────────────────────────────────────────
+// One series (revenue per month), so no legend: the section title names it.
+// Bars are anchored to the baseline with 4px rounded tops and a 2px gap
+// between them; the hover tooltip carries the store/mall split, and the
+// table under the chart carries every figure for anyone not using a pointer.
+
+.ws-revchart {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ws-space-3);
+  height: 240px;
+  padding-bottom: 22px; // room for the month labels under the plot
+
+  &__axis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 11px;
+    color: var(--ws-text-muted);
+    // Centre each tick label on its gridline.
+    margin: -7px 0;
+  }
+
+  &__plot {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    border-bottom: 1px solid var(--ws-border-default, var(--ws-border-hairline));
+  }
+
+  &__grid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 1px dashed var(--ws-border-hairline);
+    pointer-events: none;
+  }
+
+  &__col {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    outline: none;
+    cursor: default;
+
+    // The hit target is the whole column, not just the bar.
+    &:focus-visible { box-shadow: inset 0 0 0 2px var(--ws-focus-ring); border-radius: 4px; }
+  }
+
+  &__bar {
+    width: min(70%, 36px);
+    border-radius: 4px 4px 0 0;
+    background: var(--ws-chart-primary, var(--ws-action-primary-default, var(--ws-brand-primary)));
+    transition: filter var(--ws-motion-fast) var(--ws-ease);
+
+    .is-hover & { filter: brightness(1.18); }
+  }
+
+  &__label {
+    position: absolute;
+    bottom: -20px;
+    font-size: 11px;
+    color: var(--ws-text-muted);
+    white-space: nowrap;
+  }
+
+  &__tip {
+    position: absolute;
+    bottom: calc(100% - 8px);
+    left: 50%;
+    z-index: 2;
+    display: grid;
+    gap: 2px;
+    min-width: 180px;
+    padding: 8px 10px;
+    border: 1px solid var(--ws-border-hairline);
+    border-radius: var(--ws-radius-md);
+    background: var(--ws-surface-overlay, var(--ws-bg-raised));
+    box-shadow: var(--ws-shadow-nav);
+    font-size: 12px;
+    color: var(--ws-text-secondary, var(--ws-text-muted));
+    pointer-events: none;
+
+    strong { color: var(--ws-text-primary); }
+
+    // Right half of the chart: open leftwards so it never leaves the card.
+    &.is-left { left: auto; right: 50%; }
+  }
+
+  // With twelve or more bars on a phone, show every other month label.
+  @media (max-width: 639px) {
+    &__col:nth-child(even of .ws-revchart__col) .ws-revchart__label { visibility: hidden; }
+  }
+}
+
+.ws-revtable {
+  margin-top: var(--ws-space-4);
+
+  summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ws-text-muted);
+    &:hover { color: var(--ws-text-primary); }
+  }
+
+  .ws-table-wrap { margin-top: var(--ws-space-3); }
+}

@@ -13,6 +13,16 @@ import { savedListings, toggleSaved } from '@/features/listings/savedListings';
 const LOW_STOCK = 5;
 const PAY_LATER_PARTS = 4;
 
+/** "Deal ends today", "Deal ends tomorrow", "Deal ends in 5 days", counted in calendar days. */
+function dealEnds(iso: string): string {
+  const end = new Date(iso);
+  const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOf(end) - startOf(new Date())) / 86_400_000);
+  if (days <= 0) return 'Deal ends today';
+  if (days === 1) return 'Deal ends tomorrow';
+  return `Deal ends in ${days} days`;
+}
+
 function priceHint(l: PublicListing): string {
   if (l.priceType === 'ON_REQUEST') return 'No public price. Ask the seller for one.';
   if (l.priceType === 'RANGE') return 'Price depends on the option you choose.';
@@ -125,6 +135,9 @@ export default function ListingBuyBox({ listing, location, contact }: ListingBuy
             </span>
           )}
         </p>
+        {was != null && listing.dealEndsAt && (
+          <p className="ws-ldbuy__deal">{dealEnds(listing.dealEndsAt)}</p>
+        )}
         {price != null && (
           <p className="ws-ldbuy__later">
             or {PAY_LATER_PARTS} × <strong className="ws-num">{fmtNaira(Math.round(price / PAY_LATER_PARTS))}</strong>{' '}

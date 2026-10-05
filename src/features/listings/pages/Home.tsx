@@ -48,8 +48,8 @@ export default function Home() {
           id="home-deals"
           eyebrow="Deals"
           title="Deals ending soon"
-          sub="The keenest prices on the marketplace this week."
-          to="/listings?sort=price_asc"
+          sub="Prices sellers have cut, for a limited time."
+          to="/listings?deals=1"
           items={deals}
           loading={loading}
         />

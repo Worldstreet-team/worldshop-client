@@ -126,6 +126,11 @@
   --ws-tonal-warning-text: #fbbf24;
   --ws-tonal-info-surface: rgba(96, 165, 250, 0.14);
   --ws-tonal-info-text: #93c5fd;
+  // Chart bars: the yellow at full brightness sits above the lightness band a
+  // data mark needs on near-black (validated with the dataviz checks: L 0.87
+  // against a 0.48-0.67 band). The 700 step passes and still reads as gold.
+  --ws-chart-primary: var(--ws-prim-gold-700);
+
   // Confirmations ("Added to Saved", "Profile updated") in the brand yellow
   // rather than the generic success green, with the logo's black ink.
   --ws-toast-success-fill: var(--ws-action-primary-default);

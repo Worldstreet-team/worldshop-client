@@ -16,6 +16,43 @@ import { mapServerFieldPath } from '@/features/stores/listingRules';
 import { useUIStore } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
 
+/** Matches the server: a deal may end at most this many days out. */
+export const MAX_DEAL_DAYS = 30;
+
+/** YYYY-MM-DD in the vendor's own time zone, as a date input wants it. */
+export function toLocalDate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** A deal "ends on the 12th" means it runs through the 12th, local time. */
+export function endOfDay(date: string): Date {
+  const [y, m, d] = date.split('-').map(Number);
+  return new Date(y, m - 1, d, 23, 59, 59);
+}
+
+/** The first problem with a deal as entered, or null. Mirrors the API's dealProblem. */
+export function dealError(v: {
+  priceType: string;
+  basePrice: string;
+  onDeal: boolean;
+  compareAtPrice: string;
+  dealEndsOn: string;
+}): { field: 'compareAtPrice' | 'dealEndsOn'; message: string } | null {
+  if (!v.onDeal || v.priceType !== 'FIXED') return null;
+  if (v.compareAtPrice === '') return { field: 'compareAtPrice', message: 'Enter the price before the deal.' };
+  if (v.basePrice !== '' && Number(v.compareAtPrice) <= Number(v.basePrice)) {
+    return { field: 'compareAtPrice', message: 'This must be higher than your price, or there is no saving.' };
+  }
+  if (!v.dealEndsOn) return { field: 'dealEndsOn', message: 'Choose when the deal ends.' };
+  const end = endOfDay(v.dealEndsOn).getTime();
+  if (end <= Date.now()) return { field: 'dealEndsOn', message: 'The end date has already passed.' };
+  if (end - Date.now() > MAX_DEAL_DAYS * 86_400_000 + 86_400_000) {
+    return { field: 'dealEndsOn', message: `A deal can run for at most ${MAX_DEAL_DAYS} days.` };
+  }
+  return null;
+}
+
 const errMessage = (err: unknown, fallback: string) => toApiError(err, fallback).message;
 
 export function useListingEditor() {
@@ -42,6 +79,10 @@ export function useListingEditor() {
   const [basePrice, setBasePrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [isNegotiable, setIsNegotiable] = useState(true);
+  // A vendor-set deal: the price before it and the last day it runs.
+  const [onDeal, setOnDeal] = useState(false);
+  const [compareAtPrice, setCompareAtPrice] = useState('');
+  const [dealEndsOn, setDealEndsOn] = useState(''); // YYYY-MM-DD, local
   const [condition, setCondition] = useState('');
   const [country, setCountry] = useState('');
   const [state, setState] = useState('');
@@ -94,6 +135,11 @@ export function useListingEditor() {
         setBasePrice(l.basePrice != null ? String(l.basePrice) : '');
         setMaxPrice(l.maxPrice != null ? String(l.maxPrice) : '');
         setIsNegotiable(l.isNegotiable);
+        // An ended deal loads as no deal, so re-saving does not resubmit it.
+        const live = l.compareAtPrice != null && !!l.dealEndsAt && new Date(l.dealEndsAt) > new Date();
+        setOnDeal(live);
+        setCompareAtPrice(live ? String(l.compareAtPrice) : '');
+        setDealEndsOn(live ? toLocalDate(new Date(l.dealEndsAt!)) : '');
         setCondition(l.condition ?? '');
         setCountry(l.country ?? '');
         setState(l.state ?? '');
@@ -176,6 +222,9 @@ export function useListingEditor() {
         }
       }
 
+      const deal = dealError({ priceType, basePrice, onDeal, compareAtPrice, dealEndsOn });
+      if (deal) errors[deal.field] = deal.message;
+
       if (thenPublish) {
         if (images.length === 0) errors.images = 'At least one photo is required to publish.';
         for (const attr of productAttrs) {
@@ -194,8 +243,8 @@ export function useListingEditor() {
 
       return errors;
     },
-    [name, description, parentId, categoryId, priceType, basePrice, maxPrice, images,
-      productAttrs, attributes, variants, variantAttrs],
+    [name, description, parentId, categoryId, priceType, basePrice, maxPrice, onDeal, compareAtPrice,
+      dealEndsOn, images, productAttrs, attributes, variants, variantAttrs],
   );
 
   const save = useCallback(
@@ -219,6 +268,10 @@ export function useListingEditor() {
         basePrice: basePrice === '' ? undefined : Number(basePrice),
         maxPrice: maxPrice === '' ? undefined : Number(maxPrice),
         isNegotiable,
+        // Sent as null when off, so turning a deal off clears it on the server.
+        ...(priceType === 'FIXED' && onDeal
+          ? { compareAtPrice: Number(compareAtPrice), dealEndsAt: endOfDay(dealEndsOn).toISOString() }
+          : { compareAtPrice: null, dealEndsAt: null }),
         condition: condition || undefined,
         country: country || undefined,
         state: state || undefined,
@@ -263,9 +316,9 @@ export function useListingEditor() {
         setSaving(false);
       }
     },
-    [name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, condition,
-      country, state, city, tags, images, attributes, customFields, variants, isNew, id, addToast,
-      navigate, validateForm],
+    [name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, onDeal,
+      compareAtPrice, dealEndsOn, condition, country, state, city, tags, images, attributes,
+      customFields, variants, isNew, id, addToast, navigate, validateForm],
   );
 
   return {
@@ -305,6 +358,12 @@ export function useListingEditor() {
     setMaxPrice,
     isNegotiable,
     setIsNegotiable,
+    onDeal,
+    setOnDeal,
+    compareAtPrice,
+    setCompareAtPrice,
+    dealEndsOn,
+    setDealEndsOn,
     condition,
     setCondition,
     country,

@@ -19,7 +19,7 @@ export type SubscriptionStatus =
 
 export interface DashboardAlert {
   type:
-    | 'ACTIVATE' | 'RENEWAL_DUE' | 'PAYMENT_FAILED' | 'EXPIRED'
+    | 'ACTIVATE' | 'RENEWAL_DUE' | 'PAYMENT_FAILED' | 'EXPIRED' | 'CANCELLED'
     | 'UNREAD' | 'DRAFTS' | 'UNREPLIED_REVIEWS' | 'SUSPENDED';
   severity: 'info' | 'warning' | 'critical';
   message: string;
@@ -51,6 +51,7 @@ export interface VendorDashboard {
       amountMinor: number;
       currency: string;
       intervalMonths: number | null;
+      intervalDays: number;
       listingLimit: number | null;
     };
     creditMinor: number;
@@ -224,6 +225,11 @@ export interface Listing {
    * that does not carry it.
    */
   compareAtPrice?: number | null;
+  /**
+   * When the vendor's deal ends. Public reads only ever carry a live deal (the
+   * API drops both fields once this passes); vendor reads carry what is stored.
+   */
+  dealEndsAt?: string | null;
   stockLeft?: number | null;
   delivery?: ListingDelivery | null;
   updatedAt: string;
@@ -267,6 +273,10 @@ export interface ListingPayload {
   basePrice?: number;
   maxPrice?: number;
   isNegotiable: boolean;
+  /** The price before the deal; null clears a deal. FIXED prices only. */
+  compareAtPrice?: number | null;
+  /** ISO time the deal ends, at most 30 days out; null clears it. */
+  dealEndsAt?: string | null;
   condition?: string;
   brand?: string;
   material?: string;
@@ -397,7 +407,11 @@ export const storeService = {
   chargeSubscription: () =>
     api.post<ApiResponse<ChargeResult>>('/stores/me/subscription/charge'),
 
+  /** Stops auto-renewal; the store stays visible until the paid period ends. */
   cancelSubscription: () => api.post<ApiResponse<unknown>>('/stores/me/subscription/cancel'),
+
+  /** Undoes a cancellation while the paid period is still running. Charges nothing. */
+  resumeSubscription: () => api.post<ApiResponse<unknown>>('/stores/me/subscription/resume'),
 };
 
 export default storeService;

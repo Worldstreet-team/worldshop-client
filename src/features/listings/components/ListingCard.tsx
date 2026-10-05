@@ -4,6 +4,7 @@ import { BadgeCheck, Camera, Clock, Heart, ImageOff, MapPin, Star } from "lucide
 import type { Listing, PublicStore } from "@/features/stores/api";
 import {
   firstImage,
+  fmtNaira,
   imageSrc,
   priceLabel,
   timeAgo,
@@ -21,6 +22,8 @@ const CONDITION_LABEL: Record<string, string> = {
 };
 
 const FRESH_MS = 3 * 24 * 60 * 60 * 1000;
+/** Inside this, a deal's badge switches to "Ends soon". */
+const ENDING_MS = 2 * 24 * 60 * 60 * 1000;
 
 export type CardListing = Pick<
   Listing,
@@ -46,6 +49,8 @@ export type CardListing = Pick<
       | "reviewCount"
       | "isFeatured"
       | "shortDesc"
+      | "compareAtPrice"
+      | "dealEndsAt"
     >
   >;
 
@@ -53,6 +58,19 @@ function isFresh(publishedAt?: string | null): boolean {
   if (!publishedAt) return false;
   const at = Date.parse(publishedAt);
   return Number.isFinite(at) && Date.now() - at < FRESH_MS;
+}
+
+/**
+ * A vendor-set deal, if the listing is on one. The API only sends live
+ * deals; the end-date check covers a page left open past the deadline.
+ */
+function dealOf(listing: CardListing): { off: number; endingSoon: boolean } | null {
+  const was = listing.compareAtPrice;
+  const price = listing.basePrice;
+  if (listing.priceType !== "FIXED" || was == null || price == null || was <= price) return null;
+  const left = listing.dealEndsAt ? Date.parse(listing.dealEndsAt) - Date.now() : Infinity;
+  if (left <= 0) return null;
+  return { off: Math.round((1 - price / was) * 100), endingSoon: left < ENDING_MS };
 }
 
 export default function ListingCard({
@@ -83,6 +101,12 @@ export default function ListingCard({
       ? { label: "New", className: "ws-pcard__badge--new" }
       : null;
   const store = showSeller ? listing.store : undefined;
+
+  const deal = dealOf(listing);
+  const onDeal = deal != null;
+  const off = deal?.off ?? 0;
+  const endingSoon = deal?.endingSoon ?? false;
+  const was = listing.compareAtPrice;
 
   const saved = useSyncExternalStore(savedListings.subscribe, () =>
     savedListings.has(listing.id),
@@ -122,11 +146,19 @@ export default function ListingCard({
             </div>
           )}
 
-          {status && (
+          {(status || onDeal) && (
             <div className="ws-pcard__badges">
-              <span className={`ws-badge ${status.className}`}>
-                {status.label}
-              </span>
+              {onDeal && (
+                <span className="ws-badge ws-pcard__badge--deal ws-num" aria-label={`${off}% off`}>
+                  −{off}%
+                </span>
+              )}
+              {endingSoon && <span className="ws-badge ws-pcard__badge--ending">Ends soon</span>}
+              {status && !endingSoon && (
+                <span className={`ws-badge ${status.className}`}>
+                  {status.label}
+                </span>
+              )}
             </div>
           )}
 
@@ -188,6 +220,12 @@ export default function ListingCard({
               <span className="ws-sr-only">Price: </span>
               {priceLabel(listing)}
             </span>
+            {onDeal && (
+              <s className="ws-pcard__was ws-num">
+                <span className="ws-sr-only">Was </span>
+                {fmtNaira(was!)}
+              </s>
+            )}
             {listing.isNegotiable && !onRequest && (
               <span className="ws-pcard__neg">Negotiable</span>
             )}

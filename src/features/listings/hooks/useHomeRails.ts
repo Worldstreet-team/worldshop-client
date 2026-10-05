@@ -8,7 +8,6 @@ import type { ListingWithStore } from '@/features/listings/model';
 import { MINUTE } from '@/app/providers/QueryProvider';
 
 export const RAIL_SIZE = 8;
-export const DEALS_MAX = 100_000;
 const SELLERS_SHOWN = 3;
 
 type Row = ListingWithStore;
@@ -32,9 +31,12 @@ export function useHomeRails() {
     staleTime: RAIL_STALE,
   });
 
+  // Deals are what vendors put on deal (a was-price and an end date), soonest
+  // ending first. This used to be any listing under ₦100,000, which showed
+  // whatever was cheap rather than anything a seller had reduced.
   const deals = useQuery({
-    queryKey: queryKeys.listings({ maxPrice: DEALS_MAX, limit: RAIL_SIZE }),
-    queryFn: () => publicMarketplace.browse({ maxPrice: DEALS_MAX, limit: RAIL_SIZE }),
+    queryKey: queryKeys.listings({ deals: 1, limit: RAIL_SIZE }),
+    queryFn: () => publicMarketplace.browse({ deals: 1, limit: RAIL_SIZE }),
     staleTime: RAIL_STALE,
   });
 
@@ -62,10 +64,7 @@ export function useHomeRails() {
   const newestRows = newest.data?.data ?? NO_ROWS;
   const motorRows = motors.data ?? NO_ROWS;
 
-  const dealRows = useMemo(
-    () => (deals.data?.data ?? NO_ROWS).filter((l) => (l.basePrice ?? Infinity) <= DEALS_MAX),
-    [deals.data],
-  );
+  const dealRows = deals.data?.data ?? NO_ROWS;
 
   const sellerSlugs = useMemo(() => {
     const seen = new Set<string>();

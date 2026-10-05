@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, FolderTree, Users, Store, Menu, LogOut,
+  LayoutDashboard, FolderTree, Users, Store, Menu, LogOut, Tags, TrendingUp,
   ChevronLeft, ChevronRight, type LucideIcon,
 } from 'lucide-react';
 import { useAdminAuthStore } from '@/features/auth/store/adminAuthStore';
@@ -10,10 +10,13 @@ import ToastContainer from '@/shared/components/ui/ToastContainer';
 const navItems: { path: string; label: string; Icon: LucideIcon }[] = [
   // Products, orders, inventory, vendors and withdrawals were ecommerce
   // surfaces — listings belong to stores now, and moderation happens through
-  // the report queue.
+  // the report queue. What the platform does charge is the vendor
+  // subscription: Pricing sets it, Revenue shows what it brings in.
   { path: '/admin', label: 'Dashboard', Icon: LayoutDashboard },
   { path: '/admin/categories', label: 'Categories', Icon: FolderTree },
   { path: '/admin/users', label: 'Users', Icon: Users },
+  { path: '/admin/pricing', label: 'Pricing', Icon: Tags },
+  { path: '/admin/revenue', label: 'Revenue', Icon: TrendingUp },
 ];
 
 export default function AdminLayout() {

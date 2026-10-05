@@ -4,6 +4,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { ArrowRight, Building2 } from 'lucide-react';
 import { mallService } from '@/features/malls/api';
 import { toApiError } from '@/shared/lib/api';
+import { billingInterval } from '@/features/stores/model';
 
 /**
  * "Own a mall" CTA. The mall product was reachable only by typing
@@ -26,6 +27,7 @@ interface MallCalloutProps {
 export default function MallCallout({ variant = 'banner' }: MallCalloutProps) {
   const { isSignedIn } = useAuth();
   const [priceMinor, setPriceMinor] = useState<number | null>(null);
+  const [billing, setBilling] = useState('a month');
   const [substoreLimit, setSubstoreLimit] = useState<number | null>(null);
   const [ownsMall, setOwnsMall] = useState(false);
 
@@ -38,6 +40,7 @@ export default function MallCallout({ variant = 'banner' }: MallCalloutProps) {
         const plan = res.data?.[0];
         if (cancelled || !plan) return;
         setPriceMinor(plan.amountMinor);
+        setBilling(billingInterval(plan));
         setSubstoreLimit(plan.substoreLimit ?? null);
       })
       .catch(() => {
@@ -69,7 +72,7 @@ export default function MallCallout({ variant = 'banner' }: MallCalloutProps) {
     };
   }, [isSignedIn]);
 
-  const price = priceMinor === null ? null : `${formatUsd(priceMinor)}/month`;
+  const price = priceMinor === null ? null : `${formatUsd(priceMinor)} ${billing}`;
   // Gated on isSignedIn too, so signing out flips the CTA back to "create"
   // without the effect having to reset the flag.
   const showOwnerCta = isSignedIn && ownsMall;

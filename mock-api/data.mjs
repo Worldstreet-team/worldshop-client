@@ -348,6 +348,9 @@ const listing = ({ photoFile, ...o }) => {
     status: 'PUBLISHED',
     country: 'NG',
     compareAtPrice: marked ? Math.round(o.basePrice / 0.77 / 1000) * 1000 : null,
+    // A deal is a was-price plus an end date, as on the real API. Spread
+    // over the next fortnight so the "ending soon" order has something to sort.
+    dealEndsAt: marked ? new Date(Date.now() + (1 + (listingSeq % 14)) * 86_400_000).toISOString() : null,
     stockLeft: ships ? STOCK[listingSeq % STOCK.length] : null,
     delivery: ships ? deliveryFor(o) : null,
     publishedAt: iso(listingSeq * 2),

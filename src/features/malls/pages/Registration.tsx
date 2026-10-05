@@ -11,6 +11,7 @@ import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import { toast } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
+import { billingInterval } from '@/features/stores/model';
 
 /**
  * Mall creation.
@@ -54,6 +55,7 @@ const createMallSchema = z.object({
 type CreateMallFormData = z.infer<typeof createMallSchema>;
 
 const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+
 
 export default function MallRegistration() {
   const navigate = useNavigate();
@@ -119,6 +121,9 @@ export default function MallRegistration() {
 
     try {
       await mallService.createMall({
+        // The plan shown above is the plan billed. Without the code the server
+        // falls back to its default plan, which need not be the one displayed.
+        planCode: plan?.code,
         name: data.name,
         country: data.country,
         state: data.state,
@@ -167,7 +172,7 @@ export default function MallRegistration() {
         <div>
           <strong style={{ display: 'block', color: 'var(--ws-text-primary)', marginBottom: 2 }}>
             {plan
-              ? `${formatUsd(plan.amountMinor)} per month covers your mall and all its stores`
+              ? `${formatUsd(plan.amountMinor)} ${billingInterval(plan)} covers your mall and all its stores`
               : 'A monthly subscription keeps your mall and all its stores visible'}
           </strong>
           Creating your mall is free, and you can set up your stores before

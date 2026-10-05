@@ -78,7 +78,7 @@ function browseOptions(
 
 export function useBrowseListings(filters: BrowseFilters, categories: Category[]) {
   const {
-    categoryId, countryFilter, stateFilter, condition, search, page, sort, minPrice, maxPrice, attrFilters,
+    categoryId, countryFilter, stateFilter, condition, search, page, sort, minPrice, maxPrice, deals, attrFilters,
   } = filters;
   const client = useQueryClient();
 
@@ -91,9 +91,10 @@ export function useBrowseListings(filters: BrowseFilters, categories: Category[]
     if (sort) query.sort = sort;
     if (minPrice) query.minPrice = minPrice;
     if (maxPrice) query.maxPrice = maxPrice;
+    if (deals) query.deals = 1;
     for (const [name, value] of Object.entries(attrFilters)) query[`attr.${name}`] = value;
     return query;
-  }, [countryFilter, stateFilter, condition, search, sort, minPrice, maxPrice, attrFilters]);
+  }, [countryFilter, stateFilter, condition, search, sort, minPrice, maxPrice, deals, attrFilters]);
 
   const categoryIds = useMemo(
     () => (categoryId ? resolveCategoryIds(categories, categoryId) : []),

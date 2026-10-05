@@ -11,14 +11,14 @@ import BrowseResults from '@/features/listings/components/browse/BrowseResults';
 
 export default function Browse() {
   const browseFilters = useBrowseFilters();
-  const { categoryId, countryFilter, stateFilter, search, page, sort, setParam, clearAll } =
+  const { categoryId, countryFilter, stateFilter, search, page, sort, deals, setParam, clearAll } =
     browseFilters;
   const { countryOf } = useLocations();
   const countryName = countryFilter ? (countryOf(countryFilter)?.name ?? countryFilter) : '';
   const { categories, parents, selected, openParentId, siblings, isLeaf, facets } =
     useBrowseCategories(categoryId);
   const parent = parents.find((c) => c.id === openParentId);
-  usePageTitle(search ? `“${search}”` : selected ? selected.name : 'Browse listings');
+  usePageTitle(search ? `“${search}”` : selected ? selected.name : deals ? 'Deals' : 'Browse listings');
   const results = useBrowseListings(browseFilters, categories);
   const tokens = useBrowseTokens(browseFilters, selected, countryName);
   const { open: filtersOpen, setOpen: setFiltersOpen } = useFilterDrawer();
@@ -27,7 +27,9 @@ export default function Browse() {
     ? `Results for “${search}”`
     : selected
       ? selected.name
-      : 'All listings';
+      : deals
+        ? 'Deals'
+        : 'All listings';
 
   return (
     <>

@@ -17,6 +17,7 @@ import { useUIStore } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
+import { billingInterval } from '@/features/stores/model';
 
 /**
  * Vendor Overview, laid out as the sandbox's: greeting, four stat cards, the
@@ -33,6 +34,7 @@ import { MINUTE } from '@/app/providers/QueryProvider';
 
 /** Subscription prices are USD; listing prices stay in naira. */
 const usd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+
 
 // Assembled by hand: en-GB abbreviates September as "Sept".
 const MONTH = new Intl.DateTimeFormat('en-US', { month: 'short' });
@@ -123,7 +125,8 @@ export default function VendorDashboard() {
     }
 
     const balanceNote = wallet ? ` Your balance is ${usd(wallet.availableMinor)}.` : '';
-    if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your store visible for the next month?${balanceNote}`)) {
+    const plan = data.subscription.plan;
+    if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your store visible for one billing period (${plan.name}, ${usd(plan.amountMinor)} ${billingInterval(plan)})?${balanceNote}`)) {
       return;
     }
 
@@ -143,6 +146,43 @@ export default function VendorDashboard() {
             ? 'Not enough balance in your dollar wallet. Top up and try again.'
             : errMessage(err, 'Could not complete the payment'),
       });
+    } finally {
+      setCharging(false);
+    }
+  };
+
+  /**
+   * Stopping auto-renewal is not a refund: the store stays visible to the end
+   * of the paid period, and the confirm says so, since a vendor reading
+   * "cancel" tends to expect their shop to vanish now.
+   */
+  const handleCancel = async () => {
+    const end = data?.subscription?.currentPeriodEnd;
+    const until = end ? ` until ${shortDate(end)}` : '';
+    if (!window.confirm(`Stop auto-renewal? Your store stays visible${until}, then goes offline. You can turn it back on any time before then.`)) {
+      return;
+    }
+    setCharging(true);
+    try {
+      await storeService.cancelSubscription();
+      addToast({ type: 'info', message: 'Auto-renewal stopped', description: `Your store stays visible${until}.` });
+      await client.invalidateQueries({ queryKey: queryKeys.vendorDashboard() });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Could not stop auto-renewal') });
+    } finally {
+      setCharging(false);
+    }
+  };
+
+  /** Undoes a cancellation inside the paid period. Nothing is charged now. */
+  const handleResume = async () => {
+    setCharging(true);
+    try {
+      await storeService.resumeSubscription();
+      addToast({ type: 'success', message: 'Auto-renewal is back on', description: 'Nothing is charged until your current period ends.' });
+      await client.invalidateQueries({ queryKey: queryKeys.vendorDashboard() });
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: errMessage(err, 'Could not turn auto-renewal back on') });
     } finally {
       setCharging(false);
     }
@@ -194,7 +234,13 @@ export default function VendorDashboard() {
   const seen = visibility(data);
   const sub = data.subscription;
   const wallet = data.wallet;
-  const needsPayment = sub != null && ['PENDING_PAYMENT', 'GRACE', 'LAPSED'].includes(sub.status);
+  // A cancelled subscription whose paid period is over needs paying too: it
+  // was left out before, which left a cancelled vendor with no way back.
+  const needsPayment =
+    sub != null &&
+    (['PENDING_PAYMENT', 'GRACE', 'LAPSED'].includes(sub.status) ||
+      (sub.status === 'CANCELLED' && !data.store.publiclyVisible));
+  const canResume = sub?.status === 'CANCELLED' && data.store.publiclyVisible;
   const dueMinor = wallet?.dueMinor ?? sub?.plan.amountMinor ?? 0;
   const reply = replyTime(data.engagement.avgResponseMins);
   const onSchedule = sub?.status === 'ACTIVE';
@@ -227,6 +273,11 @@ export default function VendorDashboard() {
                 {needsPayment && ['ACTIVATE', 'PAYMENT_FAILED', 'EXPIRED'].includes(alert.type) && (
                   <button onClick={handleActivate} disabled={charging} className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary">
                     {charging ? 'Processing…' : `Pay ${usd(dueMinor)}`}
+                  </button>
+                )}
+                {canResume && alert.type === 'CANCELLED' && (
+                  <button onClick={handleResume} disabled={charging} className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary">
+                    {charging ? 'Processing…' : 'Turn auto-renew back on'}
                   </button>
                 )}
               </div>
@@ -367,6 +418,8 @@ export default function VendorDashboard() {
                   </div>
                   {onSchedule ? (
                     <VendorBadge tone="success" icon={CheckCircle2}>On schedule</VendorBadge>
+                  ) : canResume ? (
+                    <VendorBadge tone="pending" icon={AlertTriangle}>Ends {shortDate(sub.currentPeriodEnd)}</VendorBadge>
                   ) : (
                     <VendorBadge tone="pending" icon={AlertTriangle}>
                       {sub.status === 'LAPSED' ? 'Lapsed' : 'Payment due'}
@@ -374,9 +427,23 @@ export default function VendorDashboard() {
                   )}
                 </div>
                 <p className="ws-vxpayout__foot">
-                  {sub.currentPeriodEnd ? `Renews ${shortDate(sub.currentPeriodEnd)}` : 'Not active yet'} · {sub.plan.name} plan ·
-                  Auto-renew {sub.autoRenew ? 'on' : 'off'}
+                  {sub.currentPeriodEnd
+                    ? `${canResume ? 'Ends' : 'Renews'} ${shortDate(sub.currentPeriodEnd)}`
+                    : 'Not active yet'}{' '}
+                  · {sub.plan.name} plan, {usd(sub.plan.amountMinor)} {billingInterval(sub.plan)} · Auto-renew {sub.autoRenew ? 'on' : 'off'}
                 </p>
+                {/* The only place a vendor can stop or restart renewal. Kept
+                    quiet: it is a deliberate act, not a call to action. */}
+                {sub.status === 'ACTIVE' && sub.autoRenew && (
+                  <button type="button" className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--ghost" style={{ marginTop: 'var(--ws-space-3)' }} onClick={handleCancel} disabled={charging}>
+                    Stop auto-renewal
+                  </button>
+                )}
+                {canResume && (
+                  <button type="button" className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--outline" style={{ marginTop: 'var(--ws-space-3)' }} onClick={handleResume} disabled={charging}>
+                    Turn auto-renew back on
+                  </button>
+                )}
               </>
             ) : (
               <p className="ws-vxlist__none">No subscription yet. Your shop goes live once one is active.</p>
@@ -426,7 +493,7 @@ export default function VendorDashboard() {
           />
           <div className="ws-vxcard">
             <dl className="ws-vxdl">
-              <div><dt>Plan</dt><dd>{sub.plan.name}, {usd(sub.plan.amountMinor)} a month</dd></div>
+              <div><dt>Plan</dt><dd>{sub.plan.name}, {usd(sub.plan.amountMinor)} {billingInterval(sub.plan)}</dd></div>
               <div><dt>Status</dt><dd>{sub.status.replace(/_/g, ' ').toLowerCase()}</dd></div>
               <div><dt>Current period</dt><dd>{formatDate(sub.currentPeriodStart)} to {formatDate(sub.currentPeriodEnd)}</dd></div>
               <div><dt>Auto-renew</dt><dd>{sub.autoRenew ? 'On' : 'Off'}</dd></div>

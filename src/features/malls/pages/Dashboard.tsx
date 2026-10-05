@@ -6,6 +6,7 @@ import {
 import { mallService, type MyMall } from '@/features/malls/api';
 import { toApiError } from '@/shared/lib/api';
 import { useUIStore } from '@/shared/store/uiStore';
+import { billingInterval } from '@/features/stores/model';
 
 /**
  * Mall owner dashboard: the subscription that keeps the whole mall (and every
@@ -15,6 +16,7 @@ import { useUIStore } from '@/shared/store/uiStore';
  */
 
 const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+
 const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
 
@@ -49,7 +51,30 @@ export default function MallDashboard() {
     load();
   }, [load]);
 
+  /**
+   * Charges the owner's real wallet, so, like the store dashboard, the amount
+   * is stated and confirmed first, and a short balance is caught before the
+   * request rather than reported after it fails.
+   */
   const handleCharge = async () => {
+    const plan = mall?.subscription?.plan;
+    if (!plan) return;
+    const price = formatUsd(plan.amountMinor);
+    const wallet = mall?.wallet;
+
+    if (wallet && wallet.availableMinor < plan.amountMinor) {
+      addToast({
+        type: 'error',
+        message: `Your wallet has ${formatUsd(wallet.availableMinor)} but ${price} is due. Top up ${formatUsd(plan.amountMinor - wallet.availableMinor)} and try again.`,
+      });
+      return;
+    }
+
+    const balanceNote = wallet ? ` Your balance is ${formatUsd(wallet.availableMinor)}.` : '';
+    if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your mall and every store in it visible for one billing period (${plan.name}, ${price} ${billingInterval(plan)})?${balanceNote}`)) {
+      return;
+    }
+
     setCharging(true);
     try {
       const res = await mallService.chargeSubscription();
@@ -61,9 +86,27 @@ export default function MallDashboard() {
       });
       await load();
     } catch (err: unknown) {
-      addToast({ type: 'error', message: toApiError(err, 'Could not complete the charge').message });
+      const e = toApiError(err, 'Could not complete the charge');
+      addToast({
+        type: 'error',
+        message: e.statusCode === 402 ? 'Not enough balance in your dollar wallet. Top up and try again.' : e.message,
+      });
     } finally {
       setCharging(false);
+    }
+  };
+
+  /** Undoes a cancellation inside the paid period. Nothing is charged now. */
+  const handleResume = async () => {
+    setCancelling(true);
+    try {
+      await mallService.resumeSubscription();
+      addToast({ type: 'success', message: 'Auto-renewal is back on', description: 'Nothing is charged until your current period ends.' });
+      await load();
+    } catch (err: unknown) {
+      addToast({ type: 'error', message: toApiError(err, 'Could not turn auto-renewal back on').message });
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -104,19 +147,16 @@ export default function MallDashboard() {
     );
   }
 
-  // While the mall paywall is off, the server reports a DRAFT mall as publicly
-  // visible. Trust that answer over the status label rather than duplicating
-  // the flag on the client, where it could drift out of step.
-  const badge =
-    mall.status === 'DRAFT' && mall.isPubliclyVisible
-      ? { cls: 'ws-badge--success', label: 'Visible to buyers' }
-      : STATUS_BADGE[mall.status] ?? STATUS_BADGE.DRAFT;
+  const badge = STATUS_BADGE[mall.status] ?? STATUS_BADGE.DRAFT;
   const sub = mall.subscription;
   const plan = sub?.plan;
   // GRACE genuinely needs payment to stay up. PENDING_PAYMENT only warrants a
   // warning while the mall is actually hidden by it.
   const needsPayment =
     !mall.isPubliclyVisible || sub?.status === 'GRACE';
+  // Cancelled but still inside the paid period: turning renewal back on is
+  // free. Once the period is over, needsPayment covers the way back.
+  const canResume = sub?.status === 'CANCELLED' && mall.isPubliclyVisible;
 
   return (
     <div className="ws-page">
@@ -157,7 +197,7 @@ export default function MallDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <dt className="ws-caption ws-muted">Plan</dt>
               <dd className="ws-num" style={{ margin: 0 }}>
-                {plan ? `${plan.name} — ${formatUsd(plan.amountMinor)}/month` : '—'}
+                {plan ? `${plan.name}, ${formatUsd(plan.amountMinor)} ${billingInterval(plan)}` : '—'}
               </dd>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -190,6 +230,11 @@ export default function MallDashboard() {
             {sub?.autoRenew && sub.status !== 'CANCELLED' && (
               <button className="ws-btn ws-btn--ghost" onClick={handleCancel} disabled={cancelling}>
                 {cancelling ? 'Stopping…' : 'Stop auto-renewal'}
+              </button>
+            )}
+            {canResume && (
+              <button className="ws-btn ws-btn--secondary" onClick={handleResume} disabled={cancelling}>
+                {cancelling ? 'Saving…' : 'Turn auto-renew back on'}
               </button>
             )}
           </div>

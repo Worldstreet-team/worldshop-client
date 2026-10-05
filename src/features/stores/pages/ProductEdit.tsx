@@ -8,7 +8,7 @@ import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import Modal from '@/shared/components/common/Modal';
 import { fmtNaira, imageSrc } from '@/features/listings/model';
-import { useListingEditor } from '@/features/stores/hooks/useListingEditor';
+import { dealError, MAX_DEAL_DAYS, toLocalDate, useListingEditor } from '@/features/stores/hooks/useListingEditor';
 import { formatLocation } from '@/shared/utils/locations';
 
 /**
@@ -42,7 +42,7 @@ const TITLE_MAX = 100;
 /** Which step owns a field, so a rejected save opens where the problem is. */
 function stepOf(field: string): number {
   if (field === 'images') return 0;
-  if (['basePrice', 'maxPrice', 'priceType', 'variants', 'country', 'state', 'city'].includes(field)) return 2;
+  if (['basePrice', 'maxPrice', 'priceType', 'compareAtPrice', 'dealEndsAt', 'dealEndsOn', 'variants', 'country', 'state', 'city'].includes(field)) return 2;
   return 1;
 }
 
@@ -106,7 +106,8 @@ export default function ListingEdit() {
     productsBasePath, navigate, isNew, loading, saving, uploading, listing, problems, fieldErrors,
     setFieldErrors, name, setName, description, setDescription, parentId, setParentId, categoryId,
     setCategoryId, priceType, setPriceType, basePrice, setBasePrice, maxPrice, setMaxPrice,
-    isNegotiable, setIsNegotiable, condition, setCondition, country, setCountry, state, setState,
+    isNegotiable, setIsNegotiable, onDeal, setOnDeal, compareAtPrice, setCompareAtPrice, dealEndsOn,
+    setDealEndsOn, condition, setCondition, country, setCountry, state, setState,
     city, setCity, tags, setTags, images, setImages, attributes, setAttributes, customFields,
     setCustomFields, variants, setVariants, parents, children, productAttrs, variantAttrs,
     handleUpload, save,
@@ -125,7 +126,7 @@ export default function ListingEdit() {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // What was loaded, to tell a changed listing from an untouched one.
-  const snapshot = JSON.stringify({ name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, condition, country, state, city, tags, images, attributes, customFields, variants });
+  const snapshot = JSON.stringify({ name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, onDeal, compareAtPrice, dealEndsOn, condition, country, state, city, tags, images, attributes, customFields, variants });
   const initial = useRef<string | null>(null);
   if (!loading && initial.current === null) initial.current = snapshot;
   const dirty = initial.current !== null && initial.current !== snapshot;
@@ -177,6 +178,8 @@ export default function ListingEdit() {
         if (maxPrice === '') e.maxPrice = 'Enter the highest price.';
         else if (basePrice !== '' && Number(maxPrice) < Number(basePrice)) e.maxPrice = 'The highest price cannot be below the lowest.';
       }
+      const deal = dealError({ priceType, basePrice, onDeal, compareAtPrice, dealEndsOn });
+      if (deal) e[deal.field] = deal.message;
     }
     if (s === 3 && !confirmed) e.confirm = 'Confirm the listing follows the community guidelines.';
     return e;
@@ -576,6 +579,67 @@ export default function ListingEdit() {
         checked={isNegotiable}
         onChange={setIsNegotiable}
       />
+
+      {/* A deal is the vendor's own: the home page's Deals rail and the
+          category "Reduced price" filter show only listings set up here. */}
+      {priceType === 'FIXED' && (
+        <>
+          <Switch
+            label="Put on deal"
+            description={`Show your price as a reduction, with an end date. Deals appear in the Deals section for up to ${MAX_DEAL_DAYS} days.`}
+            checked={onDeal}
+            onChange={(on) => {
+              setOnDeal(on);
+              setStepErrors({});
+              // Default to a week, the length most sales run.
+              if (on && !dealEndsOn) setDealEndsOn(toLocalDate(new Date(Date.now() + 7 * 86_400_000)));
+            }}
+          />
+          {onDeal && (
+            <div className="ws-vxwiz__two ws-vxfade">
+              <div className="ws-vxfieldset">
+                <Label htmlFor={`${formId}-was`} required>Price before the deal</Label>
+                <div className={`ws-vxmoney${errors.compareAtPrice ? ' is-bad' : ''}`}>
+                  <span aria-hidden>₦</span>
+                  <input
+                    id={`${formId}-was`}
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    placeholder="0"
+                    className="ws-num"
+                    value={compareAtPrice}
+                    aria-invalid={!!errors.compareAtPrice}
+                    onChange={(e) => set(setCompareAtPrice, 'compareAtPrice')(e.target.value)}
+                  />
+                </div>
+                <FieldError>{errors.compareAtPrice}</FieldError>
+                {compareAtPrice !== '' && basePrice !== '' && Number(compareAtPrice) > Number(basePrice) && (
+                  <span className="ws-vxhint ws-num">
+                    {Math.round((1 - Number(basePrice) / Number(compareAtPrice)) * 100)}% off, buyers save{' '}
+                    {fmtNaira(Number(compareAtPrice) - Number(basePrice))}
+                  </span>
+                )}
+              </div>
+              <div className="ws-vxfieldset">
+                <Label htmlFor={`${formId}-ends`} required>Deal ends</Label>
+                <input
+                  id={`${formId}-ends`}
+                  type="date"
+                  className="ws-vxinput"
+                  min={toLocalDate(new Date())}
+                  max={toLocalDate(new Date(Date.now() + MAX_DEAL_DAYS * 86_400_000))}
+                  value={dealEndsOn}
+                  aria-invalid={!!errors.dealEndsOn}
+                  onChange={(e) => set(setDealEndsOn, 'dealEndsOn')(e.target.value)}
+                />
+                <FieldError>{errors.dealEndsOn}</FieldError>
+                <span className="ws-vxhint">Runs to the end of that day.</span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {variantAttrs.length > 0 && (
         <div className="ws-vxwiz__group">

@@ -48,6 +48,8 @@ export interface MyMall {
     graceEndsAt: string | null;
     plan: SubscriptionPlan & { substoreLimit: number | null };
   } | null;
+  /** The owner's WorldStreet dollar wallet. null = the wallet service could not be reached. */
+  wallet?: { currency: string; availableMinor: number; lockedMinor: number } | null;
 }
 
 export interface CreateMallRequest {
@@ -141,6 +143,9 @@ export const mallService = {
   chargeSubscription: () => api.post<ApiResponse<ChargeResult>>('/malls/me/subscription/charge'),
 
   cancelSubscription: () => api.post<ApiResponse<unknown>>('/malls/me/subscription/cancel'),
+
+  /** Undoes a cancellation while the paid period is still running. Charges nothing. */
+  resumeSubscription: () => api.post<ApiResponse<unknown>>('/malls/me/subscription/resume'),
 
   /**
    * Branding upload for the mall and its substores. Mounted on the mall

@@ -1557,6 +1557,13 @@ details:not([open]) > .ws-filters__legend::after {
   }
 }
 
+// The price before a vendor's deal, struck through beside the deal price.
+.ws-pcard__was {
+  font-size: 13px;
+  color: var(--ws-text-muted);
+  text-decoration-thickness: 1px;
+}
+
 // A small outline pill, not a whisper beside the number: "negotiable" is a
 // buying signal and should be seen without being loud.
 .ws-pcard__neg {

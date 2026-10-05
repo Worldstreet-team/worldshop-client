@@ -44,6 +44,8 @@ const AdminLoginPage = lazy(() => import('@/features/admin/pages/Login'));
 const AdminDashboard = lazy(() => import('@/features/admin/pages/Dashboard'));
 const AdminCategories = lazy(() => import('@/features/admin/pages/Categories'));
 const AdminUsers = lazy(() => import('@/features/admin/pages/Users'));
+const AdminPricing = lazy(() => import('@/features/admin/pages/Pricing'));
+const AdminRevenue = lazy(() => import('@/features/admin/pages/Revenue'));
 
 // Vendor Pages
 const VendorDashboard = lazy(() => import('@/features/stores/pages/Dashboard'));
@@ -386,6 +388,14 @@ const router = createBrowserRouter([
       {
         path: 'users',
         element: <SuspenseWrapper><AdminUsers /></SuspenseWrapper>,
+      },
+      {
+        path: 'pricing',
+        element: <SuspenseWrapper><AdminPricing /></SuspenseWrapper>,
+      },
+      {
+        path: 'revenue',
+        element: <SuspenseWrapper><AdminRevenue /></SuspenseWrapper>,
       },
       // Stale bookmarks to removed ecommerce pages (orders, inventory,
       // vendors, withdrawals, commission) land on the dashboard.

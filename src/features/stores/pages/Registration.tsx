@@ -10,6 +10,7 @@ import CountrySelect from '@/shared/components/location/CountrySelect';
 import StateSelect from '@/shared/components/location/StateSelect';
 import { toast } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
+import { billingInterval } from '@/features/stores/model';
 
 /**
  * Store creation.
@@ -56,7 +57,8 @@ const createStoreSchema = z.object({
 
 type CreateStoreFormData = z.infer<typeof createStoreSchema>;
 
-const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+const formatUsd = (minor: number) => `${(minor / 100).toFixed(2)}`;
+
 
 export default function VendorRegistration() {
   const navigate = useNavigate();
@@ -133,6 +135,9 @@ export default function VendorRegistration() {
         phone: data.phone || undefined,
         whatsapp: data.whatsapp || undefined,
         website: data.website || undefined,
+        // The plan shown above is the plan billed. Without the code the server
+        // falls back to its default plan, which need not be the one displayed.
+        planCode: plan?.code,
       });
 
       toast.success('Store created. Add your products, then activate to go live.');
@@ -170,7 +175,7 @@ export default function VendorRegistration() {
         <div>
           <strong style={{ display: 'block', color: 'var(--ws-text-primary)', marginBottom: 2 }}>
             {plan
-              ? `${formatUsd(plan.amountMinor)} per month to stay visible`
+              ? `${formatUsd(plan.amountMinor)} ${billingInterval(plan)} to stay visible`
               : 'A monthly subscription keeps your store visible'}
           </strong>
           Creating your store is free. It stays private until you activate the

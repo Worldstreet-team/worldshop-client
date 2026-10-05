@@ -13,6 +13,9 @@ export function useBrowseFilters() {
   const sort = params.get('sort') ?? '';
   const minPrice = params.get('minPrice') ?? '';
   const maxPrice = params.get('maxPrice') ?? '';
+  // Only listings a vendor has put on a live deal (the home page's Deals rail
+  // links here). The API sorts these by the soonest-ending deal.
+  const deals = params.get('deals') === '1';
 
   const attrFilters = useMemo(() => {
     const out: Record<string, string> = {};
@@ -58,6 +61,7 @@ export function useBrowseFilters() {
     sort,
     minPrice,
     maxPrice,
+    deals,
     attrFilters,
     setParam,
     clearAll,

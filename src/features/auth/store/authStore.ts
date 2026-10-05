@@ -4,7 +4,11 @@ import type { User } from '@/features/auth/types';
 
 const LOGIN_URL = import.meta.env.VITE_LOGIN_URL || 'https://www.worldstreetgold.com/login';
 const REGISTER_URL = import.meta.env.VITE_REGISTER_URL || 'https://www.worldstreetgold.com/register';
-const RETURN_PARAM = import.meta.env.VITE_AUTH_RETURN_PARAM || 'redirect';
+// The WorldStreet sign-in page reads `redirect_url` (checked against its
+// bundle, 2026-10-05) and follows it to any https worldstreetgold.com
+// subdomain once the user is in. Under any other name it ignores the value
+// and lands the user on WorldStreet's home page instead of back on Shop.
+const RETURN_PARAM = import.meta.env.VITE_AUTH_RETURN_PARAM || 'redirect_url';
 const PROFILE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 function withReturn(base: string, returnUrl?: string) {

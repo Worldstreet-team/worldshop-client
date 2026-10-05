@@ -582,6 +582,16 @@
     text-decoration: line-through;
   }
 
+  // The vendor-set deal's deadline, in the marketplace accent so it reads
+  // with the was-price above it rather than as another line of fine print.
+  &__deal {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 19.5px;
+    color: var(--mk-ink, var(--ws-text-secondary));
+  }
+
   &__later {
     margin: 0;
     font-size: 13px;
