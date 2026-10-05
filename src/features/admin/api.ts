@@ -354,6 +354,8 @@ export interface AdminUserFilters {
     limit?: number;
     search?: string;
     role?: 'CUSTOMER' | 'ADMIN';
+    /** true: owns a personal store. false: does not. */
+    vendor?: boolean;
 }
 
 // ─── Admin Service ──────────────────────────────────────────────

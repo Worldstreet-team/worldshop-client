@@ -983,6 +983,7 @@ const asAdminUser = (u) => ({
 GET('/admin/users', (_p, q) => {
   let rows = db.users.map(asAdminUser);
   if (q.role) rows = rows.filter((u) => u.role === q.role);
+  if (q.vendor === 'true' || q.vendor === 'false') rows = rows.filter((u) => u.isVendor === (q.vendor === 'true'));
   if (q.search) {
     const needle = String(q.search).toLowerCase();
     rows = rows.filter((u) => `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(needle));

@@ -26,6 +26,32 @@ const ADMIN_STATUS: Record<string, { cls: string; label: string }> = {
   INVITE_EXPIRED: { cls: 'ws-badge--danger', label: 'Invite expired' },
 };
 
+/** A store's status as the vendor's subscription leaves it. */
+const STORE_STATUS: Record<string, string> = {
+  DRAFT: 'Not paid yet',
+  ACTIVE: 'Live',
+  GRACE: 'Payment overdue',
+  EXPIRED: 'Hidden, lapsed',
+  SUSPENDED: 'Suspended',
+  BANNED: 'Banned',
+};
+const storeStatusLabel = (status: string) => STORE_STATUS[status] ?? status;
+
+/**
+ * One filter over two independent facts: the role (can use this console) and
+ * owning a store (sells). An admin who owns a store shows under both Vendors
+ * and Admins; Buyers are the accounts that are neither.
+ */
+type UserGroup = 'all' | 'buyers' | 'vendors' | 'admins';
+const USER_GROUPS: Record<UserGroup, Pick<AdminUserFilters, 'role' | 'vendor'>> = {
+  all: { role: undefined, vendor: undefined },
+  buyers: { role: 'CUSTOMER', vendor: false },
+  vendors: { role: undefined, vendor: true },
+  admins: { role: 'ADMIN', vendor: undefined },
+};
+const groupOf = (f: AdminUserFilters): UserGroup =>
+  f.role === 'ADMIN' ? 'admins' : f.vendor === true ? 'vendors' : f.vendor === false ? 'buyers' : 'all';
+
 const errMessage = (err: unknown, fallback: string) => {
   const e = toApiError(err, fallback);
   const fieldError = e.errors && Object.values(e.errors)[0];
@@ -79,7 +105,11 @@ export default function AdminUsers() {
     setUpdatingId(user.id);
     try {
       const updated = await adminService.updateUserRole(user.id, role);
-      setUsers((current) => current.map((item) => item.id === updated.id ? updated : item));
+      // The role endpoint does not look up the user's store, so keep the
+      // row's own store fields rather than blanking the Store column.
+      setUsers((current) => current.map((item) => item.id === updated.id
+        ? { ...updated, isVendor: item.isVendor, storeName: item.storeName, vendorStatus: item.vendorStatus }
+        : item));
 
       // A new admin can only sign in once they've set a password from the
       // emailed link, so a failed send is worth flagging rather than burying.
@@ -172,13 +202,14 @@ export default function AdminUsers() {
         <select
           className="ws-select"
           style={{ width: 'auto', height: 44 }}
-          aria-label="Filter by role"
-          value={filters.role || ''}
-          onChange={(e) => setFilters((f) => ({ ...f, role: (e.target.value || undefined) as AdminUserFilters['role'], page: 1 }))}
+          aria-label="Filter users"
+          value={groupOf(filters)}
+          onChange={(e) => setFilters((f) => ({ ...f, ...USER_GROUPS[e.target.value as UserGroup], page: 1 }))}
         >
-          <option value="">All Roles</option>
-          <option value="CUSTOMER">Customers</option>
-          <option value="ADMIN">Admins</option>
+          <option value="all">All</option>
+          <option value="buyers">Buyers</option>
+          <option value="vendors">Vendors</option>
+          <option value="admins">Admins</option>
         </select>
       </div>
 
@@ -188,6 +219,7 @@ export default function AdminUsers() {
             <tr>
               <th>User</th>
               <th>Role</th>
+              <th>Store</th>
               <th>Status</th>
               <th>Joined</th>
               <th />
@@ -197,12 +229,12 @@ export default function AdminUsers() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  <td colSpan={5}><div className="ws-skeleton" style={{ height: 20 }} /></td>
+                  <td colSpan={6}><div className="ws-skeleton" style={{ height: 20 }} /></td>
                 </tr>
               ))
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <p className="ws-body ws-muted" style={{ textAlign: 'center', padding: 'var(--ws-space-6)' }}>
                     No users found.
                   </p>
@@ -218,6 +250,16 @@ export default function AdminUsers() {
                   <span className={`ws-badge ${user.role === 'ADMIN' ? 'ws-badge--brand' : 'ws-badge--neutral'}`}>
                     {user.role}
                   </span>
+                </td>
+                <td>
+                  {user.isVendor ? (
+                    <>
+                      <div>{user.storeName}</div>
+                      {user.vendorStatus && (
+                        <div className="ws-caption ws-muted">{storeStatusLabel(user.vendorStatus)}</div>
+                      )}
+                    </>
+                  ) : '—'}
                 </td>
                 <td>
                   {user.adminStatus ? (
