@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, FolderTree, Trash2, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, FolderTree, Trash2, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { adminService, type AdminCategory, type CreateCategoryData, type UpdateCategoryData } from '@/features/admin/api';
 import { useUIStore } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
@@ -28,6 +28,33 @@ export default function AdminCategories() {
   const [formParentId, setFormParentId] = useState('');
   const [formSortOrder, setFormSortOrder] = useState('0');
   const [formIsActive, setFormIsActive] = useState(true);
+  // Categories whose subcategories are showing.
+  const [open, setOpen] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  /**
+   * The taxonomy is two levels: categories, and the subcategories listings are
+   * filed under. A subcategory whose parent is missing from the list is shown
+   * at the top level rather than dropped, so it can still be found and fixed.
+   */
+  const groups = useMemo(() => {
+    const ids = new Set(categories.map((c) => c.id));
+    const byOrder = (a: AdminCategory, b: AdminCategory) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
+    const tops = categories.filter((c) => !c.parentId || !ids.has(c.parentId)).sort(byOrder);
+    return tops.map((top) => ({
+      top,
+      subs: categories.filter((c) => c.parentId === top.id).sort(byOrder),
+    }));
+  }, [categories]);
+  const subCount = categories.length - groups.length;
+  const topOptions = groups.map((g) => g.top);
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -58,6 +85,7 @@ export default function AdminCategories() {
   const handleSelectCategory = (cat: AdminCategory) => {
     setSelectedCategory(cat);
     setIsCreating(false);
+    if (cat.parentId) setOpen((prev) => new Set(prev).add(cat.parentId!));
     setFormName(cat.name);
     setFormDesc(cat.description || '');
     setFormImage(cat.image || '');
@@ -67,10 +95,15 @@ export default function AdminCategories() {
     setFormIsActive(cat.isActive);
   };
 
-  const handleCreate = () => {
+  /** With a parent: a new subcategory under it. Without: a new top-level category. */
+  const handleCreate = (parentId?: string) => {
     setSelectedCategory(null);
     setIsCreating(true);
     resetForm();
+    if (parentId) {
+      setFormParentId(parentId);
+      setOpen((prev) => new Set(prev).add(parentId));
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,16 +178,28 @@ export default function AdminCategories() {
   };
 
   const showForm = isCreating || selectedCategory;
+  // What the form is about, in the admin's words: a category or a subcategory.
+  const formParentName = topOptions.find((c) => c.id === formParentId)?.name;
+  const kind = formParentId ? 'subcategory' : 'category';
+  const formTitle = isCreating
+    ? formParentName ? `New subcategory in ${formParentName}` : 'New category'
+    : `Edit ${kind}: ${selectedCategory?.name}`;
+  // A category with subcategories cannot move under another; the server
+  // refuses it, so the field is locked rather than offered.
+  const hasChildren = !!selectedCategory && categories.some((c) => c.parentId === selectedCategory.id);
 
   return (
     <div className="ws-page">
       <div className="ws-page__head">
         <h1 className="ws-page__title">
-          Categories <span className="ws-muted ws-num" style={{ fontWeight: 400 }}>({categories.length})</span>
+          Categories{' '}
+          <span className="ws-muted ws-num" style={{ fontWeight: 400, fontSize: '0.6em' }}>
+            {groups.length} categories · {subCount} subcategories
+          </span>
         </h1>
-        <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={handleCreate}>
+        <button className="ws-btn ws-btn--sm ws-btn--primary" onClick={() => handleCreate()}>
           <Plus size={14} aria-hidden />
-          Add Category
+          Add category
         </button>
       </div>
 
@@ -177,47 +222,101 @@ export default function AdminCategories() {
             </div>
           ) : (
             <div>
-              {categories.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="ws-listrow ws-listrow--link"
-                  onClick={() => handleSelectCategory(cat)}
-                  style={{
-                    cursor: 'pointer',
-                    background: selectedCategory?.id === cat.id ? 'var(--ws-bg-raised)' : undefined,
-                    opacity: cat.isActive ? 1 : 0.55,
-                  }}
-                >
-                  {cat.image && (
-                    <img
-                      src={cat.image}
-                      alt=""
+              {groups.map(({ top, subs }) => {
+                const isOpen = open.has(top.id);
+                const listings = subs.reduce((n, s) => n + (s.productCount ?? 0), top.productCount ?? 0);
+                return (
+                  <div key={top.id}>
+                    <div
+                      className="ws-listrow ws-listrow--link"
+                      onClick={() => handleSelectCategory(top)}
                       style={{
-                        width: 32, height: 32, objectFit: 'cover', flex: 'none',
-                        borderRadius: 'var(--ws-radius-md)',
-                        border: '1px solid var(--ws-border-hairline)',
+                        cursor: 'pointer',
+                        background: selectedCategory?.id === top.id ? 'var(--ws-bg-raised)' : undefined,
+                        opacity: top.isActive ? 1 : 0.55,
                       }}
-                    />
-                  )}
-                  <div className="ws-listrow__body">
-                    <span className="ws-listrow__title">{cat.name}</span>
-                    <span className="ws-listrow__sub">
-                      {cat.productCount ?? 0} listings
-                      {cat.parent && ` · in ${cat.parent.name}`}
-                    </span>
+                    >
+                      <button
+                        type="button"
+                        className="ws-iconbtn"
+                        aria-expanded={isOpen}
+                        aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${top.name}`}
+                        onClick={(e) => { e.stopPropagation(); toggle(top.id); }}
+                        disabled={subs.length === 0}
+                        style={{ visibility: subs.length === 0 ? 'hidden' : undefined }}
+                      >
+                        {isOpen ? <ChevronDown size={16} aria-hidden /> : <ChevronRight size={16} aria-hidden />}
+                      </button>
+                      {top.image && (
+                        <img
+                          src={top.image}
+                          alt=""
+                          style={{
+                            width: 32, height: 32, objectFit: 'cover', flex: 'none',
+                            borderRadius: 'var(--ws-radius-md)',
+                            border: '1px solid var(--ws-border-hairline)',
+                          }}
+                        />
+                      )}
+                      <div className="ws-listrow__body">
+                        <span className="ws-listrow__title">{top.name}</span>
+                        <span className="ws-listrow__sub">
+                          {subs.length} {subs.length === 1 ? 'subcategory' : 'subcategories'} · {listings} {listings === 1 ? 'listing' : 'listings'}
+                        </span>
+                      </div>
+                      {!top.isActive && <span className="ws-badge ws-badge--neutral">Inactive</span>}
+                      <button
+                        className="ws-iconbtn"
+                        title={`Add a subcategory to ${top.name}`}
+                        aria-label={`Add a subcategory to ${top.name}`}
+                        onClick={(e) => { e.stopPropagation(); handleCreate(top.id); }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                      <button
+                        className="ws-iconbtn"
+                        title="Deactivate"
+                        aria-label={`Deactivate ${top.name}`}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(top.id, top.name); }}
+                        style={{ color: 'var(--ws-status-danger)' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    {isOpen && subs.map((sub) => (
+                      <div
+                        key={sub.id}
+                        className="ws-listrow ws-listrow--link"
+                        onClick={() => handleSelectCategory(sub)}
+                        style={{
+                          cursor: 'pointer',
+                          // Indented past the parent's chevron, so the two
+                          // levels read as a tree rather than one list.
+                          paddingLeft: 'calc(var(--ws-space-8) * 2 + var(--ws-space-1))',
+                          background: selectedCategory?.id === sub.id ? 'var(--ws-bg-raised)' : undefined,
+                          opacity: sub.isActive ? 1 : 0.55,
+                        }}
+                      >
+                        <div className="ws-listrow__body">
+                          <span className="ws-listrow__title" style={{ fontWeight: 500 }}>{sub.name}</span>
+                          <span className="ws-listrow__sub">{sub.productCount ?? 0} {sub.productCount === 1 ? 'listing' : 'listings'}</span>
+                        </div>
+                        {!sub.isActive && <span className="ws-badge ws-badge--neutral">Inactive</span>}
+                        <button
+                          className="ws-iconbtn"
+                          title="Deactivate"
+                          aria-label={`Deactivate ${sub.name}`}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(sub.id, sub.name); }}
+                          style={{ color: 'var(--ws-status-danger)' }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  {!cat.isActive && <span className="ws-badge ws-badge--neutral">Inactive</span>}
-                  <button
-                    className="ws-iconbtn"
-                    title="Deactivate"
-                    aria-label={`Deactivate ${cat.name}`}
-                    onClick={(e) => { e.stopPropagation(); handleDelete(cat.id, cat.name); }}
-                    style={{ color: 'var(--ws-status-danger)' }}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -227,9 +326,7 @@ export default function AdminCategories() {
           <div className="ws-card">
             {showForm ? (
               <form onSubmit={handleSubmit} className="ws-stack--lg">
-                <h2 className="ws-h2">
-                  {isCreating ? 'New Category' : `Edit: ${selectedCategory?.name}`}
-                </h2>
+                <h2 className="ws-h2">{formTitle}</h2>
 
                 <div className="ws-formfield">
                   <label htmlFor="catName" className="ws-formfield__label">Name *</label>
@@ -302,20 +399,27 @@ export default function AdminCategories() {
                 </div>
 
                 <div className="ws-formfield">
-                  <label htmlFor="catParent" className="ws-formfield__label">Parent Category</label>
+                  <label htmlFor="catParent" className="ws-formfield__label">Belongs to</label>
                   <select
                     id="catParent"
                     className="ws-select"
                     value={formParentId}
                     onChange={(e) => setFormParentId(e.target.value)}
+                    disabled={hasChildren}
                   >
-                    <option value="">None (top-level)</option>
-                    {categories
+                    <option value="">Nothing: this is a top-level category</option>
+                    {/* Only categories can hold subcategories: two levels, no more. */}
+                    {topOptions
                       .filter((c) => c.id !== selectedCategory?.id)
                       .map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                        <option key={c.id} value={c.id}>Subcategory of {c.name}</option>
                       ))}
                   </select>
+                  <p className="ws-caption ws-muted">
+                    {hasChildren
+                      ? 'This category has subcategories, so it stays top-level.'
+                      : 'Listings are filed under subcategories, and filters are set per subcategory.'}
+                  </p>
                 </div>
 
                 <div className="ws-formfield">
@@ -342,7 +446,7 @@ export default function AdminCategories() {
 
                 <div className="ws-stack">
                   <button type="submit" className="ws-btn ws-btn--primary ws-btn--block" disabled={saving}>
-                    {saving ? 'Saving…' : isCreating ? 'Create Category' : 'Update Category'}
+                    {saving ? 'Saving…' : `${isCreating ? 'Create' : 'Save'} ${kind}`}
                   </button>
                   <button
                     type="button"
@@ -355,8 +459,10 @@ export default function AdminCategories() {
               </form>
             ) : (
               <>
-                <h2 className="ws-h2">Category Details</h2>
-                <p className="ws-body ws-muted">Select a category to edit, or create a new one.</p>
+                <h2 className="ws-h2">Category details</h2>
+                <p className="ws-body ws-muted">
+                  Select a category or subcategory to edit. Use + on a category to add a subcategory to it.
+                </p>
               </>
             )}
           </div>

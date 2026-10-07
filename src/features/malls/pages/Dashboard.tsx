@@ -7,6 +7,7 @@ import { mallService, type MyMall } from '@/features/malls/api';
 import { toApiError } from '@/shared/lib/api';
 import { useUIStore } from '@/shared/store/uiStore';
 import { billingInterval } from '@/features/stores/model';
+import { useLocalMoney } from '@/shared/hooks/useLocalMoney';
 
 /**
  * Mall owner dashboard: the subscription that keeps the whole mall (and every
@@ -14,8 +15,6 @@ import { billingInterval } from '@/features/stores/model';
  * subscription is the only bill — substores never charge separately, which is
  * the value proposition and worth restating where the money is managed.
  */
-
-const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
 
 const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
@@ -31,6 +30,8 @@ const STATUS_BADGE: Record<string, { cls: string; label: string }> = {
 
 export default function MallDashboard() {
   const [mall, setMall] = useState<MyMall | null>(null);
+  // Subscription amounts in the mall's own currency, with the USD charged.
+  const { money, short, converted } = useLocalMoney(mall?.country);
   const [loading, setLoading] = useState(true);
   const [charging, setCharging] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -59,18 +60,18 @@ export default function MallDashboard() {
   const handleCharge = async () => {
     const plan = mall?.subscription?.plan;
     if (!plan) return;
-    const price = formatUsd(plan.amountMinor);
+    const price = money(plan.amountMinor);
     const wallet = mall?.wallet;
 
     if (wallet && wallet.availableMinor < plan.amountMinor) {
       addToast({
         type: 'error',
-        message: `Your wallet has ${formatUsd(wallet.availableMinor)} but ${price} is due. Top up ${formatUsd(plan.amountMinor - wallet.availableMinor)} and try again.`,
+        message: `Your wallet has ${money(wallet.availableMinor)} but ${price} is due. Top up ${money(plan.amountMinor - wallet.availableMinor)} and try again.`,
       });
       return;
     }
 
-    const balanceNote = wallet ? ` Your balance is ${formatUsd(wallet.availableMinor)}.` : '';
+    const balanceNote = wallet ? ` Your balance is ${money(wallet.availableMinor)}.` : '';
     if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your mall and every store in it visible for one billing period (${plan.name}, ${price} ${billingInterval(plan)})?${balanceNote}`)) {
       return;
     }
@@ -197,9 +198,14 @@ export default function MallDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <dt className="ws-caption ws-muted">Plan</dt>
               <dd className="ws-num" style={{ margin: 0 }}>
-                {plan ? `${plan.name}, ${formatUsd(plan.amountMinor)} ${billingInterval(plan)}` : '—'}
+                {plan ? `${plan.name}, ${money(plan.amountMinor)} ${billingInterval(plan)}` : '—'}
               </dd>
             </div>
+            {converted && (
+              <p className="ws-caption ws-muted" style={{ margin: 0 }}>
+                Charged in US dollars from your WorldStreet dollar wallet. Local amounts use today's rate.
+              </p>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <dt className="ws-caption ws-muted">Status</dt>
               <dd style={{ margin: 0 }}>{sub?.status ?? '—'}</dd>
@@ -224,7 +230,7 @@ export default function MallDashboard() {
           <div style={{ display: 'flex', gap: 'var(--ws-space-2)', flexWrap: 'wrap' }}>
             {needsPayment && (
               <button className="ws-btn ws-btn--primary" onClick={handleCharge} disabled={charging}>
-                {charging ? 'Charging…' : plan ? `Pay ${formatUsd(plan.amountMinor)} & Activate` : 'Activate'}
+                {charging ? 'Charging…' : plan ? `Pay ${short(plan.amountMinor)} & Activate` : 'Activate'}
               </button>
             )}
             {sub?.autoRenew && sub.status !== 'CANCELLED' && (

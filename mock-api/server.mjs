@@ -167,6 +167,14 @@ const DELETE = (p, h) => route('DELETE', p, h);
 
 // --- Categories ---
 
+// USD exchange rates for showing subscription prices locally. Fixed values,
+// near real ones, so local pages are stable; the API fetches live ones.
+GET('/fx/usd', () => ok({
+  base: 'USD',
+  rates: { USD: 1, NGN: 1540, GHS: 15.6, KES: 129, ZAR: 18.1, EGP: 48.5, XOF: 600, GBP: 0.77, EUR: 0.91, CAD: 1.37 },
+  updatedAt: iso(0),
+}));
+
 GET('/categories', () => ok(db.categories));
 GET('/categories/featured', (_p, q) => ok(db.categories.filter((c) => !c.parentId).slice(0, Number(q.limit) || 4)));
 GET('/categories/id/:id/attributes', ({ id }) => ok(categoryAttributes.filter((a) => a.categoryId === id)));

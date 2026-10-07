@@ -12,6 +12,7 @@ import StateSelect from '@/shared/components/location/StateSelect';
 import { toast } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
 import { billingInterval } from '@/features/stores/model';
+import { useLocalMoney } from '@/shared/hooks/useLocalMoney';
 
 /**
  * Mall creation.
@@ -53,9 +54,6 @@ const createMallSchema = z.object({
 });
 
 type CreateMallFormData = z.infer<typeof createMallSchema>;
-
-const formatUsd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
-
 
 export default function MallRegistration() {
   const navigate = useNavigate();
@@ -115,6 +113,9 @@ export default function MallRegistration() {
     };
   }, []);
 
+  // The plan price in the currency of the country picked below, as it is picked.
+  const { money, converted } = useLocalMoney(watch('country'));
+
   const onSubmit = async (data: CreateMallFormData) => {
     setServerError('');
     setIsSubmitting(true);
@@ -172,9 +173,14 @@ export default function MallRegistration() {
         <div>
           <strong style={{ display: 'block', color: 'var(--ws-text-primary)', marginBottom: 2 }}>
             {plan
-              ? `${formatUsd(plan.amountMinor)} ${billingInterval(plan)} covers your mall and all its stores`
+              ? `${money(plan.amountMinor)} ${billingInterval(plan)} covers your mall and all its stores`
               : 'A monthly subscription keeps your mall and all its stores visible'}
           </strong>
+          {converted && (
+            <span style={{ display: 'block', marginBottom: 2 }}>
+              Charged in US dollars from your WorldStreet dollar wallet. Local amounts use today's rate.
+            </span>
+          )}
           Creating your mall is free, and you can set up your stores before
           activating anything.{plan?.substoreLimit ? ` Your plan includes up to ${plan.substoreLimit} stores` : ''}
           {plan?.substoreLimit ? ' — none of them needs its own subscription.' : ''}

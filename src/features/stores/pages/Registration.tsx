@@ -11,6 +11,7 @@ import StateSelect from '@/shared/components/location/StateSelect';
 import { toast } from '@/shared/store/uiStore';
 import { toApiError } from '@/shared/lib/api';
 import { billingInterval } from '@/features/stores/model';
+import { useLocalMoney } from '@/shared/hooks/useLocalMoney';
 
 /**
  * Store creation.
@@ -56,9 +57,6 @@ const createStoreSchema = z.object({
 });
 
 type CreateStoreFormData = z.infer<typeof createStoreSchema>;
-
-const formatUsd = (minor: number) => `${(minor / 100).toFixed(2)}`;
-
 
 export default function VendorRegistration() {
   const navigate = useNavigate();
@@ -118,6 +116,9 @@ export default function VendorRegistration() {
     };
   }, []);
 
+  // The plan price in the currency of the country picked below, as it is picked.
+  const { money, converted } = useLocalMoney(watch('country'));
+
   const onSubmit = async (data: CreateStoreFormData) => {
     setServerError('');
     setIsSubmitting(true);
@@ -175,9 +176,14 @@ export default function VendorRegistration() {
         <div>
           <strong style={{ display: 'block', color: 'var(--ws-text-primary)', marginBottom: 2 }}>
             {plan
-              ? `${formatUsd(plan.amountMinor)} ${billingInterval(plan)} to stay visible`
+              ? `${money(plan.amountMinor)} ${billingInterval(plan)} to stay visible`
               : 'A monthly subscription keeps your store visible'}
           </strong>
+          {converted && (
+            <span style={{ display: 'block', marginBottom: 2 }}>
+              Charged in US dollars from your WorldStreet dollar wallet. Local amounts use today's rate.
+            </span>
+          )}
           Creating your store is free. It stays private until you activate the
           subscription from your dashboard, so you can add your products first.
           Buyers contact you directly — WorldStore takes no commission on sales.

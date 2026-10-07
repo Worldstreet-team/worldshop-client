@@ -18,6 +18,7 @@ import { toApiError } from '@/shared/lib/api';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { MINUTE } from '@/app/providers/QueryProvider';
 import { billingInterval } from '@/features/stores/model';
+import { useLocalMoney } from '@/shared/hooks/useLocalMoney';
 
 /**
  * Vendor Overview, laid out as the sandbox's: greeting, four stat cards, the
@@ -32,8 +33,8 @@ import { billingInterval } from '@/features/stores/model';
  * offer and the subscription detail.
  */
 
-/** Subscription prices are USD; listing prices stay in naira. */
-const usd = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+/** Exact USD, for amounts that must not move with today's rate (a past charge). */
+const dollars = (minor: number) => `${(minor / 100).toFixed(2)}`;
 
 
 // Assembled by hand: en-GB abbreviates September as "Sept".
@@ -90,6 +91,8 @@ export default function VendorDashboard() {
   const addToast = useUIStore((s) => s.addToast);
   const [charging, setCharging] = useState(false);
   const { data, isPending, isError, error, refetch } = useVendorDashboard();
+  // Subscription amounts in the store's own currency, with the USD charged.
+  const { money, short, converted } = useLocalMoney(data?.store.country);
 
   const top = useQuery({
     queryKey: ['vendor', 'listings', 'top'],
@@ -114,19 +117,19 @@ export default function VendorDashboard() {
     if (!data?.subscription) return;
     const wallet = data.wallet;
     // Credit is spent first, so the wallet is only charged the remainder.
-    const price = usd(wallet?.dueMinor ?? data.subscription.plan.amountMinor);
+    const price = money(wallet?.dueMinor ?? data.subscription.plan.amountMinor);
 
     if (wallet && !wallet.sufficient) {
       addToast({
         type: 'error',
-        message: `Your wallet has ${usd(wallet.availableMinor)} but ${price} is due. Top up ${usd(wallet.dueMinor - wallet.availableMinor)} and try again.`,
+        message: `Your wallet has ${money(wallet.availableMinor)} but ${price} is due. Top up ${money(wallet.dueMinor - wallet.availableMinor)} and try again.`,
       });
       return;
     }
 
-    const balanceNote = wallet ? ` Your balance is ${usd(wallet.availableMinor)}.` : '';
+    const balanceNote = wallet ? ` Your balance is ${money(wallet.availableMinor)}.` : '';
     const plan = data.subscription.plan;
-    if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your store visible for one billing period (${plan.name}, ${usd(plan.amountMinor)} ${billingInterval(plan)})?${balanceNote}`)) {
+    if (!window.confirm(`Charge ${price} from your WorldStreet dollar wallet to keep your store visible for one billing period (${plan.name}, ${money(plan.amountMinor)} ${billingInterval(plan)})?${balanceNote}`)) {
       return;
     }
 
@@ -272,7 +275,7 @@ export default function VendorDashboard() {
                 <span style={{ flex: 1 }}>{alert.message}</span>
                 {needsPayment && ['ACTIVATE', 'PAYMENT_FAILED', 'EXPIRED'].includes(alert.type) && (
                   <button onClick={handleActivate} disabled={charging} className="ws-ldbtn ws-ldbtn--xs ws-ldbtn--primary">
-                    {charging ? 'Processing…' : `Pay ${usd(dueMinor)}`}
+                    {charging ? 'Processing…' : `Pay ${short(dueMinor)}`}
                   </button>
                 )}
                 {canResume && alert.type === 'CANCELLED' && (
@@ -307,8 +310,8 @@ export default function VendorDashboard() {
         />
         <VendorStat
           label="Wallet balance"
-          value={wallet ? usd(wallet.availableMinor) : '—'}
-          detail={wallet ? `${usd(dueMinor)} due at renewal` : 'Wallet unavailable right now'}
+          value={wallet ? short(wallet.availableMinor) : '—'}
+          detail={wallet ? `${money(dueMinor)} due at renewal` : 'Wallet unavailable right now'}
           icon={Wallet}
         />
       </section>
@@ -414,7 +417,7 @@ export default function VendorDashboard() {
                 <div className="ws-vxpayout">
                   <div>
                     <p className="ws-vxpayout__label">Next renewal</p>
-                    <p className="ws-vxpayout__value ws-num">{usd(sub.plan.amountMinor)}</p>
+                    <p className="ws-vxpayout__value ws-num">{short(sub.plan.amountMinor)}</p>
                   </div>
                   {onSchedule ? (
                     <VendorBadge tone="success" icon={CheckCircle2}>On schedule</VendorBadge>
@@ -430,8 +433,13 @@ export default function VendorDashboard() {
                   {sub.currentPeriodEnd
                     ? `${canResume ? 'Ends' : 'Renews'} ${shortDate(sub.currentPeriodEnd)}`
                     : 'Not active yet'}{' '}
-                  · {sub.plan.name} plan, {usd(sub.plan.amountMinor)} {billingInterval(sub.plan)} · Auto-renew {sub.autoRenew ? 'on' : 'off'}
+                  · {sub.plan.name} plan, {money(sub.plan.amountMinor)} {billingInterval(sub.plan)} · Auto-renew {sub.autoRenew ? 'on' : 'off'}
                 </p>
+                {converted && (
+                  <p className="ws-vxpayout__foot">
+                    Charged in US dollars from your WorldStreet dollar wallet. Local amounts use today's rate.
+                  </p>
+                )}
                 {/* The only place a vendor can stop or restart renewal. Kept
                     quiet: it is a deliberate act, not a call to action. */}
                 {sub.status === 'ACTIVE' && sub.autoRenew && (
@@ -493,20 +501,20 @@ export default function VendorDashboard() {
           />
           <div className="ws-vxcard">
             <dl className="ws-vxdl">
-              <div><dt>Plan</dt><dd>{sub.plan.name}, {usd(sub.plan.amountMinor)} {billingInterval(sub.plan)}</dd></div>
+              <div><dt>Plan</dt><dd>{sub.plan.name}, {money(sub.plan.amountMinor)} {billingInterval(sub.plan)}</dd></div>
               <div><dt>Status</dt><dd>{sub.status.replace(/_/g, ' ').toLowerCase()}</dd></div>
               <div><dt>Current period</dt><dd>{formatDate(sub.currentPeriodStart)} to {formatDate(sub.currentPeriodEnd)}</dd></div>
               <div><dt>Auto-renew</dt><dd>{sub.autoRenew ? 'On' : 'Off'}</dd></div>
               {sub.creditMinor > 0 && (
-                <div><dt>Store credit</dt><dd>{usd(sub.creditMinor)}, used before your wallet is charged</dd></div>
+                <div><dt>Store credit</dt><dd>{money(sub.creditMinor)}, used before your wallet is charged</dd></div>
               )}
-              <div><dt>Wallet balance</dt><dd>{wallet ? usd(wallet.availableMinor) : 'Unavailable right now'}</dd></div>
+              <div><dt>Wallet balance</dt><dd>{wallet ? money(wallet.availableMinor) : 'Unavailable right now'}</dd></div>
               {sub.lastCharge && (
                 <div>
                   <dt>Last payment</dt>
                   <dd>
                     {sub.lastCharge.status === 'PAID'
-                      ? `${usd(sub.lastCharge.amountMinor)} on ${formatDate(sub.lastCharge.chargedAt)}`
+                      ? `${dollars(sub.lastCharge.amountMinor)} on ${formatDate(sub.lastCharge.chargedAt)}`
                       : `Failed${sub.lastCharge.failureCode ? ` (${sub.lastCharge.failureCode.replace(/_/g, ' ').toLowerCase()})` : ''}`}
                   </dd>
                 </div>
