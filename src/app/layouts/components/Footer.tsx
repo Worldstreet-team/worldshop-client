@@ -29,13 +29,12 @@ const SELL: FooterLink[] = [
 
 const SUPPORT: FooterLink[] = [
   { label: "Report a listing", to: "/listings" },
-  { label: "Safety tips", to: "/terms" },
+  { label: "Safety tips", to: "/safety-tips" },
   { label: "Terms", to: "/terms" },
   { label: "Privacy", to: "/privacy" },
   { label: "Cookies", to: "/cookies" },
-  // The header has no admin shortcut (the reference has none); this is the
-  // way in. /admin asks for the admin password, so it is safe to list.
-  { label: "Admin", to: "/admin" },
+  // No Admin link: staff go to /admin directly. It was safe to list (the
+  // console has its own password) but advertised the admin area to everyone.
 ];
 
 const ECOSYSTEM: FooterLink[] = [

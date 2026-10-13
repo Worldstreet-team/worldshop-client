@@ -27,16 +27,39 @@
        it would drop a returning user onto the old dark palette. Restore this
        block together with the toggle when market gains a dark mode. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="WorldStore — buy and sell directly with sellers across Nigeria." />
-  <title>WorldStore — Marketplace</title>
+  <meta name="description"
+    content="Buy and sell phones, fashion, vehicles, home goods and more across Nigeria. Browse local stores, compare prices and chat with sellers directly on WorldStore." />
+  <title>WorldStore — Buy &amp; sell across Nigeria</title>
 
-  <!-- Every theme's fonts: Public Sans for worldstreet, Space Grotesk + Inter for
-       shop, Instrument Sans for market, IBM Plex Mono for figures in all three. The Noto Sans request is the
-       naira sign only, which Instrument Sans does not carry. -->
+  <!-- Link previews (WhatsApp, Facebook, X, LinkedIn). These are site-wide
+       defaults: crawlers that do not run JavaScript only ever see these. The
+       canonical link is set per page by src/app/useCanonical.ts, since a fixed
+       one here would mark every page as a copy of the homepage. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="WorldStore" />
+  <meta property="og:title" content="WorldStore — Buy & sell across Nigeria" />
+  <meta property="og:description"
+    content="Browse local stores, compare prices and chat with sellers directly." />
+  <meta property="og:url" content="https://shop.worldstreetgold.com/" />
+  <meta property="og:image" content="https://shop.worldstreetgold.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="WorldStore: buy and sell directly with sellers across Nigeria" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="WorldStore — Buy & sell across Nigeria" />
+  <meta name="twitter:description" content="Browse local stores, compare prices and chat with sellers directly." />
+  <meta name="twitter:image" content="https://shop.worldstreetgold.com/og-image.png" />
+  <link rel="canonical" href="https://shop.worldstreetgold.com/" />
+
+  <!-- Only the active theme's fonts: Public Sans for text, IBM Plex Mono for
+       figures. Switching data-ws-theme above means adding that theme's family
+       here too (shop: Space Grotesk + Inter; market: Instrument Sans). Loading
+       all five cost about 1.6 MB on every first visit. The Noto Sans request
+       is the naira sign only, as a fallback for any face without it. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Public+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&text=%E2%82%A6" rel="stylesheet" />
 </head>

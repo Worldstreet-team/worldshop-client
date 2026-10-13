@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { usePageTitle } from '@/shared/hooks/usePageTitle';
 
 /**
- * The three legal pages the footer links to. Until counsel supplies the real
+ * The legal pages and safety tips the footer links to. Until counsel supplies the real
  * documents these are honest plain-language summaries of how the marketplace
  * actually works (no payments on-platform, chat-based deals, local meetups) —
  * far better than the 404 these URLs used to land on.
@@ -10,7 +10,7 @@ import { usePageTitle } from '@/shared/hooks/usePageTitle';
 
 type Section = { heading: string; body: string[] };
 
-const DOCS: Record<'terms' | 'privacy' | 'cookies', { title: string; intro: string; sections: Section[] }> = {
+const DOCS: Record<'terms' | 'privacy' | 'cookies' | 'safety', { title: string; intro: string; sections: Section[] }> = {
   terms: {
     title: 'Terms of Service',
     intro:
@@ -34,6 +34,52 @@ const DOCS: Record<'terms' | 'privacy' | 'cookies', { title: string; intro: stri
         heading: 'Dealing safely',
         body: [
           'Meet in public places, inspect the item before paying, and be wary of deals that ask you to pay before seeing the goods. Anything suspicious can be reported from the listing or store page — reports go straight to the moderation team.',
+        ],
+      },
+    ],
+  },
+  // Written for how deals actually happen: buyer and seller agree terms in
+  // chat and settle between themselves. Nothing here promises escrow or
+  // buyer protection, because the platform does not hold payments.
+  safety: {
+    title: 'Safety Tips',
+    intro:
+      'Most deals on WorldStore go smoothly. These habits keep it that way, whether you are buying or selling.',
+    sections: [
+      {
+        heading: 'Before you pay',
+        body: [
+          'See the item before you pay for it, in person or on a live video call. Check that it works and matches the photos and description.',
+          'Never pay a deposit to "reserve" an item you have not seen, and be wary of prices far below what similar listings ask.',
+          'Keep the conversation in WorldStore chat. It gives you a record of what was agreed, and it is what our team looks at if you report a problem.',
+        ],
+      },
+      {
+        heading: 'Meeting up',
+        body: [
+          'Meet in a busy public place during the day, such as a mall, a bank entrance or a police station car park. Bring someone with you for expensive items.',
+          'Do not share your home address until you trust the other person, and do not carry more cash than the deal needs.',
+        ],
+      },
+      {
+        heading: 'Signs of a scam',
+        body: [
+          'Pressure to pay quickly, requests to move the conversation to another app, payment by gift card or crypto, or a "courier fee" for an item you have not seen.',
+          'Sellers asking for your card details, PIN, one-time code or WorldStreet password. No genuine buyer or seller needs them, and WorldStore staff will never ask.',
+        ],
+      },
+      {
+        heading: 'Vehicles, phones and high-value items',
+        body: [
+          'For vehicles, check the registration documents and that the seller\'s name matches them, and have a mechanic inspect the car before you pay.',
+          'For phones and laptops, check the device is not locked to someone else\'s account and that the serial number matches the box and receipt.',
+        ],
+      },
+      {
+        heading: 'If something goes wrong',
+        body: [
+          'Report the listing or the store from its page. Reports go straight to our moderation team, who can remove listings and close stores.',
+          'If you have lost money, report it to your bank straight away and to the police, and keep the chat history as evidence.',
         ],
       },
     ],

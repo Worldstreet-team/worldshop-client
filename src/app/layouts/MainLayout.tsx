@@ -5,6 +5,7 @@ import MobileNavPill from '@/app/layouts/components/MobileNavPill';
 import ToastContainer from '@/shared/components/ui/ToastContainer';
 import MobileMenu from '@/app/layouts/components/MobileMenu';
 import VoiceButton from '@/features/voice/components/VoiceButton';
+import { useCanonical } from '@/app/useCanonical';
 
 /**
  * `ws` scopes the design-system typography and token colors. It is applied here
@@ -12,6 +13,7 @@ import VoiceButton from '@/features/voice/components/VoiceButton';
  * own styling until they move across.
  */
 export default function MainLayout() {
+  useCanonical();
   return (
     <div className="ws ws-shell">
       {/* First tab stop: past the search bar and category rail. */}

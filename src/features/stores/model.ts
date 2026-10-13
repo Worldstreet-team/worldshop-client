@@ -34,10 +34,15 @@ export function billingInterval(plan: { intervalMonths: number | null; intervalD
   return plan.intervalDays === 1 ? 'a day' : `every ${plan.intervalDays} days`;
 }
 
-/** Average reply time as a buyer reads it: "~5 min", "~2 hr", "~3 days". */
+/**
+ * Typical reply time as a buyer reads it: "~5 min", "~2 hr", "~3 days".
+ * Past a week the exact figure says nothing more and alarms buyers, so it
+ * reads "over a week".
+ */
 export function replyTime(mins: number): string {
   if (mins < 60) return `~${Math.max(1, Math.round(mins))} min`;
   if (mins < 60 * 24) return `~${Math.round(mins / 60)} hr`;
   const days = Math.round(mins / (60 * 24));
+  if (days > 7) return 'over a week';
   return `~${days} day${days === 1 ? '' : 's'}`;
 }

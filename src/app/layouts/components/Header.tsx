@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchSuggest } from '@/features/listings/hooks/useSearchSuggest';
 import {
   Bell,
   Bookmark,
@@ -122,6 +123,8 @@ export default function Header() {
     el.scrollBy({ left: direction * el.clientWidth * 0.6, behavior: reduced ? "auto" : "smooth" });
   };
 
+  const suggest = useSearchSuggest(term);
+
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = term.trim();
@@ -175,8 +178,10 @@ export default function Header() {
                 onChange={(e) => setTerm(e.target.value)}
                 placeholder="Search listings, sellers, stores…"
                 aria-label="Search listings"
+                {...suggest.inputProps}
               />
               <kbd className="ws-kbd">⌘K</kbd>
+              {suggest.dropdown}
             </form>
           </div>
 

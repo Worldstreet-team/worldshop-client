@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import LocationSelect from '@/app/layouts/components/LocationSelect';
+import { useSearchSuggest } from '@/features/listings/hooks/useSearchSuggest';
 
 export default function MarketplaceSearch({ className = '' }: { className?: string }) {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function MarketplaceSearch({ className = '' }: { className?: stri
   const activeCountry = params.get('country') ?? '';
   const activeState = params.get('state') ?? '';
   const onBrowse = location.pathname === '/' || location.pathname.startsWith('/listings');
+  const suggest = useSearchSuggest(searchBox);
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const q = searchBox.trim();
@@ -44,7 +46,9 @@ export default function MarketplaceSearch({ className = '' }: { className?: stri
         onChange={(e) => setSearchBox(e.target.value)}
         placeholder="Search phones, cars, furniture…"
         aria-label="Search the marketplace"
+        {...suggest.inputProps}
       />
+      {suggest.dropdown}
       <div className="ws-marketsearch__location">
         <LocationSelect country={activeCountry} state={activeState} onChange={setLocation} />
       </div>

@@ -532,7 +532,9 @@ GET('/stores/:slug', ({ slug }) => {
 });
 // Archived substores are DRAFT, which is the one status buyers never see.
 GET('/stores', (_p, q) => {
-  const rows = byPlace(db.stores.filter((s) => s.status !== 'DRAFT'), q);
+  // As the API: a store with no live listings is left out of the directory.
+  const live = (s) => db.listings.some((l) => l.storeId === s.id && l.status === 'PUBLISHED');
+  const rows = byPlace(db.stores.filter((s) => s.status !== 'DRAFT' && live(s)), q);
   const { slice, pagination } = paginate(rows, q);
   return { success: true, data: slice.map(publicStore), pagination };
 });

@@ -62,7 +62,8 @@ export default function ListingActions({ listing }: { listing: PublicListing }) 
         <ShieldAlert size={16} aria-hidden />
         <span>
           Never pay before you have seen the item. WorldStore does not handle payment or
-          delivery, so there is no refund if a deal goes wrong.
+          delivery, so there is no refund if a deal goes wrong.{' '}
+          <Link to="/safety-tips">More safety tips</Link>
         </span>
       </p>
     </div>

@@ -5917,3 +5917,90 @@ html[data-reveal='ready'] :is(.ws-sellband, .ws-assure) [data-reveal]:not(.is-in
 .ws-menu__item--danger {
   color: var(--ws-status-danger);
 }
+
+// ─── Search suggestions ────────────────────────────────────────────────
+// The type-ahead under the header and browse search boxes. Both boxes are
+// flex rows, so they are made the anchor here rather than in each owner.
+.ws-hfield--search,
+.ws-marketsearch {
+  position: relative;
+}
+
+.ws-suggest {
+  position: absolute;
+  top: calc(100% + var(--ws-space-2));
+  left: 0;
+  right: 0;
+  z-index: var(--ws-z-dropdown);
+  margin: 0;
+  padding: var(--ws-space-1);
+  list-style: none;
+  max-height: min(420px, 70vh);
+  overflow-y: auto;
+  border: 1px solid var(--ws-border-hairline);
+  border-radius: var(--ws-radius-lg);
+  background: var(--ws-bg-surface);
+  box-shadow: var(--ws-shadow-overlay);
+  text-align: left;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: var(--ws-space-3);
+    padding: var(--ws-space-2) var(--ws-space-3);
+    border-radius: var(--ws-radius-md);
+    cursor: pointer;
+
+    &.is-active { background: var(--ws-bg-raised); }
+
+    &--search {
+      margin-top: var(--ws-space-1);
+      border-top: 1px solid var(--ws-border-hairline);
+      border-radius: 0 0 var(--ws-radius-md) var(--ws-radius-md);
+      font-weight: 600;
+    }
+  }
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    overflow: hidden;
+    border-radius: var(--ws-radius-md);
+    background: var(--ws-bg-sunken);
+    color: var(--ws-text-muted);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    color: var(--ws-text-primary);
+  }
+
+  &__detail {
+    font-size: 12.5px;
+    color: var(--ws-text-muted);
+  }
+
+  &__status {
+    padding: var(--ws-space-2) var(--ws-space-3);
+    font-size: 13px;
+    color: var(--ws-text-muted);
+  }
+}

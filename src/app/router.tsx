@@ -150,6 +150,7 @@ const router = createBrowserRouter([
       },
       { path: 'terms', element: <SuspenseWrapper><LegalPage doc="terms" /></SuspenseWrapper> },
       { path: 'privacy', element: <SuspenseWrapper><LegalPage doc="privacy" /></SuspenseWrapper> },
+      { path: 'safety-tips', element: <SuspenseWrapper><LegalPage doc="safety" /></SuspenseWrapper> },
       { path: 'cookies', element: <SuspenseWrapper><LegalPage doc="cookies" /></SuspenseWrapper> },
       // Legacy ecommerce URLs. Shopping flows (cart, checkout, orders) are
       // gone; browse-shaped ones land on the marketplace, and old store links

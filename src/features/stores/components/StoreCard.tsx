@@ -12,7 +12,7 @@ export default function StoreCard({ store }: { store: PublicStore }) {
   // took a slot and a label for nothing and made the card read as a form.
   const reply =
     store.avgResponseMins != null
-      ? `Replies ${replyTime(store.avgResponseMins)}`
+      ? `Replies in ${replyTime(store.avgResponseMins)}`
       : store.responseRate != null
         ? `${Math.round(store.responseRate * 100)}% reply rate`
         : null;

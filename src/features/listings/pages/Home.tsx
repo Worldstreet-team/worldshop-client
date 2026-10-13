@@ -23,6 +23,10 @@ export default function Home() {
   return (
     <div className="ws-wrap">
       <div className="ws-home">
+        {/* The page's one H1, for screen readers and search engines. The
+            design opens on the carousel, whose slide titles rotate and so
+            cannot name the page; this one stays put without being drawn. */}
+        <h1 className="ws-sr-only">WorldStore: buy and sell across Nigeria</h1>
         {/* Promo and trust strip travel together: the strip answers the
             question the promo provokes, so they sit closer than a section. */}
         <section className="ws-home__featured" aria-label="Featured">
