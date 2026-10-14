@@ -337,11 +337,17 @@ export function loadStates(): Promise<StatesOf> {
 }
 
 /** "Ikeja, Lagos" at home; "Harare, Harare Province, Zimbabwe" elsewhere. */
+/**
+ * The value a server migration gave stores that predate the required state.
+ * It means "not known", so it is never printed as if it were a place.
+ */
+const UNKNOWN_STATE = 'unspecified';
+
 export function formatLocation(
   parts: Array<string | null | undefined>,
   country?: string | null,
 ): string {
-  const out = parts.filter(Boolean) as string[];
+  const out = parts.filter((p): p is string => Boolean(p) && p!.trim().toLowerCase() !== UNKNOWN_STATE);
   if (country && country !== DEFAULT_COUNTRY) {
     out.push(getCountry(country)?.name ?? country);
   }
