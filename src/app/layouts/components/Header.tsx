@@ -25,6 +25,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useCurrentPlace } from "@/shared/hooks/useCurrentPlace";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useUnreadCount } from "@/features/chat/hooks/useUnreadCount";
+import { useHasMalls } from "@/features/malls/hooks/useHasMalls";
 
 /**
  * Which ends of a horizontally scrolling row have more to reveal. Measured
@@ -73,6 +74,7 @@ export default function Header() {
   const location = useLocation();
   const [params] = useSearchParams();
   const { isAuthenticated, user } = useAuth();
+  const hasMalls = useHasMalls();
   const place = useCurrentPlace();
   const { toggleMobileMenu } = useUIStore();
   const urlSearch = params.get("search") ?? "";
@@ -267,10 +269,12 @@ export default function Header() {
                   <Store size={14} fill="currentColor" aria-hidden />
                   Stores
                 </Link>
-                <Link to="/malls" className="ws-pill ws-pill--place">
-                  <Building2 size={14} fill="currentColor" aria-hidden />
-                  Malls
-                </Link>
+                {hasMalls && (
+                  <Link to="/malls" className="ws-pill ws-pill--place">
+                    <Building2 size={14} fill="currentColor" aria-hidden />
+                    Malls
+                  </Link>
+                )}
                 {categoriesLoading
                   ? // Widths vary so the row reads as words of different lengths
                     // rather than a progress bar chopped into pieces.

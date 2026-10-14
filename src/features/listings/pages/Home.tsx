@@ -18,7 +18,7 @@ import Assurances from "@/features/listings/components/home/Assurances";
  */
 export default function Home() {
   usePageTitle();
-  const { vehiclesId, deals, newest, loading } = useHomeRails();
+  const { vehiclesId, motors, deals, newest, loading } = useHomeRails();
 
   return (
     <div className="ws-wrap">
@@ -30,8 +30,10 @@ export default function Home() {
         {/* Promo and trust strip travel together: the strip answers the
             question the promo provokes, so they sit closer than a section. */}
         <section className="ws-home__featured" aria-label="Featured">
+          {/* The Motors slide promises vehicles, so it waits until there
+              are some to show rather than leading into an empty category. */}
           <HeroCarousel
-            motorsTo={vehiclesId ? `/listings?categoryId=${vehiclesId}` : "/listings"}
+            motorsTo={motors.length > 0 ? `/listings?categoryId=${vehiclesId}` : null}
           />
           <Assurances />
         </section>

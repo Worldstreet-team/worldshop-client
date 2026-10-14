@@ -16,10 +16,12 @@ import {
 } from "lucide-react";
 import { useUIStore } from "@/shared/store/uiStore";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useHasMalls } from "@/features/malls/hooks/useHasMalls";
 
 export default function MobileMenu() {
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const { isAuthenticated, user, logout } = useAuth();
+  const hasMalls = useHasMalls();
   const drawerRef = useRef<HTMLElement>(null);
   const [signingOut, setSigningOut] = useState(false);
   const displayName = [user?.firstName, user?.lastName]
@@ -146,14 +148,16 @@ export default function MobileMenu() {
             <Store size={18} aria-hidden />
             Stores
           </Link>
-          <Link
-            to="/malls"
-            className="ws-drawer__link"
-            onClick={closeMobileMenu}
-          >
-            <Building2 size={18} aria-hidden />
-            Malls
-          </Link>
+          {hasMalls && (
+            <Link
+              to="/malls"
+              className="ws-drawer__link"
+              onClick={closeMobileMenu}
+            >
+              <Building2 size={18} aria-hidden />
+              Malls
+            </Link>
+          )}
           {isAuthenticated && (
             <Link
               to="/saved"

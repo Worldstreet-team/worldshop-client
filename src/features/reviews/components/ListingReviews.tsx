@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { BadgeCheck, Info, Star, ThumbsUp } from 'lucide-react';
 import { useListingReviews } from '@/features/reviews/hooks/useListingReviews';
 import type { MarketplaceReview } from '@/features/reviews/api';
@@ -99,6 +100,7 @@ export default function ListingReviews({ listingId = '', storeSlug, heading = tr
     rating, setRating, title, setTitle, comment, setComment,
     formError, submitting, submit, removeMine,
   } = useListingReviews(listingId, storeSlug);
+  const { pathname } = useLocation();
 
   const [star, setStar] = useState<number | null>(null);
   const [withPhotos, setWithPhotos] = useState(false);
@@ -187,6 +189,20 @@ export default function ListingReviews({ listingId = '', storeSlug, heading = tr
         </div>
       )}
 
+      {/* Signed out, the eligibility check cannot run, so the way in is the
+          sign-in, with the rule stated up front rather than after it. */}
+      {!isSignedIn && listingId && (
+        <div className="ws-ldreviews__invite">
+          <Link
+            to={`/auth/login?returnUrl=${encodeURIComponent(pathname)}`}
+            className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--outline"
+          >
+            {count === 0 ? 'Be the first to review' : 'Write a review'}
+          </Link>
+          <p>Sign in, then message the seller about this item, and you can review them.</p>
+        </div>
+      )}
+
       {isSignedIn && listingId && (
         <div>
           {mine && !writing ? (
@@ -254,7 +270,7 @@ export default function ListingReviews({ listingId = '', storeSlug, heading = tr
             </form>
           ) : eligibility?.canReview ? (
             <button className="ws-ldbtn ws-ldbtn--sm ws-ldbtn--outline" onClick={() => setWriting(true)}>
-              Write a review
+              {count === 0 ? 'Be the first to review' : 'Write a review'}
             </button>
           ) : eligibility?.reason ? (
             <div className="ws-alert ws-alert--info">

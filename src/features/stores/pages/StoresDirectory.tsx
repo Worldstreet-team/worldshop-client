@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { ArrowRight, Store } from 'lucide-react';
@@ -26,6 +27,14 @@ export default function StoresDirectory() {
     staleTime: 5 * MINUTE,
   });
 
+  // A store with nothing listed is a dead end for a buyer, so the directory
+  // skips it. The API has no filter for this, so it happens per page here, and
+  // the total is reduced by what this page dropped: exact while the directory
+  // fits on one page, close beyond that.
+  const rows = query.data?.data ?? NO_STORES;
+  const stores = useMemo(() => rows.filter((s) => s.listingCount > 0), [rows]);
+  const total = Math.max(0, (query.data?.pagination.total ?? 0) - (rows.length - stores.length));
+
   return (
     <div className="ws-wrap">
       <DirectoryHeader id="stores-title" title="Stores" place={filters.place} />
@@ -34,7 +43,7 @@ export default function StoresDirectory() {
         <DirectoryFilters
           filters={filters}
           noun="stores"
-          total={query.data?.pagination.total ?? 0}
+          total={total}
           open={drawer.open}
           onClose={() => drawer.setOpen(false)}
         />
@@ -42,8 +51,8 @@ export default function StoresDirectory() {
         <div className="ws-directory">
           <DirectoryResults
             noun={['store', 'stores']}
-            items={query.isError ? NO_STORES : (query.data?.data ?? NO_STORES)}
-            total={query.data?.pagination.total ?? 0}
+            items={query.isError ? NO_STORES : stores}
+            total={total}
             totalPages={query.data?.pagination.totalPages ?? 1}
             page={filters.page}
             loading={query.isPending}

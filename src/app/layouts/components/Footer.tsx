@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useHasMalls } from "@/features/malls/hooks/useHasMalls";
 
 /**
  * Footer, in the design sandbox's four-column shape: Buy, Sell, Support and
@@ -68,9 +69,13 @@ function Column({ heading, links }: { heading: string; links: FooterLink[] }) {
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { isAuthenticated } = useAuth();
+  const hasMalls = useHasMalls();
 
-  // Saved is per-device and meaningless to a signed-out visitor.
-  const buy = isAuthenticated ? BUY : BUY.filter((l) => l.to !== "/saved");
+  // Saved is per-device and meaningless to a signed-out visitor, and the malls
+  // directory stays unlinked until it has a mall in it.
+  const buy = BUY.filter(
+    (l) => (isAuthenticated || l.to !== "/saved") && (hasMalls || l.to !== "/malls"),
+  );
 
   return (
     <footer className="ws-footer">

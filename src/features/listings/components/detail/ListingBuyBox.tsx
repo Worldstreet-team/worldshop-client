@@ -29,8 +29,11 @@ function priceHint(l: PublicListing): string {
   return l.isNegotiable ? 'Asking price. The seller takes offers.' : 'Fixed price set by the seller.';
 }
 
+// The attribute values come from the category's controlled vocabulary; the
+// name is whatever the seller typed. Leading with the vocabulary keeps a
+// typo'd name ("Balck" over a Colour of "Black") off the page.
 const variantLabel = (v: ListingVariant, i: number) =>
-  v.name || Object.values(v.attributes ?? {}).join(' / ') || `Option ${i + 1}`;
+  Object.values(v.attributes ?? {}).join(' / ') || v.name || `Option ${i + 1}`;
 
 type ListingBuyBoxProps = {
   listing: PublicListing;

@@ -24,8 +24,8 @@ type Slide = {
   alt: string;
 };
 
-function slides(motorsTo: string): Slide[] {
-  return [
+function slides(motorsTo: string | null): Slide[] {
+  const all: Array<Slide | null> = [
     {
       key: "fashion",
       eyebrow: "Fashion week",
@@ -44,7 +44,7 @@ function slides(motorsTo: string): Slide[] {
       art: "/img/hero/store.jpg",
       alt: "A clothing boutique with shelves of folded shirts",
     },
-    {
+    motorsTo ? {
       key: "motors",
       eyebrow: "Motors",
       title: "Your next ride is listed",
@@ -52,11 +52,12 @@ function slides(motorsTo: string): Slide[] {
       cta: { label: "Browse vehicles", to: motorsTo },
       art: "/img/hero/shop.jpg",
       alt: "An illuminated open sign in a shop window",
-    },
+    } : null,
   ];
+  return all.filter((s): s is Slide => Boolean(s));
 }
 
-export default function HeroCarousel({ motorsTo }: { motorsTo: string; stat?: number }) {
+export default function HeroCarousel({ motorsTo }: { motorsTo: string | null; stat?: number }) {
   const items = slides(motorsTo);
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
