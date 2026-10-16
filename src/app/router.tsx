@@ -1,18 +1,16 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams } from 'react-router-dom';
 import WsRootLayout from '@ws/app/RootLayout';
-import WsShopLayout, { LegacyPage } from '@ws/app/ShopLayout';
-import { wsNotFoundRoute, wsShopRoutes } from '@ws/app/routes';
+import WsShopLayout, { LegacyPage, LegacyPanel } from '@ws/app/ShopLayout';
+import { WsSellerLayout, WsVendorLayout, wsNotFoundRoute, wsSellRoute, wsShopRoutes, wsVendorRoutes } from '@ws/app/routes';
 import { BrowseRedirect, CategoryRedirect, ListingRedirect, SellerRedirect } from '@ws/app/redirects';
 import AdminLayout from '@/app/layouts/AdminLayout';
 import AuthLayout from '@/app/layouts/AuthLayout';
-import VendorLayout from '@/app/layouts/VendorLayout';
 import MallLayout from '@/app/layouts/MallLayout';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { RouteError } from '@/shared/components/common';
 import ProtectedRoute from '@/features/auth/components/ProtectedRoute';
 import AdminRoute from '@/features/auth/components/AdminRoute';
-import VendorRoute from '@/features/auth/components/VendorRoute';
 import MallOwnerRoute from '@/features/auth/components/MallOwnerRoute';
 import { SubstoreListingApiProvider } from '@/features/stores/context/ListingApiContext';
 
@@ -45,13 +43,11 @@ const AdminPricing = lazy(() => import('@/features/admin/pages/Pricing'));
 const AdminRevenue = lazy(() => import('@/features/admin/pages/Revenue'));
 
 // Vendor Pages
-const VendorDashboard = lazy(() => import('@/features/stores/pages/Dashboard'));
 const VendorRegistration = lazy(() => import('@/features/stores/pages/Registration'));
 const VendorProducts = lazy(() => import('@/features/stores/pages/Products'));
 const VendorProductEdit = lazy(() => import('@/features/stores/pages/ProductEdit'));
 const VendorSettings = lazy(() => import('@/features/stores/pages/Settings'));
 const VendorReviews = lazy(() => import('@/features/reviews/pages/VendorReviews'));
-const VendorMessages = lazy(() => import('@/features/chat/pages/VendorMessages'));
 
 // Mall Pages
 const MallDashboard = lazy(() => import('@/features/malls/pages/Dashboard'));
@@ -80,6 +76,12 @@ const Legacy = ({ children }: { children: React.ReactNode }) => <div className="
  * substore's endpoints via context. The provider needs the :substoreId param,
  * which is only available inside the route element.
  */
+/** The listing editor's old address, /vendor/products/:id, is the sell wizard's /sell/:id. */
+function EditRedirect() {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/sell/${id}`} replace />;
+}
+
 function SubstorePage({ children }: { children: React.ReactNode }) {
   const { substoreId } = useParams<{ substoreId: string }>();
   if (!substoreId) return <Navigate to="/mall/stores" replace />;
@@ -135,8 +137,41 @@ const router = createBrowserRouter([
       { path: 'stores/:slug', element: <SellerRedirect /> },
       { path: 'store/:slug', element: <SellerRedirect /> },
       { path: 'categories/:slug', element: <CategoryRedirect /> },
-      // Selling starts in the listing editor until the sell wizard is ported.
-      { path: 'sell/new', element: <Navigate to="/vendor/products/new" replace /> },
+      // Seller Hub and the sell wizard: signed in and owning a shop (SellerGate).
+      {
+        element: <WsSellerLayout />,
+        children: [
+          wsSellRoute,
+          {
+            path: 'vendor',
+            element: <WsVendorLayout />,
+            children: [
+              ...wsVendorRoutes,
+              // Shop settings and reviews keep their pages, inside the hub.
+              {
+                path: 'settings',
+                element: <LegacyPanel title="Shop settings" />,
+                children: [{ index: true, element: <SuspenseWrapper><VendorSettings /></SuspenseWrapper> }],
+              },
+              {
+                path: 'reviews',
+                element: <LegacyPanel title="Reviews" />,
+                children: [{ index: true, element: <SuspenseWrapper><VendorReviews /></SuspenseWrapper> }],
+              },
+              { path: 'messages', element: <Navigate to="/inbox?as=seller" replace /> },
+              { path: 'products', element: <Navigate to="/vendor/listings" replace /> },
+              { path: 'products/new', element: <Navigate to="/sell/new" replace /> },
+              { path: 'products/:id', element: <EditRedirect /> },
+              { path: 'listings/new', element: <Navigate to="/sell/new" replace /> },
+              { path: 'listings/:id', element: <EditRedirect /> },
+              // Stale bookmarks to removed pages (orders, withdrawals) land on the hub.
+              { path: '*', element: <Navigate to="/vendor" replace /> },
+            ],
+          },
+        ],
+      },
+      { path: 'sell', element: <Navigate to="/sell/new" replace /> },
+      { path: 'sell/start', element: <Navigate to="/vendor" replace /> },
       // Ecommerce URLs from before the marketplace pivot.
       { path: 'products', element: <Navigate to="/search" replace /> },
       { path: 'products/:slug', element: <Navigate to="/search" replace /> },
@@ -226,54 +261,6 @@ const router = createBrowserRouter([
       {
         path: '*',
         element: <Navigate to="/mall" replace />,
-      },
-    ],
-  },
-  // Vendor routes (vendor layout, vendor-gated)
-  {
-    path: '/vendor',
-    element: (
-      <Legacy>
-        <VendorRoute>
-          <VendorLayout />
-        </VendorRoute>
-      </Legacy>
-    ),
-    errorElement: <RouteError />,
-    children: [
-      {
-        index: true,
-        element: <SuspenseWrapper><VendorDashboard /></SuspenseWrapper>,
-      },
-      {
-        path: 'products',
-        element: <SuspenseWrapper><VendorProducts /></SuspenseWrapper>,
-      },
-      {
-        path: 'products/new',
-        element: <SuspenseWrapper><VendorProductEdit /></SuspenseWrapper>,
-      },
-      {
-        path: 'products/:id',
-        element: <SuspenseWrapper><VendorProductEdit /></SuspenseWrapper>,
-      },
-      {
-        path: 'settings',
-        element: <SuspenseWrapper><VendorSettings /></SuspenseWrapper>,
-      },
-      {
-        path: 'reviews',
-        element: <SuspenseWrapper><VendorReviews /></SuspenseWrapper>,
-      },
-      {
-        path: 'messages',
-        element: <SuspenseWrapper><VendorMessages /></SuspenseWrapper>,
-      },
-      // Stale bookmarks to removed pages (orders, withdrawals) land on the
-      // dashboard rather than an unmatched-route error.
-      {
-        path: '*',
-        element: <Navigate to="/vendor" replace />,
       },
     ],
   },

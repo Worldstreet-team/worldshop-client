@@ -5,11 +5,10 @@ import { Menu, type MenuItem } from "@ws/components/ui";
 import { requestSignIn as signIn, signOut, useSession } from "@ws/features/auth/session";
 
 /* AccountMenu (spec §3.1, eBay "My eBay"): the places a buyer and seller come back to.
-   Desktop only; phones use the Account tab. The sign-in sheet uses a device-local demo session until the auth adapter exists. */
+   Desktop only; phones use the Account tab. No Orders entry: nothing is bought on the platform. */
 
 const PLACES: MenuItem[] = [
   { label: "Saved", href: "/saved" },
-  { label: "Orders", href: "/orders" },
   { label: "Inbox", href: "/inbox" },
   { label: "Offers", href: "/offers" },
   { label: "Seller Hub", href: "/vendor" },

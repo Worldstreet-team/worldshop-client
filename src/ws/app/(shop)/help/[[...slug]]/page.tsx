@@ -71,6 +71,5 @@ function EscrowHelp() {
     <ol>{steps.map(({ icon: Icon, title, body }, index) => <li key={title}><span>{index + 1}</span><Icon /><div><h2>{title}</h2><p>{body}</p></div></li>)}</ol>
     <section><h2>What if something goes wrong?</h2><p>Report the problem from your order before the inspection window ends. The affected payment stays frozen while the seller responds and the case is reviewed.</p><p>{ESCROW.offPlatform}</p></section>
     <section className="ws-help-escrow__windows"><h2>Protection windows</h2><div className="ws-help-table"><div><strong>During inspection</strong><span>Report damage, missing parts, a wrong item or something not as described.</span></div><div><strong>Within {rules.protection.anyIssueDays} days</strong><span>Report a hidden defect after release; recovery may come from the seller or buyer-protection process.</span></div><div><strong>Within {rules.protection.counterfeitSafetyDays} days</strong><span>Report counterfeit or safety problems with supporting evidence.</span></div></div><p>{ESCROW.payout}</p></section>
-    <Link href="/orders" className={buttonClass({ variant: "ghost", arrow: true })}>View your orders<ArrowRightIcon /></Link>
   </article>;
 }

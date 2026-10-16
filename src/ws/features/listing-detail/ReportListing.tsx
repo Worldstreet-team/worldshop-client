@@ -1,18 +1,17 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useRef } from "react";
 import { FlagIcon, XmarkCircleIcon } from "@ws/components/icons";
 import { buttonClass } from "@ws/components/ui";
 import { rules } from "@ws/config/marketplace-rules";
+import { requireAuth } from "@ws/features/auth/session";
 import { REPORT_REASONS, REPORT_THANKS } from "@ws/lib/copy/listing";
-import { addReport } from "@ws/features/admin/model";
-import { updateAdmin } from "@ws/features/admin/store";
-import type { ReportReason } from "@ws/lib/copy/listing";
 import type { ReportState } from "./report-action";
 
 /* ReportListingModal (spec §7): reason (radios), optional details, send. A native modal
-   dialog opened with invoker commands; a plain form posting to a Server Action, so it
-   works before scripts load. Errors sit next to the field and take focus (R-042). */
+   dialog; the form's action files the report with the moderation queue. Reports need an
+   account (anonymous claims can't be deduplicated), so a guest is asked to sign in
+   before the dialog opens. Errors sit next to the field and take focus (R-042). */
 
 export const REPORT_ID = "report-listing";
 const command = (action: "show-modal" | "close") => ({ commandfor: REPORT_ID, command: action }) as Record<string, string>;
@@ -23,11 +22,12 @@ export function ReportButton({ className }: { className?: string }) {
       type="button"
       className={className ?? buttonClass({ variant: "quiet", size: "sm" })}
       aria-haspopup="dialog"
-      {...command("show-modal")}
-      onClick={() => {
-        const d = document.getElementById(REPORT_ID) as HTMLDialogElement | null;
-        if (d && !d.open) d.showModal();
-      }}
+      onClick={() =>
+        requireAuth("report a listing", () => {
+          const d = document.getElementById(REPORT_ID) as HTMLDialogElement | null;
+          if (d && !d.open) d.showModal();
+        })
+      }
     >
       <FlagIcon />
       Report this listing
@@ -38,24 +38,14 @@ export function ReportButton({ className }: { className?: string }) {
 type Props = {
   listingId: string;
   title: string;
-  /** Shop name, kept with the report for the moderation queue. */
-  sellerName?: string;
-  /** The Server Action (./report-action.ts); injectable for stories. */
+  /** The submit (./report-action.ts); injectable for stories. */
   submit: (prev: ReportState, form: FormData) => Promise<ReportState>;
 };
 
-export function ReportListingModal({ listingId, title, sellerName = "", submit }: Props) {
+export function ReportListingModal({ listingId, title, submit }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const submitted = useRef<FormData | null>(null);
   const [state, action, pending] = useActionState<ReportState, FormData>(submit, { status: "idle" });
   const error = state.status === "error" ? state : null;
-  // The server accepted it; queue it for moderation (device-local until the ops service exists).
-  useEffect(() => {
-    const form = submitted.current;
-    if (state.status !== "sent" || !form) return;
-    submitted.current = null;
-    try { updateAdmin((s) => addReport(s, { id: crypto.randomUUID(), listing_id: listingId, title, seller: sellerName, reason: String(form.get("reason")) as ReportReason, details: String(form.get("details") ?? "").trim(), at: Date.now() })); } catch { /* storage blocked: the server copy stands */ }
-  }, [state, listingId, title, sellerName]);
   const close = () => dialog.current?.close();
 
   return (
@@ -78,7 +68,7 @@ export function ReportListingModal({ listingId, title, sellerName = "", submit }
             </button>
           </div>
         ) : (
-          <form action={action} onSubmit={(e) => { submitted.current = new FormData(e.currentTarget); }} className="ws-report" noValidate>
+          <form action={action} className="ws-report" noValidate>
             <p className="ws-share__title">{title}</p>
             <input type="hidden" name="listing" value={listingId} />
             <fieldset className="ws-field" aria-describedby={error?.field === "reason" ? `${REPORT_ID}-reason-error` : undefined}>

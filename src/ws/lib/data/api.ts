@@ -24,7 +24,7 @@ const MAX_PAGES = 40;
 const LISTINGS_TTL = 60_000;
 const SLOW_TTL = 5 * 60_000;
 
-type Row = ApiListing & { store: PublicStore };
+export type Row = ApiListing & { store: PublicStore };
 
 /** One promise per key, reused until it expires, so a page's parallel reads share a fetch. */
 function cached<T>(ttl: number, load: () => Promise<T>) {
@@ -178,6 +178,11 @@ function toListing(row: Row, top: (id: string | null | undefined) => ApiCategory
     seller: toSeller(row.store),
     category,
   };
+}
+
+/** A listing being written in the sell wizard, as a buyer's card would show it. */
+export function previewCard(row: Row, categoryName: string): ListingWithSeller {
+  return { ...toListing(row, () => undefined), category: { id: "other", name: categoryName, inspection: "default", kind: "goods" } };
 }
 
 const loadListings = cached(LISTINGS_TTL, async () => {

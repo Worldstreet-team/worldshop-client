@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { CategoryRail } from "@ws/features/shell/CategoryRail";
 import { repos } from "@ws/lib/data";
@@ -33,5 +34,21 @@ export function LegacyPage() {
         <Outlet />
       </div>
     </main>
+  );
+}
+
+/**
+ * The same, for a legacy page inside a layout that already has the <main> (the Seller
+ * Hub). Most legacy pages never set a title, so it does it for them, or the tab would
+ * keep the previous page's.
+ */
+export function LegacyPanel({ title }: { title: string }) {
+  useEffect(() => {
+    document.title = `${title} · WorldStore Marketplace`;
+  }, [title]);
+  return (
+    <div className="ws-legacy ws-legacy--embedded">
+      <Outlet />
+    </div>
   );
 }

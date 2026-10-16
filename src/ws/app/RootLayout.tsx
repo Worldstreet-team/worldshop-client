@@ -4,6 +4,7 @@ import { Outlet, ScrollRestoration, useNavigate } from "react-router-dom";
 import { MotionProvider } from "@ws/components/motion/MotionProvider";
 import { ScrollState } from "@ws/components/motion/ScrollState";
 import { ToastViewport } from "@ws/components/ui";
+import { LegacyToasts } from "@ws/compat/LegacyToasts";
 import { registerRuntime } from "@ws/compat/runtime";
 import { AlertsWatcher } from "@ws/features/alerts/AlertsWatcher";
 import { ClerkSession } from "@ws/features/auth/ClerkSession";
@@ -74,6 +75,7 @@ export default function RootLayout() {
       <AlertsWatcher />
       <BottomNav />
       <ToastViewport />
+      <LegacyToasts />
       <SignInSheet />
       <ScrollState />
     </MotionProvider>

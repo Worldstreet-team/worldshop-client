@@ -1,9 +1,12 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
-import type { RouteObject } from "react-router-dom";
+import { Outlet, type RouteObject } from "react-router-dom";
 import { asPage, type PageModule } from "@ws/compat/page";
 import NotFound, { NotFoundContent } from "@ws/app/not-found";
 import ListingLoading from "@ws/app/(shop)/listing/[slug]/loading";
 import ListingNotFound from "@ws/app/(shop)/listing/[slug]/not-found";
+import SellerLayout from "@ws/app/(seller)/layout";
+import VendorLayout from "@ws/app/(seller)/vendor/layout";
+import { SellerGate } from "@ws/features/sell/SellerGate";
 
 /*
  * The WorldStore UI's pages as react-router routes. Each file under app/ is a Next
@@ -46,6 +49,33 @@ export const wsShopRoutes: RouteObject[] = [
     }),
   },
   { path: "help", element: page(() => import("@ws/app/(shop)/help/[[...slug]]/page"), { id: "help-home", params: () => ({ slug: undefined }), notFound: <NotFoundContent /> }) },
+];
+
+/** The (seller) group's layouts, as react-router layout routes. */
+export function WsSellerLayout() {
+  return (
+    <SellerLayout>
+      <SellerGate>
+        <Outlet />
+      </SellerGate>
+    </SellerLayout>
+  );
+}
+
+export function WsVendorLayout() {
+  return (
+    <VendorLayout>
+      <Outlet />
+    </VendorLayout>
+  );
+}
+
+export const wsSellRoute: RouteObject = { path: "sell/:id", element: page(() => import("@ws/app/(seller)/sell/[id]/page"), { id: "sell", notFound: <NotFoundContent /> }) };
+
+/** Seller Hub pages, inside WsVendorLayout. */
+export const wsVendorRoutes: RouteObject[] = [
+  { index: true, element: page(() => import("@ws/app/(seller)/vendor/page"), { id: "vendor", notFound: <NotFoundContent /> }) },
+  { path: "listings", element: page(() => import("@ws/app/(seller)/vendor/listings/page"), { id: "vendor-listings", notFound: <NotFoundContent /> }) },
 ];
 
 /** The reference's 404, for unmatched paths inside the WorldStore shell. */

@@ -258,7 +258,7 @@ export default async function ListingPage({ params }: PageProps<"/listing/[slug]
       )}
 
       <ShareSheet {...share} />
-      <ReportListingModal listingId={listing.id} title={listing.title} sellerName={listing.seller.shop_name} submit={reportListing} />
+      <ReportListingModal listingId={listing.id} title={listing.title} submit={reportListing} />
 
       <StickyBuyBar
         watch="buybox-actions"

@@ -21,7 +21,7 @@ const COLUMNS = [
   {
     title: "Sell",
     links: [
-      { label: "Start selling", href: "/sell/start" },
+      { label: "Start selling", href: "/vendor" },
       { label: "Create a listing", href: "/sell/new" },
       { label: "Seller Hub", href: "/vendor" },
       { label: "Selling fees", href: "/help/fees" },
@@ -32,7 +32,6 @@ const COLUMNS = [
     links: [
       { label: "Help centre", href: "/help" },
       { label: "Buyer protection", href: "/help/buyer-protection" },
-      { label: "Open a dispute", href: "/orders" },
       { label: "Safety tips", href: "/help/safety" },
     ],
   },

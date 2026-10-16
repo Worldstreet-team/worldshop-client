@@ -36,7 +36,7 @@ export interface ListingApiContextValue {
 
 const defaultValue: ListingApiContextValue = {
   api: listingService,
-  productsBasePath: '/vendor/products',
+  productsBasePath: '/vendor/listings',
   dashboardPath: '/vendor',
   getVisibility: () => storeService.getMyStore().then((res) => res.data.isPubliclyVisible),
 };

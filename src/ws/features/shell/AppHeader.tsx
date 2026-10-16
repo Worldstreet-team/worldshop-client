@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellIcon, ChatDotsIcon, HandshakeAgreementDealIcon, HeartIcon, HomeIcon, InfoCircleIcon, PackageIcon, PlusCircleIcon, StoreIcon, TagIcon } from "@ws/components/icons";
+import { BellIcon, ChatDotsIcon, HandshakeAgreementDealIcon, HeartIcon, HomeIcon, InfoCircleIcon, PlusCircleIcon, StoreIcon, TagIcon } from "@ws/components/icons";
 import { buttonClass } from "@ws/components/ui";
 import { AccountMenu, Greeting } from "./AccountMenu";
 import { HeaderFrame } from "./HeaderFrame";
@@ -59,7 +59,6 @@ export function AppHeader({ trending, scopes, categories, categoryLinks }: Props
               <DrawerLink href="/notifications" icon={<BellIcon />}>Notifications</DrawerLink>
               <DrawerLink href="/inbox" icon={<ChatDotsIcon />}>Inbox</DrawerLink>
               <DrawerLink href="/offers" icon={<HandshakeAgreementDealIcon />}>Offers</DrawerLink>
-              <DrawerLink href="/orders" icon={<PackageIcon />}>Orders</DrawerLink>
               <DrawerLink href="/sell/new" icon={<PlusCircleIcon />}>Sell an item</DrawerLink>
               <DrawerLink href="/vendor" icon={<StoreIcon />}>Seller Hub</DrawerLink>
               <DrawerLink href="/help" icon={<InfoCircleIcon />}>Help &amp; Contact</DrawerLink>

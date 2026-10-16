@@ -28,7 +28,7 @@ export function SellCta() {
         </h2>
         <p className="ws-sell__body">Snap a few photos, set your price and choose how buyers get it. {ESCROW.payout}</p>
       </div>
-      <Link ref={cta} href="/sell/start" className={buttonClass({ variant: "ghost", arrow: true, className: "ws-sell__cta" })}>
+      <Link ref={cta} href="/vendor" className={buttonClass({ variant: "ghost", arrow: true, className: "ws-sell__cta" })}>
         Start selling
         <ArrowRightIcon />
       </Link>
