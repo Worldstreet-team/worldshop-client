@@ -135,10 +135,7 @@ const router = createBrowserRouter([
       { path: 'stores/:slug', element: <SellerRedirect /> },
       { path: 'store/:slug', element: <SellerRedirect /> },
       { path: 'categories/:slug', element: <CategoryRedirect /> },
-      // The reference's header points at these. Messages are the real inbox today;
-      // offers ride on messages, and selling starts in the listing editor.
-      { path: 'inbox', element: <Navigate to="/account/messages" replace /> },
-      { path: 'offers', element: <Navigate to="/account/messages" replace /> },
+      // Selling starts in the listing editor until the sell wizard is ported.
       { path: 'sell/new', element: <Navigate to="/vendor/products/new" replace /> },
       // Ecommerce URLs from before the marketplace pivot.
       { path: 'products', element: <Navigate to="/search" replace /> },

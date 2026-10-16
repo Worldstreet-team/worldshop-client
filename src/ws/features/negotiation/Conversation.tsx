@@ -40,10 +40,17 @@ type Props = {
   backHref: string;
   /** Inbox only: the header button that opens the deal sheet below 1200px. */
   deal?: { open: boolean; toggle: (open: boolean) => void };
+  /** Who the reader is talking to, when the thread knows (a buyer's name on the selling side). */
+  who?: { name: string; status?: string };
+  /** False where messages carry text only (the live chat API takes no attachments). */
+  photosEnabled?: boolean;
+  /** Text to start the composer with (an offer, a question carried from the listing page). */
+  initialBody?: string;
 };
 
-export function Conversation({ listing, thread, role, run, blocked, error, backHref, deal }: Props) {
-  const [body, setBody] = useDraft(`${role}:${listing.id}`);
+export function Conversation({ listing, thread, role, run, blocked, error, backHref, deal, who, photosEnabled = true, initialBody }: Props) {
+  const [draft, setBody] = useDraft(`${role}:${listing.id}`);
+  const body = draft || initialBody || "";
   const [photos, setPhotos] = useState<string[]>([]);
   const [photoError, setPhotoError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -51,7 +58,7 @@ export function Conversation({ listing, thread, role, run, blocked, error, backH
   const log = useRef<HTMLDivElement>(null);
   const risky = unsafeMessage(body);
   const messages = thread?.messages ?? [];
-  const other = role === "buyer" ? listing.shop_name : "Buyer";
+  const other = who?.name ?? (role === "buyer" ? listing.shop_name : "Buyer");
   const [now] = useState(Date.now); // "Today" labels; read once per mount
 
   // Keep the newest message in view, as chat apps do.
@@ -74,7 +81,7 @@ export function Conversation({ listing, thread, role, run, blocked, error, backH
       <Avatar name={other} />
       <div className="ws-chat__who">
         <h2>{other}</h2>
-        {role === "buyer" && listing.seller?.reply_hours !== undefined ? <p data-status>Usually replies {replyTime(listing.seller.reply_hours)}</p> : <p>Demo buyer, saved on this device</p>}
+        {role === "buyer" && listing.seller?.reply_hours !== undefined ? <p data-status>Usually replies {replyTime(listing.seller.reply_hours)}</p> : who?.status ? <p>{who.status}</p> : null}
       </div>
       {deal && <button id="deal-toggle" type="button" className={buttonClass({ variant: "quiet", size: "sm" }) + " ws-chat__deal-toggle"} aria-expanded={deal.open} aria-controls="deal-panel" onClick={() => deal.toggle(!deal.open)}><InfoCircleIcon />Deal details</button>}
     </header>
@@ -97,7 +104,7 @@ export function Conversation({ listing, thread, role, run, blocked, error, backH
             <span className="cx-sr-only">{own ? "You" : m.role === "buyer" ? "Buyer" : "Seller"}: </span>
             {m.body && <p>{m.body}</p>}
             {m.photos.length > 0 && <div className="ws-chat__photos">{m.photos.map((photo, n) => <Image key={n} src={photo} alt={`Attached photo ${n + 1}`} width={160} height={120} unoptimized />)}</div>}
-            <span className="ws-chat__meta"><time dateTime={new Date(m.at).toISOString()}>{clock.format(m.at)}</time>{own && <CheckCircleIcon label="Saved on this device" />}</span>
+            <span className="ws-chat__meta"><time dateTime={new Date(m.at).toISOString()}>{clock.format(m.at)}</time>{own && <CheckCircleIcon label="Sent" />}</span>
           </article>
           {m.flagged && <p className="ws-chat__flag" data-own={own}>Safety warning acknowledged. Payment outside WorldStore is not covered.</p>}
         </Fragment>;
@@ -121,7 +128,7 @@ export function Conversation({ listing, thread, role, run, blocked, error, backH
           onChange={(e) => { setBody(e.target.value); setAcknowledge(false); }}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} />
         <div className="ws-chat__tools">
-          <label className={buttonClass({ variant: "quiet", size: "sm", icon: true }) + " ws-chat__attach"} data-disabled={blocked || loading || undefined}>
+          {photosEnabled && <label className={buttonClass({ variant: "quiet", size: "sm", icon: true }) + " ws-chat__attach"} data-disabled={blocked || loading || undefined}>
             <PaperclipIcon /><span className="cx-sr-only">Attach photos</span>
             <input type="file" className="cx-sr-only" accept={TYPES.join(",")} multiple disabled={blocked || loading} onChange={async (e) => {
               const files = Array.from(e.target.files ?? []); e.target.value = ""; setPhotoError("");
@@ -132,7 +139,7 @@ export function Conversation({ listing, thread, role, run, blocked, error, backH
                 setPhotos((old) => [...old, ...data]);
               } catch (err) { setPhotoError(err instanceof Error ? err.message : "Photo could not be read."); } finally { setLoading(false); }
             }} />
-          </label>
+          </label>}
           <span id="message-help" className="ws-chat__count">{body.length}/{rules.messaging.maxChars}<span className="cx-sr-only"> characters. Enter sends, Shift+Enter adds a line. Your text draft stays on this device.</span></span>
           <button className={buttonClass({ size: "sm", icon: true })} aria-label="Send message" disabled={blocked || loading || (risky && !acknowledge)}><PaperAirplaneIcon /></button>
         </div>

@@ -6,7 +6,12 @@ import { formatCurrency, kobo } from "@ws/lib/money";
 import { inputMinor, unsafeMessage, type Command } from "./model";
 
 export type Run = (command: Command, done?: () => void) => void;
-export function OfferForm({ price, qty, available, left, run }: { price: number; qty: number; available: number; left: number; run: Run }) {
+/**
+ * `asMessage`: the offer goes to the seller as a chat message (the live API has no
+ * offers service), so the copy drops the offer limit, expiry and payment-request
+ * terms, none of which apply to a message.
+ */
+export function OfferForm({ price, qty, available, left, run, asMessage = false }: { price: number; qty: number; available: number; left: number; run: Run; asMessage?: boolean }) {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [acknowledge, setAcknowledge] = useState(false);
@@ -17,7 +22,7 @@ export function OfferForm({ price, qty, available, left, run }: { price: number;
     run({ type: "offer", id: crypto.randomUUID(), amount_minor: inputMinor(amount), qty: Number(data.get("qty")), note, acknowledge });
   }}>
     <h2>Make an offer</h2>
-    <p>Asking {formatCurrency(kobo(price))} each. You have {left} offers left on this item.</p>
+    <p>Asking {formatCurrency(kobo(price))} each.{!asMessage && <> You have {left} offers left on this item.</>}</p>
     <label className="ws-field">Your offer per item (NGN)
       <input name="amount" type="number" inputMode="numeric" required min={Math.ceil(price * rules.offers.floorPercent / 100 / rules.money.minorPerMajor)} max={price / rules.money.minorPerMajor} step="1" value={amount} onChange={(e) => setAmount(e.target.value)} aria-describedby="offer-help" />
     </label>
@@ -27,7 +32,9 @@ export function OfferForm({ price, qty, available, left, run }: { price: number;
     <label className="ws-field">Quantity<input name="qty" type="number" required min="1" max={available} defaultValue={qty} step="1" /></label>
     <label className="ws-field">Note (optional)<textarea value={note} onChange={(e) => { setNote(e.target.value); setAcknowledge(false); }} maxLength={rules.messaging.maxChars} rows={3} /></label>
     {risky && <SafetyWarning checked={acknowledge} change={setAcknowledge} />}
-    <p id="offer-help" className="ws-deal-muted">Valid for {rules.offers.validityHours} hours. If accepted, you agree to pay the seller’s WorldStore payment request within {rules.offers.payWindowHours} hours. Delivery is agreed in chat before payment.</p>
+    <p id="offer-help" className="ws-deal-muted">{asMessage
+      ? "Your offer goes to the seller as a message. They can accept, counter or reply in the conversation, where you also agree delivery."
+      : `Valid for ${rules.offers.validityHours} hours. If accepted, you agree to pay the seller’s WorldStore payment request within ${rules.offers.payWindowHours} hours. Delivery is agreed in chat before payment.`}</p>
     <button className={buttonClass({ size: "sm" })} disabled={left === 0 || (risky && !acknowledge)}>Send offer</button>
   </form>;
 }

@@ -32,6 +32,9 @@ export const wsShopRoutes: RouteObject[] = [
   { path: "seller/:handle", element: page(() => import("@ws/app/(shop)/seller/[handle]/page"), { id: "seller", notFound: <NotFoundContent /> }) },
   { path: "saved", element: page(() => import("@ws/app/(shop)/saved/page"), { id: "saved", notFound: <NotFoundContent /> }) },
   { path: "compare", element: page(() => import("@ws/app/(shop)/compare/page"), { id: "compare", notFound: <NotFoundContent /> }) },
+  { path: "inbox", element: page(() => import("@ws/app/(shop)/inbox/page"), { id: "inbox", notFound: <NotFoundContent /> }) },
+  { path: "inbox/:id", element: page(() => import("@ws/app/(shop)/inbox/[id]/page"), { id: "thread", notFound: <NotFoundContent /> }) },
+  { path: "offers", element: page(() => import("@ws/app/(shop)/offers/page"), { id: "offers", notFound: <NotFoundContent /> }) },
   { path: "notifications", element: page(() => import("@ws/app/(shop)/notifications/page"), { id: "notifications", notFound: <NotFoundContent /> }) },
   {
     path: "help/*",
