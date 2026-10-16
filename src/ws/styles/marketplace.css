@@ -29,6 +29,12 @@
   --cx-panel: linear-gradient(129deg, #0c0a09 0%, #1f1703 100%);
 }
 
+/* No bottom nav for guests (BottomNav.tsx): nothing to clear. Set on the element the
+   offsets are declared on, so --cx-safe-bottom is computed from the zero. */
+:root[data-bottomnav="off"] [data-brand=worldstreet] {
+  --cx-bottom-nav-h: 0px;
+}
+
 [data-theme=light] [data-brand=worldstreet]:not([data-theme=dark], [data-theme=dark] *) {
   --cx-panel: linear-gradient(129deg, #fff 0%, #fdf6e3 100%);
 }

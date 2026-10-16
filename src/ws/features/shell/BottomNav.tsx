@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ComponentType } from "react";
 import { AccountIcon, ChatDotsIcon, HomeIcon, MagnifyingGlassIcon, PlusCircleIcon } from "@ws/components/icons";
+import { useSession } from "@ws/features/auth/session";
 import { cx } from "@ws/lib/cx";
 
 /* BottomNav (spec §3.2): five tabs on phones, Home · Search · Sell · Inbox · Account,
    Sell raised in the centre. It slides away while scrolling down and comes back on the
    way up; pages keep bottom padding equal to its height (audit F17), safe areas
-   included. The watchlist lives in the header and the Account tab (no cart: P2P). */
+   included. The watchlist lives in the header and the Account tab (no cart: P2P).
+   Signed-in only: every tab past Search needs an account, so a guest browses with the
+   header alone, and the page's bottom room for the nav is released with it. */
 
 type Tab = { href: string; label: string; icon: ComponentType; match: (path: string) => boolean; sell?: boolean };
 
@@ -24,6 +27,14 @@ const TABS: Tab[] = [
 export function BottomNav() {
   const pathname = usePathname();
   const ref = useRef<HTMLElement>(null);
+  const { signedIn } = useSession();
+
+  // --cx-bottom-nav-h feeds every offset that clears the nav (page padding, sticky bars).
+  useEffect(() => {
+    const root = document.documentElement;
+    if (signedIn) delete root.dataset.bottomnav;
+    else root.dataset.bottomnav = "off";
+  }, [signedIn]);
 
   useEffect(() => {
     const el = ref.current;
@@ -52,7 +63,7 @@ export function BottomNav() {
   }, [pathname]);
 
   // On a listing the sticky buy bar takes this place (spec §3.2).
-  if (pathname.startsWith("/listing/")) return null;
+  if (!signedIn || pathname.startsWith("/listing/")) return null;
   return (
     <nav ref={ref} aria-label="Main" className="ws-bottomnav" data-hidden="false">
       <ul>
