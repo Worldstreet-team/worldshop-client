@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useId } from "react";
 import { BellIcon } from "@ws/components/icons";
 import { buttonClass, Count } from "@ws/components/ui";
-import { markAllRead, unreadCount, useNotices, type Notice } from "@ws/features/notifications/store";
+import { unreadCount, useMarkAllRead, useNotices, type Notice } from "@ws/features/notifications/store";
 import { timeAgo } from "@ws/lib/format";
 
 /* NotificationBell + NotificationPanel (spec §3.1): a popover on desktop. The badge is
@@ -14,6 +14,7 @@ export function NotificationBell() {
   const id = useId();
   const notices = useNotices();
   const unread = unreadCount(notices);
+  const markAllRead = useMarkAllRead(notices);
   return (
     <>
       <button
@@ -43,7 +44,7 @@ export function NotificationBell() {
 
 /** The notices themselves: the bell's panel and the /notifications page share it. */
 export function NoticeList({ notices }: { notices: readonly Notice[] }) {
-  if (notices.length === 0) return <p className="ws-notices__empty">Nothing yet. Offers, messages, order updates and price drops on things you&apos;ve saved will show here.</p>;
+  if (notices.length === 0) return <p className="ws-notices__empty">Nothing yet. New messages from buyers and sellers, and price drops and new matches for things you&apos;ve saved, will show here.</p>;
   return (
     <ul className="ws-notices__list">
       {notices.map((n) => (
@@ -63,6 +64,7 @@ export function NoticeList({ notices }: { notices: readonly Notice[] }) {
 export function NotificationsPage() {
   const notices = useNotices();
   const unread = unreadCount(notices);
+  const markAllRead = useMarkAllRead(notices);
   return (
     <div className="ws-notices-page">
       <header className="ws-flow__head"><div><h1>Notifications</h1>{unread > 0 && <p>{unread} unread</p>}</div>{unread > 0 && <button type="button" className="cx-link" onClick={markAllRead}>Mark all as read</button>}</header>

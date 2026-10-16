@@ -43,6 +43,8 @@ const defaultValue: ListingApiContextValue = {
 
 const ListingApiContext = createContext<ListingApiContextValue>(defaultValue);
 
+// The hook belongs beside its context; this module is not hot-swapped as a component.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useListingApi(): ListingApiContextValue {
   return useContext(ListingApiContext);
 }

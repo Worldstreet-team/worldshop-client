@@ -332,7 +332,7 @@ export function useListingEditor() {
     },
     [name, description, categoryId, priceType, basePrice, maxPrice, isNegotiable, onDeal,
       compareAtPrice, dealEndsOn, condition, country, state, city, tags, images, attributes,
-      customFields, variants, isNew, id, addToast, navigate, validateForm],
+      customFields, variants, isNew, id, addToast, navigate, validateForm, listingService, productsBasePath],
   );
 
   return {

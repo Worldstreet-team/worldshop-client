@@ -103,6 +103,8 @@ export default function HeroCarousel({ motorsTo }: { motorsTo: string | null; st
     // that halts on the last slide reads as broken.
     const t = setInterval(() => goTo((index + 1) % items.length), ADVANCE_MS);
     return () => clearInterval(t);
+    // The timer restarts on every slide change, so the goTo it closes over is never stale.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, paused]);
 
   return (
