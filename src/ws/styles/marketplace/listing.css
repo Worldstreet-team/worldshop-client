@@ -737,8 +737,10 @@ a.ws-seller__name:hover {
     right: 4px;
   }
 
+  /* Wider than the reference's 160px: at that width live titles, prices and places
+     wrapped to three lines. About 1.6 cards show, still with a peek of the next. */
   .ws-card--rail {
-    width: 160px;
+    width: min(58vw, 240px);
   }
 }
 

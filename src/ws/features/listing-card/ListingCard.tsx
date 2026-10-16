@@ -126,8 +126,10 @@ export function ListingCard({ listing, variant = "grid", anchor, sizes, load = "
           <PriceBlock price_minor={listing.price_minor} was_minor={listing.was_minor} period={listing.price_period} kind={listing.price_kind} max_minor={listing.max_price_minor} bestOffer={listing.offers_enabled} />
 
           <div className="ws-card__meta">
-            {/* Rent and viewings, not deliveries. */}
-            {listing.category.kind !== "property" && (
+            {/* Rent and viewings, not deliveries. A listing with no delivery options
+                would say "arranged with the seller", true of every such listing and two
+                cramped lines on a phone card; the listing page still says it. */}
+            {listing.category.kind !== "property" && listing.delivery.length > 0 && (
               <DeliveryLine
                 options={listing.delivery}
                 price_minor={listing.price_minor}

@@ -264,10 +264,11 @@
 }
 
 /* CategoryTiles: 5 across from 768px; on phones two rows that scroll sideways, so
-   ten categories take two tile heights instead of five. */
+   ten categories take two tile heights instead of five. Phone tiles are wide enough
+   for a name like "Sports & Outdoors" and its count to sit on one line each. */
 .ws-tiles {
   display: grid;
-  grid-auto-columns: minmax(150px, 44%);
+  grid-auto-columns: minmax(200px, 60%);
   grid-auto-flow: column;
   grid-template-rows: repeat(2, auto);
   gap: var(--cx-s-3);
