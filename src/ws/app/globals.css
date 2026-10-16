@@ -1,0 +1,56 @@
+@import "tailwindcss";
+@import "./fonts.css";
+@import "../styles/ds/tokens.css";
+/* DS classes sit in the components layer so a layout utility can still override them. */
+@import "../styles/ds/base.css" layer(components);
+@import "../styles/ds/components/index.css" layer(components);
+@import "../styles/marketplace.css";
+@import "../styles/marketplace/listing.css" layer(components);
+@import "../styles/marketplace/home.css" layer(components);
+@import "../styles/marketplace/shell.css" layer(components);
+@import "../styles/marketplace/results.css" layer(components);
+@import "../styles/marketplace/listing-detail.css" layer(components);
+@import "../styles/marketplace/negotiation.css" layer(components);
+@import "../styles/marketplace/orders.css" layer(components);
+@import "../styles/marketplace/sell.css" layer(components);
+@import "../styles/marketplace/admin.css" layer(components);
+@import "../styles/marketplace/growth.css" layer(components);
+
+/* Tailwind is for layout only (PLAN §2.1). Its palette is cleared so a raw colour
+   can't be reached; the only colours are the DS tokens below. */
+@theme inline {
+  --color-*: initial;
+  --color-bg: var(--cx-bg);
+  --color-elevated: var(--cx-elevated);
+  --color-surface: var(--cx-surface);
+  --color-surface-2: var(--cx-surface-2);
+  --color-surface-3: var(--cx-surface-3);
+  --color-hairline: var(--cx-hairline);
+  --color-text: var(--cx-text);
+  --color-text-2: var(--cx-text-2);
+  --color-muted: var(--cx-text-muted);
+  --color-primary: var(--cx-ember);
+  --color-primary-text: var(--cx-ember-text);
+  --color-on-primary: var(--cx-on-primary);
+  --color-gain: var(--cx-gain);
+  --color-loss: var(--cx-loss);
+  --color-warning: var(--cx-warning);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-sans: var(--cx-font);
+  --font-mono: var(--cx-font-mono);
+
+  /* DS breakpoints are 768 and 1200; 480, 1024 and 1320 are grid-only subdivisions
+     (spec §16.1). */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1320px;
+
+  --radius-card: var(--cx-r-card);
+  --radius-md: var(--cx-r-md);
+  --radius-pill: var(--cx-r-pill);
+}

@@ -1,0 +1,19 @@
+/* Adapted from the WorldStreet design system (.cx-empty)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-empty {
+  text-align:center;
+  justify-items:center;
+  gap:10px;
+  padding:48px 24px;
+  display:grid;
+}
+
+.cx-empty .cx-icon-tile {
+  margin-bottom:6px;
+}
+
+.cx-empty--error .cx-icon-tile svg {
+  stroke:var(--cx-loss);
+}

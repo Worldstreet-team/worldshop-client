@@ -1,0 +1,129 @@
+/* Adapted from the WorldStreet design system (.cx-card, .cx-orb)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-light .cx-card:not(.cx-card--elevated), [data-theme=light] .cx-card:not(.cx-card--elevated) {
+  box-shadow:inset 0 0 0 1px var(--cx-hairline);
+}
+
+.cx-card {
+  border-radius:var(--cx-r-card);
+  padding:var(--cx-card-pad);
+  isolation:isolate;
+  flex-direction:column;
+  gap:8px;
+  display:flex;
+  position:relative;
+  overflow:clip;
+}
+
+.cx-card:before {
+  content:"";
+  background:var(--cx-wash);
+  opacity:var(--cx-wash-opacity);
+  z-index:-2;
+  pointer-events:none;
+  position:absolute;
+  inset:0;
+}
+
+.cx-card--elevated {
+  background:var(--cx-elevated);
+  box-shadow:var(--cx-shadow-lg);
+}
+
+.cx-card--elevated:before {
+  display:none;
+}
+
+.cx-card--interactive {
+  cursor:pointer;
+  transition:transform var(--cx-dur) var(--cx-ease);
+  color:inherit;
+  text-decoration:none;
+}
+
+.cx-card--interactive:before {
+  transition:opacity var(--cx-dur);
+}
+
+.cx-card--interactive:hover:before {
+  opacity:calc(var(--cx-wash-opacity) * 1.75);
+}
+
+.cx-card--interactive:hover {
+  transform:translateY(-2px);
+}
+
+.cx-card-head {
+  justify-content:space-between;
+  align-items:center;
+  gap:var(--cx-s-3);
+  margin-bottom:var(--cx-s-2);
+  display:flex;
+}
+
+.cx-orb {
+  background:var(--cx-ember);
+  width:246px;
+  height:246px;
+  opacity:var(--cx-orb-opacity);
+  filter:var(--cx-glow-blur);
+  z-index:-1;
+  pointer-events:none;
+  border-radius:50%;
+  position:absolute;
+}
+
+.cx-orb--tl {
+  top:-120px;
+  left:-90px;
+}
+
+.cx-orb--tr {
+  top:-120px;
+  right:-80px;
+}
+
+.cx-orb--bl {
+  bottom:-110px;
+  left:-90px;
+}
+
+.cx-orb--br {
+  bottom:-110px;
+  right:-80px;
+}
+
+.cx-orb--center {
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+}
+
+.cx-orb--soft {
+  filter:blur(150px);
+}
+
+.cx-modal>.cx-card {
+  background:var(--cx-elevated);
+  box-shadow:var(--cx-shadow-xl);
+  gap:16px;
+  padding:28px;
+}
+
+.cx-modal>.cx-card:before {
+  display:none;
+}
+
+@media (forced-colors:active) {
+  .cx-btn, .cx-input, .cx-select, .cx-textarea, .cx-card, .cx-chip, .cx-tab[aria-selected=true] {
+    border:1px solid canvastext;
+  }
+}
+
+@media print {
+  .cx-orb, .cx-halo:before, .cx-nav, .cx-bottom-nav, .cx-toast-stack {
+    display:none!important;
+  }
+}

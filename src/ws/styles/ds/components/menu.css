@@ -1,0 +1,70 @@
+/* Adapted from the WorldStreet design system (.cx-menu)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-menu {
+  border-radius:var(--cx-r-md);
+  background:var(--cx-elevated);
+  min-width:200px;
+  box-shadow:var(--cx-shadow-lg);
+  color:var(--cx-text);
+  border:0;
+  padding:6px;
+}
+
+.cx-menu button, .cx-menu a {
+  width:100%;
+  height:38px;
+  color:var(--cx-text);
+  font:400 15px var(--cx-font);
+  cursor:pointer;
+  text-align:left;
+  background:0 0;
+  border:0;
+  border-radius:10px;
+  align-items:center;
+  gap:10px;
+  padding:0 12px;
+  text-decoration:none;
+  display:flex;
+}
+
+.cx-menu button:hover, .cx-menu a:hover, .cx-menu button:focus-visible {
+  background:var(--cx-surface-2);
+  box-shadow:none;
+}
+
+.cx-menu svg {
+  stroke:currentColor;
+  fill:none;
+  stroke-width:1.7px;
+  flex:none;
+  width:18px;
+  height:18px;
+}
+
+.cx-menu .kbd {
+  color:var(--cx-text-muted);
+  margin-left:auto;
+  font-size:12px;
+}
+
+.cx-menu .danger {
+  color:var(--cx-loss);
+}
+
+.cx-menu hr {
+  background:var(--cx-hairline);
+  border:0;
+  height:1px;
+  margin:6px 0;
+}
+
+@supports (position-area:bottom) {
+  .cx-popover[popover], .cx-menu[popover] {
+    position-area:bottom span-right;
+    position-try-fallbacks:flip-block, flip-inline;
+    margin:8px 0 0;
+    inset:auto;
+  }
+}

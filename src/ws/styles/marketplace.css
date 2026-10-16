@@ -1,0 +1,318 @@
+/* Marketplace extensions to the design system. Extend, don't fork: everything here is
+   either a new token the component spec asks for (§1.3, §17.3) or a gap fix noted in
+   docs/marketplace/PROGRESS.md. The DS files in styles/ds/ stay as published. */
+
+[data-brand=worldstreet] {
+  /* Manrope has no ₦ (U+20A6). The one-glyph Noto subset comes first because its
+     unicode-range covers nothing else; putting it after Manrope would let the metric
+     fallback font next/font adds for Manrope draw the ₦ instead. */
+  --cx-font: var(--font-naira), var(--font-manrope), "Noto Sans", system-ui, sans-serif;
+
+  /* Commerce density (spec §1.3). Comfortable is the DS as published. */
+  --cx-density-pad: var(--cx-card-pad);
+  --cx-density-row: 56px;
+  --cx-gap-grid: var(--cx-gap);
+  --cx-meta: var(--cx-small);
+  --cx-price-size: 20px;        /* card price; detail uses --cx-h3 (spec §16.3) */
+
+  /* Aliases so components say what they mean (spec §17.3). */
+  --cx-savings: var(--cx-gain);
+  --cx-urgent: var(--cx-warning);
+  --cx-sheet-radius: var(--cx-r-card);
+
+  /* Layout offsets. --cx-sticky-offset is set by the header once it exists. */
+  --cx-bottom-nav-h: 64px;
+  --cx-safe-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--cx-bottom-nav-h));
+  --cx-sticky-offset: 0px;
+
+  /* Gap fix: the brand block leaves --cx-panel on the base theme's ember gradient. */
+  --cx-panel: linear-gradient(129deg, #0c0a09 0%, #1f1703 100%);
+}
+
+[data-theme=light] [data-brand=worldstreet]:not([data-theme=dark], [data-theme=dark] *) {
+  --cx-panel: linear-gradient(129deg, #fff 0%, #fdf6e3 100%);
+}
+
+/* AA fixes. The DS tokens pass 4.5:1 on bg and elevated but not on the translucent
+   fills text also sits on (--cx-surface/-2/-3); the Foundations › Colors story measures
+   every pair and fails under 4.5. Smallest lightness change that passes, hue kept:
+   dark loss #ef4444 → #f36e6e (3.95 → 4.54 worst case). */
+[data-brand=worldstreet] {
+  --cx-loss: #f36e6e;
+}
+
+/* light muted #78716c → #6c6661 (4.22 → 4.57), gold-deep text #a16207 → #925906
+   (4.33 → 4.62), warning #b45309 → #a84d08 (4.42 → 4.52), gain #047857 → #047655. */
+[data-theme=light] [data-brand=worldstreet]:not([data-theme=dark], [data-theme=dark] *) {
+  --cx-text-muted: #6c6661;
+  --cx-ember-text: #925906;
+  --cx-warning: #a84d08;
+  --cx-gain: #047655;
+}
+
+/* Compact: padding 24→12, rows 56→44, meta 14→13, gaps 24→12/16. Radius is unchanged. */
+[data-density=compact] {
+  /* The DS card and grid read these, so every DS surface inside follows the density. */
+  --cx-card-pad: var(--cx-s-3);
+  --cx-gap: var(--cx-s-3);
+  --cx-density-pad: var(--cx-s-3);
+  --cx-density-row: 44px;
+  --cx-gap-grid: var(--cx-s-3);
+  --cx-meta: 13px;
+}
+
+@media (min-width: 768px) {
+  [data-density=compact] {
+    --cx-gap: var(--cx-s-4);
+    --cx-gap-grid: var(--cx-s-4);
+  }
+}
+
+/* Icon weights (owner's direction, 7 Oct). Atlas Icons in two weights, chosen by role:
+   linear (Atlas medium, 1.5px) for things you read: meta lines, panels, facts, menus,
+   footers, empty states; bold (Atlas bold, 2px) for things you act on or that show
+   state: icon buttons, solid buttons, the selected/pressed/current item, chips, alerts
+   and the logo. This replaces the DS's per-component widths (1.6–1.8px), which also
+   silently overrode any weight set on an icon. An icon's `weight` prop (inline) wins. */
+svg[data-atlas] {
+  stroke-width: 1.5px;
+}
+
+:is(
+  .cx-btn--icon,
+  .cx-btn:not(.cx-btn--ghost, .cx-btn--quiet, .cx-btn--danger),
+  [aria-pressed="true"],
+  [aria-current="page"],
+  [aria-selected="true"],
+  [aria-checked="true"],
+  .cx-chip,
+  .cx-alert,
+  .ws-photos__arrow,
+  .ws-hero__controls,
+  .ws-logo__tile
+) svg[data-atlas] {
+  stroke-width: 2px;
+}
+
+/* Touch targets (spec §1.4 rule 3, WCAG 2.5.8): small buttons stay 36px to the eye but
+   get a 44px hit area. ::before is free on every variant except aurora. */
+.cx-btn--sm:not(.cx-btn--aurora) {
+  position: relative;
+}
+
+.cx-btn--sm:not(.cx-btn--aurora)::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--cx-control-h-sm) - var(--cx-touch)) / 2);
+}
+
+/* Menu rows are 38px in the DS; on touch screens they grow to the 44px target. */
+@media (pointer: coarse) {
+  .cx-menu button, .cx-menu a {
+    height: var(--cx-touch);
+  }
+}
+
+/* Atlas icons are flat strokes, not the DS's gradient duotone glyphs, so a tile icon in
+   --cx-flame is ~1.3:1 on the light tile. Light theme uses the gold text token (WCAG 1.4.11). */
+[data-theme=light] [data-brand=worldstreet]:not([data-theme=dark], [data-theme=dark] *) .cx-icon-tile svg {
+  stroke: var(--cx-ember-text);
+}
+
+/* WCAG 1.4.13: a tooltip must be dismissable without moving focus. Tooltip.tsx sets
+   data-dismissed on Escape until the pointer or focus leaves. */
+.cx-tip[data-dismissed]::after {
+  opacity: 0;
+}
+
+/* Spec §16.2: on phones toasts sit full width above the bottom nav. */
+@media (max-width: 767px) {
+  .cx-toast-stack {
+    bottom: calc(16px + var(--cx-safe-bottom));
+  }
+}
+
+/* The page behind the body (overscroll) follows the brand surface, not the base black. */
+html {
+  background-color: #0c0a09;
+}
+
+html[data-theme=light] {
+  background-color: #fff;
+}
+
+/* Gap fix: the DS sets smooth scrolling but doesn't switch it off for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Radio menu items (sort orders): the current choice carries a tick in the gold text
+   token and is announced as checked. */
+.cx-menu [aria-checked=true] {
+  color: var(--cx-ember-text);
+  font-weight: 500;
+}
+
+/* Dark theme (research, 6 Oct; see PROGRESS). Dark only: light keeps the DS values.
+   - Raised surfaces are lighter, not shadowed: menus, toasts, the suggest panel, the
+     location sheet and the save/photo pills sat at 1.13:1 against the page
+     (Material dark theme, Apple HIG, eBay evo-dark). Stone-800.
+   - Text tiers you can tell apart: primary off-white, secondary a step down (eBay
+     evo-dark, Primer, Material). The DS had #fff / #f0f0f0. */
+[data-brand=worldstreet]:not([data-theme=light], [data-theme=light] *) {
+  --cx-elevated: #292524;
+  /* The lighter surface costs contrast on hover fills over it; smallest nudges that
+     keep every text token ≥ 4.5:1 there (Foundations › Colors). */
+  --cx-text-muted: #aaa5a1;
+  --cx-loss: #f58686;
+  --cx-gain: #10be84;
+  --cx-text: #f5f5f4;
+  --cx-text-2: #d6d3d1;
+  --ws-title-visited: #c4bfbb;
+  --ws-photo-scrim: rgb(0 0 0 / 8%);
+  --ws-photo-edge: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+
+[data-theme=light] [data-brand=worldstreet]:not([data-theme=dark], [data-theme=dark] *) {
+  --ws-title-visited: #57534e;
+  --ws-photo-scrim: rgb(0 0 0 / 5%);
+  --ws-photo-edge: none;
+}
+
+/* Gap fix: the DS skeleton shimmer ignores reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .cx-skel {
+    animation: none;
+  }
+}
+
+/* Gap fix: touch screens keep :hover after a tap ("sticky hover"), so the DS card lift
+   and wash only run on devices that really hover. */
+@media (hover: none) {
+  .cx-card--interactive:hover {
+    transform: none;
+  }
+
+  .cx-card--interactive:hover::before {
+    opacity: var(--cx-wash-opacity);
+  }
+}
+
+/* Menu as a bottom sheet on phones (Menu `sheetTitle`; spec §6, Material bottom
+   sheet): full width from the bottom edge, a title, and 52px rows. A dropdown on
+   larger screens, where the title isn't shown. */
+.ws-sheet__title {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .cx-menu.ws-sheet[popover] {
+    position: fixed;
+    position-area: none;
+    position-try-fallbacks: none;
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: var(--cx-s-2) var(--cx-s-3) calc(var(--cx-s-4) + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--cx-sheet-radius) var(--cx-sheet-radius) 0 0;
+  }
+
+  .cx-menu.ws-sheet::backdrop {
+    background: var(--cx-overlay);
+  }
+
+  .ws-sheet__title {
+    display: block;
+    padding: var(--cx-s-3) var(--cx-s-3) var(--cx-s-2);
+    color: var(--cx-text);
+    font: 500 var(--cx-h4)/var(--cx-h4-lh) var(--cx-font);
+  }
+
+  .cx-menu.ws-sheet button,
+  .cx-menu.ws-sheet a {
+    height: 52px;
+    font-size: var(--cx-body);
+  }
+}
+
+/* Toasts animate with Motion (components/ui/Toast.tsx), so the DS CSS rise is off. */
+.cx-toast {
+  animation: none;
+}
+
+/* Interaction motion (owner's "expressive" choice, 6 Oct). Everything here sits behind
+   prefers-reduced-motion: no-preference; Motion components follow MotionConfig. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Buttons press in on the DS spring and spring back on release. */
+  .cx-btn {
+    transition: transform var(--cx-dur) var(--cx-spring-bouncy), background-color var(--cx-dur) var(--cx-ease), box-shadow var(--cx-dur) var(--cx-ease);
+  }
+
+  .cx-btn:active {
+    transform: translateY(1px) scale(0.96);
+    transition-duration: 80ms;
+  }
+
+  /* Menus drop in from their anchor; phone sheets rise on the spring. */
+  .cx-menu[popover] {
+    transition: opacity 160ms var(--cx-ease), transform var(--cx-dur) var(--cx-spring-snappy), overlay var(--cx-dur) allow-discrete, display var(--cx-dur) allow-discrete;
+    transform-origin: top left;
+  }
+
+  .cx-menu[popover]:not(:popover-open) {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+
+  @starting-style {
+    .cx-menu[popover]:popover-open {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.97);
+    }
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .cx-menu.ws-sheet[popover] {
+    transition: transform 420ms var(--cx-spring), overlay 420ms allow-discrete, display 420ms allow-discrete;
+  }
+
+  .cx-menu.ws-sheet[popover]:not(:popover-open) {
+    opacity: 1;
+    transform: translateY(100%);
+  }
+
+  @starting-style {
+    .cx-menu.ws-sheet[popover]:popover-open {
+      opacity: 1;
+      transform: translateY(100%);
+    }
+  }
+
+  .cx-menu.ws-sheet::backdrop {
+    transition: background-color var(--cx-dur), overlay var(--cx-dur) allow-discrete, display var(--cx-dur) allow-discrete;
+  }
+
+  @starting-style {
+    .cx-menu.ws-sheet:popover-open::backdrop {
+      background: transparent;
+    }
+  }
+}
+
+/* Card → listing morphs (React ViewTransition) cut instantly under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: 380ms;
+  animation-timing-function: var(--cx-ease);
+}

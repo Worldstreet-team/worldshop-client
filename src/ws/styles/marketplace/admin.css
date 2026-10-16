@@ -1,0 +1,31 @@
+/* Staff console (Phase 8). Reuses the Seller Hub shell, rows and tables; adds SLA timers. */
+.ws-sla { display: inline-flex; align-items: center; gap: var(--cx-s-1); color: var(--cx-text-2); font-size: var(--cx-caption); font-variant-numeric: tabular-nums; }
+.ws-sla svg { width: var(--cx-s-4); height: var(--cx-s-4); }
+.ws-sla[data-state=soon] { color: var(--cx-warning); }
+.ws-sla[data-state=late] { color: var(--cx-loss); font-weight: 650; }
+.ws-hub-rows__main small:has(.ws-sla) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cx-s-2); }
+.ws-case-sla { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cx-s-2); color: var(--cx-text-2); font-size: var(--cx-small); }
+.ws-admin-signin { width: min(100%, 520px); }
+.ws-staff-list { display: grid; gap: var(--cx-s-2); width: 100%; margin: 0; padding: 0; list-style: none; }
+.ws-staff-list .ws-choice { width: 100%; color: var(--cx-text); font: inherit; text-align: start; }
+.ws-staff-list svg { flex: none; width: var(--cx-s-6); height: var(--cx-s-6); color: var(--cx-ember-text); }
+.ws-admin-who { display: grid; gap: var(--cx-s-2); margin-top: var(--cx-s-4); padding-top: var(--cx-s-4); border-top: 1px solid var(--cx-hairline); }
+.ws-admin-who > span { display: grid; }
+.ws-admin-who small { color: var(--cx-text-muted); font-size: var(--cx-caption); }
+.ws-admin-tiles { margin: 0; padding: 0; list-style: none; }
+.ws-admin-tiles .ws-balance { position: relative; }
+.ws-admin-tile-link { color: var(--cx-ember-text); font-size: var(--cx-small); text-decoration: underline; text-underline-offset: 3px; }
+.ws-review-evidence { display: grid; gap: var(--cx-s-3); }
+.ws-review-photos { display: flex; gap: var(--cx-s-2); overflow-x: auto; }
+.ws-review-photos img { flex: none; width: 96px; height: 96px; border-radius: var(--cx-r-sm); background: var(--cx-surface-2); object-fit: cover; }
+.ws-review-desc { max-height: 8lh; overflow: auto; color: var(--cx-text-2); white-space: pre-line; }
+.ws-ledger-filter { max-width: 320px; }
+.ws-table tr[data-hit] td:first-child { box-shadow: inset 3px 0 0 var(--cx-warning); }
+.ws-table__note { color: var(--cx-loss) !important; }
+.ws-order-ruling strong { display: block; color: var(--cx-text); }
+.ws-admin .ws-order-dialog { width: min(92vw, 640px); }
+
+@media (max-width: 767px) {
+  .ws-admin-who { grid-template-columns: minmax(0, 1fr) auto; align-items: center; margin-top: 0; padding-top: 0; border: 0; }
+  .ws-admin-who > span { display: none; }
+}

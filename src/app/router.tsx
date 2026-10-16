@@ -1,6 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams } from 'react-router-dom';
-import MainLayout from '@/app/layouts/MainLayout';
+import WsRootLayout from '@ws/app/RootLayout';
+import WsShopLayout, { LegacyPage } from '@ws/app/ShopLayout';
+import { wsNotFoundRoute, wsShopRoutes } from '@ws/app/routes';
+import { BrowseRedirect, CategoryRedirect, ListingRedirect, SellerRedirect } from '@ws/app/redirects';
 import AdminLayout from '@/app/layouts/AdminLayout';
 import AuthLayout from '@/app/layouts/AuthLayout';
 import VendorLayout from '@/app/layouts/VendorLayout';
@@ -27,16 +30,10 @@ const SetupPasswordPage = lazy(() => import('@/features/auth/pages/SetupPassword
 const AccountPage = lazy(() => import('@/features/account/pages/Account'));
 const ProfilePage = lazy(() => import('@/features/account/pages/Profile'));
 const AccountMessagesPage = lazy(() => import('@/features/chat/pages/AccountMessages'));
-const HomePage = lazy(() => import('@/features/listings/pages/Home'));
-const BrowsePage = lazy(() => import('@/features/listings/pages/Browse'));
-const ListingDetailPage = lazy(() => import('@/features/listings/pages/ListingDetail'));
-const MarketplaceStorePage = lazy(() => import('@/features/stores/pages/StorePage'));
 const StoresDirectoryPage = lazy(() => import('@/features/stores/pages/StoresDirectory'));
 const MallsDirectoryPage = lazy(() => import('@/features/malls/pages/MallsDirectory'));
 const MarketplaceMallPage = lazy(() => import('@/features/malls/pages/MallPage'));
-const SavedPage = lazy(() => import('@/features/listings/pages/Saved'));
 const CategoriesPage = lazy(() => import('@/features/catalog/pages/Categories'));
-const CategoryPage = lazy(() => import('@/features/catalog/pages/CategoryPage'));
 const LegalPage = lazy(() => import('@/features/legal/pages/Legal'));
 
 // Admin Pages
@@ -64,8 +61,6 @@ const MallFeatured = lazy(() => import('@/features/malls/pages/Featured'));
 const MallSettings = lazy(() => import('@/features/malls/pages/Settings'));
 const SubstoreEdit = lazy(() => import('@/features/malls/pages/SubstoreEdit'));
 
-// Error Pages
-const NotFoundPage = lazy(() => import('@/app/pages/NotFound'));
 
 // Suspense wrapper for lazy loaded pages
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -74,11 +69,11 @@ const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
   </Suspense>
 );
 
-/** /store/:slug → /stores/:slug — the slug survived the pivot backfill. */
-function LegacyStoreRedirect() {
-  const { slug } = useParams();
-  return <Navigate to={`/stores/${slug}`} replace />;
-}
+/**
+ * Pages not yet on the WorldStore UI keep their old layouts. Their styles only apply
+ * under .ws-legacy (src/styles/main.scss), so each is wrapped in one.
+ */
+const Legacy = ({ children }: { children: React.ReactNode }) => <div className="ws-legacy">{children}</div>;
 
 /**
  * Substore listing pages reuse the vendor product pages, re-pointed at the
@@ -96,106 +91,68 @@ function SubstorePage({ children }: { children: React.ReactNode }) {
 }
 
 const router = createBrowserRouter([
-  // Public routes with main layout
+  // The WorldStore UI: header, footer and bottom nav around every buyer page.
   {
     path: '/',
-    element: <MainLayout />,
+    element: <WsRootLayout />,
     errorElement: <RouteError />,
     children: [
-      // The root is a segmented landing (hero, rails, promo); the full
-      // marketplace grid lives at /listings.
+      // Pages ported to the WorldStore UI, under the category rail.
+      { element: <WsShopLayout />, children: wsShopRoutes },
+      // Pages still on the old styles, inside the new shell.
       {
-        index: true,
-        element: <SuspenseWrapper><HomePage /></SuspenseWrapper>,
-      },
-      {
-        path: 'listings',
-        element: <SuspenseWrapper><BrowsePage /></SuspenseWrapper>,
-      },
-      {
-        path: 'listings/:idOrSlug',
-        element: <SuspenseWrapper><ListingDetailPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'categories',
-        element: <SuspenseWrapper><CategoriesPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'categories/:slug',
-        element: <SuspenseWrapper><CategoryPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'stores',
-        element: <SuspenseWrapper><StoresDirectoryPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'stores/:slug',
-        element: <SuspenseWrapper><MarketplaceStorePage /></SuspenseWrapper>,
-      },
-      {
-        path: 'malls',
-        element: <SuspenseWrapper><MallsDirectoryPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'malls/:slug',
-        element: <SuspenseWrapper><MarketplaceMallPage /></SuspenseWrapper>,
-      },
-      {
-        path: 'saved',
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><SavedPage /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-      { path: 'terms', element: <SuspenseWrapper><LegalPage doc="terms" /></SuspenseWrapper> },
-      { path: 'privacy', element: <SuspenseWrapper><LegalPage doc="privacy" /></SuspenseWrapper> },
-      { path: 'safety-tips', element: <SuspenseWrapper><LegalPage doc="safety" /></SuspenseWrapper> },
-      { path: 'cookies', element: <SuspenseWrapper><LegalPage doc="cookies" /></SuspenseWrapper> },
-      // Legacy ecommerce URLs. Shopping flows (cart, checkout, orders) are
-      // gone; browse-shaped ones land on the marketplace, and old store links
-      // keep their slug since the backfill preserved it.
-      { path: 'store/:slug', element: <LegacyStoreRedirect /> },
-      { path: 'products', element: <Navigate to="/listings" replace /> },
-      { path: 'products/:slug', element: <Navigate to="/listings" replace /> },
-      { path: 'category/:slug', element: <Navigate to="/listings" replace /> },
-      { path: 'search', element: <Navigate to="/listings" replace /> },
-      { path: 'cart', element: <Navigate to="/listings" replace /> },
-      { path: 'checkout/*', element: <Navigate to="/listings" replace /> },
-      // Account routes (protected)
-      {
-        path: 'account',
-        element: (
-          <ProtectedRoute>
-            <Outlet />
-          </ProtectedRoute>
-        ),
+        element: <LegacyPage />,
         children: [
+          { path: 'categories', element: <SuspenseWrapper><CategoriesPage /></SuspenseWrapper> },
+          { path: 'stores', element: <SuspenseWrapper><StoresDirectoryPage /></SuspenseWrapper> },
+          { path: 'malls', element: <SuspenseWrapper><MallsDirectoryPage /></SuspenseWrapper> },
+          { path: 'malls/:slug', element: <SuspenseWrapper><MarketplaceMallPage /></SuspenseWrapper> },
+          { path: 'terms', element: <SuspenseWrapper><LegalPage doc="terms" /></SuspenseWrapper> },
+          { path: 'privacy', element: <SuspenseWrapper><LegalPage doc="privacy" /></SuspenseWrapper> },
+          { path: 'safety-tips', element: <SuspenseWrapper><LegalPage doc="safety" /></SuspenseWrapper> },
+          { path: 'cookies', element: <SuspenseWrapper><LegalPage doc="cookies" /></SuspenseWrapper> },
           {
-            index: true,
-            element: <SuspenseWrapper><AccountPage /></SuspenseWrapper>,
+            path: 'account',
+            element: (
+              <ProtectedRoute>
+                <Outlet />
+              </ProtectedRoute>
+            ),
+            children: [
+              { index: true, element: <SuspenseWrapper><AccountPage /></SuspenseWrapper> },
+              { path: 'messages', element: <SuspenseWrapper><AccountMessagesPage /></SuspenseWrapper> },
+              { path: 'profile', element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper> },
+            ],
           },
-          {
-            path: 'messages',
-            element: <SuspenseWrapper><AccountMessagesPage /></SuspenseWrapper>,
-          },
-          {
-            path: 'profile',
-            element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper>,
-          },
+          // Opening a store or a mall: signed in, but not yet a seller.
+          { path: 'vendor/register', element: <ProtectedRoute><SuspenseWrapper><VendorRegistration /></SuspenseWrapper></ProtectedRoute> },
+          { path: 'mall/register', element: <ProtectedRoute><SuspenseWrapper><MallRegistration /></SuspenseWrapper></ProtectedRoute> },
         ],
       },
-      // 404 for main layout
-      {
-        path: '*',
-        element: <SuspenseWrapper><NotFoundPage /></SuspenseWrapper>,
-      },
+      // URLs from before the WorldStore UI, sent to their new homes (ws/app/redirects.tsx).
+      { path: 'listings', element: <BrowseRedirect /> },
+      { path: 'listings/:idOrSlug', element: <ListingRedirect /> },
+      { path: 'stores/:slug', element: <SellerRedirect /> },
+      { path: 'store/:slug', element: <SellerRedirect /> },
+      { path: 'categories/:slug', element: <CategoryRedirect /> },
+      // The reference's header points at these. Messages are the real inbox today;
+      // offers ride on messages, and selling starts in the listing editor.
+      { path: 'inbox', element: <Navigate to="/account/messages" replace /> },
+      { path: 'offers', element: <Navigate to="/account/messages" replace /> },
+      { path: 'sell/new', element: <Navigate to="/vendor/products/new" replace /> },
+      // Ecommerce URLs from before the marketplace pivot.
+      { path: 'products', element: <Navigate to="/search" replace /> },
+      { path: 'products/:slug', element: <Navigate to="/search" replace /> },
+      { path: 'category/:slug', element: <CategoryRedirect /> },
+      { path: 'cart', element: <Navigate to="/search" replace /> },
+      { path: 'checkout/*', element: <Navigate to="/search" replace /> },
+      wsNotFoundRoute,
     ],
   },
   // Auth routes (no main layout)
   {
     path: '/auth',
-    element: <AuthLayout />,
+    element: <Legacy><AuthLayout /></Legacy>,
     errorElement: <RouteError />,
     children: [
       {
@@ -224,49 +181,15 @@ const router = createBrowserRouter([
       { path: '*', element: <Navigate to="/auth/login" replace /> },
     ],
   },
-  // Vendor registration (protected, but NOT vendor-gated)
-  {
-    path: '/vendor/register',
-    element: (
-      <MainLayout />
-    ),
-    errorElement: <RouteError />,
-    children: [
-      {
-        index: true,
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><VendorRegistration /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-    ],
-  },
-  // Mall registration (protected, but NOT mall-gated)
-  {
-    path: '/mall/register',
-    element: (
-      <MainLayout />
-    ),
-    errorElement: <RouteError />,
-    children: [
-      {
-        index: true,
-        element: (
-          <ProtectedRoute>
-            <SuspenseWrapper><MallRegistration /></SuspenseWrapper>
-          </ProtectedRoute>
-        ),
-      },
-    ],
-  },
   // Mall owner routes (mall layout, mall-gated)
   {
     path: '/mall',
     element: (
-      <MallOwnerRoute>
-        <MallLayout />
-      </MallOwnerRoute>
+      <Legacy>
+        <MallOwnerRoute>
+          <MallLayout />
+        </MallOwnerRoute>
+      </Legacy>
     ),
     errorElement: <RouteError />,
     children: [
@@ -313,9 +236,11 @@ const router = createBrowserRouter([
   {
     path: '/vendor',
     element: (
-      <VendorRoute>
-        <VendorLayout />
-      </VendorRoute>
+      <Legacy>
+        <VendorRoute>
+          <VendorLayout />
+        </VendorRoute>
+      </Legacy>
     ),
     errorElement: <RouteError />,
     children: [
@@ -359,7 +284,7 @@ const router = createBrowserRouter([
   // would bounce an unauthenticated admin away from the page they need.
   {
     path: '/admin/login',
-    element: <AuthLayout />,
+    element: <Legacy><AuthLayout /></Legacy>,
     errorElement: <RouteError />,
     children: [
       {
@@ -372,9 +297,11 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: (
-      <AdminRoute>
-        <AdminLayout />
-      </AdminRoute>
+      <Legacy>
+        <AdminRoute>
+          <AdminLayout />
+        </AdminRoute>
+      </Legacy>
     ),
     errorElement: <RouteError />,
     children: [

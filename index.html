@@ -4,7 +4,7 @@
      Two alternatives stay maintained, each one attribute away: "shop" (espresso +
      coral, _tokens.scss + _shop.scss) and "market" (paper + olive, _market.scss).
      If you switch, change theme-color below too. -->
-<html lang="en" data-ws-theme="worldstreet">
+<html lang="en" data-ws-theme="worldstreet" data-theme="dark">
 
 <head>
   <meta charset="UTF-8" />
@@ -20,7 +20,7 @@
   <link rel="manifest" href="/site.webmanifest" />
   <!-- Sanctioned literal: mirrors --ws-bg-page (worldstreet; shop is #0F0C0A, market #EEEEEC) — a meta tag cannot
        read a CSS variable. Keep in sync with src/shared/utils/theme.ts. -->
-  <meta name="theme-color" content="#050505" />
+  <meta name="theme-color" content="#0c0a09" />
 
   <!-- The market theme has no dark counterpart yet, so the stored
        platform/platform-light choice is ignored rather than applied: honouring
@@ -59,12 +59,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&text=%E2%82%A6" rel="stylesheet" />
 </head>
 
-<body>
+<body class="cx-root" data-brand="worldstreet">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

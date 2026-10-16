@@ -1,0 +1,585 @@
+/* Results page tooling (Phase 2, spec §6): filter rail and sheet, the phone
+   "Filters · Sort" bar. */
+
+.ws-search-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cx-s-6);
+  align-items: start;
+}
+
+.ws-search-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cx-s-4);
+  min-width: 0;
+}
+
+.ws-search-rail {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .ws-search-layout {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  /* Sticky under the header, scrolling on its own when taller than the screen. */
+  .ws-search-rail {
+    position: sticky;
+    top: calc(var(--cx-sticky-offset) + var(--cx-s-4));
+    display: block;
+    max-height: calc(100dvh - var(--cx-sticky-offset) - var(--cx-s-6));
+    overflow-y: auto;
+    padding-right: var(--cx-s-2);
+    scrollbar-width: thin;
+  }
+
+  /* With the rail beside them, results run three across (spec §16.1). */
+  .ws-search-main .ws-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ws-filterbar {
+    display: none !important;
+  }
+}
+
+/* Below 1024px the header's sort moves into the sticky bar. */
+@media (max-width: 1023px) {
+  .ws-results-head__sort {
+    display: none;
+  }
+}
+
+/* ---------- Filter form ---------- */
+
+.ws-filters {
+  display: grid;
+}
+
+.ws-fgroup {
+  border-bottom: 1px solid var(--cx-hairline);
+}
+
+.ws-fgroup__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cx-s-2);
+  min-height: 48px;
+  color: var(--cx-text);
+  font: 500 var(--cx-body) / 1.3 var(--cx-font);
+  list-style: none;
+  cursor: pointer;
+}
+
+.ws-fgroup__title::-webkit-details-marker {
+  display: none;
+}
+
+.ws-fgroup__count {
+  color: var(--cx-ember-text);
+  font-size: var(--cx-small);
+  font-weight: 400;
+}
+
+.ws-fgroup__body {
+  padding-bottom: var(--cx-s-4);
+}
+
+.ws-fopts {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* FacetCheckbox: 44px rows (48 on phones), label left, count right. */
+.ws-facet {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--cx-s-3);
+  min-height: var(--cx-touch);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+  cursor: pointer;
+}
+
+.ws-facet input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--cx-ember);
+}
+
+.ws-facet__n {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-facet[data-empty] {
+  cursor: not-allowed;
+}
+
+.ws-facet[data-empty] .ws-facet__label {
+  color: var(--cx-text-muted);
+}
+
+/* CategoryTree: links, the current one bold. */
+.ws-ftree {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-ftree a {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+  min-height: 40px;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  text-decoration: none;
+}
+
+.ws-ftree a:hover {
+  color: var(--cx-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-ftree a[aria-current] {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+/* PriceRangeFilter: preset chips, then min/max and Go. */
+.ws-fpresets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2);
+  margin: 0 0 var(--cx-s-3);
+  padding: 0;
+  list-style: none;
+}
+
+.ws-fpreset {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--cx-s-3);
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-surface-2);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+  text-decoration: none;
+}
+
+.ws-fpreset:hover {
+  background: var(--cx-surface-3);
+}
+
+.ws-fprice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--cx-s-2);
+}
+
+.ws-fprice label {
+  display: grid;
+  gap: 4px;
+  color: var(--cx-text-2);
+  font-size: var(--cx-caption);
+}
+
+.ws-fprice input {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--cx-s-3);
+  border: 0;
+  border-radius: var(--cx-r-sm);
+  background: var(--cx-surface-2);
+  box-shadow: inset 0 0 0 1px var(--cx-field-border);
+  color: var(--cx-text);
+  font: inherit;
+  font-size: var(--cx-small);
+}
+
+.ws-fprice input:focus-visible {
+  box-shadow: var(--cx-focus-ring);
+  outline: none;
+}
+
+.ws-filters__apply {
+  margin-top: var(--cx-s-4);
+}
+
+/* With script, the rail applies as you tick. */
+.ws-filters--rail[data-js] .ws-filters__apply {
+  display: none;
+}
+
+/* ---------- Phone bar and sheet ---------- */
+
+.ws-filterbar {
+  position: sticky;
+  top: var(--cx-sticky-offset);
+  z-index: var(--cx-z-raised);
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  margin-inline: calc(var(--cx-gutter) * -1);
+  padding: var(--cx-s-2) var(--cx-gutter);
+  background: color-mix(in srgb, var(--cx-bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.ws-filterbar > .cx-btn {
+  flex: 1;
+  min-width: 0;
+  padding-inline: var(--cx-s-3);
+}
+
+.ws-filterbar__n {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-ember);
+  color: var(--cx-on-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ws-fsheet {
+  width: 100%;
+  max-width: 480px;
+  height: 100%;
+  max-height: none;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cx-text);
+}
+
+.ws-fsheet::backdrop {
+  background: var(--cx-overlay);
+}
+
+.ws-fsheet__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0 var(--cx-s-5);
+  background: var(--cx-elevated);
+  overscroll-behavior: contain;
+}
+
+.ws-fsheet__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  border-bottom: 1px solid var(--cx-hairline);
+  background: var(--cx-elevated);
+}
+
+.ws-fsheet__title {
+  margin: 0;
+  font: 500 var(--cx-h4) / 1.2 var(--cx-font);
+}
+
+.ws-fsheet .ws-facet {
+  min-height: 48px;
+}
+
+/* "Clear all" and "Show N results" stay at the bottom of the sheet. */
+.ws-filters__foot {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--cx-s-3);
+  margin-inline: calc(var(--cx-s-5) * -1);
+  padding: var(--cx-s-3) var(--cx-s-5) calc(var(--cx-s-3) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--cx-hairline);
+  background: var(--cx-elevated);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-fsheet[open] .ws-fsheet__panel {
+    animation: ws-sheet-in 420ms var(--cx-spring);
+  }
+}
+
+@keyframes ws-sheet-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ws-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* Phones: the sheet rises from the bottom instead of sliding in from the side. */
+@media (max-width: 767px) {
+  .ws-fsheet {
+    max-width: none;
+  }
+
+  .ws-fsheet[open] .ws-fsheet__panel {
+    animation-name: ws-sheet-up;
+  }
+}
+
+/* ViewToggle: two icon buttons in one pill; the pressed one is filled. */
+.ws-view {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--cx-r-pill);
+  box-shadow: inset 0 0 0 1px var(--cx-field-border);
+}
+
+.ws-view [aria-pressed=true] {
+  background: var(--cx-surface-3);
+  color: var(--cx-text);
+}
+
+@media (min-width: 1024px) {
+  .ws-results-head__sort {
+    display: flex;
+    align-items: center;
+    gap: var(--cx-s-2);
+  }
+}
+
+.ws-filterbar__view {
+  flex: none;
+}
+
+/* SaveSearchButton: under the heading, the heart filled once saved. */
+.ws-savesearch {
+  justify-self: start;
+}
+
+.ws-savesearch[aria-pressed=true] svg {
+  fill: var(--cx-ember);
+  stroke: var(--cx-ember);
+}
+
+/* ---------- Saved (SCR-006) ---------- */
+
+.ws-saved-page {
+  display: grid;
+  gap: var(--cx-s-5);
+}
+
+.ws-saved-page__title {
+  margin: var(--cx-s-2) 0 0;
+  font: 500 var(--cx-h3) / 1.2 var(--cx-font);
+  letter-spacing: var(--cx-h3-ls);
+}
+
+/* Link tabs: the current one underlined in gold. */
+.ws-tabs {
+  display: flex;
+  gap: var(--cx-s-1);
+  border-bottom: 1px solid var(--cx-hairline);
+}
+
+.ws-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--cx-s-4);
+  color: var(--cx-text-2);
+  text-decoration: none;
+  box-shadow: inset 0 -2px 0 transparent;
+}
+
+.ws-tabs__tab:hover {
+  color: var(--cx-text);
+}
+
+.ws-tabs__tab[aria-current=page] {
+  color: var(--cx-text);
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--cx-ember);
+}
+
+.ws-saved__count {
+  margin: 0;
+  color: var(--cx-text-2);
+}
+
+.ws-saved > li {
+  display: grid;
+  gap: var(--cx-s-2);
+  align-content: start;
+}
+
+.ws-saved__tag {
+  justify-self: start;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-surface-3);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+  font-weight: 500;
+}
+
+.ws-saved__tag--drop {
+  background: var(--cx-gain-wash);
+  color: var(--cx-gain);
+}
+
+/* Sold or ended: the photo greys out; text keeps full contrast. */
+.ws-saved__item[data-ended] .ws-card__media {
+  filter: grayscale(1) brightness(0.7);
+}
+
+.ws-saved__gone {
+  display: grid;
+  place-content: center;
+  gap: var(--cx-s-2);
+  min-height: 200px;
+  padding: var(--cx-s-5);
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  color: var(--cx-text-2);
+  text-align: center;
+}
+
+.ws-saved__gone p {
+  margin: 0;
+}
+
+.ws-saved-searches {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-saved-searches li {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  border-bottom: 1px solid var(--cx-hairline);
+}
+
+.ws-saved-searches__link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--cx-s-3);
+  min-height: 64px;
+  color: var(--cx-text);
+  text-decoration: none;
+}
+
+.ws-saved-searches__link svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--cx-text-2);
+}
+
+.ws-saved-searches__link > span {
+  display: grid;
+}
+
+.ws-saved-searches__label {
+  font-weight: 500;
+}
+
+.ws-saved-searches__at {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+/* Saved with no filter rail: four across on desktop like the old grid. */
+@media (min-width: 1200px) {
+  .ws-saved.ws-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ws-results-head__count:empty {
+  display: none;
+}
+
+/* SpellCorrection: one line above the results. */
+.ws-didyoumean {
+  margin: 0;
+  color: var(--cx-text);
+}
+
+.ws-didyoumean a {
+  color: var(--cx-ember-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-didyoumean__n {
+  color: var(--cx-text-muted);
+}
+
+/* RelatedSearches: chips after the results. */
+.ws-related {
+  display: grid;
+  gap: var(--cx-s-3);
+  margin-top: var(--cx-s-6);
+  padding-top: var(--cx-s-5);
+  border-top: 1px solid var(--cx-hairline);
+}
+
+.ws-related__title {
+  margin: 0;
+  font: 500 var(--cx-body) / 1.3 var(--cx-font);
+}
+
+.ws-related ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-related__chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cx-touch);
+  padding: 0 var(--cx-s-4);
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-surface-2);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+  text-decoration: none;
+}
+
+.ws-related__chip:hover {
+  background: var(--cx-surface-3);
+}

@@ -3,7 +3,7 @@
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "types": ["vite/client"],
     "skipLibCheck": true,
@@ -27,7 +27,14 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@ws/*": ["src/ws/*"],
+      "next/link": ["src/ws/compat/next/link.tsx"],
+      "next/navigation": ["src/ws/compat/next/navigation.ts"],
+      "next/image": ["src/ws/compat/next/image.tsx"],
+      "next/form": ["src/ws/compat/next/form.tsx"],
+      "next/headers": ["src/ws/compat/next/headers.ts"],
+      "next/server": ["src/ws/compat/next/server.ts"]
     }
   },
   "include": ["src"]

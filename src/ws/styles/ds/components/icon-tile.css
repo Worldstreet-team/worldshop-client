@@ -1,0 +1,40 @@
+/* Adapted from the WorldStreet design system (.cx-icon-tile)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-icon-tile {
+  border-radius:var(--cx-r-icon);
+  background:var(--cx-surface-3);
+  flex:none;
+  place-items:center;
+  width:64px;
+  height:64px;
+  display:grid;
+}
+
+.cx-icon-tile svg {
+  width:28px;
+  height:28px;
+  stroke:var(--cx-flame);
+  fill:none;
+  stroke-width:1.6px;
+}
+
+.cx-icon-tile--sm {
+  border-radius:10px;
+  width:40px;
+  height:40px;
+}
+
+.cx-icon-tile--sm svg {
+  width:20px;
+  height:20px;
+}
+
+.cx-empty .cx-icon-tile {
+  margin-bottom:6px;
+}
+
+.cx-empty--error .cx-icon-tile svg {
+  stroke:var(--cx-loss);
+}

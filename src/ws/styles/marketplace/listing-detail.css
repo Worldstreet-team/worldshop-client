@@ -1,0 +1,1774 @@
+/* Listing detail (SCR-004, spec §7). */
+
+.ws-listing {
+  display: grid;
+  gap: var(--cx-s-3);
+}
+
+@media (min-width: 768px) {
+  .ws-listing {
+    gap: var(--cx-s-4);
+  }
+}
+
+/* Breadcrumb on desktop; "‹ Category" on phones. */
+.ws-crumbs ol {
+  display: none;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+.ws-crumbs li + li::before {
+  content: "›";
+  margin-right: var(--cx-s-2);
+  color: var(--cx-text-muted);
+}
+
+.ws-crumbs li[aria-current] {
+  overflow: hidden;
+  max-width: 40ch;
+  color: var(--cx-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-crumbs a {
+  color: var(--cx-text-2);
+}
+
+.ws-crumbs__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+  min-height: 32px;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  text-decoration: none;
+}
+
+.ws-crumbs__back svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (min-width: 768px) {
+  .ws-crumbs ol {
+    display: flex;
+  }
+
+  .ws-crumbs__back {
+    display: none;
+  }
+}
+
+/* Gallery left, buy box right from 1024px. */
+.ws-listing__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cx-s-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .ws-listing__top {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: var(--cx-s-8);
+  }
+
+  .ws-listing__side {
+    position: sticky;
+    top: calc(var(--cx-sticky-offset) + var(--cx-s-4));
+  }
+}
+
+.ws-listing__side {
+  display: grid;
+  gap: var(--cx-s-4);
+}
+
+/* ---------- Gallery ---------- */
+
+.ws-gallery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cx-s-3);
+}
+
+@media (min-width: 768px) {
+  .ws-gallery {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+}
+
+.ws-gallery__thumbs {
+  display: none;
+  flex-direction: column;
+  gap: var(--cx-s-2);
+  max-height: 560px;
+  margin: 0;
+  padding: 2px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+@media (min-width: 768px) {
+  .ws-gallery__thumbs {
+    display: flex;
+  }
+}
+
+.ws-gallery__thumb {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cx-r-sm);
+  background: var(--cx-surface-2);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.ws-gallery__thumb img {
+  object-fit: cover;
+}
+
+.ws-gallery__thumb[aria-current] {
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--cx-ember);
+}
+
+.ws-gallery__main {
+  position: relative;
+  min-width: 0;
+}
+
+/* The strip: one photo per screen, snapping. Square, but never taller than about half
+   a phone screen, so price and delivery stay above the fold (§18 stage 3). */
+.ws-gallery__strip {
+  display: flex;
+  aspect-ratio: 1;
+  max-height: min(560px, 34vh);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface-2);
+  scrollbar-width: none;
+}
+
+@media (min-width: 1024px) {
+  .ws-gallery__strip {
+    max-height: 560px;
+  }
+}
+
+.ws-gallery__strip::-webkit-scrollbar {
+  display: none;
+}
+
+.ws-gallery__slide {
+  position: relative;
+  flex: 0 0 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  scroll-snap-align: start;
+}
+
+.ws-gallery__slide img {
+  object-fit: contain;
+}
+
+/* !important: the unlayered small-button rule (44px hit area) sets position: relative. */
+.ws-gallery__arrow {
+  position: absolute !important;
+  top: 50%;
+  translate: 0 -50%;
+  background: color-mix(in srgb, var(--cx-elevated) 85%, transparent) !important;
+  color: var(--cx-text);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-gallery__arrow--prev {
+  left: var(--cx-s-3);
+}
+
+.ws-gallery__arrow--next {
+  right: var(--cx-s-3);
+}
+
+@media (hover: none) {
+  .ws-gallery__arrow {
+    display: none;
+  }
+}
+
+.ws-gallery__count {
+  position: absolute;
+  right: var(--cx-s-3);
+  bottom: var(--cx-s-3);
+  padding: 4px 10px;
+  border-radius: var(--cx-r-pill);
+  background: color-mix(in srgb, var(--cx-bg) 75%, transparent);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+}
+
+.ws-gallery__3d {
+  position: absolute;
+  left: var(--cx-s-3);
+  bottom: var(--cx-s-3);
+  background: color-mix(in srgb, var(--cx-bg) 70%, transparent);
+}
+
+/* Phones: full width, 30% of the screen tall, so price, delivery, returns and the
+   escrow line fit above the fold at 375×812 (§18 stage 3). */
+@media (max-width: 767px) {
+  .ws-gallery__strip,
+  .ws-gallery .ws-viewer3d .ws-stage {
+    aspect-ratio: auto;
+    height: max(220px, 30vh);
+    max-height: none;
+  }
+}
+
+.ws-gallery .ws-viewer3d .ws-stage {
+  aspect-ratio: 1;
+}
+
+@media (min-width: 768px) {
+  .ws-gallery__strip,
+  .ws-gallery .ws-viewer3d .ws-stage {
+    max-height: 560px;
+  }
+}
+
+/* Lightbox: full screen, one photo per screen. */
+.ws-lightbox {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--cx-bg);
+  color: var(--cx-text);
+}
+
+.ws-lightbox[open] {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.ws-lightbox__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--cx-s-2) var(--cx-s-4);
+  color: var(--cx-text-2);
+}
+
+.ws-lightbox__strip {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.ws-lightbox__slide {
+  position: relative;
+  flex: 0 0 100%;
+  margin: 0;
+  scroll-snap-align: start;
+}
+
+.ws-lightbox__slide img {
+  object-fit: contain;
+}
+
+.ws-lightbox__slide figcaption {
+  position: absolute;
+  bottom: var(--cx-s-4);
+  left: 50%;
+  translate: -50% 0;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+/* ---------- Title and buy box ---------- */
+
+.ws-listing__title {
+  display: grid;
+  gap: var(--cx-s-2);
+  justify-items: start;
+}
+
+.ws-listing__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cx-s-1) var(--cx-s-3);
+}
+
+.ws-reassure__link {
+  color: var(--cx-ember-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.ws-listing__title h1 {
+  margin: 0;
+  color: var(--cx-text);
+  font: 500 22px / 1.3 var(--cx-font);
+  letter-spacing: -0.3px;
+  text-wrap: pretty;
+}
+
+@media (min-width: 1024px) {
+  .ws-listing__title h1 {
+    font-size: 26px;
+  }
+}
+
+.ws-buybox {
+  display: grid;
+  gap: var(--cx-s-3);
+}
+
+.ws-reassure {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.45;
+}
+
+.ws-reassure li {
+  display: flex;
+  gap: var(--cx-s-2);
+}
+
+.ws-reassure svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--cx-text-2);
+}
+
+.ws-reassure li[data-covered] svg {
+  color: var(--cx-ember-text);
+}
+
+.ws-actions {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin-top: var(--cx-s-2);
+}
+
+.ws-actions__save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cx-s-1);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+.ws-qty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cx-s-2) var(--cx-s-3);
+  margin-bottom: var(--cx-s-2);
+}
+
+.ws-qty__label {
+  font-weight: 500;
+}
+
+.ws-qty__stepper {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--cx-r-pill);
+  box-shadow: inset 0 0 0 1px var(--cx-field-border);
+}
+
+.ws-qty__n {
+  min-width: 2.5ch;
+  text-align: center;
+}
+
+.ws-qty__stock {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+.ws-demand {
+  display: flex;
+  gap: var(--cx-s-2);
+  margin: 0;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+.ws-demand svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.ws-demand strong {
+  color: var(--cx-text);
+}
+
+.ws-buybox__seller {
+  padding-top: var(--cx-s-3);
+  border-top: 1px solid var(--cx-hairline);
+}
+
+/* ---------- Sticky buy bar (phones) ---------- */
+
+.ws-stickybuy {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .ws-stickybuy {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: var(--cx-z-nav);
+    display: flex;
+    align-items: center;
+    gap: var(--cx-s-2);
+    padding: var(--cx-s-2) var(--cx-gutter) calc(var(--cx-s-2) + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--cx-elevated) 96%, transparent);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 -1px 0 var(--cx-hairline);
+    transform: translateY(110%);
+    transition: transform 360ms var(--cx-spring);
+  }
+
+  .ws-stickybuy[data-shown=true] {
+    transform: none;
+  }
+}
+
+.ws-stickybuy__price {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.ws-stickybuy__now {
+  color: var(--cx-ember-text);
+  font-weight: 600;
+}
+
+.ws-stickybuy__total {
+  overflow: hidden;
+  color: var(--cx-text-2);
+  font-size: var(--cx-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-stickybuy {
+    transition: none;
+  }
+}
+
+/* Share sits on the gallery's top-right corner (eBay). !important: see the arrows. */
+.ws-gallery__share {
+  position: absolute !important;
+  top: var(--cx-s-3);
+  right: var(--cx-s-3);
+  background: color-mix(in srgb, var(--cx-elevated) 85%, transparent) !important;
+  color: var(--cx-text);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+/* ---------- Below the buy box (P3b) ----------
+   Phones: delivery & returns, protection, about, safety (flows B3 order).
+   From 1024px: "About this item" left, the panels and safety tips right. */
+
+.ws-listing__more {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "panels" "about" "safety" "seller" "reviews";
+  gap: var(--cx-s-6);
+  margin-top: var(--cx-s-4);
+}
+
+@media (min-width: 1024px) {
+  .ws-listing__more {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-areas: "about panels" "about safety" "reviews seller";
+    grid-template-rows: auto 1fr auto;
+    column-gap: var(--cx-s-8);
+    align-items: start;
+  }
+}
+
+.ws-listing__panels {
+  grid-area: panels;
+  display: grid;
+  gap: var(--cx-s-4);
+}
+
+.ws-about {
+  grid-area: about;
+  display: grid;
+  gap: var(--cx-s-5);
+}
+
+.ws-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  margin: 0;
+  color: var(--cx-text);
+  font: 500 var(--cx-h4) / 1.25 var(--cx-font);
+}
+
+.ws-section-title svg {
+  width: 20px;
+  height: 20px;
+  color: var(--cx-ember-text);
+}
+
+.ws-subtitle {
+  margin: 0 0 var(--cx-s-3);
+  color: var(--cx-text);
+  font: 500 var(--cx-body) / 1.3 var(--cx-font);
+}
+
+/* Accordion panels: native <details>, one row per panel with its summary at the end. */
+.ws-panel {
+  border-top: 1px solid var(--cx-hairline);
+}
+
+.ws-panel:last-of-type {
+  border-bottom: 1px solid var(--cx-hairline);
+}
+
+.ws-panel__head {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--cx-s-2) var(--cx-s-3);
+  min-height: var(--cx-touch);
+  padding: var(--cx-s-2) 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+.ws-panel__head::-webkit-details-marker {
+  display: none;
+}
+
+.ws-panel__chev {
+  width: 18px;
+  height: 18px;
+  color: var(--cx-text-muted);
+  transition: rotate 240ms var(--cx-spring);
+}
+
+.ws-panel[open] > .ws-panel__head > .ws-panel__chev {
+  rotate: 180deg;
+}
+
+.ws-panel__head > svg:first-child {
+  width: 20px;
+  height: 20px;
+  color: var(--cx-text-2);
+}
+
+.ws-panel__title {
+  font-weight: 500;
+}
+
+.ws-panel__summary {
+  overflow: hidden;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-panel__body {
+  display: grid;
+  gap: var(--cx-s-3);
+  padding: 0 0 var(--cx-s-4);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.5;
+}
+
+.ws-panel__body p {
+  margin: 0;
+}
+
+.ws-panel__to {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cx-s-2);
+  color: var(--cx-text);
+}
+
+.ws-panel__to svg {
+  width: 18px;
+  height: 18px;
+  color: var(--cx-text-2);
+}
+
+.ws-panel__to .cx-btn {
+  margin-left: auto;
+}
+
+.ws-panel__list {
+  display: grid;
+  list-style: disc;
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding-left: var(--cx-s-5);
+}
+
+.ws-panel__total {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+.ws-methods {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-method {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--cx-s-3);
+  padding: var(--cx-s-3) 0;
+  border-top: 1px solid var(--cx-hairline);
+}
+
+.ws-method:first-child {
+  border-top: 0;
+}
+
+.ws-method__name {
+  color: var(--cx-text);
+  font-weight: 500;
+}
+
+.ws-method__fee {
+  color: var(--cx-text);
+  text-align: right;
+}
+
+.ws-method__when {
+  grid-column: 1 / -1;
+}
+
+.ws-method[data-unavailable] .ws-method__name,
+.ws-method[data-unavailable] .ws-method__fee {
+  color: var(--cx-text-muted);
+}
+
+.ws-payments {
+  display: grid;
+  gap: var(--cx-s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-payments li {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-3);
+}
+
+.ws-payments svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.ws-payments strong {
+  color: var(--cx-text);
+  font-weight: 500;
+}
+
+.ws-payments__detail {
+  color: var(--cx-text-muted);
+}
+
+/* Shop with confidence */
+.ws-protect {
+  display: grid;
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-4);
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-protect__list {
+  display: grid;
+  gap: var(--cx-s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.5;
+}
+
+.ws-protect__list li {
+  display: flex;
+  gap: var(--cx-s-3);
+}
+
+.ws-protect__list svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--cx-ember-text);
+}
+
+.ws-protect__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cx-s-2) var(--cx-s-4);
+  font-size: var(--cx-small);
+}
+
+.ws-protect__links a {
+  color: var(--cx-ember-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-protect__report {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+  min-height: var(--cx-touch);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cx-text-2);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ws-protect__report svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Item specifics: two columns of label and value. */
+.ws-specs {
+  display: grid;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .ws-specs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--cx-s-6);
+  }
+}
+
+.ws-specs__row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-2) 0;
+  border-bottom: 1px solid var(--cx-hairline);
+  font-size: var(--cx-small);
+}
+
+.ws-specs dt {
+  color: var(--cx-text-muted);
+}
+
+.ws-specs dd {
+  margin: 0;
+  color: var(--cx-text);
+  overflow-wrap: anywhere;
+}
+
+.ws-specs dd a {
+  color: var(--cx-ember-text);
+}
+
+.ws-specs__cond {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+}
+
+.ws-specs__more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cx-touch);
+  color: var(--cx-ember-text);
+  font-size: var(--cx-small);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ws-specs__more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ws-specs__more[open] > summary {
+  display: none;
+}
+
+/* Condition info button and popover (a sheet on phones). */
+.ws-cond-info {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: -6px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cx-r-pill);
+  background: none;
+  color: var(--cx-text-2);
+  cursor: pointer;
+}
+
+.ws-cond-info svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ws-cond-pop {
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(80vh, 640px);
+  margin: auto;
+  padding: var(--cx-s-5);
+  overflow-y: auto;
+  border: 0;
+  border-radius: var(--cx-r-card);
+  background: var(--cx-elevated);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.5;
+  box-shadow: var(--cx-shadow-xl), inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-cond-pop::backdrop {
+  background: var(--cx-overlay);
+}
+
+.ws-cond-pop__title {
+  margin: 0 0 var(--cx-s-2);
+  color: var(--cx-text);
+  font: 500 var(--cx-h4) / 1.25 var(--cx-font);
+}
+
+.ws-cond-pop p {
+  margin: 0 0 var(--cx-s-4);
+}
+
+.ws-cond-pop__grades {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin: 0 0 var(--cx-s-4);
+}
+
+.ws-cond-pop__grades > div {
+  padding: var(--cx-s-2) var(--cx-s-3);
+  border-radius: var(--cx-r-md);
+}
+
+.ws-cond-pop__grades > div[data-current] {
+  background: var(--cx-surface-2);
+  box-shadow: inset 2px 0 0 var(--cx-ember);
+}
+
+.ws-cond-pop__grades dt {
+  color: var(--cx-text);
+  font-weight: 500;
+}
+
+.ws-cond-pop__grades dd {
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .ws-cond-pop {
+    width: 100%;
+    max-width: none;
+    margin: auto 0 0;
+    padding-bottom: calc(var(--cx-s-5) + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--cx-r-card) var(--cx-r-card) 0 0;
+  }
+}
+
+/* Description: plain paragraphs, clamped with "Read more". */
+.ws-desc {
+  color: var(--cx-text);
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.ws-desc p {
+  margin: 0 0 var(--cx-s-3);
+}
+
+.ws-desc p:last-child {
+  margin-bottom: 0;
+}
+
+.ws-desc[data-clamped] {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--ws-desc-lines);
+}
+
+.ws-itemmeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2) var(--cx-s-8);
+  margin: 0;
+  padding-top: var(--cx-s-4);
+  border-top: 1px solid var(--cx-hairline);
+  font-size: var(--cx-small);
+}
+
+.ws-itemmeta dt {
+  color: var(--cx-text-muted);
+}
+
+.ws-itemmeta dd {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin: 0;
+  color: var(--cx-text);
+}
+
+.ws-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+}
+
+/* Safety tips */
+.ws-safety {
+  grid-area: safety;
+  display: grid;
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-4);
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-safety__list {
+  display: grid;
+  list-style: decimal;
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding-left: var(--cx-s-5);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.5;
+}
+
+.ws-safety__more {
+  justify-self: start;
+  color: var(--cx-ember-text);
+  font-size: var(--cx-small);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------- Modals: share and report ----------
+   Centred card from 768px, a bottom sheet below. */
+
+.ws-modal {
+  width: min(480px, calc(100vw - 32px));
+  max-height: min(88vh, 720px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cx-r-card);
+  background: var(--cx-elevated);
+  color: var(--cx-text);
+  box-shadow: var(--cx-shadow-xl), inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-modal::backdrop {
+  background: var(--cx-overlay);
+}
+
+.ws-modal__panel {
+  display: grid;
+  gap: var(--cx-s-4);
+  padding: 0 var(--cx-s-5) var(--cx-s-5);
+}
+
+.ws-modal__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  border-bottom: 1px solid var(--cx-hairline);
+  background: var(--cx-elevated);
+}
+
+.ws-modal__title {
+  margin: 0;
+  font: 500 var(--cx-h4) / 1.2 var(--cx-font);
+}
+
+.ws-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--cx-s-3);
+}
+
+@media (max-width: 767px) {
+  .ws-modal {
+    width: 100%;
+    max-width: none;
+    margin: auto 0 0;
+    border-radius: var(--cx-r-card) var(--cx-r-card) 0 0;
+  }
+
+  .ws-modal__panel {
+    padding-bottom: calc(var(--cx-s-5) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .ws-modal[open] {
+    animation: ws-modal-up 380ms var(--cx-spring);
+  }
+}
+
+@keyframes ws-modal-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-modal[open] {
+    animation: none;
+  }
+}
+
+.ws-share__title {
+  overflow: hidden;
+  margin: 0;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-share {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-share__target {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-3);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--cx-s-4);
+  border: 0;
+  border-radius: var(--cx-r-md);
+  background: var(--cx-surface-2);
+  color: var(--cx-text);
+  font: 500 var(--cx-small) var(--cx-font);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ws-share__target:hover {
+  background: var(--cx-surface-3);
+}
+
+.ws-share__target svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* Report form */
+.ws-report {
+  display: grid;
+  gap: var(--cx-s-4);
+}
+
+.ws-report__reason {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-2) 0;
+  min-height: var(--cx-touch);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+  cursor: pointer;
+}
+
+.ws-report__reason input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--cx-ember);
+}
+
+.ws-report__hint {
+  display: block;
+  color: var(--cx-text-muted);
+  font-size: var(--cx-caption);
+}
+
+.ws-report__sent {
+  display: grid;
+  gap: var(--cx-s-4);
+  justify-items: start;
+}
+
+.ws-report__sent p {
+  margin: 0;
+  color: var(--cx-text-2);
+}
+
+.ws-textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: var(--cx-s-3) var(--cx-s-4);
+  border: 1px solid var(--cx-field-border);
+  border-radius: var(--cx-r-md);
+  background: var(--cx-field);
+  color: var(--cx-text);
+  font: 400 var(--cx-body) / 1.5 var(--cx-font);
+  resize: vertical;
+}
+
+.ws-textarea:focus-visible {
+  outline: none;
+  border-color: var(--cx-focus-border);
+  box-shadow: var(--cx-focus-halo);
+}
+
+.ws-textarea[aria-invalid] {
+  border-color: var(--cx-loss);
+}
+
+.ws-field__error {
+  margin: 0;
+  color: var(--cx-loss);
+  font-size: var(--cx-small);
+}
+
+/* About this seller (P3c): SellerCard + SellerRatingsBreakdown. Beside the reviews from
+   1024px, after them on phones. */
+.ws-sellercard {
+  grid-area: seller;
+  display: grid;
+  gap: var(--cx-s-4);
+  padding: var(--cx-s-5);
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-sellercard__head {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-4);
+}
+
+.ws-sellercard__who {
+  display: grid;
+  gap: var(--cx-s-2);
+  min-width: 0;
+}
+
+.ws-sellercard__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cx-text);
+  font: 500 var(--cx-body-lg) / 1.3 var(--cx-font);
+  text-decoration: none;
+}
+
+.ws-sellercard__name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-sellercard__name svg {
+  width: 18px;
+  height: 18px;
+  color: var(--cx-ember-text);
+}
+
+.ws-sellercard__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2);
+}
+
+.ws-sellercard__feedback {
+  margin: 0;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+.ws-sellercard__feedback strong {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+.ws-sellercard__facts {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin: 0;
+  font-size: var(--cx-small);
+}
+
+.ws-sellercard__facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--cx-s-3);
+}
+
+.ws-sellercard__facts dt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  color: var(--cx-text-muted);
+}
+
+.ws-sellercard__facts dt svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ws-sellercard__facts dd {
+  margin: 0;
+  color: var(--cx-text);
+  text-align: right;
+}
+
+.ws-sellercard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2);
+}
+
+/* Detailed seller ratings and the reviews' star spread share one bar style. The bars
+   use the text colour: the price stays the page's one gold element. */
+.ws-dims__note {
+  margin: calc(var(--cx-s-2) * -1) 0 var(--cx-s-3);
+  color: var(--cx-text-muted);
+  font-size: var(--cx-meta);
+}
+
+.ws-dims__list,
+.ws-rsum__bars {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--cx-small);
+}
+
+.ws-dims__list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 2.5em;
+  align-items: center;
+  gap: var(--cx-s-3);
+  color: var(--cx-text-2);
+}
+
+.ws-dims__bar,
+.ws-rsum__bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-surface-3);
+}
+
+.ws-dims__bar > span,
+.ws-rsum__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cx-text-2);
+}
+
+.ws-dims__value,
+.ws-rsum__n {
+  color: var(--cx-text);
+  text-align: right;
+}
+
+/* Ratings and reviews (P3c): ReviewsSection. */
+.ws-reviews {
+  grid-area: reviews;
+  display: grid;
+  gap: var(--cx-s-5);
+  min-width: 0;
+}
+
+.ws-reviews__panel {
+  display: grid;
+  gap: var(--cx-s-5);
+  border-radius: var(--cx-r-md);
+}
+
+.ws-reviews__panel:focus-visible {
+  box-shadow: var(--cx-focus-ring);
+  outline: none;
+}
+
+.ws-rsum {
+  display: grid;
+  gap: var(--cx-s-5);
+}
+
+@media (min-width: 768px) {
+  .ws-rsum {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--cx-s-8);
+  }
+}
+
+.ws-rsum__score {
+  display: grid;
+  justify-items: start;
+  gap: var(--cx-s-2);
+}
+
+.ws-rsum__avg {
+  margin: 0;
+  color: var(--cx-text);
+  font: 300 48px / 1 var(--cx-font);
+  letter-spacing: -1px;
+}
+
+.ws-rsum__count {
+  margin: 0;
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+.ws-rsum__bars li {
+  display: grid;
+  grid-template-columns: 4.5em minmax(0, 1fr) 2.5em;
+  align-items: center;
+  gap: var(--cx-s-3);
+  color: var(--cx-text-2);
+}
+
+/* Topic chips: toggle buttons (aria-pressed), one scrolling row, 44px for touch. */
+.ws-reviews__topics {
+  display: flex;
+  gap: var(--cx-s-2);
+  overflow-x: auto;
+  padding-block: 2px;
+  scrollbar-width: none;
+}
+
+.ws-topic {
+  flex: none;
+  height: var(--cx-touch);
+  padding: 0 var(--cx-s-4);
+  border: 0;
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  color: var(--cx-text-2);
+  font: 400 var(--cx-small) var(--cx-font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ws-topic:hover {
+  color: var(--cx-text);
+}
+
+.ws-topic[aria-pressed="true"] {
+  background: var(--cx-surface-3);
+  box-shadow: inset 0 0 0 1px var(--cx-text-2);
+  color: var(--cx-text);
+}
+
+.ws-topic:focus-visible {
+  box-shadow: var(--cx-focus-ring);
+  outline: none;
+}
+
+.ws-reviews__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-reviews__list > li + li {
+  border-top: 1px solid var(--cx-hairline);
+}
+
+.ws-review {
+  display: grid;
+  gap: var(--cx-s-2);
+  padding-block: var(--cx-s-4);
+}
+
+.ws-review__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cx-s-2) var(--cx-s-3);
+}
+
+.ws-review__buyer {
+  margin: 0;
+  color: var(--cx-text);
+  font: 500 var(--cx-small) / 1.4 var(--cx-font);
+}
+
+.ws-review__fb,
+.ws-review__when,
+.ws-review__item {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-meta);
+  font-weight: 400;
+}
+
+.ws-review__when {
+  margin-left: auto;
+}
+
+.ws-review__item {
+  margin: 0;
+}
+
+.ws-review__text {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--cx-text-2);
+  line-height: 1.6;
+}
+
+.ws-review__reply {
+  margin-left: var(--cx-s-4);
+  padding: var(--cx-s-3) var(--cx-s-4);
+  border-left: 2px solid var(--cx-hairline);
+  border-radius: 0 var(--cx-r-md) var(--cx-r-md) 0;
+  background: var(--cx-surface);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+.ws-review__reply p {
+  margin: 0;
+}
+
+.ws-review__reply .ws-review__replyby {
+  margin-bottom: var(--cx-s-1);
+  color: var(--cx-text);
+  font-weight: 500;
+}
+
+.ws-reviews__more {
+  justify-self: start;
+}
+
+.ws-buybox__sellerlinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-1) var(--cx-s-4);
+  margin: var(--cx-s-2) 0 0;
+  font-size: var(--cx-small);
+}
+
+.ws-buybox__sellerlinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cx-touch);
+  color: var(--cx-ember-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+
+/* P3d: listings that can't be bought (UnavailableState, R-021, R-032). In place of the
+   buying actions, same width, so the buy box doesn't jump. */
+.ws-unavailable {
+  display: grid;
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-4);
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-unavailable__title {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  margin: 0;
+  color: var(--cx-text);
+  font: 500 var(--cx-body-lg) / 1.3 var(--cx-font);
+}
+
+.ws-unavailable__title svg {
+  width: 22px;
+  height: 22px;
+  color: var(--cx-warning);
+}
+
+.ws-unavailable[data-availability="sold"] .ws-unavailable__title svg,
+.ws-unavailable[data-availability="ended"] .ws-unavailable__title svg {
+  color: var(--cx-text-muted);
+}
+
+.ws-unavailable__body {
+  margin: 0;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.5;
+}
+
+.ws-unavailable__actions {
+  display: grid;
+  gap: var(--cx-s-2);
+  justify-items: center;
+}
+
+/* The listing 404: two ways on. */
+.ws-coming__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--cx-s-2);
+}
+
+/* A text button that reads like a link (View history). 44px tall for touch. */
+.ws-linkbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cx-touch);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cx-ember-text);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ws-linkbtn:focus-visible {
+  border-radius: var(--cx-r-xs);
+  box-shadow: var(--cx-focus-ring);
+  outline: none;
+}
+
+/* Revision history (R-112): a dated list, newest first. */
+.ws-revisions {
+  display: grid;
+  margin: var(--cx-s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-revisions li {
+  display: grid;
+  grid-template-columns: 9.5em minmax(0, 1fr);
+  gap: var(--cx-s-3);
+  padding-block: var(--cx-s-3);
+  border-top: 1px solid var(--cx-hairline);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+}
+
+.ws-revisions time {
+  color: var(--cx-text-muted);
+}
+
+/* Seller notes: the seller's own words, quoted (spec §7). */
+.ws-notes {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin: 0;
+}
+
+.ws-notes .ws-subtitle {
+  margin: 0;
+}
+
+.ws-notes blockquote {
+  margin: 0;
+  padding: var(--cx-s-3) var(--cx-s-4);
+  border-left: 2px solid var(--cx-ember-text);
+  border-radius: 0 var(--cx-r-md) var(--cx-r-md) 0;
+  background: var(--cx-surface);
+  color: var(--cx-text-2);
+  line-height: 1.6;
+}
+
+.ws-notes blockquote p {
+  max-width: 70ch;
+  margin: 0;
+}
+
+.ws-notes__by {
+  margin: 0;
+  color: var(--cx-text-muted);
+  font-size: var(--cx-meta);
+}
+
+.ws-itemmeta .ws-linkbtn {
+  margin-left: var(--cx-s-2);
+}
+
+.ws-pricenote {
+  margin: 0 0 calc(var(--cx-s-1) * -1);
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+/* Seller shop (P3d, SCR-005): header, then Items / Reviews / About. */
+.ws-shop {
+  display: grid;
+  gap: var(--cx-s-6);
+  padding-block: var(--cx-s-5) var(--cx-s-8);
+}
+
+.ws-shophead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--cx-s-4) var(--cx-s-5);
+}
+
+.ws-shophead__main {
+  display: grid;
+  gap: var(--cx-s-2);
+  min-width: 0;
+}
+
+.ws-shophead__name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  margin: 0;
+  color: var(--cx-text);
+  font: 500 var(--cx-h3) / 1.2 var(--cx-font);
+  letter-spacing: var(--cx-h3-ls);
+}
+
+.ws-shophead__name svg {
+  width: 24px;
+  height: 24px;
+  color: var(--cx-ember-text);
+}
+
+.ws-shophead__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-1) var(--cx-s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+.ws-shophead__stats strong {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+.ws-shophead__message {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+@media (min-width: 768px) {
+  .ws-shophead {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .ws-shophead__message {
+    grid-column: auto;
+  }
+}
+
+.ws-shoptabs {
+  display: grid;
+  gap: var(--cx-s-5);
+}
+
+.ws-shoptabs__panel {
+  display: grid;
+  gap: var(--cx-s-5);
+  border-radius: var(--cx-r-md);
+}
+
+.ws-shoptabs__panel:focus-visible {
+  box-shadow: var(--cx-focus-ring);
+  outline: none;
+}
+
+.ws-shopabout {
+  display: grid;
+  gap: var(--cx-s-5);
+  max-width: 560px;
+}

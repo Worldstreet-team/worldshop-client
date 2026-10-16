@@ -5,6 +5,7 @@ import ClerkTokenProvider from '@/app/providers/ClerkTokenProvider';
 import QueryProvider from '@/app/providers/QueryProvider';
 import LoadingSpinner from '@/shared/components/ui/LoadingSpinner';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import '@ws/app/globals.css';
 import '@/styles/main.scss';
 
 function App() {

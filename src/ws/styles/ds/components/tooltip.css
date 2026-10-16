@@ -1,0 +1,32 @@
+/* Adapted from the WorldStreet design system (.cx-tip)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-tip {
+  display:inline-flex;
+  position:relative;
+}
+
+.cx-tip:after {
+  content:attr(data-tip);
+  z-index:var(--cx-z-tooltip);
+  white-space:nowrap;
+  border-radius:var(--cx-r-sm);
+  background:var(--cx-elevated);
+  box-shadow:var(--cx-shadow-md);
+  color:var(--cx-text);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity var(--cx-dur-fast), transform var(--cx-dur-fast);
+  padding:6px 10px;
+  font-size:13px;
+  position:absolute;
+  bottom:calc(100% + 8px);
+  left:50%;
+  transform:translate(-50%,4px);
+}
+
+.cx-tip:hover:after, .cx-tip:focus-within:after {
+  opacity:1;
+  transform:translate(-50%);
+}

@@ -1,0 +1,28 @@
+/* Adapted from the WorldStreet design system (.cx-lit)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-lit {
+  position:relative;
+}
+
+.cx-lit:after {
+  content:"";
+}
+
+.cx-lit:after, .cx-lit-2 {
+  border-radius:inherit;
+  pointer-events:none;
+  border:1px solid var(--cx-lit);
+  opacity:var(--cx-lit-opacity);
+  position:absolute;
+  inset:0;
+  -webkit-mask:linear-gradient(320deg,#000 16%,#0000 20%);
+  mask:linear-gradient(320deg,#000 16%,#0000 20%);
+}
+
+.cx-lit-2 {
+  opacity:calc(var(--cx-lit-opacity) * .6);
+  -webkit-mask:linear-gradient(137deg,#000 0%,#0000 22%);
+  mask:linear-gradient(137deg,#000 0%,#0000 22%);
+}

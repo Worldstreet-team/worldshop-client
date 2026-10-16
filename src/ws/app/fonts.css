@@ -1,0 +1,14 @@
+/* Manrope has no ₦ (U+20A6). This one-glyph Noto Sans subset (OFL) fills that code
+   point and nothing else, which is why it can sit first in --cx-font. */
+@font-face {
+  font-family: "WS Naira";
+  src: url("/fonts/ws/noto-sans-naira.woff2") format("woff2");
+  font-weight: 300 800;
+  font-display: swap;
+  unicode-range: U+20A6;
+}
+
+:root {
+  --font-manrope: "Manrope";
+  --font-naira: "WS Naira";
+}

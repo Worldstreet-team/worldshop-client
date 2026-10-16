@@ -1,0 +1,1002 @@
+/* App shell (spec §3): header, menu drawer, bottom nav, footer, skip links. */
+
+/* Skip links: off screen until focused (DS .cx-skip), stacked in one place. */
+.ws-skip .cx-skip {
+  position: fixed;
+}
+
+/* ---------- Header ---------- */
+
+/* Sticky with a negative top: the row above the search (utility on desktop, logo row
+   on phones) scrolls away and the rest sticks. --ws-header-collapse is that row's
+   height; HeaderFrame subtracts it for --cx-sticky-offset. */
+.ws-header {
+  --ws-header-collapse: 56px;
+  position: sticky;
+  top: calc(var(--ws-header-collapse) * -1);
+  z-index: var(--cx-z-sticky);
+  background: color-mix(in srgb, var(--cx-bg) 92%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 1px 0 var(--cx-hairline);
+  transition: box-shadow var(--cx-dur) var(--cx-ease);
+}
+
+.ws-header[data-scrolled=true] {
+  box-shadow: 0 1px 0 var(--cx-hairline), 0 12px 32px -18px rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 768px) {
+  .ws-header {
+    --ws-header-collapse: 0px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .ws-header {
+    --ws-header-collapse: 36px;
+  }
+}
+
+/* Utility row (≥ 1200). */
+.ws-utility {
+  display: none;
+  height: 36px;
+  border-bottom: 1px solid var(--cx-hairline);
+  font-size: 13px;
+}
+
+@media (min-width: 1200px) {
+  .ws-utility {
+    display: block;
+  }
+}
+
+.ws-utility__row,
+.ws-utility__group {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.ws-utility__row {
+  justify-content: space-between;
+}
+
+.ws-utility__group {
+  gap: var(--cx-s-5);
+}
+
+.ws-utility a,
+.ws-utility__signin,
+.ws-utility .cx-btn {
+  color: var(--cx-text-2);
+  text-decoration: none;
+}
+
+.ws-utility a:hover,
+.ws-utility__signin:hover {
+  color: var(--cx-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-utility .cx-btn {
+  height: 32px;
+  padding-inline: var(--cx-s-2);
+  font-size: 13px;
+}
+
+.ws-utility .cx-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ws-utility .ws-bell svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ws-utility__hi {
+  color: var(--cx-text-2);
+}
+
+.ws-utility__signin {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cx-ember-text) !important;
+  font: inherit;
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* Main row. Phones: menu, logo, actions over a full-width search row. Tablets: one
+   row. Desktop: logo, Shop by category, search, cart. */
+.ws-header__main {
+  display: grid;
+  grid-template-areas:
+    "start actions"
+    "search search";
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--cx-s-3);
+  padding-bottom: var(--cx-s-3);
+}
+
+.ws-header__start {
+  grid-area: start;
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+  height: 56px;
+  min-width: 0;
+}
+
+.ws-header__cats {
+  grid-area: cats;
+  display: none;
+}
+
+.ws-header__search {
+  grid-area: search;
+  min-width: 0;
+}
+
+.ws-header__actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+}
+
+.ws-header__bell {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .ws-header__main {
+    grid-template-areas: "start search actions";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: var(--cx-s-5);
+    padding-block: var(--cx-s-3);
+  }
+
+  .ws-header__start {
+    height: auto;
+  }
+
+  .ws-header__bell {
+    display: contents;
+  }
+}
+
+@media (min-width: 1200px) {
+  .ws-header__main {
+    grid-template-areas: "start cats search actions";
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+  }
+
+  .ws-header__menu,
+  .ws-header__bell {
+    display: none !important;
+  }
+
+  .ws-header__cats {
+    display: block;
+  }
+}
+
+/* Logo: the app-icon tile and the name. */
+.ws-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  min-height: var(--cx-touch);
+  padding-inline: 2px;
+  border-radius: var(--cx-r-sm);
+  color: var(--cx-text);
+  text-decoration: none;
+}
+
+.ws-logo__tile {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.ws-logo__tile img {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.ws-logo__name {
+  font: 600 19px/1 var(--cx-font);
+  letter-spacing: -0.4px;
+}
+
+/* Bell and its count (the number of unread items in the panel). */
+.ws-bell {
+  position: relative;
+}
+
+.ws-bell__count {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  pointer-events: none;
+}
+
+.ws-notices {
+  width: min(360px, calc(100vw - 32px));
+  padding: var(--cx-s-2) 0;
+}
+
+.ws-notices__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--cx-s-2) var(--cx-s-4);
+}
+
+.ws-notices__title {
+  margin: 0;
+  font: 500 var(--cx-body) / 1.3 var(--cx-font);
+}
+
+.ws-notices__read {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--cx-small);
+  cursor: pointer;
+}
+
+.ws-notices__empty {
+  margin: 0;
+  padding: var(--cx-s-2) var(--cx-s-4) var(--cx-s-3);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: var(--cx-small-lh);
+}
+
+.ws-notices__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-notices__list a {
+  display: grid;
+  gap: 2px;
+  height: auto !important;
+  padding: var(--cx-s-3) var(--cx-s-4) !important;
+}
+
+.ws-notices__list [data-unread] a {
+  background: var(--cx-brand-wash);
+}
+
+.ws-notices__item-body,
+.ws-notices__item-time {
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+/* ---------- Menu drawer (native dialog) ---------- */
+
+.ws-drawer {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--cx-text);
+}
+
+.ws-drawer::backdrop {
+  background: var(--cx-overlay);
+}
+
+.ws-drawer__panel {
+  display: flex;
+  flex-direction: column;
+  width: min(340px, 88vw);
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--cx-s-3) var(--cx-s-3) calc(var(--cx-s-6) + env(safe-area-inset-bottom, 0px));
+  background: var(--cx-elevated);
+  box-shadow: var(--cx-shadow-xl);
+  overscroll-behavior: contain;
+}
+
+.ws-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: var(--cx-s-3);
+}
+
+.ws-drawer__title {
+  margin: 0;
+  font: 500 var(--cx-h4) / 1.2 var(--cx-font);
+}
+
+.ws-drawer__hi {
+  margin: var(--cx-s-2) var(--cx-s-3) var(--cx-s-3);
+  font-size: var(--cx-body);
+}
+
+.ws-drawer__hi .ws-utility__hi {
+  color: var(--cx-text);
+}
+
+.ws-drawer__nav,
+.ws-drawer__cats {
+  display: grid;
+  padding-block: var(--cx-s-2);
+  border-top: 1px solid var(--cx-hairline);
+}
+
+.ws-drawer__label {
+  margin: var(--cx-s-3) var(--cx-s-3) var(--cx-s-1);
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+.ws-drawer__link {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-3);
+  min-height: 48px;
+  padding-inline: var(--cx-s-3);
+  border-radius: var(--cx-r-sm);
+  color: var(--cx-text);
+  text-decoration: none;
+}
+
+.ws-drawer__link:hover {
+  background: var(--cx-surface-2);
+}
+
+.ws-drawer__link svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--cx-text-2);
+}
+
+.ws-drawer__link small {
+  margin-left: auto;
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-drawer[open] .ws-drawer__panel {
+    animation: ws-drawer-in 420ms var(--cx-spring);
+  }
+
+  .ws-drawer[open]::backdrop {
+    animation: ws-fade-in var(--cx-dur) var(--cx-ease);
+  }
+}
+
+@keyframes ws-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes ws-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Bottom nav (phones) ---------- */
+
+.ws-bottomnav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* F17: room for the nav at the end of every page, safe area included. */
+  body {
+    padding-bottom: var(--cx-safe-bottom);
+  }
+
+  .ws-bottomnav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: var(--cx-z-nav);
+    display: block;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: color-mix(in srgb, var(--cx-elevated) 94%, transparent);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 -1px 0 var(--cx-hairline);
+    transition: transform 320ms var(--cx-ease);
+  }
+
+  /* Far enough that the raised Sell button goes too. */
+  .ws-bottomnav[data-hidden=true] {
+    transform: translateY(calc(100% + 28px));
+  }
+
+  .ws-bottomnav ul {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    height: var(--cx-bottom-nav-h);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+.ws-bottomnav__tab {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  height: 100%;
+  color: var(--cx-text-2);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.ws-bottomnav__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ws-bottomnav__tab[aria-current=page] {
+  color: var(--cx-ember-text);
+}
+
+.ws-bottomnav__tab[aria-current=page] .ws-bottomnav__label {
+  font-weight: 600;
+}
+
+/* Sell: raised in the centre, the nav's one gold element. */
+.ws-bottomnav__tab--sell .ws-bottomnav__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-top: -18px;
+  border-radius: 50%;
+  background: var(--cx-ember);
+  color: var(--cx-on-primary);
+  box-shadow: 0 6px 18px -6px rgba(var(--cx-accent-rgb), 0.7), 0 0 0 4px var(--cx-bg);
+}
+
+.ws-bottomnav__tab--sell[aria-current=page] {
+  color: var(--cx-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-bottomnav {
+    transition: none;
+  }
+}
+
+/* ---------- Footer ---------- */
+
+.ws-footer {
+  margin-top: var(--cx-s-10);
+  padding-block: var(--cx-s-8) var(--cx-s-5);
+  border-top: 1px solid var(--cx-hairline);
+  background: color-mix(in srgb, var(--cx-elevated) 50%, var(--cx-bg));
+  font-size: var(--cx-small);
+}
+
+.ws-footer:focus {
+  outline: none;
+}
+
+.ws-footer__top {
+  display: grid;
+  gap: var(--cx-s-6);
+}
+
+@media (min-width: 768px) {
+  .ws-footer__top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: var(--cx-s-8);
+  }
+}
+
+.ws-footer__tagline {
+  max-width: 34ch;
+  margin: var(--cx-s-3) 0 0;
+  color: var(--cx-text-2);
+  line-height: var(--cx-small-lh);
+}
+
+.ws-footer__cols {
+  display: grid;
+}
+
+@media (min-width: 768px) {
+  .ws-footer__cols {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--cx-s-5);
+  }
+}
+
+.ws-footer__col {
+  border-bottom: 1px solid var(--cx-hairline);
+}
+
+.ws-footer__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  color: var(--cx-text);
+  font: 500 var(--cx-body) / 1.3 var(--cx-font);
+  list-style: none;
+  cursor: pointer;
+}
+
+.ws-footer__title::-webkit-details-marker {
+  display: none;
+}
+
+.ws-footer__chev {
+  width: 18px;
+  height: 18px;
+  color: var(--cx-text-2);
+  transition: transform var(--cx-dur) var(--cx-ease);
+}
+
+.ws-footer__col[open] .ws-footer__chev {
+  transform: rotate(180deg);
+}
+
+.ws-footer__col ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 var(--cx-s-3);
+  list-style: none;
+}
+
+.ws-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--cx-text-2);
+  text-decoration: none;
+}
+
+.ws-footer a:hover {
+  color: var(--cx-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Desktop: every column open, headings aren't toggles. Browsers without
+   ::details-content keep the accordion. */
+@media (min-width: 768px) {
+  .ws-footer__col {
+    border: 0;
+  }
+
+  .ws-footer__col::details-content {
+    content-visibility: visible;
+    display: block;
+    height: auto;
+  }
+
+  .ws-footer__title {
+    min-height: 0;
+    margin-bottom: var(--cx-s-3);
+    pointer-events: none;
+  }
+
+  .ws-footer__chev {
+    display: none;
+  }
+
+  .ws-footer a {
+    min-height: 32px;
+  }
+}
+
+.ws-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cx-s-2) var(--cx-s-5);
+  margin-top: var(--cx-s-6);
+  padding-top: var(--cx-s-4);
+  border-top: 1px solid var(--cx-hairline);
+  color: var(--cx-text-muted);
+}
+
+.ws-footer__legal p {
+  margin: 0;
+}
+
+.ws-footer__legal ul {
+  display: flex;
+  gap: var(--cx-s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- Shop by category (mega menu, ≥ 1200) ---------- */
+
+.ws-mega__button {
+  height: 44px;
+  padding-inline: var(--cx-s-3);
+  color: var(--cx-text);
+  font-size: var(--cx-body);
+}
+
+.ws-mega__button svg:last-child {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--cx-dur) var(--cx-ease);
+}
+
+.ws-mega__button[aria-expanded=true] svg:last-child {
+  transform: rotate(180deg);
+}
+
+.ws-mega {
+  position: fixed;
+  inset: auto 0 auto 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--cx-hairline);
+  background: var(--cx-elevated);
+  color: var(--cx-text);
+  box-shadow: var(--cx-shadow-xl);
+}
+
+.ws-mega::backdrop {
+  background: color-mix(in srgb, var(--cx-bg) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-mega:popover-open {
+    animation: ws-mega-in 320ms var(--cx-spring-snappy);
+  }
+}
+
+@keyframes ws-mega-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.ws-mega__inner {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: var(--cx-s-8);
+  padding-block: var(--cx-s-6) var(--cx-s-8);
+}
+
+.ws-mega__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-mega__cat {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-3);
+  min-height: 44px;
+  padding-inline: var(--cx-s-3);
+  border-radius: var(--cx-r-sm);
+  color: var(--cx-text-2);
+  text-decoration: none;
+}
+
+.ws-mega__cat svg {
+  width: 20px;
+  height: 20px;
+  color: var(--cx-flame);
+}
+
+.ws-mega__cat[data-active] {
+  background: var(--cx-surface-2);
+  color: var(--cx-text);
+}
+
+.ws-mega__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--cx-s-4);
+}
+
+.ws-mega__title {
+  margin: 0;
+  font: 500 var(--cx-h4) / 1.3 var(--cx-font);
+}
+
+.ws-mega__all {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+  min-height: 44px;
+}
+
+.ws-mega__all svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ws-mega__items {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--cx-s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ws-mega__item {
+  display: grid;
+  gap: var(--cx-s-1);
+  color: var(--cx-text);
+  font-size: var(--cx-small);
+  text-decoration: none;
+}
+
+.ws-mega__item:hover .ws-mega__item-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-mega__thumb {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  margin-bottom: var(--cx-s-1);
+  border-radius: var(--cx-r-md);
+  background: var(--cx-surface-2);
+}
+
+.ws-mega__thumb img {
+  object-fit: cover;
+}
+
+.ws-mega__item-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ws-mega__item-price {
+  color: var(--cx-ember-text);
+  font-weight: 600;
+}
+
+/* ---------- Category rail ---------- */
+
+.ws-catrail__inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-1);
+}
+
+.ws-catrail__list {
+  display: flex;
+  flex: 1;
+  gap: var(--cx-s-2);
+  min-width: 0;
+  margin: 0;
+  padding: var(--cx-s-3) 0 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.ws-catrail__list::-webkit-scrollbar {
+  display: none;
+}
+
+.ws-catrail__list > li {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+/* 44px to the finger (F10). */
+.ws-catrail__pill {
+  min-height: var(--cx-touch);
+  padding-inline: var(--cx-s-4);
+  background: var(--cx-surface-2);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  font-size: var(--cx-small);
+  color: var(--cx-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ws-catrail__pill[aria-current=page] {
+  background: var(--cx-text);
+  color: var(--cx-bg);
+}
+
+.ws-catrail__arrow {
+  display: none;
+  flex: none;
+}
+
+@media (hover: hover) and (min-width: 768px) {
+  .ws-catrail__arrow {
+    display: inline-flex;
+    margin-top: var(--cx-s-3);
+  }
+
+  .ws-catrail[data-start=true][data-end=true] .ws-catrail__arrow {
+    display: none;
+  }
+
+  .ws-catrail__arrow:disabled {
+    visibility: hidden;
+  }
+
+  /* Faded edges where there's more to scroll. */
+  .ws-catrail[data-start=false] .ws-catrail__list {
+    mask-image: linear-gradient(to right, transparent, #000 40px);
+  }
+
+  .ws-catrail[data-end=false] .ws-catrail__list {
+    mask-image: linear-gradient(to left, transparent, #000 40px);
+  }
+
+  .ws-catrail[data-start=false][data-end=false] .ws-catrail__list {
+    mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+  }
+}
+
+@media (max-width: 767px) {
+  .ws-catrail .cx-container {
+    padding-inline: 0;
+  }
+
+  .ws-catrail__list {
+    padding-inline: var(--cx-gutter);
+    scroll-padding-inline: var(--cx-gutter);
+  }
+}
+
+.ws-catrail__pill:hover {
+  background: var(--cx-surface-3);
+}
+
+/* ---------- Search: scope select, "in Category" rows, phone overlay ---------- */
+
+.ws-search__scope {
+  position: relative;
+  display: none;
+  flex: none;
+  align-items: center;
+  height: 100%;
+  margin-left: calc(var(--cx-s-4) * -1);
+  border-right: 1px solid var(--cx-hairline);
+}
+
+@media (min-width: 1024px) {
+  .ws-search__scope {
+    display: inline-flex;
+  }
+}
+
+.ws-search__scope select {
+  max-width: 180px;
+  height: 100%;
+  padding: 0 34px 0 var(--cx-s-4);
+  border: 0;
+  border-radius: var(--cx-r-pill) 0 0 var(--cx-r-pill);
+  background: transparent;
+  color: var(--cx-text-2);
+  font: inherit;
+  font-size: var(--cx-small);
+  text-overflow: ellipsis;
+  appearance: none;
+  cursor: pointer;
+}
+
+.ws-search__scope select:focus-visible {
+  box-shadow: var(--cx-focus-ring);
+  outline: none;
+}
+
+.ws-search__scope option {
+  background: var(--cx-elevated);
+  color: var(--cx-text);
+}
+
+.ws-search__scope svg {
+  position: absolute;
+  right: 12px;
+  width: 14px;
+  height: 14px;
+  color: var(--cx-text-muted);
+  pointer-events: none;
+}
+
+.ws-suggest__in {
+  color: var(--cx-text-2);
+  font-weight: 600;
+}
+
+.ws-search__cancel {
+  display: none;
+}
+
+/* Phones: focusing the search opens it full screen; the suggestions fill the rest. */
+@media (max-width: 767px) {
+  .ws-search--overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--cx-z-modal);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: start;
+    gap: var(--cx-s-2);
+    padding: var(--cx-s-3) var(--cx-gutter) 0;
+    background: var(--cx-bg);
+  }
+
+  .ws-search--overlay .ws-search__scope {
+    display: none;
+  }
+
+  .ws-search--overlay .ws-search__cancel {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--cx-touch);
+    padding: 0 var(--cx-s-1);
+    border: 0;
+    background: none;
+    color: var(--cx-text);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .ws-search--overlay .ws-suggest {
+    position: static;
+    grid-column: 1 / -1;
+    max-height: none;
+    overflow-y: auto;
+    padding-bottom: var(--cx-s-6);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .ws-search--overlay {
+      animation: ws-fade-in 160ms var(--cx-ease);
+    }
+  }
+}
+
+/* A backdrop filter would make the header the overlay's containing block, and its
+   z-index would keep the overlay under the bottom nav. */
+.ws-header:has(.ws-search--overlay) {
+  z-index: var(--cx-z-modal);
+  backdrop-filter: none;
+}

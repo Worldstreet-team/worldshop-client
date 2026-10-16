@@ -1,0 +1,31 @@
+/* Adapted from the WorldStreet design system (.cx-badge)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-badge {
+  isolation:isolate;
+  border-radius:var(--cx-r-pill);
+  align-items:center;
+  gap:8px;
+  padding:12px 24px;
+  font-size:16px;
+  line-height:1.2;
+  display:inline-flex;
+  position:relative;
+  overflow:hidden;
+}
+
+.cx-badge:before {
+  content:"";
+  background:linear-gradient(100deg, var(--cx-ember), var(--cx-ember-50));
+  opacity:.15;
+  z-index:-1;
+  position:absolute;
+  inset:0;
+}
+
+.cx-badge svg {
+  width:18px;
+  height:18px;
+  fill:var(--cx-flame);
+}

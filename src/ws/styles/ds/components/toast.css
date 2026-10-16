@@ -1,0 +1,73 @@
+/* Adapted from the WorldStreet design system (.cx-toast)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-toast {
+  border-radius:var(--cx-r-md);
+  background:var(--cx-elevated);
+  box-shadow:var(--cx-shadow-lg);
+  max-width:380px;
+  color:var(--cx-text);
+  align-items:center;
+  gap:12px;
+  padding:14px 18px;
+  font-size:15px;
+  display:flex;
+}
+
+.cx-toast .dot {
+  background:var(--cx-gain);
+  border-radius:50%;
+  flex:none;
+  width:8px;
+  height:8px;
+}
+
+.cx-toast--loss .dot {
+  background:var(--cx-loss);
+}
+
+.cx-toast--warning .dot {
+  background:var(--cx-warning);
+}
+
+.cx-toast .cx-btn {
+  margin-left:auto;
+}
+
+.cx-toast-stack {
+  z-index:var(--cx-z-toast);
+  gap:10px;
+  display:grid;
+  position:fixed;
+  bottom:24px;
+  right:24px;
+}
+
+.cx-toast-stack .cx-toast {
+  animation:cx-rise var(--cx-dur) var(--cx-ease);
+}
+
+@media (max-width:767px) {
+  .cx-toast-stack {
+    left:16px;
+    right:16px;
+    bottom:calc(16px + env(safe-area-inset-bottom));
+  }
+  .cx-toast {
+    max-width:none;
+  }
+}
+
+@media print {
+  .cx-orb, .cx-halo:before, .cx-nav, .cx-bottom-nav, .cx-toast-stack {
+    display:none!important;
+  }
+}
+
+@keyframes cx-rise {
+  0% {
+    opacity:0;
+    transform:translateY(12px);
+  }
+}

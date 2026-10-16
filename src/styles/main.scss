@@ -1,30 +1,40 @@
-// WorldStore - Main Stylesheet
+// WorldStore - legacy stylesheet
 //
-// Four layers, in order:
-//   tokens       the semantic variables, selected by data-ws-theme on <html>
-//   base         reset + element defaults, all reading from those tokens
-//   ds           the design-system component layer (ws-* classes)
-//   marketplace  the marketplace-specific compositions built on ds
+// The app is moving onto the WorldStore UI (src/ws, styled by src/ws/app/globals.css).
+// Pages not yet ported still render on these ws-* styles, inside a `.ws-legacy`
+// wrapper. Both stylesheets name their classes ws-*, so the component layers below
+// are nested under that wrapper: they apply only on legacy pages, and a new page can
+// never pick up a legacy rule that happens to share a class name.
 //
-// The Electro partials that used to sit between base and ds (_components,
-// _pages, _product, _orders, _layout, _vendor, _admin, _variables, _mixins)
-// were deleted once every screen moved onto ws-*. They hardcoded the old light
-// palette, so they could not have survived the dark theme intact.
-//
-// The Material Icons and Open Sans webfonts went with them: icons are now
-// lucide-react everywhere, and the Platform pairing (Poppins + Public Sans)
-// is preloaded in index.html.
+// The theme partials stay global. They only define custom properties, on <html>, so
+// they cannot collide with anything, and nesting them would stop them matching.
+
+@use 'sass:meta';
 
 @use 'tokens';
-@use 'base';
 @use 'market';
 @use 'shop';
 @use 'worldstreet';
-@use 'ds';
-@use 'marketplace';
-@use 'market-home';
-@use 'market-listing';
-@use 'market-categories';
-@use 'market-shop';
-@use 'market-vendor';
-@use 'admin-billing';
+
+.ws-legacy {
+  @include meta.load-css('base');
+  @include meta.load-css('ds');
+  @include meta.load-css('marketplace');
+  @include meta.load-css('market-home');
+  @include meta.load-css('market-listing');
+  @include meta.load-css('market-categories');
+  @include meta.load-css('market-shop');
+  @include meta.load-css('market-vendor');
+  @include meta.load-css('admin-billing');
+}
+
+// What _base.scss set on <body>, which cannot match from inside the wrapper.
+.ws-legacy {
+  min-height: 100vh;
+  background: var(--ws-bg-page);
+  color: var(--ws-text-primary);
+  font-family: var(--ws-font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}

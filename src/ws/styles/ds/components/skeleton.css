@@ -1,0 +1,43 @@
+/* Adapted from the WorldStreet design system (.cx-skel, .cx-skeleton)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-skel {
+  border-radius:var(--cx-r-sm);
+  background:linear-gradient(90deg, var(--cx-skel-a) 25%, var(--cx-skel-b) 50%, var(--cx-skel-a) 75%);
+  background-size:200% 100%;
+  animation:1.4s linear infinite cx-shimmer;
+}
+
+.cx-skeleton--aurora {
+  background:var(--cx-surface-2);
+  position:relative;
+  overflow:hidden;
+}
+
+.cx-skeleton--aurora:after {
+  content:"";
+  background:linear-gradient(90deg, transparent, rgba(var(--cx-accent-rgb), .16) 35%, rgba(var(--cx-fg-rgb), .12) 50%, rgba(var(--cx-accent-rgb), .16) 65%, transparent);
+  animation:cx-sweep 1.8s var(--cx-ease-in-out) infinite;
+  position:absolute;
+  inset:0;
+  transform:translate(-100%);
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .cx-aurora--mesh:before, .cx-aurora--mesh:after, .cx-aurora--curtain:before, .cx-aurora--curtain:after, .cx-aurora-frame, .cx-aurora-text, .cx-aurora-pulse:before, .cx-aurora-rule:before, .cx-skeleton--aurora:after {
+    animation:none!important;
+  }
+}
+
+@keyframes cx-sweep {
+  to {
+    transform:translate(100%);
+  }
+}
+
+@keyframes cx-shimmer {
+  to {
+    background-position:-200% 0;
+  }
+}

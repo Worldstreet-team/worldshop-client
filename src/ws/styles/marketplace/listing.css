@@ -1,0 +1,1791 @@
+/* Listing card atoms (spec §5.3). Anatomy and wording follow eBay; everything visual is
+   DS tokens. Marketplace components use the `ws-` prefix so they're never mistaken for
+   DS classes (`cx-`), which they compose rather than restyle. */
+
+/* Shared meta line: location, delivery, social proof. */
+.ws-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 2px 6px;
+  font-size: var(--cx-meta);
+  line-height: 1.35;
+  color: var(--cx-text-muted);
+}
+
+/* Icons sit level with the first line when the text wraps. */
+.ws-meta svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-block-start: calc((1lh - 16px) / 2);
+}
+
+.ws-meta__clip {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ws-meta__list {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 2px;
+  margin-inline-start: -13px;
+}
+
+.ws-meta__item {
+  position: relative;
+  padding-inline-start: 13px;
+}
+
+/* Empty alt text keeps screen readers from reading "dot" between items. */
+.ws-meta__item::before {
+  content: "·" / "";
+  position: absolute;
+  inset-inline-start: 4px;
+  color: var(--cx-text-muted);
+}
+
+.ws-meta strong {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+/* PriceBlock. Gold text token: gold on dark, gold-deep on light (spec §16.4). */
+.ws-price {
+  display: grid;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-price__now {
+  color: var(--cx-ember-text);
+  font-size: var(--cx-price-size);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+}
+
+.ws-price--detail .ws-price__now {
+  font-size: var(--cx-h3);
+  font-weight: 500;
+  line-height: var(--cx-h3-lh);
+  letter-spacing: var(--cx-h3-ls);
+}
+
+.ws-price--cart .ws-price__now {
+  font-size: var(--cx-body);
+}
+
+.ws-price--sticky .ws-price__now {
+  font-size: 18px;
+}
+
+.ws-price--cart {
+  justify-items: end;
+  text-align: end;
+}
+
+.ws-price__period {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-meta);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.ws-price__was {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: var(--cx-meta);
+  color: var(--cx-text-muted);
+}
+
+.ws-price__was s {
+  text-decoration-thickness: 1px;
+}
+
+.ws-price__save {
+  color: var(--cx-savings);
+  font-weight: 600;
+}
+
+.ws-price__note {
+  font-size: var(--cx-meta);
+  color: var(--cx-text-muted);
+}
+
+.ws-price__total {
+  font-size: var(--cx-meta);
+  color: var(--cx-text-2);
+}
+
+.ws-price__total strong {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+/* RatingStars: a filled row clipped over an outline row, so partial stars need no ids. */
+.ws-stars {
+  --ws-star: 14px;
+  --ws-star-gap: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--cx-meta);
+  color: var(--cx-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-stars--lg {
+  --ws-star: 20px;
+}
+
+.ws-stars__track {
+  position: relative;
+  display: inline-flex;
+  gap: var(--ws-star-gap);
+  color: var(--cx-text-muted);
+}
+
+.ws-stars__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: inline-flex;
+  gap: var(--ws-star-gap);
+  overflow: hidden;
+  white-space: nowrap;
+  /* Text colour, not gold: the price is the card's one gold element (eBay, Baymard). */
+  color: var(--cx-text);
+}
+
+.ws-stars svg {
+  flex: none;
+  width: var(--ws-star);
+  height: var(--ws-star);
+}
+
+.ws-stars__fill svg {
+  fill: currentColor;
+}
+
+/* Atlas's star carries a decorative inner stroke (its second path). It reads as noise
+   in empty and half stars, so ratings draw the outline only. */
+.ws-stars svg path + path {
+  display: none;
+}
+
+/* SaveButton: the DS quiet icon button, with a backdrop so it reads over photos. */
+.ws-save.cx-btn--quiet {
+  color: var(--cx-text);
+  background: var(--cx-elevated);
+  box-shadow: var(--cx-shadow-sm);
+}
+
+.ws-save.cx-btn--quiet:hover {
+  background: var(--cx-elevated);
+  color: var(--cx-ember-text);
+}
+
+.ws-save.cx-btn--quiet:focus-visible {
+  box-shadow: var(--cx-focus-ring);
+}
+
+.ws-save.cx-btn svg {
+  width: 20px;
+  height: 20px;
+  transition: transform var(--cx-dur-fast) var(--cx-ease);
+}
+
+.ws-save[aria-pressed=true] {
+  color: var(--cx-ember-text);
+}
+
+.ws-save.cx-btn[aria-pressed=true] svg {
+  fill: currentColor;
+}
+
+.ws-save:active svg {
+  transform: scale(0.88);
+}
+
+/* SellerMini (eBay: "name · 99.2% positive (1,284)"). */
+.ws-seller {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: var(--cx-meta);
+  color: var(--cx-text-muted);
+}
+
+.ws-seller__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--cx-text-2);
+  font-weight: 500;
+}
+
+a.ws-seller__name:hover {
+  color: var(--cx-text);
+  text-decoration: underline;
+}
+
+.ws-seller__name svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--cx-ember-text);
+}
+
+/* In the seller row the badge is a size down, so name, tick and badge share a line. */
+.ws-seller .cx-chip {
+  height: 22px;
+  padding: 0 8px;
+  font-size: var(--cx-caption);
+}
+
+.ws-chip-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* SocialProof: urgency in the warning token, never loss red (spec §16.4). */
+.ws-proof__urgent {
+  color: var(--cx-urgent);
+  font-weight: 600;
+}
+
+.ws-proof__strong {
+  color: var(--cx-text-2);
+  font-weight: 500;
+}
+
+/* DeliveryLine: the fee, then the total on its own line under the text (eBay stacks
+   these too), so a wrap never strands a separator. */
+.ws-delivery {
+  display: grid;
+  gap: 2px;
+}
+
+.ws-delivery__total {
+  padding-inline-start: 22px; /* icon 16 + gap 6 */
+}
+
+.ws-delivery__free {
+  color: var(--cx-gain);
+  font-weight: 600;
+}
+
+.ws-delivery__fee {
+  color: var(--cx-text-2);
+}
+
+/* Rails are the most compact listing; local pickup is on the listing page. */
+.ws-card--rail .ws-delivery__pickup {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-save.cx-btn svg {
+    transition: none;
+  }
+
+  .ws-save:active svg {
+    transform: none;
+  }
+}
+
+/* ListingCard (spec §5.1–5.2). One spacing rhythm: 16px padding, 12px between
+   groups, 6px inside the title group, 4px between meta lines. The details column
+   (.ws-card__body) is a size container: under 240px wide (phone grids, home rails,
+   the phone list view) its contents trim to eBay's app density further down. */
+.ws-card {
+  height: 100%;
+  padding: 0;
+  gap: 0;
+}
+
+.ws-card__body {
+  --ws-card-pad: var(--cx-s-4);
+  container: ws-body / inline-size;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  padding: var(--ws-card-pad);
+}
+
+.ws-card__stack {
+  --ws-title-size: var(--cx-body);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--cx-s-3);
+  min-width: 0;
+}
+
+[data-density=compact] .ws-card__body {
+  --ws-card-pad: var(--cx-s-3);
+}
+
+[data-density=compact] .ws-card__stack {
+  --ws-title-size: var(--cx-small);
+}
+
+.ws-card__media {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--cx-surface-2);
+}
+
+.ws-card__media img {
+  object-fit: cover;
+}
+
+/* eBay's image treatment: a faint scrim so white product shots don't glare on dark,
+   and a hairline edge in dark so light photos don't bleed into the card. */
+.ws-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ws-photo-scrim);
+  box-shadow: var(--ws-photo-edge);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.ws-card__photos {
+  z-index: 3;
+}
+
+/* The scrim sits over the photo track (z 2) but never takes clicks. */
+.ws-card__media::after {
+  z-index: 2;
+}
+
+.ws-card__media > .cx-skel {
+  position: absolute;
+  inset: 0;
+}
+
+/* Above the stretched link and the photo track, so it's its own target. */
+.ws-card__save {
+  position: absolute;
+  top: var(--cx-s-2);
+  right: var(--cx-s-2);
+  z-index: 3;
+}
+
+.ws-card__photos {
+  position: absolute;
+  right: var(--cx-s-2);
+  bottom: var(--cx-s-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-elevated);
+  box-shadow: var(--cx-shadow-sm);
+  color: var(--cx-text-2);
+  font: 500 var(--cx-caption)/1 var(--cx-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-card__photos svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ws-card__head {
+  display: grid;
+  gap: 6px;
+}
+
+/* Reserved even when empty (property has no condition), so rows stay level. */
+.ws-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 26px;
+}
+
+/* Two lines, always: titles clamp, and short ones still take two lines so prices line
+   up across a row. */
+.ws-card__title {
+  display: -webkit-box;
+  min-height: 2lh;
+  overflow: hidden;
+  color: var(--cx-text);
+  font: 500 var(--ws-title-size)/1.35 var(--cx-font);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ws-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The one link, stretched over the card (spec §16.6). */
+.ws-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.ws-card__link:focus-visible {
+  outline: none;
+}
+
+.ws-card.cx-card:has(.ws-card__link:focus-visible) {
+  box-shadow: var(--cx-focus-ring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ws-card:hover .ws-card__title {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
+/* Listings already opened read a step dimmer (eBay item tile, NN/g). */
+.ws-card__link:visited {
+  color: var(--ws-title-visited);
+}
+
+/* Press feedback, so a tap registers before the next page arrives. */
+.ws-card.cx-card:has(.ws-card__link:active)::before {
+  opacity: calc(var(--cx-wash-opacity) * 2.5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ws-card.cx-card:has(.ws-card__link:active) {
+    transform: scale(0.985);
+  }
+}
+
+/* Reserved even when a listing has no ratings, so prices line up across a row. */
+.ws-card__rating {
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+}
+
+.ws-card__meta {
+  display: grid;
+  gap: 4px;
+}
+
+/* Seller and the ⋮ menu share the bottom edge, so cards in a row end level. */
+.ws-card__foot {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cx-s-2);
+  margin-top: auto;
+  padding-top: var(--cx-s-2);
+  border-top: 1px solid var(--cx-hairline);
+}
+
+.ws-card__foot > .ws-seller {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The 36px button centres on the seller's first line. */
+.ws-card__menu {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  margin-block: calc((1lh - var(--cx-control-h-sm)) / 2);
+  margin-inline-end: -8px;
+  font-size: var(--cx-meta);
+  line-height: 1.35;
+}
+
+.ws-card--skeleton .ws-card__foot {
+  border-top-color: transparent;
+}
+
+.ws-card--skeleton .ws-card__title {
+  display: grid;
+  align-content: space-around;
+}
+
+/* What's left after "Not interested" / "Hide seller", with Undo. */
+.ws-card-hidden {
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--cx-s-3);
+  min-height: 160px;
+  height: 100%;
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+}
+
+/* List (eBay's list view): photo left, details right. */
+.ws-card--list {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: start;
+}
+
+.ws-card--list .ws-card__media {
+  overflow: hidden;
+  border-end-end-radius: var(--cx-r-md);
+}
+
+.ws-card--list .ws-card__title {
+  min-height: 0;
+  font-size: var(--cx-h4);
+  line-height: var(--cx-h4-lh);
+}
+
+.ws-card--list .ws-card__rating {
+  min-height: 0;
+}
+
+.ws-card--list .ws-card__rating:empty {
+  display: none;
+}
+
+/* Rail (home rows): fixed width, no seller row. */
+.ws-card--rail {
+  width: 220px;
+  height: auto;
+  flex: none;
+}
+
+.ws-card--rail .ws-card__body {
+  --ws-card-pad: var(--cx-s-3);
+}
+
+/* Compact: a 72px thumbnail row (cart suggestions, similar items, messages). */
+.ws-card--compact {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-2);
+  height: auto;
+}
+
+.ws-card--compact .ws-card__media {
+  overflow: hidden;
+  border-radius: var(--cx-r-sm);
+}
+
+.ws-card--compact .ws-card__body {
+  --ws-title-size: var(--cx-small);
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  align-items: flex-start;
+}
+
+.ws-card--compact .ws-card__title {
+  min-height: 0;
+}
+
+.ws-card--compact .ws-price {
+  justify-items: start;
+  text-align: start;
+}
+
+/* Narrow details (under 240px: phone grids, home rails, phone list view) follow eBay's app: same order,
+   fewer lines. Condition as plain text, price and "% off" on one line, "Total ₦X"
+   (the location bar names the area), distance only, one demand signal, the seller's
+   name. Everything trimmed is on the listing page. */
+@container ws-body (max-width: 240px) {
+  .ws-card__stack {
+    --ws-title-size: var(--cx-small);
+    --cx-price-size: 17px;
+    --cx-meta: 12px;
+    gap: var(--cx-s-2);
+  }
+
+  .ws-card__head {
+    gap: 2px;
+  }
+
+  .ws-card__chips {
+    min-height: 16px;
+  }
+
+  .ws-card__chips .cx-chip {
+    height: auto;
+    padding: 0;
+    background: none;
+    color: var(--cx-text-muted);
+    font-size: var(--cx-caption);
+  }
+
+  .ws-card__rating {
+    min-height: 16px;
+  }
+
+  .ws-stars {
+    --ws-star: 12px;
+    font-size: var(--cx-caption);
+  }
+
+  .ws-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 6px;
+  }
+
+  .ws-price__was {
+    display: contents;
+  }
+
+  .ws-price__was > span:first-child {
+    display: none;
+  }
+
+  .ws-price .cx-chip {
+    height: 20px;
+    padding: 0 6px;
+    font-size: var(--cx-caption);
+  }
+
+  .ws-price__note {
+    flex-basis: 100%;
+    font-size: var(--cx-meta);
+  }
+
+  .ws-card__meta {
+    gap: 2px;
+  }
+
+  .ws-total-to,
+  .ws-delivery__eta,
+  .ws-delivery__local,
+  .ws-meta__item:has(time),
+  .ws-meta__item:has(.ws-loc__area):has(+ .ws-meta__item .ws-loc__km),
+  .ws-proof .ws-meta__item + .ws-meta__item {
+    display: none;
+  }
+
+  .ws-meta svg {
+    width: 14px;
+    height: 14px;
+    margin-block-start: calc((1lh - 14px) / 2);
+  }
+
+  .ws-delivery__total {
+    padding-inline-start: 20px;
+  }
+
+  /* Location on one line: the area gives way (ellipsis) before the distance does. */
+  .ws-card__meta .ws-meta__list {
+    flex-wrap: nowrap;
+  }
+
+  .ws-card__meta .ws-meta__item {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .ws-card__meta .ws-meta__item:not(:first-child) {
+    flex: none;
+  }
+
+  .ws-seller > :not(.ws-seller__name) {
+    display: none;
+  }
+
+  .ws-seller__name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .ws-seller__name svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Phones: the list view's photo shrinks to 112px and its details trim the same way. */
+@media (max-width: 767px) {
+  .ws-card--list {
+    grid-template-columns: 112px minmax(0, 1fr);
+  }
+
+  .ws-card--list .ws-card__body {
+    --ws-card-pad: var(--cx-s-3);
+  }
+
+  .ws-card--list .ws-card__title {
+    font-size: var(--ws-title-size);
+    line-height: 1.35;
+  }
+
+  .ws-card--list .ws-card__save {
+    top: 4px;
+    right: 4px;
+  }
+
+  .ws-card--rail {
+    width: 160px;
+  }
+}
+
+/* Results grid (spec §5.2): 2 columns on phones, 3 from 768, 4 from 1200. Five
+   columns would make desktop cards narrow enough to trim, so 4 is the cap (the spec
+   allows 4–5). Phone cards are narrow, so they trim themselves. */
+.ws-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cx-gap-grid);
+}
+
+.ws-card-list {
+  display: grid;
+  gap: var(--cx-s-3);
+}
+
+@media (max-width: 767px) {
+  .ws-card-grid {
+    --cx-gap-grid: var(--cx-s-3);
+  }
+
+  .ws-card-grid .ws-card__body {
+    --ws-card-pad: var(--cx-s-3);
+  }
+}
+
+@media (min-width: 768px) {
+  .ws-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .ws-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-card.cx-card--interactive:hover {
+    transform: none;
+  }
+}
+
+/* SortMenu: keeps radio items' labels aligned whether or not they carry the tick. */
+.ws-menu-spacer {
+  flex: none;
+  width: 18px;
+}
+
+/* Phones show "Sort" alone (the name keeps the order for screen readers), plus a dot
+   when the order isn't Best match. */
+@media (max-width: 479px) {
+  .ws-sort__current {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+.ws-sort__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cx-ember);
+}
+
+@media (min-width: 480px) {
+  .ws-sort__dot {
+    display: none;
+  }
+}
+
+/* LocationBar (R-001): inline, one line, never a modal. */
+.ws-locbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cx-s-2) var(--cx-s-3);
+  padding: var(--cx-s-2) var(--cx-s-3) var(--cx-s-2) var(--cx-s-4);
+  border-radius: var(--cx-r-md);
+  background: var(--cx-surface);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+}
+
+.ws-locbar__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cx-s-2);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  line-height: 1.4;
+}
+
+.ws-locbar__text svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-block-start: calc((1lh - 18px) / 2);
+  color: var(--cx-ember-text);
+}
+
+.ws-locbar__text strong {
+  color: var(--cx-text);
+  font-weight: 600;
+}
+
+.ws-locbar__hint {
+  display: block;
+  color: var(--cx-text-muted);
+}
+
+/* ShipToSelector: a centred card on desktop, a bottom sheet on phones. */
+/* Tailwind's reset zeroes margins, which undoes the browser's centring of popovers. */
+.ws-shipto {
+  margin: auto;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: var(--cx-s-6);
+  border: 0;
+  border-radius: var(--cx-r-card);
+  background: var(--cx-elevated);
+  box-shadow: var(--cx-shadow-xl);
+  color: var(--cx-text);
+}
+
+.ws-shipto::backdrop {
+  background: var(--cx-overlay);
+}
+
+@media (max-width: 767px) {
+  .ws-shipto {
+    inset: auto 0 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: var(--cx-s-5) var(--cx-s-4) calc(var(--cx-s-5) + env(safe-area-inset-bottom, 0px));
+    border-radius: var(--cx-sheet-radius) var(--cx-sheet-radius) 0 0;
+  }
+}
+
+.ws-shipto__form {
+  display: grid;
+  gap: var(--cx-s-5);
+}
+
+.ws-shipto__title {
+  font: 500 var(--cx-h4)/var(--cx-h4-lh) var(--cx-font);
+  letter-spacing: var(--cx-h4-ls);
+}
+
+.ws-shipto__lead {
+  margin-top: calc(var(--cx-s-4) * -1);
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+}
+
+.ws-shipto__locate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cx-s-2);
+  margin-inline-start: -12px;
+}
+
+.ws-shipto__status {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-meta);
+}
+
+.ws-shipto__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--cx-s-3);
+}
+
+/* Fields: DS field metrics (label 14/500, 48px control, field tokens). */
+.ws-field {
+  display: grid;
+  gap: var(--cx-s-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ws-field > label,
+.ws-field > legend {
+  padding: 0;
+  margin-bottom: var(--cx-s-2);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  font-weight: 500;
+}
+
+.ws-field > label {
+  margin-bottom: 0;
+}
+
+.ws-select {
+  height: var(--cx-control-h);
+  padding: 0 40px 0 var(--cx-s-4);
+  border: 1px solid var(--cx-field-border);
+  border-radius: var(--cx-r-md);
+  width: 100%;
+  background: var(--cx-field);
+  color: var(--cx-text);
+  font: 400 var(--cx-body) var(--cx-font);
+  appearance: none;
+}
+
+/* The arrow is Atlas ArrowDown (the icon set's chevron stand-in), laid over the field. */
+.ws-select-wrap {
+  position: relative;
+  display: block;
+}
+
+.ws-select-wrap > svg {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--cx-text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.ws-select:hover {
+  background-color: var(--cx-field-hover);
+}
+
+.ws-select:focus-visible {
+  outline: none;
+  border-color: var(--cx-focus-border);
+  box-shadow: var(--cx-focus-halo);
+}
+
+.ws-select option,
+.ws-select optgroup {
+  background: var(--cx-elevated);
+  color: var(--cx-text);
+}
+
+/* Radio pills: real radios, visually DS chips. */
+.ws-radios__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cx-s-2);
+}
+
+.ws-radio-pill {
+  position: relative;
+}
+
+.ws-radio-pill input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ws-radio-pill span {
+  display: inline-flex;
+  align-items: center;
+  height: var(--cx-touch);
+  padding: 0 var(--cx-s-4);
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-surface-2);
+  box-shadow: inset 0 0 0 1px var(--cx-hairline);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  font-weight: 500;
+}
+
+.ws-radio-pill input:checked + span {
+  background: var(--cx-brand-wash);
+  box-shadow: inset 0 0 0 1px var(--cx-ember-text);
+  color: var(--cx-ember-text);
+}
+
+.ws-radio-pill input:focus-visible + span {
+  box-shadow: var(--cx-focus-ring);
+}
+
+/* Page frame until the Phase 1 header exists. */
+.ws-page {
+  padding-block: var(--cx-s-5) 0;
+}
+
+/* minmax(0, 1fr): an implicit auto column grows to its widest child's minimum and
+   pushed the page sideways on 320–360px phones. */
+.ws-search-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--cx-s-4);
+}
+
+/* GlobalSearchBox: one pill field, icon left, Search right (spec §3). */
+.ws-search {
+  position: relative;
+  z-index: var(--cx-z-popover);
+}
+
+.ws-search__field {
+  display: flex;
+  align-items: center;
+  gap: var(--cx-s-2);
+  height: var(--cx-control-h);
+  padding-inline: var(--cx-s-4) 6px;
+  border: 1px solid var(--cx-field-border);
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-field);
+}
+
+.ws-search__field:focus-within {
+  border-color: var(--cx-focus-border);
+  box-shadow: var(--cx-focus-halo);
+}
+
+.ws-search__icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--cx-text-muted);
+}
+
+.ws-search__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--cx-text);
+  font: 400 var(--cx-body) var(--cx-font);
+}
+
+/* The pill shows focus (focus-within); the input itself doesn't draw a second ring. */
+.cx-root .ws-search__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.ws-search__input::placeholder {
+  color: var(--cx-text-muted);
+}
+
+/* Our own Clear button replaces the browser's (eBay search field, Apple HIG). */
+.ws-search__input::-webkit-search-cancel-button {
+  appearance: none;
+  display: none;
+}
+
+.ws-search__clear {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--cx-text-muted);
+  cursor: pointer;
+}
+
+/* 44px to the finger without growing the pill. */
+.ws-search__clear::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.ws-search__clear:hover {
+  color: var(--cx-text);
+}
+
+.ws-search__clear svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ws-suggest {
+  position: absolute;
+  inset: calc(100% + 8px) 0 auto;
+  padding: 6px;
+  border-radius: var(--cx-r-md);
+  background: var(--cx-elevated);
+  box-shadow: var(--cx-shadow-lg);
+}
+
+.ws-suggest[hidden] {
+  display: none;
+}
+
+.ws-suggest__head {
+  padding: 8px 12px 4px;
+  color: var(--cx-text-muted);
+  font-size: var(--cx-caption);
+  font-weight: 500;
+  letter-spacing: var(--cx-caption-ls);
+}
+
+.ws-suggest__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--cx-touch);
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--cx-text);
+  cursor: pointer;
+}
+
+.ws-suggest__option svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--cx-text-muted);
+}
+
+/* One highlighted row, shared by pointer and keyboard, marked with a gold edge. */
+.ws-suggest__option[aria-selected=true] {
+  background: var(--cx-surface-2);
+  box-shadow: inset 3px 0 0 var(--cx-ember-text);
+}
+
+@media (forced-colors: active) {
+  .ws-suggest__option[aria-selected=true] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
+
+.ws-suggest__text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Reverse highlighting: typed part plain, the rest bold. */
+.ws-suggest__typed {
+  color: var(--cx-text-2);
+  font-weight: 400;
+}
+
+.ws-suggest__more {
+  color: var(--cx-text);
+  font-weight: 700;
+}
+
+.ws-suggest__remove {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin-inline-end: -8px;
+  border-radius: 50%;
+  color: var(--cx-text-muted);
+}
+
+.ws-suggest__remove:hover {
+  background: var(--cx-surface-3);
+  color: var(--cx-text);
+}
+
+.ws-suggest__clear {
+  width: 100%;
+  min-height: var(--cx-touch);
+  margin-top: 4px;
+  border: 0;
+  border-top: 1px solid var(--cx-hairline);
+  background: none;
+  color: var(--cx-text-2);
+  font: 500 var(--cx-small) var(--cx-font);
+  cursor: pointer;
+}
+
+.ws-suggest__clear:hover {
+  color: var(--cx-text);
+}
+
+/* ResultsHeader */
+.ws-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--cx-s-3);
+  margin-top: var(--cx-s-2);
+}
+
+.ws-results-head__title {
+  font: 500 var(--cx-h4)/var(--cx-h4-lh) var(--cx-font);
+  letter-spacing: var(--cx-h4-ls);
+  overflow-wrap: anywhere;
+}
+
+.ws-results-head__count {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ActiveFilterChips */
+.ws-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cx-s-2);
+}
+
+.ws-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--cx-touch);
+  white-space: nowrap;
+  padding: 0 10px 0 14px;
+  border-radius: var(--cx-r-pill);
+  background: var(--cx-brand-wash);
+  color: var(--cx-ember-text);
+  font-size: var(--cx-small);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.ws-filter-chip svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ws-filter-chip:hover {
+  box-shadow: inset 0 0 0 1px var(--cx-ember-text);
+}
+
+.ws-filter-chip:focus-visible,
+.ws-filter-chips__clear:focus-visible {
+  outline: none;
+  box-shadow: var(--cx-focus-ring);
+}
+
+.ws-filter-chips__clear {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--cx-touch);
+  padding: 0 8px;
+  white-space: nowrap;
+  border-radius: var(--cx-r-sm);
+  color: var(--cx-text-2);
+  font-size: var(--cx-small);
+  text-decoration: underline;
+}
+
+/* Results list: hidden cards (HideGate) leave an empty item; don't keep a hole. */
+.ws-results > li:empty {
+  display: none;
+}
+
+.ws-results-more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--cx-s-4);
+}
+
+/* ZeroResults suggestions */
+.ws-zero {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--cx-s-2);
+  margin-top: var(--cx-s-2);
+}
+
+.ws-zero__cats a,
+.cx-empty a:not(.cx-btn) {
+  color: var(--cx-ember-text);
+  text-decoration: underline;
+}
+
+/* The location sheet slides up on phones (Material bottom sheet). */
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .ws-shipto {
+    transform: translateY(100%);
+    transition: transform var(--cx-dur) var(--cx-ease), overlay var(--cx-dur) allow-discrete, display var(--cx-dur) allow-discrete;
+  }
+
+  .ws-shipto:popover-open {
+    transform: none;
+  }
+
+  @starting-style {
+    .ws-shipto:popover-open {
+      transform: translateY(100%);
+    }
+  }
+
+  .ws-shipto::backdrop {
+    background: transparent;
+    transition: background-color var(--cx-dur), overlay var(--cx-dur) allow-discrete, display var(--cx-dur) allow-discrete;
+  }
+
+  .ws-shipto:popover-open::backdrop {
+    background: var(--cx-overlay);
+  }
+
+  @starting-style {
+    .ws-shipto:popover-open::backdrop {
+      background: transparent;
+    }
+  }
+}
+
+/* Phones: applied filters stay one row that scrolls sideways, bleeding to the edges,
+   with Clear all last (Baymard applied filters). */
+@media (max-width: 767px) {
+  .ws-filter-chips {
+    flex-wrap: nowrap;
+    margin-inline: calc(var(--cx-gutter) * -1);
+    padding-inline: var(--cx-gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+  }
+
+  .ws-filter-chips > li {
+    flex: none;
+  }
+}
+
+/* In-page changes (SearchTransitions): a thin progress bar, and the current results
+   dim while the next ones load; the search box and heading stay put. */
+.ws-search-page {
+  position: relative;
+}
+
+.ws-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--cx-z-toast);
+  height: 3px;
+  background: var(--cx-ember);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ws-search-page[data-pending] .ws-progress {
+  opacity: 1;
+  transform: scaleX(0.8);
+  transition: transform 2.5s var(--cx-ease), opacity var(--cx-dur-fast);
+}
+
+.ws-search-page[data-pending=change] .ws-results,
+.ws-search-page[data-pending=change] .ws-filter-chips,
+.ws-search-page[data-pending=change] .cx-empty {
+  opacity: 0.45;
+  transition: opacity var(--cx-dur) var(--cx-ease) 120ms;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-search-page[data-pending] .ws-progress {
+    transform: scaleX(1);
+    transition: none;
+  }
+}
+
+.ws-results-more {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cx-s-3);
+}
+
+.ws-results-more__progress,
+.ws-results-end p {
+  color: var(--cx-text-muted);
+  font-size: var(--cx-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-results-more [aria-disabled=true] {
+  cursor: progress;
+}
+
+.ws-results-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cx-s-3);
+  margin-top: var(--cx-s-4);
+}
+
+/* EC-004: one neutral line under the h1, no suggestions. */
+.ws-prohibited {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cx-s-3);
+  padding: var(--cx-s-5);
+  border-radius: var(--cx-r-md);
+  background: var(--cx-surface);
+  color: var(--cx-text-2);
+}
+
+.ws-prohibited svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--cx-warning);
+}
+
+.ws-prohibited a {
+  color: var(--cx-ember-text);
+  text-decoration: underline;
+}
+
+.ws-route-error {
+  display: grid;
+  gap: var(--cx-s-6);
+  justify-items: center;
+  padding-block: var(--cx-s-8);
+}
+
+.ws-route-error__search {
+  display: flex;
+  gap: var(--cx-s-2);
+  width: min(480px, 100%);
+}
+
+.ws-route-error__search input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ws-gallery__skel > .cx-skel {
+  position: absolute;
+  inset: 0;
+}
+
+.ws-gallery__skel {
+  position: relative;
+}
+
+/* Subtitle line (eBay item tile): condition · key facts, one line, ellipsis. The row
+   is always reserved so prices line up across a grid row. */
+.ws-facts {
+  min-height: 1lh;
+  overflow: hidden;
+  color: var(--cx-text-muted);
+  font-size: var(--cx-meta);
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ws-facts__item + .ws-facts__item::before {
+  content: " · " / "";
+}
+
+.ws-facts__item[data-tone=warning] {
+  color: var(--cx-warning);
+  font-weight: 500;
+}
+
+@container ws-body (max-width: 240px) {
+  .ws-facts {
+    font-size: var(--cx-caption);
+  }
+
+  .ws-facts__item:nth-child(n + 3) {
+    display: none;
+  }
+}
+
+/* CardPhotos: step through photos from the card (UI research C1). The track sits above
+   the stretched link (it navigates on tap itself) and lets vertical scrolling through. */
+.ws-photos,
+.ws-photos__track,
+.ws-photos__slide {
+  position: absolute;
+  inset: 0;
+}
+
+.ws-photos__track {
+  z-index: 2;
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.ws-photos__slide img {
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ws-photos__arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cx-elevated);
+  box-shadow: var(--cx-shadow-sm);
+  color: var(--cx-text);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity var(--cx-dur-fast) var(--cx-ease), transform var(--cx-dur) var(--cx-spring-snappy);
+}
+
+/* 44px to the pointer. */
+.ws-photos__arrow::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+.ws-photos__arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ws-photos__arrow--prev {
+  left: var(--cx-s-2);
+}
+
+.ws-photos__arrow--next {
+  right: var(--cx-s-2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ws-card:hover .ws-photos__arrow {
+    opacity: 1;
+    transform: none;
+  }
+
+  .ws-photos__arrow:hover {
+    transform: scale(1.08);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .ws-photos__arrow,
+  .ws-photos__dots {
+    display: none;
+  }
+}
+
+.ws-photos__dots {
+  position: absolute;
+  bottom: var(--cx-s-3);
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  gap: 5px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.ws-photos__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 25%);
+}
+
+.ws-photos__preload {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* SaveButton motion: the icon pops (Motion), a ring and six sparks burst from it. */
+.ws-save {
+  overflow: visible;
+}
+
+.ws-save__icon {
+  display: grid;
+  place-items: center;
+}
+
+.ws-save__burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ws-save__ring {
+  position: absolute;
+  inset: 4px;
+  border: 2px solid var(--cx-ember);
+  border-radius: 50%;
+}
+
+.ws-save__spoke {
+  position: absolute;
+  inset: 0;
+}
+
+.ws-save__spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--cx-ember);
+}
+
+/* Card motion wrappers (components/motion/Tilt, CardActions' hide gate) fill the grid
+   cell so cards in a row stay the same height. */
+.ws-tilt,
+.ws-hide-wrap {
+  height: 100%;
+}
+
+/* Grid cards tilt towards the pointer and lift; the photo eases in a touch. Mouse and
+   trackpad only, never under reduced motion. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .ws-tilt {
+    perspective: 900px;
+  }
+
+  .ws-tilt > .ws-card {
+    transform: rotateX(var(--ws-rx, 0deg)) rotateY(var(--ws-ry, 0deg)) translateY(0);
+    transition: transform 500ms var(--cx-spring), box-shadow var(--cx-dur) var(--cx-ease);
+    /* Smooths the tilted edges (no stair-stepping on the photo's top edge). */
+    backface-visibility: hidden;
+    outline: 1px solid transparent;
+  }
+
+  .ws-tilt:hover > .ws-card.cx-card--interactive {
+    transform: rotateX(var(--ws-rx, 0deg)) rotateY(var(--ws-ry, 0deg)) translateY(-4px);
+    transition-duration: 160ms, var(--cx-dur);
+    /* Promoted only while hovered: a permanent will-change made every card in the grid
+       its own compositor layer, all the time. */
+    will-change: transform;
+  }
+
+  .ws-card__media img {
+    transition: transform 700ms var(--cx-ease);
+  }
+
+  .ws-card:hover .ws-card__media img {
+    transform: scale(1.05);
+  }
+}
+
+/* ThreeStage (components/three): the fallback fills the stage until the canvas has
+   drawn, then the canvas fades in over it. */
+.ws-stage {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ws-stage__fallback,
+.ws-stage__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ws-stage__canvas {
+  display: block;
+  animation: ws-stage-in 900ms var(--cx-ease) both;
+}
+
+.ws-stage[data-status=live] .ws-stage__fallback {
+  opacity: 0;
+  transition: opacity 900ms var(--cx-ease);
+}
+
+.ws-stage--drag {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.ws-stage--drag:active {
+  cursor: grabbing;
+}
+
+@keyframes ws-stage-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The hero's still fallback: a soft gold glow, no drawing. */
+.ws-stage__glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 70% 40%, color-mix(in srgb, var(--cx-ember) 22%, transparent), transparent 70%),
+    radial-gradient(40% 40% at 20% 70%, color-mix(in srgb, var(--cx-ember) 10%, transparent), transparent 70%);
+}
+
+.ws-viewer3d {
+  display: grid;
+  gap: var(--cx-s-2);
+  margin: 0;
+}
+
+.ws-viewer3d .ws-stage {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--cx-r-card);
+  background: var(--cx-surface-2);
+}
+
+.ws-viewer3d .ws-stage__fallback img {
+  object-fit: contain;
+}
+
+.ws-viewer3d__caption {
+  color: var(--cx-text);
+  font: 400 var(--cx-small)/1.4 var(--cx-font);
+  text-align: center;
+}
+
+/* Mid-scroll (components/motion/ScrollState): cards and tiles passing under a still
+   pointer don't take hover, so no tilt, lift or photo zoom starts while the page moves.
+   Hover returns as soon as scrolling stops. */
+html[data-scrolling] :is(.ws-tilt, .ws-card, .ws-tile) {
+  pointer-events: none;
+}
+

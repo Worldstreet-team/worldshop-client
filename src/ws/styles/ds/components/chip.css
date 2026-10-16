@@ -1,0 +1,83 @@
+/* Adapted from the WorldStreet design system (.cx-chip, .cx-count)
+   https://worldstreet-design-system.vercel.app, compiled CSS read 6 Oct 2026. Copied as
+   published, only reformatted. Marketplace changes belong in styles/marketplace.css. */
+
+.cx-chip {
+  border-radius:var(--cx-r-pill);
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+  background:var(--cx-info-wash);
+  height:26px;
+  color:var(--cx-info);
+  align-items:center;
+  gap:4px;
+  padding:0 10px;
+  font-size:13px;
+  font-weight:500;
+  display:inline-flex;
+}
+
+.cx-chip--gain {
+  background:var(--cx-gain-wash);
+  color:var(--cx-gain);
+}
+
+.cx-chip--loss {
+  background:var(--cx-loss-wash);
+  color:var(--cx-loss);
+}
+
+.cx-chip--warning {
+  background:var(--cx-warning-wash);
+  color:var(--cx-warning);
+}
+
+.cx-chip--brand {
+  background:var(--cx-brand-wash);
+  color:var(--cx-ember-text);
+}
+
+.cx-chip--dot:before {
+  content:"";
+  background:currentColor;
+  border-radius:50%;
+  width:6px;
+  height:6px;
+}
+
+.cx-count {
+  background:var(--cx-ember);
+  min-width:20px;
+  height:20px;
+  color:var(--cx-on-primary);
+  font:500 11px/1 var(--cx-font);
+  font-variant-numeric:tabular-nums;
+  border-radius:999px;
+  place-items:center;
+  padding:0 6px;
+  display:inline-grid;
+}
+
+.cx-count--dot {
+  width:8px;
+  min-width:8px;
+  height:8px;
+  padding:0;
+}
+
+.cx-with-count>.cx-count {
+  box-shadow:0 0 0 2px var(--cx-bg);
+  position:absolute;
+  top:-4px;
+  right:-4px;
+}
+
+.cx-side-link .cx-count {
+  margin-left:auto;
+}
+
+@media (forced-colors:active) {
+  .cx-btn, .cx-input, .cx-select, .cx-textarea, .cx-card, .cx-chip, .cx-tab[aria-selected=true] {
+    border:1px solid canvastext;
+  }
+}
